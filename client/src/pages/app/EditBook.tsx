@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, Type, Camera, Video, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,9 @@ export default function EditBook() {
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [selectedText, setSelectedText] = useState("");
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
+  
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
 
   const pages: BookPage[] = [
     {
@@ -250,11 +253,15 @@ export default function EditBook() {
 
               {!selectedPhoto ? (
                 <>
-                  <label className="flex-1 border-2 border-dashed border-stone-300 rounded-lg flex flex-col items-center justify-center mb-6 hover:border-primary transition-colors cursor-pointer group">
+                  <div
+                    onClick={() => photoInputRef.current?.click()}
+                    className="flex-1 border-2 border-dashed border-stone-300 rounded-lg flex flex-col items-center justify-center mb-6 hover:border-primary transition-colors cursor-pointer group"
+                  >
                     <Camera size={48} className="text-stone-300 mb-4 group-hover:text-primary transition-colors" />
                     <p className="text-stone-600 font-medium mb-2">Cliquez pour sélectionner une photo</p>
                     <p className="text-xs text-stone-500">ou glissez-déposez une image</p>
                     <input
+                      ref={photoInputRef}
                       type="file"
                       accept="image/*"
                       capture="environment"
@@ -271,7 +278,7 @@ export default function EditBook() {
                       className="hidden"
                       data-testid="input-photo-file"
                     />
-                  </label>
+                  </div>
                 </>
               ) : (
                 <>
@@ -326,11 +333,15 @@ export default function EditBook() {
                 </button>
               </div>
 
-              <label className="flex-1 border-2 border-dashed border-stone-300 rounded-lg flex flex-col items-center justify-center mb-6 hover:border-primary transition-colors cursor-pointer group">
+              <div
+                onClick={() => videoInputRef.current?.click()}
+                className="flex-1 border-2 border-dashed border-stone-300 rounded-lg flex flex-col items-center justify-center mb-6 hover:border-primary transition-colors cursor-pointer group"
+              >
                 <Video size={48} className="text-stone-300 mb-4 group-hover:text-primary transition-colors" />
                 <p className="text-stone-600 font-medium mb-2">Cliquez pour sélectionner une vidéo</p>
                 <p className="text-xs text-stone-500">ou glissez-déposez un fichier vidéo</p>
                 <input
+                  ref={videoInputRef}
                   type="file"
                   accept="video/*"
                   capture="environment"
@@ -344,7 +355,7 @@ export default function EditBook() {
                   className="hidden"
                   data-testid="input-video-file"
                 />
-              </label>
+              </div>
 
               <div className="flex gap-3">
                 <Button

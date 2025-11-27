@@ -131,88 +131,146 @@ export default function Prototype() {
             </div>
           </div>
 
-          {/* Timeline Feed */}
-          <div className="p-4 space-y-6 pb-24">
-            {memories.map((memory, idx) => (
+          {/* Content based on active tab */}
+          {activeTab === 'print' ? (
+            // Print format options
+            <div className="p-4 space-y-4 pb-24">
+              <div className="mb-4">
+                <h3 className="text-sm font-bold text-stone-800 mb-1">Choisir un format</h3>
+                <p className="text-xs text-stone-500">Seules les pages complétées seront imprimées</p>
+              </div>
+              
+              {/* 8x11 Hardcover */}
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.1 }}
-                key={memory.id} 
-                className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden"
+                className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
               >
-                {/* Special Birth Card */}
-                {memory.isBirthCard ? (
-                   <div className="p-6 bg-gradient-to-br from-white to-stone-50">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="w-10 h-10 rounded-full bg-secondary/20 text-secondary-foreground flex items-center justify-center">
-                          <Baby size={20} />
+                <div className="p-4">
+                  <div className="flex items-start gap-4">
+                    <div className="w-16 h-20 bg-gradient-to-b from-primary/20 to-stone-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <span className="text-[10px] font-bold text-stone-600">8x11</span>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-bold text-stone-800 text-sm">Couverture Rigide</h4>
+                      <p className="text-xs text-stone-500 mt-1">Reliure premium avec couverture rigide</p>
+                      <div className="flex items-center gap-3 mt-3">
+                        <span className="text-xs font-medium text-primary">12,99 €</span>
+                        <Button size="sm" className="h-6 text-xs">Commander</Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* 8x11 Softcover */}
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+              >
+                <div className="p-4">
+                  <div className="flex items-start gap-4">
+                    <div className="w-16 h-20 bg-gradient-to-b from-secondary/20 to-stone-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <span className="text-[10px] font-bold text-stone-600">8x11</span>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-bold text-stone-800 text-sm">Couverture Souple</h4>
+                      <p className="text-xs text-stone-500 mt-1">Reliure pratique avec couverture souple</p>
+                      <div className="flex items-center gap-3 mt-3">
+                        <span className="text-xs font-medium text-primary">8,99 €</span>
+                        <Button size="sm" className="h-6 text-xs">Commander</Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          ) : (
+            // Timeline Feed
+            <div className="p-4 space-y-6 pb-24">
+              {memories.map((memory, idx) => (
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.1 }}
+                  key={memory.id} 
+                  className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden"
+                >
+                  {/* Special Birth Card */}
+                  {memory.isBirthCard ? (
+                     <div className="p-6 bg-gradient-to-br from-white to-stone-50">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="w-10 h-10 rounded-full bg-secondary/20 text-secondary-foreground flex items-center justify-center">
+                            <Baby size={20} />
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-stone-800">{memory.title}</h3>
+                            <p className="text-xs text-stone-400">{memory.date}</p>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                          {Object.entries(memory.stats || {}).map(([key, value]) => (
+                            <div key={key} className="bg-white border border-stone-100 rounded-xl p-2 text-center">
+                              <span className="block text-sm font-bold text-stone-800">{value}</span>
+                              <span className="text-[10px] text-stone-400 uppercase">{key}</span>
+                            </div>
+                          ))}
+                        </div>
+                     </div>
+                  ) : (
+                    <>
+                      {/* Header */}
+                      <div className="p-4 flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${memory.accent || "bg-stone-100 text-stone-600"}`}>
+                          {memory.type === "photo" && <ImageIcon size={18} />}
+                          {memory.type === "video" && <Video size={18} />}
+                          {memory.type === "milestone" && <Calendar size={18} />}
                         </div>
                         <div>
-                          <h3 className="font-bold text-stone-800">{memory.title}</h3>
+                          <h3 className="font-bold text-stone-800 text-sm">{memory.title}</h3>
                           <p className="text-xs text-stone-400">{memory.date}</p>
                         </div>
                       </div>
-                      <div className="grid grid-cols-3 gap-2">
-                        {Object.entries(memory.stats || {}).map(([key, value]) => (
-                          <div key={key} className="bg-white border border-stone-100 rounded-xl p-2 text-center">
-                            <span className="block text-sm font-bold text-stone-800">{value}</span>
-                            <span className="text-[10px] text-stone-400 uppercase">{key}</span>
-                          </div>
-                        ))}
-                      </div>
-                   </div>
-                ) : (
-                  <>
-                    {/* Header */}
-                    <div className="p-4 flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${memory.accent || "bg-stone-100 text-stone-600"}`}>
-                        {memory.type === "photo" && <ImageIcon size={18} />}
-                        {memory.type === "video" && <Video size={18} />}
-                        {memory.type === "milestone" && <Calendar size={18} />}
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-stone-800 text-sm">{memory.title}</h3>
-                        <p className="text-xs text-stone-400">{memory.date}</p>
-                      </div>
-                    </div>
 
-                    {/* Media */}
-                    {memory.image && (
-                      <div className="relative aspect-square bg-stone-100">
-                        <img src={memory.image} alt={memory.title} className="w-full h-full object-cover" />
-                        {memory.isVideo && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                            <div className="w-12 h-12 rounded-full bg-white/90 backdrop-blur flex items-center justify-center shadow-lg mb-2">
-                              <div className="w-0 h-0 border-t-[6px] border-t-transparent border-l-[10px] border-l-stone-900 border-b-[6px] border-b-transparent ml-1"></div>
+                      {/* Media */}
+                      {memory.image && (
+                        <div className="relative aspect-square bg-stone-100">
+                          <img src={memory.image} alt={memory.title} className="w-full h-full object-cover" />
+                          {memory.isVideo && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                              <div className="w-12 h-12 rounded-full bg-white/90 backdrop-blur flex items-center justify-center shadow-lg mb-2">
+                                <div className="w-0 h-0 border-t-[6px] border-t-transparent border-l-[10px] border-l-stone-900 border-b-[6px] border-b-transparent ml-1"></div>
+                              </div>
+                              <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur px-2 py-1 rounded-md flex items-center gap-1 text-[10px] font-bold">
+                                <QrCode size={12} />
+                                <span>QR LINKED</span>
+                              </div>
                             </div>
-                            <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur px-2 py-1 rounded-md flex items-center gap-1 text-[10px] font-bold">
-                              <QrCode size={12} />
-                              <span>QR LINKED</span>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                          )}
+                        </div>
+                      )}
 
-                    {/* Caption */}
-                    {memory.desc && (
-                      <div className="p-4 pt-3">
-                        <p className="text-stone-600 text-sm leading-relaxed">{memory.desc}</p>
-                      </div>
-                    )}
-                  </>
-                )}
-              </motion.div>
-            ))}
-            
-            <div className="text-center py-8">
-                <p className="text-xs text-stone-400 mb-2">C'est tout pour le moment</p>
-                <Button variant="ghost" size="sm" className="text-primary hover:text-primary/80 text-xs">
-                    Charger les mois précédents
-                </Button>
+                      {/* Caption */}
+                      {memory.desc && (
+                        <div className="p-4 pt-3">
+                          <p className="text-stone-600 text-sm leading-relaxed">{memory.desc}</p>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </motion.div>
+              ))}
+              
+              <div className="text-center py-8">
+                  <p className="text-xs text-stone-400 mb-2">C'est tout pour le moment</p>
+                  <Button variant="ghost" size="sm" className="text-primary hover:text-primary/80 text-xs">
+                      Charger les mois précédents
+                  </Button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Floating Action Button */}

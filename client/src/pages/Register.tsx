@@ -72,11 +72,11 @@ export default function Register() {
         </div>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md pb-32 sm:pb-0">
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md pb-80 sm:pb-0 overflow-visible">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white py-8 px-4 shadow sm:rounded-xl sm:px-10 border border-stone-100 relative"
+          className="bg-white py-8 px-4 shadow sm:rounded-xl sm:px-10 border border-stone-100 relative overflow-visible"
         >
           <div className="grid grid-cols-2 gap-3 mb-6">
             <Button variant="outline" className="w-full flex items-center gap-2" onClick={() => console.log("Google login")}>
@@ -116,7 +116,7 @@ export default function Register() {
           </div>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 relative">
               <FormField
                 control={form.control}
                 name="fullName"
@@ -171,7 +171,7 @@ export default function Register() {
                           <SelectValue placeholder="Sélectionnez une option" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent side="top" sideOffset={8}>
                         <SelectItem value="female">Femme</SelectItem>
                         <SelectItem value="male">Homme</SelectItem>
                         <SelectItem value="non-binary">Non-binaire</SelectItem>

@@ -63,3 +63,35 @@ export const insertMemorySchema = createInsertSchema(memories).omit({
 
 export type InsertMemory = z.infer<typeof insertMemorySchema>;
 export type Memory = typeof memories.$inferSelect;
+
+export const userPlans = pgTable("user_plans", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }).unique(),
+  plan: text("plan").notNull().default("free"), // free, premium, platine
+  storageUsed: integer("storage_used").notNull().default(0), // in MB
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertUserPlanSchema = createInsertSchema(userPlans).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertUserPlan = z.infer<typeof insertUserPlanSchema>;
+export type UserPlan = typeof userPlans.$inferSelect;
+
+export const qrCodes = pgTable("qr_codes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  memoryId: varchar("memory_id").notNull().references(() => memories.id, { onDelete: "cascade" }).unique(),
+  qrUrl: text("qr_url").notNull(),
+  videoUrl: text("video_url").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertQRCodeSchema = createInsertSchema(qrCodes).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertQRCode = z.infer<typeof insertQRCodeSchema>;
+export type QRCode = typeof qrCodes.$inferSelect;

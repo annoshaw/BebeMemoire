@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { users, books, memories, type User, type InsertUser, type Book, type InsertBook, type Memory, type InsertMemory } from "@shared/schema";
+import { users, books, memories, userPlans, qrCodes, type User, type InsertUser, type Book, type InsertBook, type Memory, type InsertMemory, type UserPlan, type InsertUserPlan, type QRCode, type InsertQRCode } from "@shared/schema";
 import { eq, desc } from "drizzle-orm";
 
 export interface IStorage {
@@ -21,6 +21,17 @@ export interface IStorage {
   createMemory(memory: InsertMemory): Promise<Memory>;
   updateMemory(id: string, memory: Partial<InsertMemory>): Promise<Memory | undefined>;
   deleteMemory(id: string): Promise<boolean>;
+  
+  // User Plan operations
+  getUserPlan(userId: string): Promise<UserPlan | undefined>;
+  createUserPlan(plan: InsertUserPlan): Promise<UserPlan>;
+  updateUserPlan(userId: string, plan: Partial<InsertUserPlan>): Promise<UserPlan | undefined>;
+  getStorageLimit(plan: string): number;
+  
+  // QR Code operations
+  getQRCode(memoryId: string): Promise<QRCode | undefined>;
+  createQRCode(qrCode: InsertQRCode): Promise<QRCode>;
+  deleteQRCode(memoryId: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -87,6 +98,47 @@ export class DatabaseStorage implements IStorage {
 
   async deleteMemory(id: string): Promise<boolean> {
     const result = await db.delete(memories).where(eq(memories.id, id)).returning();
+    return result.length > 0;
+  }
+
+  // User Plan operations
+  async getUserPlan(userId: string): Promise<UserPlan | undefined> {
+    const result = await db.select().from(userPlans).where(eq(userPlans.userId, userId)).limit(1);
+    return result[0];
+  }
+
+  async createUserPlan(insertPlan: InsertUserPlan): Promise<UserPlan> {
+    const result = await db.insert(userPlans).values(insertPlan).returning();
+    return result[0];
+  }
+
+  async updateUserPlan(userId: string, updateData: Partial<InsertUserPlan>): Promise<UserPlan | undefined> {
+    const result = await db.update(userPlans).set(updateData).where(eq(userPlans.userId, userId)).returning();
+    return result[0];
+  }
+
+  getStorageLimit(plan: string): number {
+    const limits: Record<string, number> = {
+      free: 1024, // 1 GB in MB
+      premium: 2048, // 2 GB
+      platine: 5120, // 5 GB
+    };
+    return limits[plan] || 1024;
+  }
+
+  // QR Code operations
+  async getQRCode(memoryId: string): Promise<QRCode | undefined> {
+    const result = await db.select().from(qrCodes).where(eq(qrCodes.memoryId, memoryId)).limit(1);
+    return result[0];
+  }
+
+  async createQRCode(insertQR: InsertQRCode): Promise<QRCode> {
+    const result = await db.insert(qrCodes).values(insertQR).returning();
+    return result[0];
+  }
+
+  async deleteQRCode(memoryId: string): Promise<boolean> {
+    const result = await db.delete(qrCodes).where(eq(qrCodes.memoryId, memoryId)).returning();
     return result.length > 0;
   }
 }

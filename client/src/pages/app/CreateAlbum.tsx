@@ -11,6 +11,7 @@ export default function CreateAlbum() {
   const [childName, setChildName] = useState("");
   const [selectedTemplate, setSelectedTemplate] = useState("modern");
   const [selectedPhotos, setSelectedPhotos] = useState<string[]>([]);
+  const [showArrangementPreview, setShowArrangementPreview] = useState(false);
 
   const templates = [
     {
@@ -54,6 +55,24 @@ export default function CreateAlbum() {
     const steps: CreateStep[] = ["info", "template", "photos", "edit", "preview"];
     const currentIdx = steps.indexOf(step);
     if (currentIdx > 0) setStep(steps[currentIdx - 1]);
+  };
+
+  const getLayoutPreview = () => {
+    const layouts: Record<string, string[][]> = {
+      modern: [
+        ["full"], ["half", "half"], ["full"], ["third", "third", "third"]
+      ],
+      classic: [
+        ["full"], ["full"], ["half", "half"], ["half", "half"]
+      ],
+      playful: [
+        ["third", "third", "third"], ["half", "half"], ["full"], ["third", "third", "third"]
+      ],
+      story: [
+        ["full"], ["half", "half"], ["full"], ["half", "half"]
+      ]
+    };
+    return layouts[selectedTemplate] || layouts.modern;
   };
 
   return (
@@ -291,12 +310,16 @@ export default function CreateAlbum() {
 
               {/* Mock Layout Preview */}
               <div className="bg-white rounded-lg shadow-md p-6 space-y-4">
-                <div className="flex items-center gap-2 p-3 bg-stone-50 rounded-lg">
+                <motion.button 
+                  onClick={() => setShowArrangementPreview(true)}
+                  className="w-full flex items-center gap-2 p-3 bg-stone-50 hover:bg-stone-100 rounded-lg transition-colors"
+                >
                   <Sparkles size={18} className="text-primary" />
                   <p className="text-sm text-stone-700">
                     Arrangement automatique appliqué ✓
                   </p>
-                </div>
+                  <span className="text-xs text-stone-500 ml-auto">Cliquez pour voir l'aperçu</span>
+                </motion.button>
 
                 <div className="space-y-3">
                   {selectedPhotos.map((photo, idx) => (
@@ -341,6 +364,79 @@ export default function CreateAlbum() {
               </div>
             </motion.div>
           )}
+
+          {/* Arrangement Preview Modal */}
+          <AnimatePresence>
+            {showArrangementPreview && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+                onClick={() => setShowArrangementPreview(false)}
+              >
+                <motion.div
+                  initial={{ scale: 0.95 }}
+                  animate={{ scale: 1 }}
+                  exit={{ scale: 0.95 }}
+                  className="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="mb-4">
+                    <h3 className="text-2xl font-serif font-bold text-stone-900 mb-2">
+                      Aperçu de l'arrangement
+                    </h3>
+                    <p className="text-sm text-stone-600">
+                      Voici comment vos photos seront arrangées avec le style "{templates.find(t => t.id === selectedTemplate)?.name}"
+                    </p>
+                  </div>
+
+                  <div className="space-y-6">
+                    {getLayoutPreview().map((row, rowIdx) => (
+                      <div key={rowIdx} className="flex gap-3">
+                        {row.map((layout, colIdx) => {
+                          const photoIdx = rowIdx * 3 + colIdx;
+                          const photo = selectedPhotos[photoIdx];
+                          const isFullWidth = layout === "full";
+                          const isThird = layout === "third";
+                          
+                          return (
+                            <div
+                              key={`${rowIdx}-${colIdx}`}
+                              className={`${
+                                isFullWidth ? "w-full" : isThird ? "flex-1" : "flex-1"
+                              } aspect-square rounded-lg overflow-hidden border-2 border-dashed border-stone-300 bg-stone-50`}
+                            >
+                              {photo ? (
+                                <img
+                                  src={`https://images.unsplash.com/photo-155${photoIdx}?w=300&h=300&auto=format&fit=crop`}
+                                  alt={`Photo ${photoIdx}`}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-stone-400 text-xs">
+                                  -
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-6 flex gap-3">
+                    <Button
+                      onClick={() => setShowArrangementPreview(false)}
+                      className="flex-1 bg-primary hover:bg-primary/90 text-white"
+                    >
+                      C'est parfait!
+                    </Button>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Step 5: Preview */}
           {step === "preview" && (

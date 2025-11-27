@@ -159,7 +159,7 @@ export default function Prototype() {
                       <h4 className="font-bold text-stone-800 text-sm">Couverture Rigide</h4>
                       <p className="text-xs text-stone-500 mt-1">Reliure premium avec couverture rigide</p>
                       <div className="flex items-center gap-3 mt-3">
-                        <span className="text-xs font-medium text-primary">12,99 €</span>
+                        <span className="text-xs font-medium text-primary">54,75 $</span>
                         <Button size="sm" className="h-6 text-xs">Commander</Button>
                       </div>
                     </div>
@@ -183,7 +183,7 @@ export default function Prototype() {
                       <h4 className="font-bold text-stone-800 text-sm">Couverture Souple</h4>
                       <p className="text-xs text-stone-500 mt-1">Reliure pratique avec couverture souple</p>
                       <div className="flex items-center gap-3 mt-3">
-                        <span className="text-xs font-medium text-primary">8,99 €</span>
+                        <span className="text-xs font-medium text-primary">43,24 $</span>
                         <Button size="sm" className="h-6 text-xs">Commander</Button>
                       </div>
                     </div>

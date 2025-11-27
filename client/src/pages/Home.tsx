@@ -53,7 +53,7 @@ export default function Home() {
               </h1>
               
               <p className="text-lg lg:text-xl text-stone-600 leading-relaxed max-w-lg">
-                Remplissez l'histoire de votre enfant au fil de l'eau, directement depuis votre mobile. Vidéos, photos, et souvenirs, sans pages vides ni contraintes.
+                Remplissez l'histoire de votre enfant au moment qui vous convient directement depuis votre appareil mobile ou votre talette. Insérez des photos et des vidéos et laissez-vous guider par notre modèle de livre pour y ajouter ce qui convient à VOTRE famille. L'impression du livre avec vos photos et votre texte donnera accès aux vidéos par code QR.
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4">

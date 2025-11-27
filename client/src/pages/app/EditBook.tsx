@@ -1,14 +1,15 @@
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, Type, Camera, Video, X } from "lucide-react";
+import { ChevronLeft, Type, Camera, Video, X, QrCode as QrCodeIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 
-type EditorMode = "view" | "text" | "photo" | "video";
+type EditorMode = "view" | "text" | "photo" | "video" | "qrcode";
 
 type ContentItem = {
-  type: "text" | "photo" | "video";
+  type: "text" | "photo" | "video" | "qrcode";
   value?: string;
+  videoUrl?: string;
 };
 
 type BookPage = {
@@ -30,6 +31,12 @@ export default function EditBook() {
   const videoInputRef = useRef<HTMLInputElement>(null);
   
   const babyName = typeof window !== "undefined" ? localStorage.getItem("babyName") || "Léo" : "Léo";
+  const [selectedVideoUrl, setSelectedVideoUrl] = useState("");
+
+  const generateQRCodeDataUrl = (text: string) => {
+    const encodedText = encodeURIComponent(text);
+    return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodedText}`;
+  };
 
   const pages: BookPage[] = [
     {
@@ -150,6 +157,16 @@ export default function EditBook() {
                         {item.type === "video" && (
                           <p className="text-xs text-stone-500">🎥 Vidéo ajoutée</p>
                         )}
+                        {item.type === "qrcode" && item.videoUrl && (
+                          <div className="flex flex-col items-center gap-2">
+                            <p className="text-xs text-stone-500">📱 QR Code pour vidéo</p>
+                            <img 
+                              src={generateQRCodeDataUrl(item.videoUrl)} 
+                              alt="QR Code" 
+                              className="w-16 h-16"
+                            />
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -189,11 +206,86 @@ export default function EditBook() {
                     <Video size={18} />
                     <span className="text-sm font-medium">Vidéo</span>
                   </motion.button>
+
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setEditorMode("qrcode")}
+                    className="flex-1 flex items-center justify-center gap-2 p-3 bg-purple-100 hover:bg-purple-200 text-purple-600 rounded-lg transition-colors"
+                    data-testid="button-add-qrcode"
+                  >
+                    <QrCodeIcon size={18} />
+                    <span className="text-sm font-medium">QR Code</span>
+                  </motion.button>
                 </div>
               </div>
             </div>
           </div>
         )}
+
+        {/* QR Code Modal */}
+        <AnimatePresence>
+          {editorMode === "qrcode" && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="absolute inset-0 bg-white rounded-lg shadow-2xl p-8 flex flex-col z-50"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-2xl font-serif font-bold text-stone-900">Générer un QR Code</h3>
+                <button onClick={closeEditor} className="p-2 hover:bg-stone-100 rounded-full">
+                  <X size={24} className="text-stone-600" />
+                </button>
+              </div>
+
+              <div className="flex-1 mb-6">
+                <label className="block text-sm font-medium text-stone-700 mb-2">
+                  URL de la vidéo
+                </label>
+                <input
+                  type="text"
+                  value={selectedVideoUrl}
+                  onChange={(e) => setSelectedVideoUrl(e.target.value)}
+                  placeholder="https://example.com/video.mp4"
+                  className="w-full p-4 border border-stone-200 rounded-lg focus:outline-none focus:border-primary text-sm"
+                />
+              </div>
+
+              {selectedVideoUrl && (
+                <div className="flex justify-center mb-6 p-4 bg-stone-50 rounded-lg">
+                  <img 
+                    src={generateQRCodeDataUrl(selectedVideoUrl)} 
+                    alt="QR Code preview" 
+                    className="w-48 h-48"
+                  />
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <Button
+                  onClick={closeEditor}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  Annuler
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (selectedVideoUrl) {
+                      currentPage.content.push({ type: "qrcode", videoUrl: selectedVideoUrl });
+                      setSelectedVideoUrl("");
+                      closeEditor();
+                    }
+                  }}
+                  className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
+                >
+                  Ajouter le QR Code
+                </Button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Text Editor Modal */}
         <AnimatePresence>

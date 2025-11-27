@@ -101,17 +101,19 @@ export default function Prototype() {
         {/* Content */}
         <div className="flex-1 overflow-y-auto no-scrollbar bg-stone-50 relative">
           {/* Hero Cover of the Book */}
-          <div className="h-48 bg-stone-200 relative">
-            <img 
-              src="https://images.unsplash.com/photo-1544126566-475d8528f69f?q=80&w=800&auto=format&fit=crop" 
-              className="w-full h-full object-cover opacity-90" 
-              alt="Cover"
-            />
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4 pt-12 text-white">
-              <p className="text-xs font-medium opacity-80">Commencé le 12 Janvier 2025</p>
-              <h2 className="text-2xl font-serif font-bold">L'histoire de Léo</h2>
-            </div>
-          </div>
+          <Link href="/app/edit">
+            <button className="w-full h-48 bg-stone-200 relative hover:opacity-80 transition-opacity cursor-pointer" data-testid="button-open-book">
+              <img 
+                src="https://images.unsplash.com/photo-1544126566-475d8528f69f?q=80&w=800&auto=format&fit=crop" 
+                className="w-full h-full object-cover opacity-90" 
+                alt="Cover"
+              />
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4 pt-12 text-white">
+                <p className="text-xs font-medium opacity-80">Commencé le 12 Janvier 2025</p>
+                <h2 className="text-2xl font-serif font-bold">L'histoire de Léo</h2>
+              </div>
+            </button>
+          </Link>
 
           {/* Stats / Actions */}
           <div className="flex justify-between items-center p-4 px-6 bg-white border-b border-stone-100">

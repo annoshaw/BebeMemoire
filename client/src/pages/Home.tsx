@@ -150,6 +150,21 @@ export default function Home() {
                 icon: <CheckCircle className="w-8 h-8 text-stone-700" />,
                 title: "Zéro gaspillage",
                 desc: "Fini les pages 'Première dent' qui restent vides. Vous choisissez quelles pages imprimer. Personnalisation totale."
+              },
+              {
+                icon: <Heart className="w-8 h-8 text-red-400" />,
+                title: "Inclusivité Totale",
+                desc: "Adapté à toutes les familles : monoparentales, homoparentales, adoptions, naissances multiples. C'est votre histoire."
+              },
+              {
+                icon: <CheckCircle className="w-8 h-8 text-primary" />,
+                title: "Notifications Intelligentes",
+                desc: "Recevez des suggestions personnalisées : 'Vous êtes à 6 mois, une photo du ventre ?' ou 'Léo a 1 an aujourd'hui !'"
+              },
+              {
+                icon: <Printer className="w-8 h-8 text-stone-800" />,
+                title: "Impression Premium",
+                desc: "Papier mat certifié FSC, couverture rigide en toile. Une qualité d'archivage pour durer toute une vie."
               }
             ].map((feature, idx) => (
               <motion.div 
@@ -163,6 +178,67 @@ export default function Home() {
                   {feature.desc}
                 </p>
               </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section className="py-24 bg-white border-t border-stone-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <h2 className="text-4xl font-serif font-bold text-stone-900 mb-4">Une formule pour chaque famille</h2>
+            <p className="text-lg text-stone-600">Commencez gratuitement, évoluez selon vos souvenirs.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {[
+              {
+                name: "Découverte",
+                price: "Gratuit",
+                desc: "Parfait pour commencer",
+                features: ["Accès à l'application", "1 Go de stockage photos", "Création du livre", "Chronologie automatique"],
+                cta: "Commencer",
+                highlight: false
+              },
+              {
+                name: "Premium",
+                price: "4.99 $ / mois",
+                desc: "L'expérience complète",
+                features: ["QR Codes vidéo inclus", "Photos illimitées", "2 Go de stockage vidéos", "Support prioritaire"],
+                cta: "Essayer Premium",
+                highlight: true
+              },
+              {
+                name: "Platine",
+                price: "9.99 $ / mois",
+                desc: "Pour les vidéastes",
+                features: ["Tout du Premium", "5 Go de stockage vidéos", "15% de rabais sur l'impression", "Design exclusifs"],
+                cta: "Choisir Platine",
+                highlight: false
+              }
+            ].map((plan, i) => (
+              <div key={i} className={`relative rounded-2xl p-8 ${plan.highlight ? 'bg-stone-900 text-white shadow-xl scale-105 z-10' : 'bg-stone-50 text-stone-900 border border-stone-100'}`}>
+                {plan.highlight && (
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-primary text-white px-4 py-1 rounded-full text-sm font-medium">
+                    Recommandé
+                  </div>
+                )}
+                <h3 className="text-xl font-bold mb-2">{plan.name}</h3>
+                <div className="text-3xl font-serif font-bold mb-2">{plan.price}</div>
+                <p className={`text-sm mb-6 ${plan.highlight ? 'text-stone-400' : 'text-stone-500'}`}>{plan.desc}</p>
+                <ul className="space-y-4 mb-8">
+                  {plan.features.map((feat, j) => (
+                    <li key={j} className="flex items-center gap-3 text-sm">
+                      <CheckCircle size={16} className={plan.highlight ? 'text-primary' : 'text-stone-400'} />
+                      {feat}
+                    </li>
+                  ))}
+                </ul>
+                <Button className={`w-full rounded-full py-6 ${plan.highlight ? 'bg-white text-stone-900 hover:bg-stone-100' : 'bg-stone-900 text-white hover:bg-stone-800'}`}>
+                  {plan.cta}
+                </Button>
+              </div>
             ))}
           </div>
         </div>

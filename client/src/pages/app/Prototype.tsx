@@ -1,13 +1,26 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
-import { ChevronLeft, Plus, Image as ImageIcon, Mic, Video, MoreHorizontal, Calendar, Share2, BookOpen, Printer, CheckCircle } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ChevronLeft, Plus, Image as ImageIcon, Mic, Video, MoreHorizontal, Calendar, Share2, BookOpen, Printer, CheckCircle, Bell, QrCode, Baby } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 
 export default function Prototype() {
   const [activeTab, setActiveTab] = useState("timeline");
+  const [showNotification, setShowNotification] = useState(true);
 
   const memories = [
+    {
+      id: 0,
+      type: "birth",
+      date: "12 Jan 2025",
+      title: "Bienvenue Léo !",
+      isBirthCard: true,
+      stats: {
+        weight: "3.4 kg",
+        height: "51 cm",
+        time: "04:23"
+      }
+    },
     {
       id: 1,
       type: "photo",
@@ -45,6 +58,30 @@ export default function Prototype() {
             <div className="w-24 h-4 bg-black rounded-full"></div>
         </div>
 
+        {/* Smart Notification Mockup */}
+        <AnimatePresence>
+          {showNotification && (
+            <motion.div 
+              initial={{ y: -100, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: -100, opacity: 0 }}
+              className="absolute top-12 left-4 right-4 bg-white/95 backdrop-blur-md shadow-lg rounded-2xl p-4 z-50 border border-stone-100 cursor-pointer"
+              onClick={() => setShowNotification(false)}
+            >
+              <div className="flex gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                  <Bell size={18} />
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-sm font-bold text-stone-900">Léo a 6 mois aujourd'hui ! 🎉</h4>
+                  <p className="text-xs text-stone-500 mt-1">C'est le moment idéal pour prendre une photo de son évolution.</p>
+                </div>
+                <div className="w-2 h-2 rounded-full bg-primary mt-2"></div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* App Header */}
         <div className="p-6 pb-4 bg-white z-10 flex justify-between items-center">
           <Link href="/">
@@ -52,7 +89,10 @@ export default function Prototype() {
               <ChevronLeft className="text-stone-800" />
             </button>
           </Link>
-          <h1 className="text-lg font-serif font-bold text-stone-800">Livre de Léo</h1>
+          <div className="flex flex-col items-center">
+            <h1 className="text-lg font-serif font-bold text-stone-800">Livre de Léo</h1>
+            <span className="text-[10px] text-stone-400 font-medium bg-stone-100 px-2 py-0.5 rounded-full">Famille Dupond-Martin</span>
+          </div>
           <button className="p-2 hover:bg-stone-50 rounded-full -mr-2">
             <MoreHorizontal className="text-stone-800" />
           </button>
@@ -101,37 +141,68 @@ export default function Prototype() {
                 key={memory.id} 
                 className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden"
               >
-                {/* Header */}
-                <div className="p-4 flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${memory.accent || "bg-stone-100 text-stone-600"}`}>
-                    {memory.type === "photo" && <ImageIcon size={18} />}
-                    {memory.type === "video" && <Video size={18} />}
-                    {memory.type === "milestone" && <Calendar size={18} />}
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-stone-800 text-sm">{memory.title}</h3>
-                    <p className="text-xs text-stone-400">{memory.date}</p>
-                  </div>
-                </div>
-
-                {/* Media */}
-                {memory.image && (
-                  <div className="relative aspect-square bg-stone-100">
-                    <img src={memory.image} alt={memory.title} className="w-full h-full object-cover" />
-                    {memory.isVideo && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                        <div className="w-12 h-12 rounded-full bg-white/90 backdrop-blur flex items-center justify-center shadow-lg">
-                          <div className="w-0 h-0 border-t-[6px] border-t-transparent border-l-[10px] border-l-stone-900 border-b-[6px] border-b-transparent ml-1"></div>
+                {/* Special Birth Card */}
+                {memory.isBirthCard ? (
+                   <div className="p-6 bg-gradient-to-br from-white to-stone-50">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 rounded-full bg-secondary/20 text-secondary-foreground flex items-center justify-center">
+                          <Baby size={20} />
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-stone-800">{memory.title}</h3>
+                          <p className="text-xs text-stone-400">{memory.date}</p>
                         </div>
                       </div>
-                    )}
-                  </div>
-                )}
+                      <div className="grid grid-cols-3 gap-2">
+                        {Object.entries(memory.stats || {}).map(([key, value]) => (
+                          <div key={key} className="bg-white border border-stone-100 rounded-xl p-2 text-center">
+                            <span className="block text-sm font-bold text-stone-800">{value}</span>
+                            <span className="text-[10px] text-stone-400 uppercase">{key}</span>
+                          </div>
+                        ))}
+                      </div>
+                   </div>
+                ) : (
+                  <>
+                    {/* Header */}
+                    <div className="p-4 flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${memory.accent || "bg-stone-100 text-stone-600"}`}>
+                        {memory.type === "photo" && <ImageIcon size={18} />}
+                        {memory.type === "video" && <Video size={18} />}
+                        {memory.type === "milestone" && <Calendar size={18} />}
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-stone-800 text-sm">{memory.title}</h3>
+                        <p className="text-xs text-stone-400">{memory.date}</p>
+                      </div>
+                    </div>
 
-                {/* Caption */}
-                <div className="p-4 pt-3">
-                  <p className="text-stone-600 text-sm leading-relaxed">{memory.desc}</p>
-                </div>
+                    {/* Media */}
+                    {memory.image && (
+                      <div className="relative aspect-square bg-stone-100">
+                        <img src={memory.image} alt={memory.title} className="w-full h-full object-cover" />
+                        {memory.isVideo && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                            <div className="w-12 h-12 rounded-full bg-white/90 backdrop-blur flex items-center justify-center shadow-lg mb-2">
+                              <div className="w-0 h-0 border-t-[6px] border-t-transparent border-l-[10px] border-l-stone-900 border-b-[6px] border-b-transparent ml-1"></div>
+                            </div>
+                            <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur px-2 py-1 rounded-md flex items-center gap-1 text-[10px] font-bold">
+                              <QrCode size={12} />
+                              <span>QR LINKED</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Caption */}
+                    {memory.desc && (
+                      <div className="p-4 pt-3">
+                        <p className="text-stone-600 text-sm leading-relaxed">{memory.desc}</p>
+                      </div>
+                    )}
+                  </>
+                )}
               </motion.div>
             ))}
             
@@ -188,14 +259,15 @@ export default function Prototype() {
         </div>
         <h2 className="text-3xl font-serif font-bold text-stone-900">L'expérience d'édition</h2>
         <p className="text-stone-600 leading-relaxed">
-            Voici à quoi ressemble l'interface de création. Simple, intuitive et focalisée sur vos souvenirs.
+            L'interface a été mise à jour selon le cahier des charges pour inclure les notifications intelligentes, les fiches de naissance et l'inclusivité.
         </p>
         <div className="p-4 bg-white rounded-xl border border-stone-200 shadow-sm">
-            <h4 className="font-bold text-stone-800 mb-2 text-sm">Fonctionnalités clés</h4>
+            <h4 className="font-bold text-stone-800 mb-2 text-sm">Nouveautés</h4>
             <ul className="space-y-2 text-sm text-stone-600">
-                <li className="flex items-center gap-2"><CheckCircle size={14} className="text-primary"/> Timeline Chronologique</li>
-                <li className="flex items-center gap-2"><CheckCircle size={14} className="text-primary"/> Support Vidéo (QR Code)</li>
-                <li className="flex items-center gap-2"><CheckCircle size={14} className="text-primary"/> Mode hors-ligne</li>
+                <li className="flex items-center gap-2"><CheckCircle size={14} className="text-primary"/> Notifications Intelligentes (Top)</li>
+                <li className="flex items-center gap-2"><CheckCircle size={14} className="text-primary"/> Carte de Naissance</li>
+                <li className="flex items-center gap-2"><CheckCircle size={14} className="text-primary"/> QR Codes Vidéo</li>
+                <li className="flex items-center gap-2"><CheckCircle size={14} className="text-primary"/> Profil Famille Inclusive</li>
             </ul>
         </div>
         <Link href="/">

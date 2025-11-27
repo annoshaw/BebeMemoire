@@ -1,0 +1,67 @@
+Parfait Ann-Sophie 🌟. Voici un cahier des charges structuré et complet pour ton projet d’application et de livre numérique/imprimé. J’ai organisé les éléments que tu as listés en sections claires afin que ce document puisse servir de base pour la conception, le développement et la communication avec des partenaires ou développeurs.
+
+📘 Cahier des charges – Application et Livre Mémo
+1. Objectif du projet
+Créer une application mobile permettant aux parents de remplir un livre de grossesse et de souvenirs d’enfance de manière simple, interactive et personnalisée. Le livre pourra être consulté en version électronique ou imprimée, avec intégration de vidéos via QR codes.
+
+2. Fonctionnalités principales
+2.1 Remplissage du livre
+- Application mobile avec rappels mensuels et personnalisés.
+- Suggestions automatiques de sujets à aborder (ex. échographie, premières fois, fêtes).
+- Onglets interactifs pour ajouter détails, photos, vidéos, descriptions.
+- Remplissage simultané selon l’évolution de la grossesse ou de l’enfant.
+- Chronologie automatique des événements.
+2.2 Notifications intelligentes
+- Synchronisation avec calendrier et IA.
+- Notifications personnalisées selon étapes (grossesse, naissance, anniversaires mensuels).
+- Exemples : “Vous êtes à 1 mois de grossesse, entrez vos symptômes”, “Ajoutez une photo de votre ventre arrondi”.
+2.3 Options de personnalisation
+- Choix entre enfant à naître ou déjà né.
+- Ajout des informations de naissance (date, heure, poids, taille, lieu).
+- Pages thématiques personnalisées (baby shower, voyages, fêtes, etc.).
+- Onglets d’inspiration pour guider la rédaction.
+2.4 Inclusivité
+- Adapté à toutes parentalités : naissances multiples, adoption, familles atypiques, FIV, deuil périnatal.
+- Sections spécifiques développées avec des personnes concernées pour répondre aux besoins réels.
+
+3. Différenciation du produit
+- Insertion de vidéos visibles via QR codes dans la version imprimée.
+- Facilité d’utilisation : remplissage en mobilité, sans impression préalable.
+- Livre unique et personnalisé : impression uniquement des pages choisies.
+- Écologique : version électronique sans gaspillage de papier.
+
+4. Version imprimée
+- Options de couverture : souple ou rigide.
+- Choix de couleurs, finitions (mat ou lustré).
+- Qualité de papier premium pour durabilité.
+- Impression à la demande (aucune perte de papier).
+- Possibilité d’imprimer plusieurs exemplaires (cadeaux, familles séparées, pluri-parentalité).
+- QR codes intégrés pour revivre les souvenirs en vidéo.
+
+5. Version électronique
+- Accessible partout, écologique et économique.
+- Stockage des photos et vidéos.
+- Chronologie automatique des événements.
+- Design attrayant avec plusieurs styles thématiques (moderne, naturel, coloré, animé).
+
+6. Abonnements et modèles économiques
+- Gratuit (Base) : accès limité, 1 Go de photos, pas de QR codes.
+- Premium : QR codes inclus, photos illimitées, 2 Go de vidéos.
+- Platine : photos illimitées, 5 Go de vidéos.
+
+7. Expérience utilisateur
+- Interface intuitive et esthétique.
+- Boutons clairs pour ajouter pages, photos, vidéos.
+- Icônes et crayons pour éditer descriptions.
+- Notifications engageantes et personnalisées.
+- Livre qui reflète à 100 % l’histoire unique de chaque famille.
+
+8. Valeurs ajoutées
+- Nostalgie : version imprimée durable dans le temps.
+- Émotion : QR codes pour revivre les moments avec intensité.
+- Inclusivité : adapté à toutes formes de parentalité.
+- Durabilité : matériaux de haute qualité, impression responsable.
+
+✨ Ce cahier des charges peut servir de document de référence pour les développeurs, designers et partenaires. Il met en avant la vision, les fonctionnalités et la valeur unique du projet.
+
+👉 Veux-tu que je prépare aussi une version condensée en une page (style fiche projet) que tu pourrais utiliser pour présenter rapidement Mémo à des investisseurs ou partenaires?

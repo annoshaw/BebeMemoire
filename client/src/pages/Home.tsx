@@ -203,7 +203,7 @@ export default function Home() {
               },
               {
                 name: "Premium",
-                price: "4.99 $ / mois",
+                price: "1.99 $ / mois",
                 desc: "L'expérience complète",
                 features: ["QR Codes vidéo inclus", "Photos illimitées", "2 Go de stockage vidéos", "Support prioritaire"],
                 cta: "Essayer Premium",
@@ -211,7 +211,7 @@ export default function Home() {
               },
               {
                 name: "Platine",
-                price: "9.99 $ / mois",
+                price: "4.99 $ / mois",
                 desc: "Pour les vidéastes",
                 features: ["Tout du Premium", "5 Go de stockage vidéos", "15% de rabais sur l'impression", "Design exclusifs"],
                 cta: "Choisir Platine",

@@ -274,15 +274,18 @@ export default function Prototype() {
         </div>
 
         {/* Floating Action Button */}
-        <div className="absolute bottom-20 right-6 z-20">
-          <motion.button 
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            className="w-14 h-14 rounded-full bg-primary text-white shadow-lg shadow-primary/30 flex items-center justify-center"
-          >
-            <Plus size={28} />
-          </motion.button>
-        </div>
+        <Link href="/app/create">
+          <div className="absolute bottom-20 right-6 z-20">
+            <motion.button 
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              className="w-14 h-14 rounded-full bg-primary text-white shadow-lg shadow-primary/30 flex items-center justify-center"
+              data-testid="button-create-memory"
+            >
+              <Plus size={28} />
+            </motion.button>
+          </div>
+        </Link>
 
         {/* Bottom Navigation */}
         <div className="h-16 bg-white border-t border-stone-100 flex items-center justify-around px-2 relative z-20">

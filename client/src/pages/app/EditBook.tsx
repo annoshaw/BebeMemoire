@@ -347,31 +347,31 @@ export default function EditBook() {
 
               {!selectedPhoto ? (
                 <>
+                  <input
+                    ref={photoInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                          setSelectedPhoto(event.target?.result as string);
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                    className="hidden"
+                    data-testid="input-photo-file"
+                  />
                   <div
                     onClick={() => photoInputRef.current?.click()}
                     className="flex-1 border-2 border-dashed border-stone-300 rounded-lg flex flex-col items-center justify-center mb-6 hover:border-primary transition-colors cursor-pointer group"
+                    data-testid="button-select-photo"
                   >
                     <Camera size={48} className="text-stone-300 mb-4 group-hover:text-primary transition-colors" />
                     <p className="text-stone-600 font-medium mb-2">Cliquez pour sélectionner une photo</p>
                     <p className="text-xs text-stone-500">ou glissez-déposez une image</p>
-                    <input
-                      ref={photoInputRef}
-                      type="file"
-                      accept="image/*"
-                      capture="environment"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          const reader = new FileReader();
-                          reader.onload = (event) => {
-                            setSelectedPhoto(event.target?.result as string);
-                          };
-                          reader.readAsDataURL(file);
-                        }
-                      }}
-                      className="hidden"
-                      data-testid="input-photo-file"
-                    />
                   </div>
                 </>
               ) : (

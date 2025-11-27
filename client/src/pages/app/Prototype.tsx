@@ -7,6 +7,8 @@ import { Link } from "wouter";
 export default function Prototype() {
   const [activeTab, setActiveTab] = useState("timeline");
   const [showNotification, setShowNotification] = useState(true);
+  
+  const babyName = typeof window !== "undefined" ? localStorage.getItem("babyName") || "Léo" : "Léo";
 
   const memories = [
     {
@@ -73,7 +75,7 @@ export default function Prototype() {
                   <Bell size={18} />
                 </div>
                 <div className="flex-1">
-                  <h4 className="text-sm font-bold text-stone-900">Léo a 6 mois aujourd'hui ! 🎉</h4>
+                  <h4 className="text-sm font-bold text-stone-900">{babyName} a 6 mois aujourd'hui ! 🎉</h4>
                   <p className="text-xs text-stone-500 mt-1">C'est le moment idéal pour prendre une photo de son évolution.</p>
                 </div>
                 <div className="w-2 h-2 rounded-full bg-primary mt-2"></div>
@@ -90,7 +92,7 @@ export default function Prototype() {
             </button>
           </Link>
           <div className="flex flex-col items-center">
-            <h1 className="text-lg font-serif font-bold text-stone-800">Livre de Léo</h1>
+            <h1 className="text-lg font-serif font-bold text-stone-800">Livre de {babyName}</h1>
             <span className="text-[10px] text-stone-400 font-medium bg-stone-100 px-2 py-0.5 rounded-full">Famille Dupond-Martin</span>
           </div>
           <button className="p-2 hover:bg-stone-50 rounded-full -mr-2">
@@ -110,7 +112,7 @@ export default function Prototype() {
               />
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4 pt-12 text-white">
                 <p className="text-xs font-medium opacity-80">Commencé le 12 Janvier 2025</p>
-                <h2 className="text-2xl font-serif font-bold">L'histoire de Léo</h2>
+                <h2 className="text-2xl font-serif font-bold">L'histoire de {babyName}</h2>
               </div>
             </button>
           </Link>

@@ -298,7 +298,18 @@ export default function Onboarding() {
               </div>
 
               <Link href="/app">
-                <Button className="w-full bg-primary hover:bg-primary/90 text-white h-12 rounded-lg" data-testid="button-start-app">
+                <Button 
+                  onClick={() => {
+                    if (babyName && babyStatus && babyDate && babyGender) {
+                      localStorage.setItem("babyName", babyName);
+                      localStorage.setItem("babyStatus", babyStatus);
+                      localStorage.setItem("babyDate", babyDate);
+                      localStorage.setItem("babyGender", babyGender);
+                    }
+                  }}
+                  className="w-full bg-primary hover:bg-primary/90 text-white h-12 rounded-lg" 
+                  data-testid="button-start-app"
+                >
                   Commencer à créer le livre
                 </Button>
               </Link>

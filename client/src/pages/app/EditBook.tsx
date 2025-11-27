@@ -28,6 +28,8 @@ export default function EditBook() {
   
   const photoInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
+  
+  const babyName = typeof window !== "undefined" ? localStorage.getItem("babyName") || "Léo" : "Léo";
 
   const pages: BookPage[] = [
     {
@@ -88,7 +90,7 @@ export default function EditBook() {
 
       {/* Title */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20">
-        <h1 className="text-white font-serif text-xl font-bold">L'histoire de Léo</h1>
+        <h1 className="text-white font-serif text-xl font-bold">L'histoire de {babyName}</h1>
       </div>
 
       {/* Page Counter */}

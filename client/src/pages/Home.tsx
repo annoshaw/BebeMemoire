@@ -62,10 +62,12 @@ export default function Home() {
                     Commencer l'histoire
                   </Button>
                 </Link>
-                <Button variant="outline" size="lg" className="rounded-full px-8 h-14 text-lg border-stone-200 hover:bg-stone-50 text-stone-600">
-                  <Play size={18} className="mr-2 fill-stone-600" />
-                  Voir la démo
-                </Button>
+                <Link href="/book-demo">
+                  <Button variant="outline" size="lg" className="rounded-full px-8 h-14 text-lg border-stone-200 hover:bg-stone-50 text-stone-600" data-testid="button-demo">
+                    <Play size={18} className="mr-2 fill-stone-600" />
+                    Voir la démo
+                  </Button>
+                </Link>
               </div>
 
               <div className="flex items-center gap-4 text-sm text-stone-500 pt-4">

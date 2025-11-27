@@ -24,6 +24,7 @@ export default function EditBook() {
   const [editorMode, setEditorMode] = useState<EditorMode>("view");
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [selectedText, setSelectedText] = useState("");
+  const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
 
   const pages: BookPage[] = [
     {
@@ -247,11 +248,49 @@ export default function EditBook() {
                 </button>
               </div>
 
-              <div className="flex-1 border-2 border-dashed border-stone-300 rounded-lg flex flex-col items-center justify-center mb-6 hover:border-primary transition-colors">
-                <Camera size={48} className="text-stone-300 mb-4" />
-                <p className="text-stone-600 font-medium mb-2">Cliquez pour ajouter une photo</p>
-                <p className="text-xs text-stone-500">ou glissez-déposez une image</p>
-              </div>
+              {!selectedPhoto ? (
+                <>
+                  <label className="flex-1 border-2 border-dashed border-stone-300 rounded-lg flex flex-col items-center justify-center mb-6 hover:border-primary transition-colors cursor-pointer group">
+                    <Camera size={48} className="text-stone-300 mb-4 group-hover:text-primary transition-colors" />
+                    <p className="text-stone-600 font-medium mb-2">Cliquez pour sélectionner une photo</p>
+                    <p className="text-xs text-stone-500">ou glissez-déposez une image</p>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (event) => {
+                            setSelectedPhoto(event.target?.result as string);
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                      className="hidden"
+                      data-testid="input-photo-file"
+                    />
+                  </label>
+                </>
+              ) : (
+                <>
+                  <div className="flex-1 mb-6 rounded-lg overflow-hidden border border-stone-200">
+                    <img
+                      src={selectedPhoto}
+                      alt="Preview"
+                      className="w-full h-full object-contain bg-stone-50"
+                    />
+                  </div>
+                  <button
+                    onClick={() => setSelectedPhoto(null)}
+                    className="mb-6 text-sm text-primary hover:text-primary/80 transition-colors"
+                    data-testid="button-change-photo"
+                  >
+                    Changer la photo
+                  </button>
+                </>
+              )}
 
               <div className="flex gap-3">
                 <Button
@@ -263,7 +302,8 @@ export default function EditBook() {
                 </Button>
                 <Button
                   onClick={closeEditor}
-                  className="flex-1 bg-primary hover:bg-primary/90 text-white h-12 rounded-lg"
+                  disabled={!selectedPhoto}
+                  className="flex-1 bg-primary hover:bg-primary/90 text-white h-12 rounded-lg disabled:opacity-50"
                   data-testid="button-save-photo"
                 >
                   Ajouter
@@ -286,11 +326,25 @@ export default function EditBook() {
                 </button>
               </div>
 
-              <div className="flex-1 border-2 border-dashed border-stone-300 rounded-lg flex flex-col items-center justify-center mb-6 hover:border-primary transition-colors">
-                <Video size={48} className="text-stone-300 mb-4" />
-                <p className="text-stone-600 font-medium mb-2">Cliquez pour ajouter une vidéo</p>
+              <label className="flex-1 border-2 border-dashed border-stone-300 rounded-lg flex flex-col items-center justify-center mb-6 hover:border-primary transition-colors cursor-pointer group">
+                <Video size={48} className="text-stone-300 mb-4 group-hover:text-primary transition-colors" />
+                <p className="text-stone-600 font-medium mb-2">Cliquez pour sélectionner une vidéo</p>
                 <p className="text-xs text-stone-500">ou glissez-déposez un fichier vidéo</p>
-              </div>
+                <input
+                  type="file"
+                  accept="video/*"
+                  capture="environment"
+                  onChange={(e) => {
+                    // Handle video upload
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      console.log("Vidéo sélectionnée:", file.name);
+                    }
+                  }}
+                  className="hidden"
+                  data-testid="input-video-file"
+                />
+              </label>
 
               <div className="flex gap-3">
                 <Button

@@ -9,6 +9,7 @@ import Prototype from "@/pages/app/Prototype";
 import CreateAlbum from "@/pages/app/CreateAlbum";
 import EditBook from "@/pages/app/EditBook";
 import Register from "@/pages/Register";
+import Onboarding from "@/pages/Onboarding";
 import BookDemo from "@/pages/BookDemo";
 
 function Router() {
@@ -19,6 +20,7 @@ function Router() {
       <Route path="/app/create" component={CreateAlbum} />
       <Route path="/app/edit" component={EditBook} />
       <Route path="/register" component={Register} />
+      <Route path="/onboarding" component={Onboarding} />
       <Route path="/book-demo" component={BookDemo} />
       <Route component={NotFound} />
     </Switch>

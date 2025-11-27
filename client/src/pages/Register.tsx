@@ -52,7 +52,7 @@ export default function Register() {
     setTimeout(() => {
       console.log(values);
       setIsLoading(false);
-      setLocation("/app"); // Redirect to app after signup
+      setLocation("/onboarding"); // Redirect to onboarding after signup
     }, 1500);
   }
 

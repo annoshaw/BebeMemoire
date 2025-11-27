@@ -359,7 +359,7 @@ export default function Home() {
             Ne laissez plus les souvenirs s'effacer dans la galerie de votre téléphone.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4">
-             <Link href="/app">
+             <Link href="/register">
               <Button size="lg" className="bg-stone-900 hover:bg-stone-800 text-white rounded-full px-10 h-16 text-xl">
                 Créer mon compte gratuit
               </Button>

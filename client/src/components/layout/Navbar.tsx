@@ -48,7 +48,7 @@ export default function Navbar() {
               <span>{lang.toUpperCase()}</span>
             </button>
 
-            <Link href="/app">
+            <Link href="/register">
               <Button className="bg-primary hover:bg-primary/90 text-white rounded-full px-6">
                 {lang === "fr" ? "Commencer" : "Get Started"}
               </Button>

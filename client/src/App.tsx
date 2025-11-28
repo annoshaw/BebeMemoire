@@ -8,6 +8,7 @@ import Home from "@/pages/Home";
 import Prototype from "@/pages/app/Prototype";
 import CreateAlbum from "@/pages/app/CreateAlbum";
 import EditBook from "@/pages/app/EditBook";
+import EditProfile from "@/pages/app/EditProfile";
 import Register from "@/pages/Register";
 import Onboarding from "@/pages/Onboarding";
 import BookDemo from "@/pages/BookDemo";
@@ -19,6 +20,7 @@ function Router() {
       <Route path="/app" component={Prototype} />
       <Route path="/app/create" component={CreateAlbum} />
       <Route path="/app/edit" component={EditBook} />
+      <Route path="/app/profile" component={EditProfile} />
       <Route path="/register" component={Register} />
       <Route path="/onboarding" component={Onboarding} />
       <Route path="/book-demo" component={BookDemo} />

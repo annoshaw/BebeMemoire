@@ -937,9 +937,11 @@ export default function Prototype() {
                     <h3 className="font-bold text-stone-800">{userInfo.name}</h3>
                     <p className="text-xs text-stone-500">{userInfo.email}</p>
                   </div>
-                  <button className="p-2 hover:bg-stone-100 rounded-full">
-                    <Edit2 size={16} className="text-stone-500" />
-                  </button>
+                  <Link href="/app/profile">
+                    <button className="p-2 hover:bg-stone-100 rounded-full" data-testid="button-edit-profile">
+                      <Edit2 size={16} className="text-stone-500" />
+                    </button>
+                  </Link>
                 </div>
               </div>
 

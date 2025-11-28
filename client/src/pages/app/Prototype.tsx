@@ -1236,12 +1236,34 @@ export default function Prototype() {
                     <span className="text-stone-600">Livraison Postes Canada</span>
                     <span className="font-medium text-stone-800">12,00 $</span>
                   </div>
-                  <div className="border-t border-stone-200 pt-2 flex justify-between">
-                    <span className="font-bold text-stone-800">Total</span>
-                    <span className="font-bold text-stone-800">
-                      {(parseFloat(selectedProduct.price.replace(',', '.').replace(' $', '')) + 12).toFixed(2).replace('.', ',')} $
-                    </span>
-                  </div>
+                  {(() => {
+                    const productPrice = parseFloat(selectedProduct.price.replace(',', '.').replace(' $', ''));
+                    const shipping = 12;
+                    const subtotal = productPrice + shipping;
+                    const tps = subtotal * 0.05;
+                    const tvq = subtotal * 0.09975;
+                    const total = subtotal + tps + tvq;
+                    return (
+                      <>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-stone-600">Sous-total</span>
+                          <span className="font-medium text-stone-800">{subtotal.toFixed(2).replace('.', ',')} $</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-stone-600">TPS (5%)</span>
+                          <span className="font-medium text-stone-800">{tps.toFixed(2).replace('.', ',')} $</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-stone-600">TVQ (9,975%)</span>
+                          <span className="font-medium text-stone-800">{tvq.toFixed(2).replace('.', ',')} $</span>
+                        </div>
+                        <div className="border-t border-stone-200 pt-2 flex justify-between">
+                          <span className="font-bold text-stone-800">Total</span>
+                          <span className="font-bold text-stone-800">{total.toFixed(2).replace('.', ',')} $</span>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
 
                 {/* Submit Button */}

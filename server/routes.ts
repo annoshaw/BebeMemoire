@@ -1,86 +1,30 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import session from "express-session";
-import passport from "passport";
-import { Strategy as LocalStrategy } from "passport-local";
 import bcrypt from "bcryptjs";
-import connectPg from "connect-pg-simple";
 import { insertUserSchema, insertBookSchema, insertMemorySchema, type User } from "@shared/schema";
 import { fromError } from "zod-validation-error";
-
-const PgStore = connectPg(session);
+import { setupAuth, isAuthenticated } from "./replitAuth";
 
 // Extend Express Request to include user
 declare global {
   namespace Express {
     interface User {
-      id: string;
-      email: string;
-      fullName: string;
-      address: string | null;
-      gender: string | null;
+      claims?: {
+        sub: string;
+        email?: string;
+        first_name?: string;
+        last_name?: string;
+        profile_image_url?: string;
+      };
+      access_token?: string;
+      refresh_token?: string;
+      expires_at?: number;
     }
   }
 }
 
-// Passport configuration
-passport.use(
-  new LocalStrategy(
-    { usernameField: "email" },
-    async (email, password, done) => {
-      try {
-        const user = await storage.getUserByEmail(email);
-        if (!user) {
-          return done(null, false, { message: "Email ou mot de passe incorrect" });
-        }
-        
-        if (!user.password) {
-          return done(null, false, { message: "Veuillez vous connecter avec votre fournisseur OAuth" });
-        }
-
-        const isValid = await bcrypt.compare(password, user.password);
-        if (!isValid) {
-          return done(null, false, { message: "Email ou mot de passe incorrect" });
-        }
-
-        return done(null, {
-          id: user.id,
-          email: user.email,
-          fullName: user.fullName,
-          address: user.address,
-          gender: user.gender,
-        });
-      } catch (err) {
-        return done(err);
-      }
-    }
-  )
-);
-
-passport.serializeUser((user, done) => {
-  done(null, user.id);
-});
-
-passport.deserializeUser(async (id: string, done) => {
-  try {
-    const user = await storage.getUser(id);
-    if (!user) {
-      return done(null, false);
-    }
-    done(null, {
-      id: user.id,
-      email: user.email,
-      fullName: user.fullName,
-      address: user.address,
-      gender: user.gender,
-    });
-  } catch (err) {
-    done(err);
-  }
-});
-
-// Authentication middleware
+// Legacy authentication middleware for backward compatibility
 function requireAuth(req: Request, res: Response, next: NextFunction) {
   if (!req.isAuthenticated()) {
     return res.status(401).json({ message: "Non autorisé" });
@@ -92,119 +36,24 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  // Session configuration
-  const sessionStore = new PgStore({
-    conString: process.env.DATABASE_URL,
-    createTableIfMissing: true,
-  });
-
-  app.use(
-    session({
-      store: sessionStore,
-      secret: process.env.SESSION_SECRET || "memoria-secret-key-change-in-production",
-      resave: false,
-      saveUninitialized: false,
-      cookie: {
-        secure: process.env.NODE_ENV === "production",
-        httpOnly: true,
-        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-      },
-    })
-  );
-
-  app.use(passport.initialize());
-  app.use(passport.session());
+  // Setup Replit Auth (handles session, passport, login/logout/callback routes)
+  await setupAuth(app);
 
   // AUTH ROUTES
 
-  // Register
-  app.post("/api/auth/register", async (req: Request, res: Response) => {
+  // Get current user (Replit Auth)
+  app.get("/api/auth/user", isAuthenticated, async (req: any, res: Response) => {
     try {
-      const validation = insertUserSchema.safeParse(req.body);
-      
-      if (!validation.success) {
-        return res.status(400).json({ 
-          message: fromError(validation.error).toString()
-        });
-      }
-
-      const { email, password, fullName, address, gender } = validation.data;
-
-      // Check if user already exists
-      const existingUser = await storage.getUserByEmail(email);
-      if (existingUser) {
-        return res.status(400).json({ message: "Un compte avec cet email existe déjà" });
-      }
-
-      // Hash password
-      const hashedPassword = await bcrypt.hash(password!, 10);
-
-      // Create user
-      const user = await storage.createUser({
-        email,
-        password: hashedPassword,
-        fullName,
-        address: address || null,
-        gender: gender || null,
-        authProvider: "email",
-      });
-
-      // Log the user in
-      req.login({
-        id: user.id,
-        email: user.email,
-        fullName: user.fullName,
-        address: user.address,
-        gender: user.gender,
-      }, (err) => {
-        if (err) {
-          return res.status(500).json({ message: "Erreur lors de la connexion" });
-        }
-        return res.json({
-          user: {
-            id: user.id,
-            email: user.email,
-            fullName: user.fullName,
-            address: user.address,
-            gender: user.gender,
-          }
-        });
-      });
-    } catch (error: any) {
-      console.error("Registration error:", error);
-      res.status(500).json({ message: "Erreur lors de l'inscription" });
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
     }
   });
 
-  // Login
-  app.post("/api/auth/login", (req: Request, res: Response, next: NextFunction) => {
-    passport.authenticate("local", (err: any, user: Express.User | false, info: any) => {
-      if (err) {
-        return res.status(500).json({ message: "Erreur serveur" });
-      }
-      if (!user) {
-        return res.status(401).json({ message: info.message || "Authentification échouée" });
-      }
-      req.login(user, (err) => {
-        if (err) {
-          return res.status(500).json({ message: "Erreur lors de la connexion" });
-        }
-        return res.json({ user });
-      });
-    })(req, res, next);
-  });
-
-  // Logout
-  app.post("/api/auth/logout", (req: Request, res: Response) => {
-    req.logout((err) => {
-      if (err) {
-        return res.status(500).json({ message: "Erreur lors de la déconnexion" });
-      }
-      res.json({ message: "Déconnecté avec succès" });
-    });
-  });
-
-  // Get current user
+  // Legacy: Get current user (for backward compatibility)
   app.get("/api/auth/me", (req: Request, res: Response) => {
     if (!req.isAuthenticated()) {
       return res.status(401).json({ message: "Non connecté" });

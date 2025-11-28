@@ -1233,12 +1233,14 @@ export default function Prototype() {
                     <span className="font-medium text-stone-800">{selectedProduct.price}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-stone-600">Livraison</span>
-                    <span className="font-medium text-green-600">Gratuite</span>
+                    <span className="text-stone-600">Livraison Postes Canada</span>
+                    <span className="font-medium text-stone-800">12,00 $</span>
                   </div>
                   <div className="border-t border-stone-200 pt-2 flex justify-between">
                     <span className="font-bold text-stone-800">Total</span>
-                    <span className="font-bold text-stone-800">{selectedProduct.price}</span>
+                    <span className="font-bold text-stone-800">
+                      {(parseFloat(selectedProduct.price.replace(',', '.').replace(' $', '')) + 12).toFixed(2).replace('.', ',')} $
+                    </span>
                   </div>
                 </div>
 

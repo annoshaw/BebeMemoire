@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Plus, Minus, Image as ImageIcon, Mic, Video, MoreHorizontal, Calendar, Share2, BookOpen, Printer, CheckCircle, Bell, QrCode, Baby, LogOut, Settings, User, Sparkles, ShoppingBag, FolderHeart, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Minus, Image as ImageIcon, Mic, Video, MoreHorizontal, Calendar, Share2, BookOpen, Printer, CheckCircle, Bell, QrCode, Baby, LogOut, Settings, User, Sparkles, ShoppingBag, FolderHeart, Trash2, Crown, Mail, Phone, MapPin, UserPlus, Users, Edit2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
 import {
@@ -25,6 +25,34 @@ export default function Prototype() {
   ]);
   
   const babyName = typeof window !== "undefined" ? localStorage.getItem("babyName") || "Léo" : "Léo";
+
+  const [userPlan, setUserPlan] = useState<"base" | "premium" | "platine">("base");
+  const [userInfo, setUserInfo] = useState({
+    name: "Marie Dupond-Martin",
+    email: "marie@example.com",
+    phone: "+1 (514) 555-1234",
+    address: "123 Rue des Érables, Montréal, QC",
+    gender: "Femme"
+  });
+  const [invitedUsers, setInvitedUsers] = useState([
+    { id: 1, name: "Jean Martin", email: "jean@example.com" }
+  ]);
+  const [showAddUser, setShowAddUser] = useState(false);
+  const [newUserName, setNewUserName] = useState("");
+  const [newUserEmail, setNewUserEmail] = useState("");
+
+  const addInvitedUser = () => {
+    if (newUserName && newUserEmail) {
+      setInvitedUsers([...invitedUsers, { id: Date.now(), name: newUserName, email: newUserEmail }]);
+      setNewUserName("");
+      setNewUserEmail("");
+      setShowAddUser(false);
+    }
+  };
+
+  const removeInvitedUser = (id: number) => {
+    setInvitedUsers(invitedUsers.filter(u => u.id !== id));
+  };
 
   const addPage = () => {
     const newPage = {
@@ -329,40 +357,188 @@ export default function Prototype() {
             </div>
           ) : activeTab === 'account' ? (
             // Account tab
-            <div className="p-4 space-y-4 pb-24">
+            <div className="p-4 space-y-4 pb-24 overflow-y-auto">
+              {/* Profile Header */}
               <div className="bg-white rounded-2xl shadow-sm border border-stone-100 p-4">
                 <div className="flex items-center gap-4">
                   <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
                     <User size={28} className="text-primary" />
                   </div>
-                  <div>
-                    <h3 className="font-bold text-stone-800">Famille Dupond-Martin</h3>
-                    <p className="text-xs text-stone-500">famille@example.com</p>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-stone-800">{userInfo.name}</h3>
+                    <p className="text-xs text-stone-500">{userInfo.email}</p>
+                  </div>
+                  <button className="p-2 hover:bg-stone-100 rounded-full">
+                    <Edit2 size={16} className="text-stone-500" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Subscription Plan */}
+              <div className="bg-white rounded-2xl shadow-sm border border-stone-100 p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Crown size={18} className="text-amber-500" />
+                  <h4 className="font-bold text-stone-800 text-sm">Mon abonnement</h4>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { id: "base", label: "De base", price: "Gratuit", color: "stone" },
+                    { id: "premium", label: "Premium", price: "9,99$/mois", color: "blue" },
+                    { id: "platine", label: "Platine", price: "19,99$/mois", color: "amber" },
+                  ].map((plan) => (
+                    <button
+                      key={plan.id}
+                      onClick={() => setUserPlan(plan.id as any)}
+                      className={`p-3 rounded-xl border-2 transition-all text-center ${
+                        userPlan === plan.id
+                          ? plan.id === "platine" 
+                            ? "border-amber-400 bg-amber-50"
+                            : plan.id === "premium"
+                            ? "border-blue-400 bg-blue-50"
+                            : "border-primary bg-primary/5"
+                          : "border-stone-200 hover:border-stone-300"
+                      }`}
+                      data-testid={`button-plan-${plan.id}`}
+                    >
+                      <p className={`font-bold text-xs ${userPlan === plan.id ? (plan.id === "platine" ? "text-amber-700" : plan.id === "premium" ? "text-blue-700" : "text-primary") : "text-stone-700"}`}>
+                        {plan.label}
+                      </p>
+                      <p className="text-[10px] text-stone-500 mt-1">{plan.price}</p>
+                    </button>
+                  ))}
+                </div>
+                {userPlan !== "platine" && (
+                  <Button size="sm" className="w-full mt-3 h-8 text-xs">
+                    Passer à {userPlan === "base" ? "Premium" : "Platine"}
+                  </Button>
+                )}
+              </div>
+
+              {/* Personal Information */}
+              <div className="bg-white rounded-2xl shadow-sm border border-stone-100 p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-bold text-stone-800 text-sm">Informations personnelles</h4>
+                  <button className="text-xs text-primary font-medium">Modifier</button>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <User size={16} className="text-stone-400" />
+                    <div className="flex-1">
+                      <p className="text-[10px] text-stone-400 uppercase">Nom</p>
+                      <p className="text-sm text-stone-800">{userInfo.name}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Mail size={16} className="text-stone-400" />
+                    <div className="flex-1">
+                      <p className="text-[10px] text-stone-400 uppercase">Courriel</p>
+                      <p className="text-sm text-stone-800">{userInfo.email}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Phone size={16} className="text-stone-400" />
+                    <div className="flex-1">
+                      <p className="text-[10px] text-stone-400 uppercase">Téléphone</p>
+                      <p className="text-sm text-stone-800">{userInfo.phone}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <MapPin size={16} className="text-stone-400" />
+                    <div className="flex-1">
+                      <p className="text-[10px] text-stone-400 uppercase">Adresse</p>
+                      <p className="text-sm text-stone-800">{userInfo.address}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <User size={16} className="text-stone-400" />
+                    <div className="flex-1">
+                      <p className="text-[10px] text-stone-400 uppercase">Sexe</p>
+                      <p className="text-sm text-stone-800">{userInfo.gender}</p>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden">
-                <button className="w-full p-4 flex items-center gap-3 hover:bg-stone-50 transition-colors border-b border-stone-100">
-                  <User size={18} className="text-stone-600" />
-                  <span className="text-sm font-medium text-stone-800">Mon Profil</span>
-                </button>
-                <button className="w-full p-4 flex items-center gap-3 hover:bg-stone-50 transition-colors border-b border-stone-100">
-                  <Bell size={18} className="text-stone-600" />
-                  <span className="text-sm font-medium text-stone-800">Notifications</span>
-                </button>
-                <button className="w-full p-4 flex items-center gap-3 hover:bg-stone-50 transition-colors border-b border-stone-100">
-                  <Settings size={18} className="text-stone-600" />
-                  <span className="text-sm font-medium text-stone-800">Paramètres</span>
-                </button>
-                <button 
-                  className="w-full p-4 flex items-center gap-3 hover:bg-red-50 transition-colors text-red-600"
-                  onClick={() => setLocation("/")}
-                >
-                  <LogOut size={18} />
-                  <span className="text-sm font-medium">Déconnexion</span>
-                </button>
+              {/* Invited Users */}
+              <div className="bg-white rounded-2xl shadow-sm border border-stone-100 p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Users size={18} className="text-stone-600" />
+                    <h4 className="font-bold text-stone-800 text-sm">Utilisateurs invités</h4>
+                  </div>
+                  <button 
+                    onClick={() => setShowAddUser(!showAddUser)}
+                    className="text-xs text-primary font-medium flex items-center gap-1"
+                  >
+                    <UserPlus size={14} /> Ajouter
+                  </button>
+                </div>
+
+                {showAddUser && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    className="mb-3 p-3 bg-stone-50 rounded-xl space-y-2"
+                  >
+                    <input
+                      type="text"
+                      placeholder="Nom"
+                      value={newUserName}
+                      onChange={(e) => setNewUserName(e.target.value)}
+                      className="w-full px-3 py-2 text-sm rounded-lg border border-stone-200 focus:border-primary focus:outline-none"
+                      data-testid="input-new-user-name"
+                    />
+                    <input
+                      type="email"
+                      placeholder="Courriel"
+                      value={newUserEmail}
+                      onChange={(e) => setNewUserEmail(e.target.value)}
+                      className="w-full px-3 py-2 text-sm rounded-lg border border-stone-200 focus:border-primary focus:outline-none"
+                      data-testid="input-new-user-email"
+                    />
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" className="flex-1 h-8 text-xs" onClick={() => setShowAddUser(false)}>
+                        Annuler
+                      </Button>
+                      <Button size="sm" className="flex-1 h-8 text-xs" onClick={addInvitedUser} data-testid="button-confirm-add-user">
+                        Ajouter
+                      </Button>
+                    </div>
+                  </motion.div>
+                )}
+
+                <div className="space-y-2">
+                  {invitedUsers.map((user) => (
+                    <div key={user.id} className="flex items-center gap-3 p-2 bg-stone-50 rounded-lg">
+                      <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                        <User size={14} className="text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-stone-800">{user.name}</p>
+                        <p className="text-xs text-stone-500">{user.email}</p>
+                      </div>
+                      <button 
+                        onClick={() => removeInvitedUser(user.id)}
+                        className="p-1 hover:bg-red-100 rounded-full text-red-500"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+                  {invitedUsers.length === 0 && (
+                    <p className="text-sm text-stone-400 text-center py-4">Aucun utilisateur invité</p>
+                  )}
+                </div>
               </div>
+
+              {/* Logout Button */}
+              <button 
+                className="w-full p-4 bg-white rounded-2xl shadow-sm border border-stone-100 flex items-center justify-center gap-2 hover:bg-red-50 transition-colors text-red-600"
+                onClick={() => setLocation("/")}
+              >
+                <LogOut size={18} />
+                <span className="text-sm font-medium">Déconnexion</span>
+              </button>
             </div>
           ) : (
             // Mes créations - Book View

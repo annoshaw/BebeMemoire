@@ -1573,103 +1573,126 @@ export default function Prototype() {
                 <p className="text-xs text-stone-500">Accédez rapidement à vos créations</p>
               </div>
 
-              {/* Quick Access - Current Book */}
-              <div className="px-4 mb-4">
-                <Link href="/app/edit">
-                  <motion.div 
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-2xl p-4 border border-primary/20 cursor-pointer hover:shadow-md transition-all"
-                    data-testid="dashboard-current-book"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="w-16 h-20 rounded-lg overflow-hidden shadow-md">
-                        <img 
-                          src={activeBook?.coverImage || "https://images.unsplash.com/photo-1544126566-475d8528f69f?q=80&w=800&auto=format&fit=crop"} 
-                          className="w-full h-full object-cover" 
-                          alt="Couverture"
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <BookOpen size={14} className="text-primary" />
-                          <span className="text-[10px] text-primary font-medium uppercase tracking-wide">En cours</span>
-                        </div>
-                        <h4 className="font-bold text-stone-800">L'histoire de {activeBook?.childName || babyName}</h4>
-                        <p className="text-xs text-stone-500">{bookPages.length} pages • {Math.round((bookPages.length / 50) * 100)}% complet</p>
-                      </div>
-                      <ChevronRight size={20} className="text-stone-400" />
-                    </div>
-                  </motion.div>
-                </Link>
-              </div>
-
-              {/* Recent Books Section */}
+              {/* All Books Section - Full Cards */}
               <div className="px-4 mb-4">
                 <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-xs font-bold text-stone-700 uppercase tracking-wide">Mes livres</h4>
+                  <h4 className="text-xs font-bold text-stone-700 uppercase tracking-wide">Mes livres en cours</h4>
                   <span className="text-xs text-stone-500">{userBooks.length} livre{userBooks.length > 1 ? 's' : ''}</span>
                 </div>
-                <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
-                  {booksLoading ? (
-                    <div className="flex items-center justify-center w-full py-8">
-                      <Loader2 className="animate-spin text-primary" size={24} />
-                    </div>
-                  ) : userBooks.length > 0 ? (
-                    userBooks.map((book, idx) => {
+                
+                {booksLoading ? (
+                  <div className="flex items-center justify-center w-full py-8">
+                    <Loader2 className="animate-spin text-primary" size={24} />
+                  </div>
+                ) : userBooks.length > 0 ? (
+                  <div className="space-y-3">
+                    {userBooks.map((book, idx) => {
                       const isActive = activeBook?.id === book.id;
                       const bookImage = book.coverImage || "https://images.unsplash.com/photo-1544126566-475d8528f69f?q=80&w=800&auto=format&fit=crop";
+                      const statusLabel = book.babyStatus === "enceinte" ? "Enceinte" : 
+                                         book.babyStatus === "ne" ? "Né(e)" : 
+                                         book.babyStatus === "adopte" ? "Adopté(e)" : "En cours";
+                      const genderColor = book.babyGender === "fille" ? "from-pink-100 to-pink-50" :
+                                         book.babyGender === "garcon" ? "from-blue-100 to-blue-50" : 
+                                         "from-primary/10 to-secondary/10";
+                      const genderBorder = book.babyGender === "fille" ? "border-pink-200" :
+                                          book.babyGender === "garcon" ? "border-blue-200" : 
+                                          "border-primary/20";
+                      
                       return (
                         <motion.div 
                           key={book.id}
-                          initial={{ opacity: 0, x: 20 }}
-                          animate={{ opacity: 1, x: 0 }}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: idx * 0.1 }}
-                          onClick={() => setActiveBookMutation.mutate(book.id)}
-                          className={`flex-shrink-0 w-28 cursor-pointer group ${isActive ? '' : 'opacity-60 hover:opacity-80'}`}
-                          data-testid={`dashboard-book-${book.id}`}
+                          className={`bg-gradient-to-r ${genderColor} rounded-2xl p-4 border ${genderBorder} cursor-pointer hover:shadow-md transition-all ${isActive ? 'ring-2 ring-primary shadow-md' : ''}`}
+                          data-testid={`card-book-${book.id}`}
                         >
-                          <div className={`w-28 h-36 rounded-xl overflow-hidden shadow-md mb-2 relative ${isActive ? 'ring-2 ring-primary' : ''}`}>
-                            <img 
-                              src={bookImage} 
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform" 
-                              alt={book.childName}
-                            />
-                            {isActive && (
-                              <div className="absolute top-2 right-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
-                                <CheckCircle size={12} className="text-white" />
+                          <div className="flex items-center gap-4">
+                            <div className="w-16 h-20 rounded-lg overflow-hidden shadow-md relative">
+                              <img 
+                                src={bookImage} 
+                                className="w-full h-full object-cover" 
+                                alt={book.childName}
+                              />
+                              {isActive && (
+                                <div className="absolute top-1 right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                                  <CheckCircle size={12} className="text-white" />
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <BookOpen size={14} className="text-primary" />
+                                <span className="text-[10px] text-primary font-medium uppercase tracking-wide">{statusLabel}</span>
                               </div>
-                            )}
+                              <h4 className="font-bold text-stone-800">L'histoire de {book.childName}</h4>
+                              <p className="text-xs text-stone-500">
+                                {book.birthDate ? new Date(book.birthDate).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Date à définir'}
+                                {' • '}{bookPages.length} pages
+                              </p>
+                            </div>
+                            <div className="flex flex-col gap-2">
+                              <Link href="/app/edit" onClick={(e) => { 
+                                e.stopPropagation(); 
+                                setActiveBookMutation.mutate(book.id); 
+                              }}>
+                                <Button size="sm" variant="outline" className="text-xs h-8 px-3" data-testid={`button-edit-book-${book.id}`}>
+                                  <Edit2 size={12} className="mr-1" />
+                                  Éditer
+                                </Button>
+                              </Link>
+                              {!isActive && (
+                                <Button 
+                                  size="sm" 
+                                  variant="ghost" 
+                                  className="text-xs h-8 px-3 text-primary"
+                                  onClick={(e) => { 
+                                    e.stopPropagation(); 
+                                    setActiveBookMutation.mutate(book.id); 
+                                  }}
+                                  data-testid={`button-select-book-${book.id}`}
+                                >
+                                  Sélectionner
+                                </Button>
+                              )}
+                            </div>
                           </div>
-                          <p className="text-xs font-medium text-stone-800 line-clamp-1">{book.childName}</p>
-                          <p className="text-[10px] text-stone-500">
-                            {book.birthDate ? new Date(book.birthDate).toLocaleDateString('fr-CA', { month: 'short', year: 'numeric' }) : 'En cours'}
-                          </p>
                         </motion.div>
                       );
-                    })
-                  ) : (
-                    <div className="text-center py-6 w-full">
-                      <Baby size={32} className="text-stone-300 mx-auto mb-2" />
-                      <p className="text-xs text-stone-500">Aucun livre créé</p>
-                    </div>
-                  )}
-                  {/* Add new book button */}
-                  <Link href="/onboarding">
-                    <motion.div 
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.3 }}
-                      className="flex-shrink-0 w-20 cursor-pointer flex flex-col items-center justify-center"
-                      data-testid="dashboard-add-book"
-                    >
-                      <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center mb-2 hover:bg-primary/90 transition-all shadow-lg shadow-primary/30">
-                        <Plus size={24} className="text-white" />
-                      </div>
-                      <p className="text-[10px] font-medium text-stone-600 text-center leading-tight">Nouveau<br/>livre</p>
-                    </motion.div>
-                  </Link>
-                </div>
+                    })}
+                    
+                    {/* Add new book button */}
+                    <Link href="/onboarding">
+                      <motion.div 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: userBooks.length * 0.1 }}
+                        className="bg-white rounded-2xl p-4 border-2 border-dashed border-stone-200 cursor-pointer hover:border-primary hover:bg-primary/5 transition-all flex items-center justify-center gap-3"
+                        data-testid="dashboard-add-book"
+                      >
+                        <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/30">
+                          <Plus size={24} className="text-white" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-stone-800">Créer un nouveau livre</p>
+                          <p className="text-xs text-stone-500">Documenter une nouvelle histoire</p>
+                        </div>
+                      </motion.div>
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Baby size={48} className="text-stone-300 mx-auto mb-3" />
+                    <p className="text-sm text-stone-500 mb-4">Aucun livre créé</p>
+                    <Link href="/onboarding">
+                      <Button className="gap-2" data-testid="button-create-first-book">
+                        <Plus size={16} />
+                        Créer mon premier livre
+                      </Button>
+                    </Link>
+                  </div>
+                )}
               </div>
 
               {/* Recent Activity Section */}

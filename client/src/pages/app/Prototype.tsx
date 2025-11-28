@@ -189,6 +189,70 @@ export default function Prototype() {
   const [pendingInspirationPage, setPendingInspirationPage] = useState<{title: string, icon: string, color: string} | null>(null);
   
   const [pageAddedFeedback, setPageAddedFeedback] = useState<{bookName: string, pageTitle: string} | null>(null);
+  const [showDeleteBookModal, setShowDeleteBookModal] = useState(false);
+  const [bookToDelete, setBookToDelete] = useState<{id: string, childName: string, isLocal: boolean} | null>(null);
+  
+  const handleDeleteBook = (book: {id: string, childName: string, isLocal?: boolean}) => {
+    setBookToDelete({ id: book.id, childName: book.childName, isLocal: book.isLocal || false });
+    setShowDeleteBookModal(true);
+  };
+  
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  
+  const confirmDeleteBook = async () => {
+    if (!bookToDelete) return;
+    
+    setIsDeleting(true);
+    setDeleteError(null);
+    
+    try {
+      let deleteSuccess = false;
+      
+      if (bookToDelete.isLocal) {
+        const updatedLocalBooks = localBooks.filter(b => b.id !== bookToDelete.id);
+        localStorage.setItem("localBooks", JSON.stringify(updatedLocalBooks));
+        setLocalBooks(updatedLocalBooks);
+        deleteSuccess = true;
+      } else {
+        const response = await fetch(`/api/books/${bookToDelete.id}`, {
+          method: "DELETE",
+          credentials: "include",
+        });
+        
+        if (response.ok) {
+          await queryClient.invalidateQueries({ queryKey: ["/api/books"] });
+          deleteSuccess = true;
+        } else {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.message || "Erreur lors de la suppression");
+        }
+      }
+      
+      if (deleteSuccess) {
+        if (activeBookId === bookToDelete.id) {
+          const currentApiBooks = queryClient.getQueryData<{ books: any[] }>(["/api/books"])?.books || [];
+          const currentLocalBooks = JSON.parse(localStorage.getItem("localBooks") || "[]");
+          const allRemainingBooks = [...currentApiBooks, ...currentLocalBooks].filter(b => b.id !== bookToDelete.id);
+          
+          if (allRemainingBooks.length > 0) {
+            setActiveBookMutation.mutate(allRemainingBooks[0].id);
+          } else {
+            localStorage.removeItem("activeBookId");
+            setActiveBookId(null);
+          }
+        }
+        
+        setShowDeleteBookModal(false);
+        setBookToDelete(null);
+      }
+    } catch (error) {
+      console.error("Error deleting book:", error);
+      setDeleteError(error instanceof Error ? error.message : "Erreur lors de la suppression");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
   
   const handleAddInspirationPage = (page: {title: string, icon: string, color: string}) => {
     if (userBooks.length > 1) {
@@ -1707,20 +1771,34 @@ export default function Prototype() {
                                   Éditer
                                 </Button>
                               </Link>
-                              {!isActive && (
+                              <div className="flex gap-1">
+                                {!isActive && (
+                                  <Button 
+                                    size="sm" 
+                                    variant="ghost" 
+                                    className="text-xs h-8 px-2 text-primary flex-1"
+                                    onClick={(e) => { 
+                                      e.stopPropagation(); 
+                                      setActiveBookMutation.mutate(book.id); 
+                                    }}
+                                    data-testid={`button-select-book-${book.id}`}
+                                  >
+                                    Sélectionner
+                                  </Button>
+                                )}
                                 <Button 
                                   size="sm" 
                                   variant="ghost" 
-                                  className="text-xs h-8 px-3 text-primary"
+                                  className="text-xs h-8 px-2 text-red-500 hover:text-red-600 hover:bg-red-50"
                                   onClick={(e) => { 
                                     e.stopPropagation(); 
-                                    setActiveBookMutation.mutate(book.id); 
+                                    handleDeleteBook({ id: book.id, childName: book.childName, isLocal: (book as any).isLocal });
                                   }}
-                                  data-testid={`button-select-book-${book.id}`}
+                                  data-testid={`button-delete-book-${book.id}`}
                                 >
-                                  Sélectionner
+                                  <Trash2 size={14} />
                                 </Button>
-                              )}
+                              </div>
                             </div>
                           </div>
                         </motion.div>
@@ -2524,6 +2602,80 @@ export default function Prototype() {
                 <p className="text-[10px] text-stone-400 text-center">
                   Annulez à tout moment. Vos données sont sauvegardées.
                 </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete Book Confirmation Modal */}
+      <AnimatePresence>
+        {showDeleteBookModal && bookToDelete && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4"
+            onClick={() => {
+              setShowDeleteBookModal(false);
+              setBookToDelete(null);
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl w-full max-w-sm overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="p-6 text-center">
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Trash2 size={28} className="text-red-500" />
+                </div>
+                <h3 className="text-lg font-bold text-stone-800 mb-2">Supprimer ce livre ?</h3>
+                <p className="text-sm text-stone-500">
+                  Êtes-vous certain de vouloir supprimer le livre de <span className="font-medium text-stone-700">{bookToDelete.childName}</span> ? 
+                  Cette action est irréversible.
+                </p>
+                {deleteError && (
+                  <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-600">{deleteError}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div className="p-4 bg-stone-50 flex gap-3">
+                <Button 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={() => {
+                    setShowDeleteBookModal(false);
+                    setBookToDelete(null);
+                    setDeleteError(null);
+                  }}
+                  disabled={isDeleting}
+                  data-testid="button-cancel-delete"
+                >
+                  Annuler
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  className="flex-1 bg-red-500 hover:bg-red-600"
+                  onClick={confirmDeleteBook}
+                  disabled={isDeleting}
+                  data-testid="button-confirm-delete"
+                >
+                  {isDeleting ? (
+                    <>
+                      <Loader2 size={16} className="mr-2 animate-spin" />
+                      Suppression...
+                    </>
+                  ) : (
+                    "Supprimer"
+                  )}
+                </Button>
               </div>
             </motion.div>
           </motion.div>

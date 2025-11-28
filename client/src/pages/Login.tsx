@@ -189,20 +189,28 @@ export default function Login() {
             </form>
           </Form>
 
+          <div className="mt-4 text-center">
+            <Link href="/forgot-password">
+              <span className="text-sm text-primary hover:underline cursor-pointer" data-testid="link-forgot-password">
+                Mot de passe oublié?
+              </span>
+            </Link>
+          </div>
+
           <div className="mt-6 text-center space-y-3">
             <p className="text-sm text-stone-600">
               Vous n'avez pas de compte?{" "}
               <Link href="/register">
-                <a className="text-primary font-medium hover:underline" data-testid="link-register">
+                <span className="text-primary font-medium hover:underline cursor-pointer" data-testid="link-register">
                   Créer un compte
-                </a>
+                </span>
               </Link>
             </p>
             <Link href="/">
-              <a className="text-sm text-stone-500 hover:text-stone-900 flex items-center justify-center gap-1">
+              <span className="text-sm text-stone-500 hover:text-stone-900 flex items-center justify-center gap-1 cursor-pointer">
                 <ArrowLeft size={14} />
                 Retour à l'accueil
-              </a>
+              </span>
             </Link>
           </div>
         </div>

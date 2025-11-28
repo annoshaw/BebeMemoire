@@ -1117,13 +1117,10 @@ export default function Prototype() {
                         paymentMethod === "paypal" ? "border-blue-500 bg-blue-50" : "border-stone-200"
                       }`}
                     >
-                      <svg viewBox="0 0 100 40" className="w-20 h-10">
-                        <path fill="#003087" d="M35,10 C35,10 31,10 30,10 C29,10 28,10.5 27.5,11.5 L22,30 C22,30.3 22.2,30.5 22.5,30.5 L27,30.5 C27.5,30.5 28,30.2 28.1,29.7 L29.5,22 C29.6,21.3 30.2,20.8 30.9,20.8 L34,20.8 C40,20.8 43.5,17.5 44.5,12 C45,10 44.5,8.3 43.3,7.2 C41.8,5.8 39,10 35,10Z"/>
-                        <path fill="#003087" d="M36.5,15 C36,18 33.5,18 31,18 L29.5,18 L30.5,12 C30.5,11.7 30.8,11.5 31.1,11.5 L31.8,11.5 C33.5,11.5 35,11.5 36,12.5 C36.5,13 36.7,13.8 36.5,15Z"/>
-                        <path fill="#0070E0" d="M60,14 L56,14 C55.7,14 55.4,14.2 55.3,14.5 L55.1,15.5 L54.8,15 C53.8,13.5 51.5,13 49.5,13 C44.5,13 40.3,16.8 39.3,22 C38.8,24.6 39.4,27 41,28.8 C42.4,30.4 44.4,31 46.8,31 C50.5,31 52.5,28.8 52.5,28.8 L52.3,29.8 C52.2,30.1 52.4,30.5 52.8,30.5 L56.5,30.5 C57,30.5 57.5,30.1 57.6,29.6 L60,14.5 C60.1,14.2 59.8,14 60,14Z"/>
-                        <path fill="#0070E0" d="M53,22.2 C52.5,24.8 50.4,26.7 47.7,26.7 C46.3,26.7 45.2,26.2 44.5,25.4 C43.8,24.6 43.5,23.5 43.7,22.3 C44.1,19.8 46.3,17.8 48.9,17.8 C50.3,17.8 51.4,18.3 52.1,19.1 C52.8,19.9 53.2,20.9 53,22.2Z"/>
-                        <text x="68" y="25" fontSize="14" fill="#003087" fontWeight="bold" fontStyle="italic">Pay</text>
-                        <text x="86" y="25" fontSize="14" fill="#0070E0" fontWeight="bold" fontStyle="italic">Pal</text>
+                      <svg viewBox="0 0 50 30" className="w-12 h-8">
+                        <rect fill="#FFF" x="0" y="0" width="50" height="30" rx="3" stroke="#E5E5E5"/>
+                        <text x="25" y="18" fontSize="9" fill="#003087" textAnchor="middle" fontWeight="bold" fontStyle="italic">Pay</text>
+                        <text x="25" y="18" fontSize="9" fill="#0070E0" textAnchor="start" fontWeight="bold" fontStyle="italic" dx="8">Pal</text>
                       </svg>
                       <span className={`text-xs font-medium ${paymentMethod === "paypal" ? "text-blue-600" : "text-stone-600"}`}>PayPal</span>
                     </button>

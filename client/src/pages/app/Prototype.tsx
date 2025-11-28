@@ -272,150 +272,141 @@ export default function Prototype() {
                 <p className="text-xs text-stone-500">Choisissez le forfait qui vous convient</p>
               </div>
               
-              {/* Base Plan - Free */}
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className={`bg-white rounded-2xl shadow-sm border-2 overflow-hidden hover:shadow-md transition-all ${userPlan === 'base' ? 'border-primary' : 'border-stone-100'}`}
-              >
-                <div className="p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-10 h-10 bg-stone-100 rounded-full flex items-center justify-center">
-                        <BookOpen size={18} className="text-stone-600" />
+              {/* Plans Grid - Side by Side */}
+              <div className="grid grid-cols-3 gap-2">
+                {/* Base Plan - Free */}
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`bg-white rounded-xl shadow-sm border-2 overflow-hidden hover:shadow-md transition-all ${userPlan === 'base' ? 'border-primary' : 'border-stone-100'}`}
+                >
+                  <div className="p-3">
+                    <div className="text-center mb-3">
+                      <div className="w-10 h-10 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                        <BookOpen size={16} className="text-stone-600" />
                       </div>
-                      <div>
-                        <h4 className="font-bold text-stone-800 text-sm">De base</h4>
-                        <span className="text-lg font-bold text-primary">Gratuit</span>
+                      <h4 className="font-bold text-stone-800 text-xs">De base</h4>
+                      <span className="text-sm font-bold text-primary">Gratuit</span>
+                      {userPlan === 'base' && (
+                        <span className="block text-[9px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium mt-1 mx-auto w-fit">Actuel</span>
+                      )}
+                    </div>
+                    <div className="space-y-1.5 mb-3">
+                      <div className="flex items-start gap-1 text-[10px] text-stone-600">
+                        <CheckCircle size={12} className="text-primary flex-shrink-0 mt-0.5" />
+                        <span>1 Go photos</span>
+                      </div>
+                      <div className="flex items-start gap-1 text-[10px] text-stone-600">
+                        <CheckCircle size={12} className="text-primary flex-shrink-0 mt-0.5" />
+                        <span>Notifications</span>
+                      </div>
+                      <div className="flex items-start gap-1 text-[10px] text-stone-600">
+                        <CheckCircle size={12} className="text-primary flex-shrink-0 mt-0.5" />
+                        <span>Impression</span>
                       </div>
                     </div>
-                    {userPlan === 'base' && (
-                      <span className="text-[10px] bg-primary/10 text-primary px-2 py-1 rounded-full font-medium">Actuel</span>
-                    )}
+                    <Button 
+                      size="sm" 
+                      variant={userPlan === 'base' ? 'outline' : 'default'}
+                      className="w-full h-7 text-[10px]"
+                      data-testid="button-select-base"
+                    >
+                      {userPlan === 'base' ? 'Actuel' : 'Choisir'}
+                    </Button>
                   </div>
-                  <div className="space-y-2 mb-4">
-                    <div className="flex items-center gap-2 text-xs text-stone-600">
-                      <CheckCircle size={14} className="text-primary flex-shrink-0" />
-                      <span>1 Go de stockage pour photos</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-stone-600">
-                      <CheckCircle size={14} className="text-primary flex-shrink-0" />
-                      <span>Notifications push personnalisables</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-stone-600">
-                      <CheckCircle size={14} className="text-primary flex-shrink-0" />
-                      <span>Livre couverture souple, rigide ou E-Book</span>
-                    </div>
-                  </div>
-                  <Button 
-                    size="sm" 
-                    variant={userPlan === 'base' ? 'outline' : 'default'}
-                    className="w-full h-9 text-xs"
-                    data-testid="button-select-base"
-                  >
-                    {userPlan === 'base' ? 'Forfait actuel' : 'Choisir ce forfait'}
-                  </Button>
-                </div>
-              </motion.div>
+                </motion.div>
 
-              {/* Premium Plan */}
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className={`bg-white rounded-2xl shadow-sm border-2 overflow-hidden hover:shadow-md transition-all ${userPlan === 'premium' ? 'border-blue-400' : 'border-stone-100'}`}
-              >
-                <div className="p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                        <Crown size={18} className="text-blue-600" />
+                {/* Premium Plan */}
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className={`bg-white rounded-xl shadow-sm border-2 overflow-hidden hover:shadow-md transition-all ${userPlan === 'premium' ? 'border-blue-400' : 'border-stone-100'}`}
+                >
+                  <div className="p-3">
+                    <div className="text-center mb-3">
+                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                        <Crown size={16} className="text-blue-600" />
                       </div>
-                      <div>
-                        <h4 className="font-bold text-stone-800 text-sm">Premium</h4>
-                        <span className="text-lg font-bold text-blue-600">1,99$/mois</span>
-                        <span className="text-[10px] text-stone-500 block">(23,88$/an)</span>
+                      <h4 className="font-bold text-stone-800 text-xs">Premium</h4>
+                      <span className="text-sm font-bold text-blue-600">1,99$</span>
+                      <span className="text-[9px] text-stone-500 block">/mois</span>
+                      {userPlan === 'premium' && (
+                        <span className="block text-[9px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium mt-1 mx-auto w-fit">Actuel</span>
+                      )}
+                    </div>
+                    <div className="space-y-1.5 mb-3">
+                      <div className="flex items-start gap-1 text-[10px] text-stone-600">
+                        <CheckCircle size={12} className="text-blue-600 flex-shrink-0 mt-0.5" />
+                        <span>2 Go stockage</span>
+                      </div>
+                      <div className="flex items-start gap-1 text-[10px] text-stone-600 font-medium">
+                        <CheckCircle size={12} className="text-blue-600 flex-shrink-0 mt-0.5" />
+                        <span>Vidéos + photos</span>
+                      </div>
+                      <div className="flex items-start gap-1 text-[10px] text-stone-500">
+                        <CheckCircle size={12} className="text-stone-400 flex-shrink-0 mt-0.5" />
+                        <span>+ base</span>
                       </div>
                     </div>
-                    {userPlan === 'premium' && (
-                      <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium">Actuel</span>
-                    )}
+                    <Button 
+                      size="sm" 
+                      variant={userPlan === 'premium' ? 'outline' : 'default'}
+                      className={`w-full h-7 text-[10px] ${userPlan !== 'premium' ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
+                      data-testid="button-select-premium"
+                    >
+                      {userPlan === 'premium' ? 'Actuel' : 'Choisir'}
+                    </Button>
                   </div>
-                  <div className="space-y-2 mb-4">
-                    <div className="flex items-center gap-2 text-xs text-stone-600">
-                      <CheckCircle size={14} className="text-blue-600 flex-shrink-0" />
-                      <span>2 Go de stockage</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-stone-600">
-                      <CheckCircle size={14} className="text-blue-600 flex-shrink-0" />
-                      <span className="font-medium">Vidéos ET photos</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-stone-500">
-                      <CheckCircle size={14} className="text-stone-400 flex-shrink-0" />
-                      <span>Tous les avantages de base</span>
-                    </div>
-                  </div>
-                  <Button 
-                    size="sm" 
-                    variant={userPlan === 'premium' ? 'outline' : 'default'}
-                    className={`w-full h-9 text-xs ${userPlan !== 'premium' ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
-                    data-testid="button-select-premium"
-                  >
-                    {userPlan === 'premium' ? 'Forfait actuel' : 'Passer à Premium'}
-                  </Button>
-                </div>
-              </motion.div>
+                </motion.div>
 
-              {/* Platine Plan */}
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className={`relative bg-gradient-to-br from-amber-50 to-amber-100/30 rounded-2xl shadow-sm border-2 overflow-hidden hover:shadow-md transition-all ${userPlan === 'platine' ? 'border-amber-400' : 'border-amber-200'}`}
-              >
-                <div className="absolute top-0 right-0 bg-amber-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl">
-                  POPULAIRE
-                </div>
-                <div className="p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-10 h-10 bg-amber-200 rounded-full flex items-center justify-center">
-                        <Crown size={18} className="text-amber-700" />
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-stone-800 text-sm">Platine</h4>
-                        <span className="text-lg font-bold text-amber-700">4,99$/mois</span>
-                        <span className="text-[10px] text-stone-500 block">(59,88$/an)</span>
-                      </div>
-                    </div>
-                    {userPlan === 'platine' && (
-                      <span className="text-[10px] bg-amber-200 text-amber-800 px-2 py-1 rounded-full font-medium">Actuel</span>
-                    )}
+                {/* Platine Plan */}
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className={`relative bg-gradient-to-br from-amber-50 to-amber-100/30 rounded-xl shadow-sm border-2 overflow-hidden hover:shadow-md transition-all ${userPlan === 'platine' ? 'border-amber-400' : 'border-amber-200'}`}
+                >
+                  <div className="absolute top-0 right-0 bg-amber-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-bl-lg">
+                    TOP
                   </div>
-                  <div className="space-y-2 mb-4">
-                    <div className="flex items-center gap-2 text-xs text-stone-600">
-                      <CheckCircle size={14} className="text-amber-600 flex-shrink-0" />
-                      <span className="font-medium">5 Go de stockage vidéos et photos</span>
+                  <div className="p-3">
+                    <div className="text-center mb-3">
+                      <div className="w-10 h-10 bg-amber-200 rounded-full flex items-center justify-center mx-auto mb-2">
+                        <Crown size={16} className="text-amber-700" />
+                      </div>
+                      <h4 className="font-bold text-stone-800 text-xs">Platine</h4>
+                      <span className="text-sm font-bold text-amber-700">4,99$</span>
+                      <span className="text-[9px] text-stone-500 block">/mois</span>
+                      {userPlan === 'platine' && (
+                        <span className="block text-[9px] bg-amber-200 text-amber-800 px-2 py-0.5 rounded-full font-medium mt-1 mx-auto w-fit">Actuel</span>
+                      )}
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-stone-500">
-                      <CheckCircle size={14} className="text-stone-400 flex-shrink-0" />
-                      <span>Tous les avantages Premium</span>
+                    <div className="space-y-1.5 mb-3">
+                      <div className="flex items-start gap-1 text-[10px] text-stone-600 font-medium">
+                        <CheckCircle size={12} className="text-amber-600 flex-shrink-0 mt-0.5" />
+                        <span>5 Go stockage</span>
+                      </div>
+                      <div className="flex items-start gap-1 text-[10px] text-stone-500">
+                        <CheckCircle size={12} className="text-stone-400 flex-shrink-0 mt-0.5" />
+                        <span>+ Premium</span>
+                      </div>
+                      <div className="flex items-start gap-1 text-[10px] text-stone-500">
+                        <CheckCircle size={12} className="text-stone-400 flex-shrink-0 mt-0.5" />
+                        <span>+ base</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-stone-500">
-                      <CheckCircle size={14} className="text-stone-400 flex-shrink-0" />
-                      <span>Tous les avantages de base</span>
-                    </div>
+                    <Button 
+                      size="sm" 
+                      variant={userPlan === 'platine' ? 'outline' : 'default'}
+                      className={`w-full h-7 text-[10px] ${userPlan !== 'platine' ? 'bg-amber-600 hover:bg-amber-700' : ''}`}
+                      data-testid="button-select-platine"
+                    >
+                      {userPlan === 'platine' ? 'Actuel' : 'Choisir'}
+                    </Button>
                   </div>
-                  <Button 
-                    size="sm" 
-                    variant={userPlan === 'platine' ? 'outline' : 'default'}
-                    className={`w-full h-9 text-xs ${userPlan !== 'platine' ? 'bg-amber-600 hover:bg-amber-700' : ''}`}
-                    data-testid="button-select-platine"
-                  >
-                    {userPlan === 'platine' ? 'Forfait actuel' : 'Passer à Platine'}
-                  </Button>
-                </div>
-              </motion.div>
+                </motion.div>
+              </div>
 
               {/* Price Chart for Books */}
               <div className="mt-6 pt-4 border-t border-stone-200">

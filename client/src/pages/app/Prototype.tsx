@@ -611,10 +611,12 @@ export default function Prototype() {
                   </div>
                   
                   {[
-                    { id: 1, title: "Le dévoilement de sexe", icon: "🎀", color: "from-pink-100" },
-                    { id: 2, title: "L'apprentissage du sexe", icon: "💭", color: "from-blue-100" },
-                    { id: 3, title: "Le baby shower", icon: "🎉", color: "from-yellow-100" },
-                    { id: 4, title: "Le baby moon", icon: "🌙", color: "from-indigo-100" },
+                    { id: 1, title: "L'annonce du parrain", icon: "🤵", color: "from-indigo-100" },
+                    { id: 2, title: "L'annonce de la marraine", icon: "👸", color: "from-rose-100" },
+                    { id: 3, title: "Le dévoilement de sexe", icon: "🎀", color: "from-pink-100" },
+                    { id: 4, title: "L'apprentissage du sexe", icon: "💭", color: "from-blue-100" },
+                    { id: 5, title: "Le baby shower", icon: "🎉", color: "from-yellow-100" },
+                    { id: 6, title: "Le baby moon", icon: "🌙", color: "from-purple-100" },
                   ].map((subPage, idx) => (
                     <motion.div 
                       key={subPage.id}

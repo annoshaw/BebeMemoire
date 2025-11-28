@@ -871,22 +871,103 @@ export default function Prototype() {
                   </div>
                   
                   {[
-                    { title: "La présentation de la famille", desc: "Qui sommes-nous?", icon: "👨‍👩‍👧‍👦", color: "from-teal-100", keywords: ["famille", "présentation", "parents", "proches"], hasSubPages: true },
-                    { title: "Annonce de grossesse", desc: "Partagez la grande nouvelle", icon: "🤰", color: "from-pink-100", keywords: ["annonce", "grossesse", "nouvelle", "enceinte"], hasSubPages: true },
-                    { title: "Échographie", desc: "Les premiers aperçus", icon: "🔊", color: "from-purple-100", keywords: ["échographie", "scan", "médical", "bébé"], hasSubPages: true },
-                    { title: "Adoption", desc: "Notre parcours d'adoption", icon: "💕", color: "from-blue-100", keywords: ["adoption", "famille", "parcours", "accueil"], hasSubPages: false },
-                    { title: "FIV", desc: "Notre parcours de fertilité", icon: "🌱", color: "from-orange-100", keywords: ["fiv", "fertilité", "parcours", "ivf", "procréation"], hasSubPages: false },
-                    { title: "Événements lors de la grossesse", desc: "Célébrez avec vos proches", icon: "🎉", color: "from-yellow-100", keywords: ["baby shower", "fête", "célébration", "cadeau", "événement", "grossesse"], hasSubPages: true },
-                    { title: "Chambre de bébé", desc: "Le nid douillet", icon: "🛏️", color: "from-green-100", keywords: ["chambre", "décoration", "nursery", "lit"], hasSubPages: false },
-                    { title: "Lettre à bébé", desc: "Vos mots d'amour", icon: "💌", color: "from-red-100", keywords: ["lettre", "message", "amour", "souvenir"], hasSubPages: false },
-                    { title: "Premier mot", desc: "Maman ou Papa?", icon: "💬", color: "from-indigo-100", keywords: ["mot", "parler", "langage", "maman", "papa"], hasSubPages: false },
-                    { title: "Première dent", desc: "Un sourire tout neuf", icon: "🦷", color: "from-cyan-100", keywords: ["dent", "sourire", "bébé"], hasSubPages: false },
+                    { 
+                      title: "La présentation de la famille", 
+                      desc: "Qui sommes-nous?", 
+                      icon: "👨‍👩‍👧‍👦", 
+                      color: "from-teal-100", 
+                      keywords: ["famille", "présentation", "parents", "proches"], 
+                      hasSubPages: true,
+                      subPages: ["Ta famille", "Arbre généalogique", "Tes parents", "Tes grands-parents", "Ton oncle", "Tes oncles", "Ta tante", "Tes tantes", "Ton parrain", "Tes parrains", "Ta marraine", "Tes marraines", "Les cousins", "Les cousines", "Les amis", "Animaux de compagnie", "chien", "chat", "animal"]
+                    },
+                    { 
+                      title: "Annonce de grossesse", 
+                      desc: "Partagez la grande nouvelle", 
+                      icon: "🤰", 
+                      color: "from-pink-100", 
+                      keywords: ["annonce", "grossesse", "nouvelle", "enceinte"], 
+                      hasSubPages: true,
+                      subPages: ["Quand j'ai appris la nouvelle", "Quand ton père a appris", "Quand ta mère a appris", "Quand tes grands-parents ont appris", "Quand nous avons appris", "Quand la famille a appris", "père", "mère", "grands-parents"]
+                    },
+                    { 
+                      title: "Échographie", 
+                      desc: "Les premiers aperçus", 
+                      icon: "🔊", 
+                      color: "from-purple-100", 
+                      keywords: ["échographie", "scan", "médical", "bébé"], 
+                      hasSubPages: true,
+                      subPages: ["Ta première échographie", "Ta deuxième échographie", "Ta troisième échographie", "Les échographies de suivi", "La première fois que j'ai entendu ton coeur", "coeur", "battement", "suivi"]
+                    },
+                    { 
+                      title: "Adoption", 
+                      desc: "Notre parcours d'adoption", 
+                      icon: "💕", 
+                      color: "from-blue-100", 
+                      keywords: ["adoption", "famille", "parcours", "accueil"], 
+                      hasSubPages: false,
+                      subPages: []
+                    },
+                    { 
+                      title: "FIV", 
+                      desc: "Notre parcours de fertilité", 
+                      icon: "🌱", 
+                      color: "from-orange-100", 
+                      keywords: ["fiv", "fertilité", "parcours", "ivf", "procréation"], 
+                      hasSubPages: false,
+                      subPages: []
+                    },
+                    { 
+                      title: "Événements lors de la grossesse", 
+                      desc: "Célébrez avec vos proches", 
+                      icon: "🎉", 
+                      color: "from-yellow-100", 
+                      keywords: ["baby shower", "fête", "célébration", "cadeau", "événement", "grossesse"], 
+                      hasSubPages: true,
+                      subPages: ["L'annonce du parrain", "L'annonce de la marraine", "Le dévoilement de sexe", "gender reveal", "L'apprentissage du sexe", "Le baby shower", "Le baby moon", "parrain", "marraine", "sexe", "shower", "moon"]
+                    },
+                    { 
+                      title: "Chambre de bébé", 
+                      desc: "Le nid douillet", 
+                      icon: "🛏️", 
+                      color: "from-green-100", 
+                      keywords: ["chambre", "décoration", "nursery", "lit"], 
+                      hasSubPages: false,
+                      subPages: []
+                    },
+                    { 
+                      title: "Lettre à bébé", 
+                      desc: "Vos mots d'amour", 
+                      icon: "💌", 
+                      color: "from-red-100", 
+                      keywords: ["lettre", "message", "amour", "souvenir"], 
+                      hasSubPages: false,
+                      subPages: []
+                    },
+                    { 
+                      title: "Premier mot", 
+                      desc: "Maman ou Papa?", 
+                      icon: "💬", 
+                      color: "from-indigo-100", 
+                      keywords: ["mot", "parler", "langage", "maman", "papa"], 
+                      hasSubPages: false,
+                      subPages: []
+                    },
+                    { 
+                      title: "Première dent", 
+                      desc: "Un sourire tout neuf", 
+                      icon: "🦷", 
+                      color: "from-cyan-100", 
+                      keywords: ["dent", "sourire", "bébé"], 
+                      hasSubPages: false,
+                      subPages: []
+                    },
                   ].filter(item => {
                     if (!inspirationSearch.trim()) return true;
                     const searchLower = inspirationSearch.toLowerCase();
                     return item.title.toLowerCase().includes(searchLower) || 
                            item.desc.toLowerCase().includes(searchLower) ||
-                           item.keywords.some(k => k.toLowerCase().includes(searchLower));
+                           item.keywords.some(k => k.toLowerCase().includes(searchLower)) ||
+                           item.subPages.some(sp => sp.toLowerCase().includes(searchLower));
                   }).map((item, idx) => (
                     <motion.div 
                       key={item.title}

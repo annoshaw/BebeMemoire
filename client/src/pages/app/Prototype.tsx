@@ -325,6 +325,8 @@ export default function Prototype() {
   const [bookStyle, setBookStyle] = useState<"moderne" | "classique" | "colore" | "animation">("moderne");
   const [previewStyle, setPreviewStyle] = useState<string | null>(null);
   const [showCheckout, setShowCheckout] = useState(false);
+  const [showManageSubscription, setShowManageSubscription] = useState(false);
+  const [showCancelSubscription, setShowCancelSubscription] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<{name: string, price: string} | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<"card" | "paypal">("card");
   const [checkoutForm, setCheckoutForm] = useState({
@@ -1435,6 +1437,38 @@ export default function Prototype() {
                   <Crown size={18} className="text-amber-500" />
                   <h4 className="font-bold text-stone-800 text-sm">Mon abonnement</h4>
                 </div>
+                
+                {/* Current Plan Status */}
+                <div className={`p-3 rounded-xl mb-3 ${
+                  userPlan === "platine" ? "bg-amber-50 border border-amber-200" :
+                  userPlan === "premium" ? "bg-blue-50 border border-blue-200" :
+                  "bg-stone-50 border border-stone-200"
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-stone-500">Plan actuel</p>
+                      <p className={`font-bold text-sm ${
+                        userPlan === "platine" ? "text-amber-700" :
+                        userPlan === "premium" ? "text-blue-700" :
+                        "text-stone-700"
+                      }`}>
+                        {userPlan === "platine" ? "Platine" : userPlan === "premium" ? "Premium" : "De base"}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-stone-500">Tarif</p>
+                      <p className="font-bold text-sm text-stone-800">
+                        {userPlan === "platine" ? "4,99$/mois" : userPlan === "premium" ? "1,99$/mois" : "Gratuit"}
+                      </p>
+                    </div>
+                  </div>
+                  {userPlan !== "base" && (
+                    <p className="text-[10px] text-stone-500 mt-2">
+                      Prochain renouvellement: {new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    </p>
+                  )}
+                </div>
+
                 <div className="grid grid-cols-3 gap-2">
                   {[
                     { id: "base", label: "De base", price: "Gratuit", color: "stone" },
@@ -1445,7 +1479,9 @@ export default function Prototype() {
                       key={plan.id}
                       onClick={() => {
                         if (plan.id === "base") {
-                          setUserPlan("base");
+                          if (userPlan !== "base") {
+                            setShowCancelSubscription(true);
+                          }
                         } else if (plan.id !== userPlan) {
                           setSelectedProduct({ name: `Abonnement ${plan.label}`, price: plan.price.replace("/mois", "") });
                           setShowCheckout(true);
@@ -1469,19 +1505,50 @@ export default function Prototype() {
                     </button>
                   ))}
                 </div>
-                {userPlan !== "platine" && (
-                  <Button 
-                    size="sm" 
-                    className="w-full mt-3 h-8 text-xs"
-                    onClick={() => {
-                      const nextPlan = userPlan === "base" ? { name: "Abonnement Premium", price: "1,99$" } : { name: "Abonnement Platine", price: "4,99$" };
-                      setSelectedProduct(nextPlan);
-                      setShowCheckout(true);
-                    }}
-                  >
-                    Passer à {userPlan === "base" ? "Premium" : "Platine"}
-                  </Button>
-                )}
+                
+                {/* Action Buttons */}
+                <div className="mt-3 space-y-2">
+                  {userPlan !== "platine" && (
+                    <Button 
+                      size="sm" 
+                      className="w-full h-8 text-xs"
+                      onClick={() => {
+                        const nextPlan = userPlan === "base" ? { name: "Abonnement Premium", price: "1,99$" } : { name: "Abonnement Platine", price: "4,99$" };
+                        setSelectedProduct(nextPlan);
+                        setShowCheckout(true);
+                      }}
+                      data-testid="button-upgrade-plan"
+                    >
+                      <Crown size={12} className="mr-1" />
+                      Passer à {userPlan === "base" ? "Premium" : "Platine"}
+                    </Button>
+                  )}
+                  
+                  {userPlan !== "base" && (
+                    <div className="flex gap-2">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        className="flex-1 h-8 text-xs"
+                        onClick={() => setShowManageSubscription(true)}
+                        data-testid="button-manage-subscription"
+                      >
+                        <Settings size={12} className="mr-1" />
+                        Gérer
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        className="flex-1 h-8 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                        onClick={() => setShowCancelSubscription(true)}
+                        data-testid="button-cancel-subscription"
+                      >
+                        <X size={12} className="mr-1" />
+                        Annuler
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Book Style */}
@@ -2570,6 +2637,223 @@ export default function Prototype() {
                 <p className="text-[10px] text-stone-400 text-center">
                   Paiement sécurisé. Vos informations sont protégées.
                 </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Manage Subscription Modal */}
+      <AnimatePresence>
+        {showManageSubscription && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+            onClick={() => setShowManageSubscription(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl w-full max-w-md overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-4 border-b border-stone-100 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Settings size={20} className="text-primary" />
+                  <h3 className="font-bold text-stone-800">Gérer mon abonnement</h3>
+                </div>
+                <button 
+                  onClick={() => setShowManageSubscription(false)}
+                  className="p-2 hover:bg-stone-100 rounded-full"
+                >
+                  <X size={20} className="text-stone-500" />
+                </button>
+              </div>
+
+              <div className="p-4 space-y-4">
+                {/* Current Plan */}
+                <div className={`p-4 rounded-xl ${
+                  userPlan === "platine" ? "bg-amber-50 border border-amber-200" :
+                  "bg-blue-50 border border-blue-200"
+                }`}>
+                  <div className="flex items-center gap-3">
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                      userPlan === "platine" ? "bg-amber-200" : "bg-blue-200"
+                    }`}>
+                      <Crown size={24} className={userPlan === "platine" ? "text-amber-700" : "text-blue-700"} />
+                    </div>
+                    <div>
+                      <p className="text-xs text-stone-500">Plan actuel</p>
+                      <p className={`font-bold text-lg ${userPlan === "platine" ? "text-amber-700" : "text-blue-700"}`}>
+                        {userPlan === "platine" ? "Platine" : "Premium"}
+                      </p>
+                    </div>
+                    <div className="ml-auto text-right">
+                      <p className="font-bold text-stone-800">
+                        {userPlan === "platine" ? "4,99 $" : "1,99 $"}
+                      </p>
+                      <p className="text-xs text-stone-500">par mois</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Subscription Details */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 bg-stone-50 rounded-xl">
+                    <div className="flex items-center gap-3">
+                      <Calendar size={18} className="text-stone-400" />
+                      <div>
+                        <p className="text-xs text-stone-500">Prochain paiement</p>
+                        <p className="text-sm font-medium text-stone-800">
+                          {new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' })}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 bg-stone-50 rounded-xl">
+                    <div className="flex items-center gap-3">
+                      <CreditCard size={18} className="text-stone-400" />
+                      <div>
+                        <p className="text-xs text-stone-500">Mode de paiement</p>
+                        <p className="text-sm font-medium text-stone-800">•••• •••• •••• 4242</p>
+                      </div>
+                    </div>
+                    <button className="text-xs text-primary font-medium" data-testid="button-change-payment">
+                      Modifier
+                    </button>
+                  </div>
+                </div>
+
+                {/* Upgrade Option */}
+                {userPlan === "premium" && (
+                  <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-200">
+                    <div className="flex items-center gap-3 mb-3">
+                      <Sparkles size={20} className="text-amber-600" />
+                      <div>
+                        <p className="font-bold text-amber-800">Passez à Platine</p>
+                        <p className="text-xs text-amber-700">5 Go de stockage vidéo + fonctionnalités exclusives</p>
+                      </div>
+                    </div>
+                    <Button 
+                      size="sm"
+                      className="w-full bg-amber-500 hover:bg-amber-600"
+                      onClick={() => {
+                        setShowManageSubscription(false);
+                        setSelectedProduct({ name: "Abonnement Platine", price: "4,99$" });
+                        setShowCheckout(true);
+                      }}
+                      data-testid="button-upgrade-to-platine"
+                    >
+                      <Crown size={14} className="mr-1" />
+                      Passer à Platine - 4,99$/mois
+                    </Button>
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="pt-2 space-y-2">
+                  <Button 
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => setShowManageSubscription(false)}
+                    data-testid="button-close-manage"
+                  >
+                    Fermer
+                  </Button>
+                  <button
+                    className="w-full text-xs text-red-500 hover:text-red-600 py-2"
+                    onClick={() => {
+                      setShowManageSubscription(false);
+                      setShowCancelSubscription(true);
+                    }}
+                    data-testid="button-cancel-from-manage"
+                  >
+                    Annuler mon abonnement
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Cancel Subscription Modal */}
+      <AnimatePresence>
+        {showCancelSubscription && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+            onClick={() => setShowCancelSubscription(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl w-full max-w-md overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-6 text-center">
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <AlertTriangle size={32} className="text-red-500" />
+                </div>
+                <h3 className="text-xl font-bold text-stone-800 mb-2">Annuler votre abonnement?</h3>
+                <p className="text-sm text-stone-600 mb-4">
+                  Vous êtes sur le point d'annuler votre abonnement {userPlan === "platine" ? "Platine" : "Premium"}. 
+                  Vous perdrez accès à:
+                </p>
+
+                <div className="text-left bg-stone-50 rounded-xl p-4 mb-4 space-y-2">
+                  <div className="flex items-center gap-2 text-sm text-stone-600">
+                    <X size={14} className="text-red-500" />
+                    <span>Stockage vidéo ({userPlan === "platine" ? "5 Go" : "2 Go"})</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-stone-600">
+                    <X size={14} className="text-red-500" />
+                    <span>QR codes pour les vidéos</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-stone-600">
+                    <X size={14} className="text-red-500" />
+                    <span>Fonctionnalités exclusives</span>
+                  </div>
+                  {userPlan === "platine" && (
+                    <div className="flex items-center gap-2 text-sm text-stone-600">
+                      <X size={14} className="text-red-500" />
+                      <span>Support prioritaire</span>
+                    </div>
+                  )}
+                </div>
+
+                <p className="text-xs text-stone-500 mb-4">
+                  Votre abonnement restera actif jusqu'au {new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' })}.
+                  Vous pouvez réactiver à tout moment.
+                </p>
+
+                <div className="space-y-2">
+                  <Button 
+                    className="w-full"
+                    onClick={() => setShowCancelSubscription(false)}
+                    data-testid="button-keep-subscription"
+                  >
+                    Garder mon abonnement
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    className="w-full text-red-600 border-red-200 hover:bg-red-50"
+                    onClick={() => {
+                      setUserPlan("base");
+                      setShowCancelSubscription(false);
+                    }}
+                    data-testid="button-confirm-cancel"
+                  >
+                    Confirmer l'annulation
+                  </Button>
+                </div>
               </div>
             </motion.div>
           </motion.div>

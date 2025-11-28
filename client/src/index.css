@@ -116,8 +116,9 @@
 /* Force select dropdown to appear above all other elements */
 [data-radix-select-content] {
   z-index: 99999 !important;
+  position: fixed !important;
 }
 
-[data-radix-select-item] {
+[data-radix-select-viewport] {
   z-index: 99999 !important;
 }

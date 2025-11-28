@@ -11,6 +11,8 @@ import EditBook from "@/pages/app/EditBook";
 import EditProfile from "@/pages/app/EditProfile";
 import Register from "@/pages/Register";
 import Login from "@/pages/Login";
+import ForgotPassword from "@/pages/ForgotPassword";
+import ResetPassword from "@/pages/ResetPassword";
 import Onboarding from "@/pages/Onboarding";
 import BookDemo from "@/pages/BookDemo";
 
@@ -24,6 +26,8 @@ function Router() {
       <Route path="/app/profile" component={EditProfile} />
       <Route path="/register" component={Register} />
       <Route path="/login" component={Login} />
+      <Route path="/forgot-password" component={ForgotPassword} />
+      <Route path="/reset-password" component={ResetPassword} />
       <Route path="/onboarding" component={Onboarding} />
       <Route path="/book-demo" component={BookDemo} />
       <Route component={NotFound} />

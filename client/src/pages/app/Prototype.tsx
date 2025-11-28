@@ -593,6 +593,53 @@ export default function Prototype() {
                     </motion.div>
                   ))}
                 </>
+              ) : selectedInspiration === "Événements lors de la grossesse" ? (
+                // Sub-pages for "Événements lors de la grossesse"
+                <>
+                  <div className="flex items-center gap-3 mb-4">
+                    <button 
+                      onClick={() => setSelectedInspiration(null)}
+                      className="p-2 hover:bg-stone-100 rounded-full transition-colors"
+                      data-testid="button-back-evenements"
+                    >
+                      <ChevronLeft size={20} className="text-stone-600" />
+                    </button>
+                    <div>
+                      <h3 className="text-sm font-bold text-stone-800">Événements lors de la grossesse</h3>
+                      <p className="text-xs text-stone-500">Choisissez une page à ajouter</p>
+                    </div>
+                  </div>
+                  
+                  {[
+                    { id: 1, title: "Le dévoilement de sexe", icon: "🎀", color: "from-pink-100" },
+                    { id: 2, title: "L'apprentissage du sexe", icon: "💭", color: "from-blue-100" },
+                    { id: 3, title: "Le baby shower", icon: "🎉", color: "from-yellow-100" },
+                    { id: 4, title: "Le baby moon", icon: "🌙", color: "from-indigo-100" },
+                  ].map((subPage, idx) => (
+                    <motion.div 
+                      key={subPage.id}
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.05 }}
+                      className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                      data-testid={`evenements-subpage-${subPage.id}`}
+                    >
+                      <div className="p-4">
+                        <div className="flex items-center gap-4">
+                          <div className={`w-12 h-12 bg-gradient-to-b ${subPage.color} to-stone-50 rounded-xl flex items-center justify-center`}>
+                            <span className="text-xl">{subPage.icon}</span>
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="font-bold text-stone-800 text-sm">{subPage.title}</h4>
+                          </div>
+                          <Button size="sm" variant="outline" className="h-8 text-xs" data-testid={`button-add-event-${subPage.id}`}>
+                            <Plus size={14} className="mr-1" /> Ajouter
+                          </Button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </>
               ) : (
                 // Main inspiration list
                 <>
@@ -618,7 +665,7 @@ export default function Prototype() {
                     { title: "Annonce de grossesse", desc: "Partagez la grande nouvelle", icon: "🤰", color: "from-pink-100", keywords: ["annonce", "grossesse", "nouvelle", "enceinte"], hasSubPages: true },
                     { title: "Échographie", desc: "Les premiers aperçus", icon: "🔊", color: "from-purple-100", keywords: ["échographie", "scan", "médical", "bébé"], hasSubPages: true },
                     { title: "Révélation du sexe", desc: "Fille ou garçon?", icon: "🎀", color: "from-blue-100", keywords: ["sexe", "révélation", "fille", "garçon", "gender"], hasSubPages: false },
-                    { title: "Événements lors de la grossesse", desc: "Célébrez avec vos proches", icon: "🎉", color: "from-yellow-100", keywords: ["baby shower", "fête", "célébration", "cadeau", "événement", "grossesse"], hasSubPages: false },
+                    { title: "Événements lors de la grossesse", desc: "Célébrez avec vos proches", icon: "🎉", color: "from-yellow-100", keywords: ["baby shower", "fête", "célébration", "cadeau", "événement", "grossesse"], hasSubPages: true },
                     { title: "Chambre de bébé", desc: "Le nid douillet", icon: "🛏️", color: "from-green-100", keywords: ["chambre", "décoration", "nursery", "lit"], hasSubPages: false },
                     { title: "Lettre à bébé", desc: "Vos mots d'amour", icon: "💌", color: "from-red-100", keywords: ["lettre", "message", "amour", "souvenir"], hasSubPages: false },
                     { title: "Premier sourire", desc: "Ce moment inoubliable", icon: "😊", color: "from-orange-100", keywords: ["sourire", "premier", "joie", "émotion"], hasSubPages: false },

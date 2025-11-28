@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Plus, Minus, Image as ImageIcon, Mic, Video, MoreHorizontal, Calendar, Share2, BookOpen, Printer, CheckCircle, Bell, QrCode, Baby, LogOut, Settings, User, Sparkles, ShoppingBag, FolderHeart, Trash2, Crown, Mail, Phone, MapPin, UserPlus, Users, Edit2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Minus, Image as ImageIcon, Mic, Video, MoreHorizontal, Calendar, Share2, BookOpen, Printer, CheckCircle, Bell, QrCode, Baby, LogOut, Settings, User, Sparkles, ShoppingBag, FolderHeart, Trash2, Crown, Mail, Phone, MapPin, UserPlus, Users, Edit2, CreditCard, X, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
 import {
@@ -43,6 +43,24 @@ export default function Prototype() {
   const [showAddPageMenu, setShowAddPageMenu] = useState(false);
   const [bookStyle, setBookStyle] = useState<"moderne" | "classique" | "colore" | "animation">("moderne");
   const [previewStyle, setPreviewStyle] = useState<string | null>(null);
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<{name: string, price: string} | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "paypal">("card");
+  const [checkoutForm, setCheckoutForm] = useState({
+    name: "",
+    email: "",
+    address: "",
+    city: "",
+    postalCode: "",
+    cardNumber: "",
+    expiry: "",
+    cvv: ""
+  });
+
+  const handleSelectProduct = (name: string, price: string) => {
+    setSelectedProduct({ name, price });
+    setShowCheckout(true);
+  };
 
   const addInvitedUser = () => {
     if (newUserName && newUserEmail) {
@@ -408,7 +426,8 @@ export default function Prototype() {
                   <motion.div 
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="bg-white rounded-xl border border-stone-200 p-3 flex items-center justify-between"
+                    onClick={() => handleSelectProduct("Couverture souple", "43,24 $")}
+                    className="bg-white rounded-xl border border-stone-200 p-3 flex items-center justify-between cursor-pointer hover:border-primary hover:shadow-md transition-all"
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-14 bg-gradient-to-b from-secondary/20 to-stone-100 rounded-lg flex items-center justify-center">
@@ -430,7 +449,8 @@ export default function Prototype() {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.1 }}
-                    className="bg-white rounded-xl border border-stone-200 p-3 flex items-center justify-between"
+                    onClick={() => handleSelectProduct("Couverture rigide", "54,99 $")}
+                    className="bg-white rounded-xl border border-stone-200 p-3 flex items-center justify-between cursor-pointer hover:border-primary hover:shadow-md transition-all"
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-14 bg-gradient-to-b from-primary/20 to-stone-100 rounded-lg flex items-center justify-center">
@@ -452,7 +472,8 @@ export default function Prototype() {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.2 }}
-                    className="bg-white rounded-xl border border-stone-200 p-3 flex items-center justify-between"
+                    onClick={() => handleSelectProduct("E-Book", "19,99 $")}
+                    className="bg-white rounded-xl border border-stone-200 p-3 flex items-center justify-between cursor-pointer hover:border-primary hover:shadow-md transition-all"
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-14 bg-gradient-to-b from-blue-100 to-stone-100 rounded-lg flex items-center justify-center">
@@ -473,7 +494,7 @@ export default function Prototype() {
                 {/* Note */}
                 <div className="bg-stone-50 rounded-xl p-3 mt-4">
                   <p className="text-[11px] text-stone-500 text-center">
-                    Livraison standard incluse au Canada. Frais supplémentaires pour l'international.
+                    Cliquez sur une option pour procéder au paiement
                   </p>
                 </div>
               </div>
@@ -1032,6 +1053,185 @@ export default function Prototype() {
             <Button variant="outline" className="w-full mt-4">Retour à l'accueil</Button>
         </Link>
       </div>
+
+      {/* Checkout Modal */}
+      <AnimatePresence>
+        {showCheckout && selectedProduct && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+            onClick={() => setShowCheckout(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="p-4 border-b border-stone-100 flex items-center justify-between sticky top-0 bg-white rounded-t-2xl">
+                <div>
+                  <h3 className="font-bold text-stone-800">Paiement</h3>
+                  <p className="text-xs text-stone-500">{selectedProduct.name} - {selectedProduct.price}</p>
+                </div>
+                <button 
+                  onClick={() => setShowCheckout(false)}
+                  className="p-2 hover:bg-stone-100 rounded-full"
+                >
+                  <X size={20} className="text-stone-500" />
+                </button>
+              </div>
+
+              <div className="p-4 space-y-4">
+                {/* Payment Method */}
+                <div>
+                  <label className="text-xs font-medium text-stone-600 mb-2 block">Mode de paiement</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => setPaymentMethod("card")}
+                      className={`p-3 rounded-xl border-2 flex items-center justify-center gap-2 transition-all ${
+                        paymentMethod === "card" ? "border-primary bg-primary/5" : "border-stone-200"
+                      }`}
+                    >
+                      <CreditCard size={18} className={paymentMethod === "card" ? "text-primary" : "text-stone-500"} />
+                      <span className={`text-sm font-medium ${paymentMethod === "card" ? "text-primary" : "text-stone-600"}`}>Carte</span>
+                    </button>
+                    <button
+                      onClick={() => setPaymentMethod("paypal")}
+                      className={`p-3 rounded-xl border-2 flex items-center justify-center gap-2 transition-all ${
+                        paymentMethod === "paypal" ? "border-blue-500 bg-blue-50" : "border-stone-200"
+                      }`}
+                    >
+                      <span className={`text-lg ${paymentMethod === "paypal" ? "text-blue-600" : "text-stone-500"}`}>P</span>
+                      <span className={`text-sm font-medium ${paymentMethod === "paypal" ? "text-blue-600" : "text-stone-600"}`}>PayPal</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Personal Info */}
+                <div className="space-y-3">
+                  <label className="text-xs font-medium text-stone-600 block">Informations personnelles</label>
+                  <input
+                    type="text"
+                    placeholder="Nom complet"
+                    value={checkoutForm.name}
+                    onChange={(e) => setCheckoutForm({...checkoutForm, name: e.target.value})}
+                    className="w-full px-3 py-2.5 text-sm rounded-lg border border-stone-200 focus:border-primary focus:outline-none"
+                    data-testid="input-checkout-name"
+                  />
+                  <input
+                    type="email"
+                    placeholder="Courriel"
+                    value={checkoutForm.email}
+                    onChange={(e) => setCheckoutForm({...checkoutForm, email: e.target.value})}
+                    className="w-full px-3 py-2.5 text-sm rounded-lg border border-stone-200 focus:border-primary focus:outline-none"
+                    data-testid="input-checkout-email"
+                  />
+                </div>
+
+                {/* Address */}
+                <div className="space-y-3">
+                  <label className="text-xs font-medium text-stone-600 block">Adresse de livraison</label>
+                  <input
+                    type="text"
+                    placeholder="Adresse"
+                    value={checkoutForm.address}
+                    onChange={(e) => setCheckoutForm({...checkoutForm, address: e.target.value})}
+                    className="w-full px-3 py-2.5 text-sm rounded-lg border border-stone-200 focus:border-primary focus:outline-none"
+                    data-testid="input-checkout-address"
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="text"
+                      placeholder="Ville"
+                      value={checkoutForm.city}
+                      onChange={(e) => setCheckoutForm({...checkoutForm, city: e.target.value})}
+                      className="w-full px-3 py-2.5 text-sm rounded-lg border border-stone-200 focus:border-primary focus:outline-none"
+                      data-testid="input-checkout-city"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Code postal"
+                      value={checkoutForm.postalCode}
+                      onChange={(e) => setCheckoutForm({...checkoutForm, postalCode: e.target.value})}
+                      className="w-full px-3 py-2.5 text-sm rounded-lg border border-stone-200 focus:border-primary focus:outline-none"
+                      data-testid="input-checkout-postal"
+                    />
+                  </div>
+                </div>
+
+                {/* Card Details (only if card payment) */}
+                {paymentMethod === "card" && (
+                  <div className="space-y-3">
+                    <label className="text-xs font-medium text-stone-600 block">Informations de carte</label>
+                    <input
+                      type="text"
+                      placeholder="Numéro de carte"
+                      value={checkoutForm.cardNumber}
+                      onChange={(e) => setCheckoutForm({...checkoutForm, cardNumber: e.target.value})}
+                      className="w-full px-3 py-2.5 text-sm rounded-lg border border-stone-200 focus:border-primary focus:outline-none"
+                      data-testid="input-checkout-card"
+                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      <input
+                        type="text"
+                        placeholder="MM/AA"
+                        value={checkoutForm.expiry}
+                        onChange={(e) => setCheckoutForm({...checkoutForm, expiry: e.target.value})}
+                        className="w-full px-3 py-2.5 text-sm rounded-lg border border-stone-200 focus:border-primary focus:outline-none"
+                        data-testid="input-checkout-expiry"
+                      />
+                      <input
+                        type="text"
+                        placeholder="CVV"
+                        value={checkoutForm.cvv}
+                        onChange={(e) => setCheckoutForm({...checkoutForm, cvv: e.target.value})}
+                        className="w-full px-3 py-2.5 text-sm rounded-lg border border-stone-200 focus:border-primary focus:outline-none"
+                        data-testid="input-checkout-cvv"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {paymentMethod === "paypal" && (
+                  <div className="bg-blue-50 rounded-xl p-4 text-center">
+                    <p className="text-sm text-blue-700">Vous serez redirigé vers PayPal pour compléter le paiement</p>
+                  </div>
+                )}
+
+                {/* Order Summary */}
+                <div className="bg-stone-50 rounded-xl p-4 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-stone-600">{selectedProduct.name}</span>
+                    <span className="font-medium text-stone-800">{selectedProduct.price}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-stone-600">Livraison</span>
+                    <span className="font-medium text-green-600">Gratuite</span>
+                  </div>
+                  <div className="border-t border-stone-200 pt-2 flex justify-between">
+                    <span className="font-bold text-stone-800">Total</span>
+                    <span className="font-bold text-stone-800">{selectedProduct.price}</span>
+                  </div>
+                </div>
+
+                {/* Submit Button */}
+                <Button className="w-full h-12 text-sm font-medium gap-2" data-testid="button-submit-payment">
+                  <Lock size={16} />
+                  {paymentMethod === "card" ? "Payer maintenant" : "Continuer vers PayPal"}
+                </Button>
+
+                <p className="text-[10px] text-stone-400 text-center">
+                  Paiement sécurisé. Vos informations sont protégées.
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

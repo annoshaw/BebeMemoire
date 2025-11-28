@@ -42,6 +42,7 @@ export default function Prototype() {
   const [newUserEmail, setNewUserEmail] = useState("");
   const [showAddPageMenu, setShowAddPageMenu] = useState(false);
   const [bookStyle, setBookStyle] = useState<"moderne" | "classique" | "colore" | "animation">("moderne");
+  const [previewStyle, setPreviewStyle] = useState<string | null>(null);
 
   const addInvitedUser = () => {
     if (newUserName && newUserEmail) {
@@ -584,29 +585,56 @@ export default function Prototype() {
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   {[
-                    { id: "moderne", label: "Moderne", icon: "✨", desc: "Épuré et minimaliste" },
-                    { id: "classique", label: "Classique", icon: "📖", desc: "Traditionnel et élégant" },
-                    { id: "colore", label: "Coloré", icon: "🎨", desc: "Vif et joyeux" },
-                    { id: "animation", label: "Animation", icon: "🎬", desc: "Ludique et animé" },
+                    { id: "moderne", label: "Moderne", icon: "✨", desc: "Épuré et minimaliste", preview: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&h=300&fit=crop" },
+                    { id: "classique", label: "Classique", icon: "📖", desc: "Traditionnel et élégant", preview: "https://images.unsplash.com/photo-1589998059171-988d887df646?w=400&h=300&fit=crop" },
+                    { id: "colore", label: "Coloré", icon: "🎨", desc: "Vif et joyeux", preview: "https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?w=400&h=300&fit=crop" },
+                    { id: "animation", label: "Animation", icon: "🎬", desc: "Ludique et animé", preview: "https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=400&h=300&fit=crop" },
                   ].map((style) => (
-                    <button
-                      key={style.id}
-                      onClick={() => setBookStyle(style.id as any)}
-                      className={`p-3 rounded-xl border-2 transition-all text-left ${
-                        bookStyle === style.id
-                          ? "border-primary bg-primary/5"
-                          : "border-stone-200 hover:border-stone-300"
-                      }`}
-                      data-testid={`button-style-${style.id}`}
-                    >
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-lg">{style.icon}</span>
-                        <p className={`font-bold text-xs ${bookStyle === style.id ? "text-primary" : "text-stone-700"}`}>
-                          {style.label}
-                        </p>
-                      </div>
-                      <p className="text-[10px] text-stone-500">{style.desc}</p>
-                    </button>
+                    <div key={style.id} className="relative">
+                      <button
+                        onClick={() => {
+                          setBookStyle(style.id as any);
+                          setPreviewStyle(previewStyle === style.id ? null : style.id);
+                        }}
+                        className={`w-full p-3 rounded-xl border-2 transition-all text-left ${
+                          bookStyle === style.id
+                            ? "border-primary bg-primary/5"
+                            : "border-stone-200 hover:border-stone-300"
+                        }`}
+                        data-testid={`button-style-${style.id}`}
+                      >
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-lg">{style.icon}</span>
+                          <p className={`font-bold text-xs ${bookStyle === style.id ? "text-primary" : "text-stone-700"}`}>
+                            {style.label}
+                          </p>
+                        </div>
+                        <p className="text-[10px] text-stone-500">{style.desc}</p>
+                      </button>
+                      
+                      {/* Preview Bubble */}
+                      <AnimatePresence>
+                        {previewStyle === style.id && (
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0.8, y: 10 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.8, y: 10 }}
+                            className="absolute z-50 bottom-full mb-2 left-1/2 -translate-x-1/2"
+                          >
+                            <div className="bg-white rounded-xl shadow-xl border border-stone-200 p-2 w-48">
+                              <img 
+                                src={style.preview} 
+                                alt={`Aperçu ${style.label}`}
+                                className="w-full h-32 object-cover rounded-lg mb-2"
+                              />
+                              <p className="text-xs font-medium text-stone-800 text-center">{style.label}</p>
+                              <p className="text-[10px] text-stone-500 text-center">{style.desc}</p>
+                            </div>
+                            <div className="absolute left-1/2 -translate-x-1/2 -bottom-2 w-0 h-0 border-l-8 border-r-8 border-t-8 border-transparent border-t-white"></div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
                   ))}
                 </div>
               </div>

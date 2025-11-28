@@ -1,12 +1,20 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, Plus, Image as ImageIcon, Mic, Video, MoreHorizontal, Calendar, Share2, BookOpen, Printer, CheckCircle, Bell, QrCode, Baby } from "lucide-react";
+import { ChevronLeft, Plus, Image as ImageIcon, Mic, Video, MoreHorizontal, Calendar, Share2, BookOpen, Printer, CheckCircle, Bell, QrCode, Baby, LogOut, Settings, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 export default function Prototype() {
   const [activeTab, setActiveTab] = useState("timeline");
   const [showNotification, setShowNotification] = useState(true);
+  const [, setLocation] = useLocation();
   
   const babyName = typeof window !== "undefined" ? localStorage.getItem("babyName") || "Léo" : "Léo";
 
@@ -95,9 +103,31 @@ export default function Prototype() {
             <h1 className="text-lg font-serif font-bold text-stone-800">Livre de {babyName}</h1>
             <span className="text-[10px] text-stone-400 font-medium bg-stone-100 px-2 py-0.5 rounded-full">Famille Dupond-Martin</span>
           </div>
-          <button className="p-2 hover:bg-stone-50 rounded-full -mr-2">
-            <MoreHorizontal className="text-stone-800" />
-          </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="p-2 hover:bg-stone-50 rounded-full -mr-2">
+                <MoreHorizontal className="text-stone-800" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem className="cursor-pointer">
+                <User size={16} className="mr-2" />
+                <span>Mon Profil</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer">
+                <Settings size={16} className="mr-2" />
+                <span>Paramètres</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                className="cursor-pointer text-red-600"
+                onClick={() => setLocation("/")}
+              >
+                <LogOut size={16} className="mr-2" />
+                <span>Déconnexion</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* Content */}

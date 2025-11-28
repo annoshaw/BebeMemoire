@@ -88,6 +88,13 @@ export default function Prototype() {
   });
   const [inspirationSearch, setInspirationSearch] = useState("");
   const [selectedInspiration, setSelectedInspiration] = useState<string | null>(null);
+  const [showNotificationPopup, setShowNotificationPopup] = useState(() => {
+    if (typeof window !== "undefined") {
+      return !localStorage.getItem("notificationPopupShown");
+    }
+    return true;
+  });
+  const [notificationFrequency, setNotificationFrequency] = useState<"daily" | "weekly" | "biweekly" | "monthly">("weekly");
 
   const handleSelectProduct = (name: string, price: string) => {
     setSelectedProduct({ name, price });
@@ -1394,6 +1401,102 @@ export default function Prototype() {
             <Button variant="outline" className="w-full mt-4">Retour à l'accueil</Button>
         </Link>
       </div>
+
+      {/* Notification Push Popup */}
+      <AnimatePresence>
+        {showNotificationPopup && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden"
+            >
+              <div className="bg-gradient-to-br from-primary to-primary/80 p-6 text-white text-center">
+                <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Bell size={32} className="text-white" />
+                </div>
+                <h3 className="text-xl font-bold mb-2">Activez les notifications</h3>
+                <p className="text-sm text-white/90">
+                  Recevez des rappels pour capturer les moments importants de votre enfant
+                </p>
+              </div>
+              
+              <div className="p-6 space-y-4">
+                <div>
+                  <p className="text-sm font-medium text-stone-700 mb-3">À quelle fréquence souhaitez-vous être notifié?</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { id: "daily", label: "Quotidien", desc: "Chaque jour" },
+                      { id: "weekly", label: "Hebdomadaire", desc: "1x par semaine" },
+                      { id: "biweekly", label: "Bi-mensuel", desc: "2x par mois" },
+                      { id: "monthly", label: "Mensuel", desc: "1x par mois" },
+                    ].map((option) => (
+                      <button
+                        key={option.id}
+                        onClick={() => setNotificationFrequency(option.id as any)}
+                        className={`p-3 rounded-xl border-2 transition-all text-left ${
+                          notificationFrequency === option.id
+                            ? "border-primary bg-primary/5"
+                            : "border-stone-200 hover:border-stone-300"
+                        }`}
+                        data-testid={`button-frequency-${option.id}`}
+                      >
+                        <p className={`font-bold text-xs ${notificationFrequency === option.id ? "text-primary" : "text-stone-700"}`}>
+                          {option.label}
+                        </p>
+                        <p className="text-[10px] text-stone-500">{option.desc}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                <div className="bg-stone-50 rounded-xl p-3">
+                  <div className="flex items-start gap-2">
+                    <CheckCircle size={16} className="text-primary flex-shrink-0 mt-0.5" />
+                    <p className="text-[11px] text-stone-600">
+                      Nous vous enverrons des suggestions comme "C'est le moment de capturer le premier sourire!" ou "Léo a 6 mois aujourd'hui!"
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => {
+                      localStorage.setItem("notificationPopupShown", "true");
+                      localStorage.setItem("notificationsEnabled", "false");
+                      setShowNotificationPopup(false);
+                    }}
+                    data-testid="button-skip-notifications"
+                  >
+                    Plus tard
+                  </Button>
+                  <Button
+                    className="flex-1 bg-primary hover:bg-primary/90"
+                    onClick={() => {
+                      localStorage.setItem("notificationPopupShown", "true");
+                      localStorage.setItem("notificationsEnabled", "true");
+                      localStorage.setItem("notificationFrequency", notificationFrequency);
+                      setShowNotificationPopup(false);
+                    }}
+                    data-testid="button-enable-notifications"
+                  >
+                    <Bell size={16} className="mr-2" />
+                    Activer
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Checkout Modal */}
       <AnimatePresence>

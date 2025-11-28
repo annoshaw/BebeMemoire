@@ -78,11 +78,9 @@ export default function Register() {
         </div>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md pb-80 sm:pb-0 overflow-visible">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white py-8 px-4 shadow sm:rounded-xl sm:px-10 border border-stone-100 relative overflow-visible z-0"
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md pb-80 sm:pb-0 overflow-visible z-0">
+        <div 
+          className="bg-white py-8 px-4 shadow sm:rounded-xl sm:px-10 border border-stone-100 relative overflow-visible"
         >
           <div className="grid grid-cols-2 gap-3 mb-6">
             <Button variant="outline" className="w-full flex items-center gap-2" onClick={() => console.log("Google login")}>
@@ -255,7 +253,7 @@ export default function Register() {
                   </a>
               </Link>
           </div>
-        </motion.div>
+        </div>
       </div>
     </div>
   );

@@ -44,6 +44,13 @@ export default function Prototype() {
     return 14;
   });
   const isTrialActive = trialDaysLeft > 0;
+  const [showTrialExpiredModal, setShowTrialExpiredModal] = useState(false);
+  
+  useEffect(() => {
+    if (!isTrialActive && userPlan === "base") {
+      setShowTrialExpiredModal(true);
+    }
+  }, [isTrialActive, userPlan]);
   
   const [userInfo, setUserInfo] = useState(() => {
     if (typeof window !== "undefined") {
@@ -1891,6 +1898,126 @@ export default function Prototype() {
 
                 <p className="text-[10px] text-stone-400 text-center">
                   Paiement sécurisé. Vos informations sont protégées.
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Trial Expired Modal */}
+      <AnimatePresence>
+        {showTrialExpiredModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl w-full max-w-md overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="bg-gradient-to-r from-amber-500 to-orange-500 p-6 text-center">
+                <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Clock size={32} className="text-white" />
+                </div>
+                <h2 className="text-2xl font-bold text-white mb-2">Essai terminé</h2>
+                <p className="text-white/90 text-sm">
+                  Votre période d'essai Premium de 14 jours est terminée
+                </p>
+              </div>
+
+              <div className="p-6 space-y-4">
+                <p className="text-center text-stone-600 text-sm">
+                  Pour continuer à profiter de toutes les fonctionnalités et conserver vos souvenirs, 
+                  choisissez un forfait ci-dessous:
+                </p>
+
+                {/* Plan Options */}
+                <div className="space-y-3">
+                  {/* Base Plan */}
+                  <div 
+                    className="border-2 border-stone-200 rounded-xl p-4 cursor-pointer hover:border-stone-300 transition-all"
+                    onClick={() => {
+                      setUserPlan("base");
+                      setShowTrialExpiredModal(false);
+                    }}
+                    data-testid="trial-expired-base"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-bold text-stone-800">De base</h3>
+                        <p className="text-xs text-stone-500">1 Go de stockage photos</p>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-xl font-bold text-stone-800">Gratuit</span>
+                      </div>
+                    </div>
+                    <div className="mt-2 flex items-center gap-1 text-amber-600 text-xs">
+                      <AlertTriangle size={12} />
+                      <span>Stockage limité, pas de vidéos</span>
+                    </div>
+                  </div>
+
+                  {/* Premium Plan */}
+                  <div 
+                    className="border-2 border-primary rounded-xl p-4 cursor-pointer bg-primary/5 hover:bg-primary/10 transition-all relative"
+                    onClick={() => {
+                      setSelectedProduct({ name: "Abonnement Premium", price: "1,99 $" });
+                      setShowTrialExpiredModal(false);
+                      setShowCheckout(true);
+                    }}
+                    data-testid="trial-expired-premium"
+                  >
+                    <div className="absolute -top-2 -right-2 bg-primary text-white text-[10px] px-2 py-0.5 rounded-full font-medium">
+                      Populaire
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-bold text-stone-800 flex items-center gap-2">
+                          Premium <Crown size={14} className="text-primary" />
+                        </h3>
+                        <p className="text-xs text-stone-500">2 Go vidéos + photos illimitées</p>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-xl font-bold text-primary">1,99 $</span>
+                        <span className="text-xs text-stone-500">/mois</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Platine Plan */}
+                  <div 
+                    className="border-2 border-amber-400 rounded-xl p-4 cursor-pointer bg-amber-50 hover:bg-amber-100 transition-all"
+                    onClick={() => {
+                      setSelectedProduct({ name: "Abonnement Platine", price: "4,99 $" });
+                      setShowTrialExpiredModal(false);
+                      setShowCheckout(true);
+                    }}
+                    data-testid="trial-expired-platine"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-bold text-stone-800 flex items-center gap-2">
+                          Platine <Sparkles size={14} className="text-amber-500" />
+                        </h3>
+                        <p className="text-xs text-stone-500">5 Go vidéos + photos illimitées</p>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-xl font-bold text-amber-600">4,99 $</span>
+                        <span className="text-xs text-stone-500">/mois</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-[10px] text-stone-400 text-center">
+                  Annulez à tout moment. Vos données sont sauvegardées.
                 </p>
               </div>
             </motion.div>

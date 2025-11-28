@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Plus, Minus, Image as ImageIcon, Mic, Video, MoreHorizontal, Calendar, Share2, BookOpen, Printer, CheckCircle, Bell, QrCode, Baby, LogOut, Settings, User, Sparkles, ShoppingBag, FolderHeart, Trash2, Crown, Mail, Phone, MapPin, UserPlus, Users, Edit2, CreditCard, X, Lock, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Minus, Image as ImageIcon, Mic, Video, MoreHorizontal, Calendar, Share2, BookOpen, Printer, CheckCircle, Bell, QrCode, Baby, LogOut, Settings, User, Sparkles, ShoppingBag, FolderHeart, Trash2, Crown, Mail, Phone, MapPin, UserPlus, Users, Edit2, CreditCard, X, Lock, Search, Clock, AlertTriangle, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
 import {
@@ -27,6 +27,24 @@ export default function Prototype() {
   const babyName = typeof window !== "undefined" ? localStorage.getItem("babyName") || "Léo" : "Léo";
 
   const [userPlan, setUserPlan] = useState<"base" | "premium" | "platine">("base");
+  
+  const [trialDaysLeft, setTrialDaysLeft] = useState(() => {
+    if (typeof window !== "undefined") {
+      const trialStart = localStorage.getItem("trialStartDate");
+      if (!trialStart) {
+        localStorage.setItem("trialStartDate", new Date().toISOString());
+        return 14;
+      }
+      const startDate = new Date(trialStart);
+      const now = new Date();
+      const diffTime = now.getTime() - startDate.getTime();
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      return Math.max(0, 14 - diffDays);
+    }
+    return 14;
+  });
+  const isTrialActive = trialDaysLeft > 0;
+  
   const [userInfo, setUserInfo] = useState(() => {
     if (typeof window !== "undefined") {
       return {
@@ -280,6 +298,46 @@ export default function Prototype() {
           {activeTab === 'order' ? (
             // Order/Commander options - Plans with benefits
             <div className="p-4 space-y-4 pb-24">
+              {/* Trial Banner */}
+              {isTrialActive && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-4 mb-4 text-white shadow-lg"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                      <Gift size={20} className="text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-bold text-sm">Essai Premium GRATUIT</h4>
+                      <p className="text-xs text-white/90">Il vous reste {trialDaysLeft} jour{trialDaysLeft > 1 ? 's' : ''} d'essai Premium</p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold">{trialDaysLeft}</div>
+                      <div className="text-[10px] text-white/80">jours</div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+              
+              {/* Video Storage Warning */}
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4"
+              >
+                <div className="flex items-start gap-2">
+                  <AlertTriangle size={16} className="text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs text-amber-800 font-medium">Important concernant les vidéos</p>
+                    <p className="text-[10px] text-amber-700 mt-1">
+                      Les vidéos consomment beaucoup d'espace. Si vous téléversez des vidéos pendant l'essai Premium et choisissez ensuite l'option De base (1 Go), votre espace sera rapidement épuisé.
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+              
               <div className="mb-4">
                 <h3 className="text-sm font-bold text-stone-800 mb-1">Nos forfaits</h3>
                 <p className="text-xs text-stone-500">Choisissez le forfait qui vous convient</p>
@@ -793,6 +851,23 @@ export default function Prototype() {
           ) : activeTab === 'account' ? (
             // Account tab
             <div className="p-4 space-y-4 pb-24 overflow-y-auto">
+              {/* Trial Banner in Account */}
+              {isTrialActive && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-3 text-white shadow-lg"
+                >
+                  <div className="flex items-center gap-3">
+                    <Gift size={18} className="text-white" />
+                    <div className="flex-1">
+                      <p className="text-xs font-bold">Essai Premium - {trialDaysLeft} jour{trialDaysLeft > 1 ? 's' : ''} restant{trialDaysLeft > 1 ? 's' : ''}</p>
+                    </div>
+                    <Clock size={16} className="text-white/80" />
+                  </div>
+                </motion.div>
+              )}
+              
               {/* Profile Header */}
               <div className="bg-white rounded-2xl shadow-sm border border-stone-100 p-4">
                 <div className="flex items-center gap-4">

@@ -47,6 +47,11 @@ export default function Home() {
                 Disponible au Canada & Europe
               </div>
               
+              <div className="inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 text-white text-sm font-bold shadow-lg ml-2">
+                <span className="mr-2">🎁</span>
+                14 jours d'essai Premium GRATUIT
+              </div>
+              
               <h1 className="text-5xl lg:text-7xl font-serif font-bold text-stone-900 leading-[1.1]">
                 Le livre de naissance <br/>
                 <span className="text-primary italic">réinventé.</span>
@@ -190,7 +195,14 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <h2 className="text-4xl font-serif font-bold text-stone-900 mb-4">Une formule pour chaque famille</h2>
-            <p className="text-lg text-stone-600">Commencez gratuitement, évoluez selon vos souvenirs.</p>
+            <p className="text-lg text-stone-600 mb-4">Commencez gratuitement, évoluez selon vos souvenirs.</p>
+            <div className="inline-flex items-center px-6 py-3 rounded-2xl bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold shadow-lg">
+              <span className="text-2xl mr-3">🎁</span>
+              <div className="text-left">
+                <p className="text-lg">14 jours d'essai Premium GRATUIT</p>
+                <p className="text-sm font-normal opacity-90">Testez toutes les fonctionnalités sans engagement</p>
+              </div>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">

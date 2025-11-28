@@ -247,80 +247,123 @@ export default function Prototype() {
             // Order/Commander options
             <div className="p-4 space-y-4 pb-24">
               <div className="mb-4">
-                <h3 className="text-sm font-bold text-stone-800 mb-1">Choisir un format</h3>
-                <p className="text-xs text-stone-500">Seules les pages complétées seront imprimées</p>
+                <h3 className="text-sm font-bold text-stone-800 mb-1">Charte de prix</h3>
+                <p className="text-xs text-stone-500">Livre couverture souple - 50 pages</p>
+              </div>
+
+              {/* Price Chart Header */}
+              <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-2xl p-4 mb-2">
+                <div className="flex items-center gap-2 mb-2">
+                  <Crown size={20} className="text-amber-500" />
+                  <h4 className="font-bold text-stone-800 text-sm">Choisissez votre forfait</h4>
+                </div>
+                <p className="text-xs text-stone-600">Seules les pages complétées seront imprimées</p>
               </div>
               
-              {/* 8x11 Hardcover */}
+              {/* Base Plan */}
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                className={`bg-white rounded-2xl shadow-sm border-2 overflow-hidden hover:shadow-md transition-all cursor-pointer ${userPlan === 'base' ? 'border-primary' : 'border-stone-100'}`}
               >
                 <div className="p-4">
                   <div className="flex items-start gap-4">
-                    <div className="w-16 h-20 bg-gradient-to-b from-primary/20 to-stone-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <span className="text-[10px] font-bold text-stone-600">8x11</span>
+                    <div className="w-16 h-20 bg-gradient-to-b from-stone-200 to-stone-100 rounded-lg flex flex-col items-center justify-center flex-shrink-0">
+                      <BookOpen size={20} className="text-stone-600 mb-1" />
+                      <span className="text-[8px] font-bold text-stone-500">SOUPLE</span>
                     </div>
                     <div className="flex-1">
-                      <h4 className="font-bold text-stone-800 text-sm">Couverture Rigide</h4>
-                      <p className="text-xs text-stone-500 mt-1">Reliure premium avec couverture rigide</p>
-                      <div className="flex items-center gap-3 mt-3">
-                        <span className="text-xs font-medium text-primary">54,75 $</span>
-                        <Button size="sm" className="h-6 text-xs">Commander</Button>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-bold text-stone-800 text-sm">Forfait de base</h4>
+                        {userPlan === 'base' && (
+                          <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">Votre forfait</span>
+                        )}
+                      </div>
+                      <p className="text-xs text-stone-500 mt-1">Livre couverture souple 50 pages</p>
+                      <div className="flex items-center justify-between mt-3">
+                        <span className="text-lg font-bold text-stone-800">43,24 $</span>
+                        <Button size="sm" className="h-8 text-xs px-4" data-testid="button-order-base">
+                          Commander
+                        </Button>
                       </div>
                     </div>
                   </div>
                 </div>
               </motion.div>
 
-              {/* 8x11 Softcover */}
+              {/* Premium Plan */}
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                className={`bg-white rounded-2xl shadow-sm border-2 overflow-hidden hover:shadow-md transition-all cursor-pointer ${userPlan === 'premium' ? 'border-blue-400' : 'border-stone-100'}`}
               >
                 <div className="p-4">
                   <div className="flex items-start gap-4">
-                    <div className="w-16 h-20 bg-gradient-to-b from-secondary/20 to-stone-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <span className="text-[10px] font-bold text-stone-600">8x11</span>
+                    <div className="w-16 h-20 bg-gradient-to-b from-blue-200 to-blue-100 rounded-lg flex flex-col items-center justify-center flex-shrink-0">
+                      <Crown size={20} className="text-blue-600 mb-1" />
+                      <span className="text-[8px] font-bold text-blue-600">PREMIUM</span>
                     </div>
                     <div className="flex-1">
-                      <h4 className="font-bold text-stone-800 text-sm">Couverture Souple</h4>
-                      <p className="text-xs text-stone-500 mt-1">Reliure pratique avec couverture souple</p>
-                      <div className="flex items-center gap-3 mt-3">
-                        <span className="text-xs font-medium text-primary">43,24 $</span>
-                        <Button size="sm" className="h-6 text-xs">Commander</Button>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-bold text-stone-800 text-sm">Abonnement Premium</h4>
+                        {userPlan === 'premium' && (
+                          <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">Votre forfait</span>
+                        )}
+                      </div>
+                      <p className="text-xs text-stone-500 mt-1">Livre couverture souple 50 pages + avantages</p>
+                      <div className="flex items-center justify-between mt-3">
+                        <span className="text-lg font-bold text-blue-700">67,12 $</span>
+                        <Button size="sm" className="h-8 text-xs px-4 bg-blue-600 hover:bg-blue-700" data-testid="button-order-premium">
+                          Commander
+                        </Button>
                       </div>
                     </div>
                   </div>
                 </div>
               </motion.div>
 
-              {/* E-Book option */}
+              {/* Platine Plan */}
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                className={`relative bg-gradient-to-r from-amber-50 to-amber-100/50 rounded-2xl shadow-sm border-2 overflow-hidden hover:shadow-md transition-all cursor-pointer ${userPlan === 'platine' ? 'border-amber-400' : 'border-amber-200'}`}
               >
+                <div className="absolute top-0 right-0 bg-amber-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl">
+                  POPULAIRE
+                </div>
                 <div className="p-4">
                   <div className="flex items-start gap-4">
-                    <div className="w-16 h-20 bg-gradient-to-b from-blue-100 to-stone-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <BookOpen size={24} className="text-blue-600" />
+                    <div className="w-16 h-20 bg-gradient-to-b from-amber-300 to-amber-200 rounded-lg flex flex-col items-center justify-center flex-shrink-0">
+                      <Crown size={20} className="text-amber-700 mb-1" />
+                      <span className="text-[8px] font-bold text-amber-700">PLATINE</span>
                     </div>
                     <div className="flex-1">
-                      <h4 className="font-bold text-stone-800 text-sm">E-Book avec QR codes</h4>
-                      <p className="text-xs text-stone-500 mt-1">Version numérique avec vidéos intégrées</p>
-                      <div className="flex items-center gap-3 mt-3">
-                        <span className="text-xs font-medium text-primary">19,99 $</span>
-                        <Button size="sm" className="h-6 text-xs">Commander</Button>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-bold text-stone-800 text-sm">Abonnement Platine</h4>
+                        {userPlan === 'platine' && (
+                          <span className="text-[10px] bg-amber-200 text-amber-800 px-2 py-0.5 rounded-full font-medium">Votre forfait</span>
+                        )}
+                      </div>
+                      <p className="text-xs text-stone-500 mt-1">Livre couverture souple 50 pages + tous les avantages</p>
+                      <div className="flex items-center justify-between mt-3">
+                        <span className="text-lg font-bold text-amber-700">103,12 $</span>
+                        <Button size="sm" className="h-8 text-xs px-4 bg-amber-600 hover:bg-amber-700" data-testid="button-order-platine">
+                          Commander
+                        </Button>
                       </div>
                     </div>
                   </div>
                 </div>
               </motion.div>
+
+              {/* Info Note */}
+              <div className="bg-stone-50 rounded-xl p-3 mt-4">
+                <p className="text-xs text-stone-500 text-center">
+                  Les prix incluent l'impression et la livraison standard au Canada
+                </p>
+              </div>
             </div>
           ) : activeTab === 'inspiration' ? (
             // Inspiration tab

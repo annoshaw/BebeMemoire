@@ -544,8 +544,8 @@ export default function Prototype() {
                 <div className="grid grid-cols-3 gap-2">
                   {[
                     { id: "base", label: "De base", price: "Gratuit", color: "stone" },
-                    { id: "premium", label: "Premium", price: "9,99$/mois", color: "blue" },
-                    { id: "platine", label: "Platine", price: "19,99$/mois", color: "amber" },
+                    { id: "premium", label: "Premium", price: "1,99$/mois", color: "blue" },
+                    { id: "platine", label: "Platine", price: "4,99$/mois", color: "amber" },
                   ].map((plan) => (
                     <button
                       key={plan.id}

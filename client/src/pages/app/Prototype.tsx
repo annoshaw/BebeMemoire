@@ -1505,13 +1505,13 @@ export default function Prototype() {
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.3 }}
-                    className="flex-shrink-0 w-28 cursor-pointer"
+                    className="flex-shrink-0 w-20 cursor-pointer flex flex-col items-center justify-center"
                     data-testid="dashboard-add-book"
                   >
-                    <div className="w-28 h-36 rounded-xl bg-primary flex flex-col items-center justify-center mb-2 hover:bg-primary/90 transition-all shadow-lg shadow-primary/30">
-                      <Plus size={28} className="text-white" />
+                    <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center mb-2 hover:bg-primary/90 transition-all shadow-lg shadow-primary/30">
+                      <Plus size={24} className="text-white" />
                     </div>
-                    <p className="text-xs font-medium text-stone-800 text-center">Nouveau livre</p>
+                    <p className="text-[10px] font-medium text-stone-600 text-center leading-tight">Nouveau<br/>livre</p>
                   </motion.div>
                 </div>
               </div>

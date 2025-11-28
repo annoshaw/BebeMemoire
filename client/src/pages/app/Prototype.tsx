@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, Plus, Image as ImageIcon, Mic, Video, MoreHorizontal, Calendar, Share2, BookOpen, Printer, CheckCircle, Bell, QrCode, Baby, LogOut, Settings, User } from "lucide-react";
+import { ChevronLeft, Plus, Image as ImageIcon, Mic, Video, MoreHorizontal, Calendar, Share2, BookOpen, Printer, CheckCircle, Bell, QrCode, Baby, LogOut, Settings, User, Sparkles, ShoppingBag, FolderHeart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
 import {
@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export default function Prototype() {
-  const [activeTab, setActiveTab] = useState("timeline");
+  const [activeTab, setActiveTab] = useState("creations");
   const [showNotification, setShowNotification] = useState(true);
   const [, setLocation] = useLocation();
   
@@ -166,8 +166,8 @@ export default function Prototype() {
           </div>
 
           {/* Content based on active tab */}
-          {activeTab === 'print' ? (
-            // Print format options
+          {activeTab === 'order' ? (
+            // Order/Commander options
             <div className="p-4 space-y-4 pb-24">
               <div className="mb-4">
                 <h3 className="text-sm font-bold text-stone-800 mb-1">Choisir un format</h3>
@@ -220,6 +220,107 @@ export default function Prototype() {
                   </div>
                 </div>
               </motion.div>
+
+              {/* E-Book option */}
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+              >
+                <div className="p-4">
+                  <div className="flex items-start gap-4">
+                    <div className="w-16 h-20 bg-gradient-to-b from-blue-100 to-stone-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <BookOpen size={24} className="text-blue-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-bold text-stone-800 text-sm">E-Book avec QR codes</h4>
+                      <p className="text-xs text-stone-500 mt-1">Version numérique avec vidéos intégrées</p>
+                      <div className="flex items-center gap-3 mt-3">
+                        <span className="text-xs font-medium text-primary">19,99 $</span>
+                        <Button size="sm" className="h-6 text-xs">Commander</Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          ) : activeTab === 'inspiration' ? (
+            // Inspiration tab
+            <div className="p-4 space-y-4 pb-24">
+              <div className="mb-4">
+                <h3 className="text-sm font-bold text-stone-800 mb-1">Pages d'inspiration</h3>
+                <p className="text-xs text-stone-500">Ajoutez ces pages spéciales à votre livre</p>
+              </div>
+              
+              {[
+                { title: "Annonce de grossesse", desc: "Partagez la grande nouvelle", icon: "🤰", color: "from-pink-100" },
+                { title: "Échographie", desc: "Les premiers aperçus", icon: "🔊", color: "from-purple-100" },
+                { title: "Révélation du sexe", desc: "Fille ou garçon?", icon: "🎀", color: "from-blue-100" },
+                { title: "Baby Shower", desc: "Célébrez avec vos proches", icon: "🎉", color: "from-yellow-100" },
+                { title: "Chambre de bébé", desc: "Le nid douillet", icon: "🛏️", color: "from-green-100" },
+                { title: "Lettre à bébé", desc: "Vos mots d'amour", icon: "💌", color: "from-red-100" },
+              ].map((item, idx) => (
+                <motion.div 
+                  key={item.title}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                  className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                >
+                  <div className="p-4">
+                    <div className="flex items-center gap-4">
+                      <div className={`w-12 h-12 bg-gradient-to-b ${item.color} to-stone-50 rounded-xl flex items-center justify-center`}>
+                        <span className="text-xl">{item.icon}</span>
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-bold text-stone-800 text-sm">{item.title}</h4>
+                        <p className="text-xs text-stone-500">{item.desc}</p>
+                      </div>
+                      <Button size="sm" variant="outline" className="h-8 text-xs">
+                        <Plus size={14} className="mr-1" /> Ajouter
+                      </Button>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          ) : activeTab === 'account' ? (
+            // Account tab
+            <div className="p-4 space-y-4 pb-24">
+              <div className="bg-white rounded-2xl shadow-sm border border-stone-100 p-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+                    <User size={28} className="text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-stone-800">Famille Dupond-Martin</h3>
+                    <p className="text-xs text-stone-500">famille@example.com</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden">
+                <button className="w-full p-4 flex items-center gap-3 hover:bg-stone-50 transition-colors border-b border-stone-100">
+                  <User size={18} className="text-stone-600" />
+                  <span className="text-sm font-medium text-stone-800">Mon Profil</span>
+                </button>
+                <button className="w-full p-4 flex items-center gap-3 hover:bg-stone-50 transition-colors border-b border-stone-100">
+                  <Bell size={18} className="text-stone-600" />
+                  <span className="text-sm font-medium text-stone-800">Notifications</span>
+                </button>
+                <button className="w-full p-4 flex items-center gap-3 hover:bg-stone-50 transition-colors border-b border-stone-100">
+                  <Settings size={18} className="text-stone-600" />
+                  <span className="text-sm font-medium text-stone-800">Paramètres</span>
+                </button>
+                <button 
+                  className="w-full p-4 flex items-center gap-3 hover:bg-red-50 transition-colors text-red-600"
+                  onClick={() => setLocation("/")}
+                >
+                  <LogOut size={18} />
+                  <span className="text-sm font-medium">Déconnexion</span>
+                </button>
+              </div>
             </div>
           ) : (
             // Timeline Feed
@@ -323,22 +424,37 @@ export default function Prototype() {
 
         {/* Bottom Navigation */}
         <div className="h-16 bg-white border-t border-stone-100 flex items-center justify-around px-2 relative z-20">
-          <button className={`p-2 flex flex-col items-center gap-1 ${activeTab === 'timeline' ? 'text-primary' : 'text-stone-400'}`} onClick={() => setActiveTab('timeline')}>
-            <BookOpen size={20} />
-            <span className="text-[10px] font-medium">Livre</span>
+          <button 
+            className={`p-2 flex flex-col items-center gap-1 ${activeTab === 'creations' ? 'text-primary' : 'text-stone-400'}`} 
+            onClick={() => setActiveTab('creations')}
+            data-testid="nav-creations"
+          >
+            <FolderHeart size={20} />
+            <span className="text-[10px] font-medium">Mes créations</span>
           </button>
-          <button className={`p-2 flex flex-col items-center gap-1 ${activeTab === 'media' ? 'text-primary' : 'text-stone-400'}`} onClick={() => setActiveTab('media')}>
-            <ImageIcon size={20} />
-            <span className="text-[10px] font-medium">Média</span>
+          <button 
+            className={`p-2 flex flex-col items-center gap-1 ${activeTab === 'inspiration' ? 'text-primary' : 'text-stone-400'}`} 
+            onClick={() => setActiveTab('inspiration')}
+            data-testid="nav-inspiration"
+          >
+            <Sparkles size={20} />
+            <span className="text-[10px] font-medium">Inspiration</span>
           </button>
-          <div className="w-8"></div> {/* Spacer for FAB */}
-          <button className={`p-2 flex flex-col items-center gap-1 ${activeTab === 'print' ? 'text-primary' : 'text-stone-400'}`} onClick={() => setActiveTab('print')}>
-            <Printer size={20} />
-            <span className="text-[10px] font-medium">Imprimer</span>
+          <button 
+            className={`p-2 flex flex-col items-center gap-1 ${activeTab === 'order' ? 'text-primary' : 'text-stone-400'}`} 
+            onClick={() => setActiveTab('order')}
+            data-testid="nav-order"
+          >
+            <ShoppingBag size={20} />
+            <span className="text-[10px] font-medium">Commander</span>
           </button>
-          <button className={`p-2 flex flex-col items-center gap-1 ${activeTab === 'share' ? 'text-primary' : 'text-stone-400'}`} onClick={() => setActiveTab('share')}>
-            <Share2 size={20} />
-            <span className="text-[10px] font-medium">Partage</span>
+          <button 
+            className={`p-2 flex flex-col items-center gap-1 ${activeTab === 'account' ? 'text-primary' : 'text-stone-400'}`} 
+            onClick={() => setActiveTab('account')}
+            data-testid="nav-account"
+          >
+            <User size={20} />
+            <span className="text-[10px] font-medium">Compte</span>
           </button>
         </div>
 

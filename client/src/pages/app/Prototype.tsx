@@ -1092,12 +1092,23 @@ export default function Prototype() {
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       onClick={() => setPaymentMethod("card")}
-                      className={`p-3 rounded-xl border-2 flex items-center justify-center gap-2 transition-all ${
+                      className={`p-3 rounded-xl border-2 flex flex-col items-center justify-center gap-1 transition-all ${
                         paymentMethod === "card" ? "border-primary bg-primary/5" : "border-stone-200"
                       }`}
                     >
-                      <CreditCard size={18} className={paymentMethod === "card" ? "text-primary" : "text-stone-500"} />
-                      <span className={`text-sm font-medium ${paymentMethod === "card" ? "text-primary" : "text-stone-600"}`}>Carte</span>
+                      <div className="flex items-center gap-1">
+                        <svg viewBox="0 0 48 48" className="w-8 h-5">
+                          <rect fill="#1A1F71" x="2" y="14" width="44" height="20" rx="2"/>
+                          <polygon fill="#F7B600" points="20,17 28,17 28,31 20,31"/>
+                          <circle fill="#EB001B" cx="18" cy="24" r="6"/>
+                          <circle fill="#F79E1B" cx="30" cy="24" r="6"/>
+                        </svg>
+                        <svg viewBox="0 0 48 48" className="w-8 h-5">
+                          <rect fill="#1A1F71" x="2" y="14" width="44" height="20" rx="2"/>
+                          <text x="24" y="27" fontSize="10" fill="#FFF" textAnchor="middle" fontWeight="bold" fontStyle="italic">VISA</text>
+                        </svg>
+                      </div>
+                      <span className={`text-xs font-medium ${paymentMethod === "card" ? "text-primary" : "text-stone-600"}`}>Carte</span>
                     </button>
                     <button
                       onClick={() => setPaymentMethod("paypal")}

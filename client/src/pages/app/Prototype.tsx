@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Plus, Minus, Image as ImageIcon, Mic, Video, MoreHorizontal, Calendar, Share2, BookOpen, Printer, CheckCircle, Bell, QrCode, Baby, LogOut, Settings, User, Sparkles, ShoppingBag, FolderHeart, Trash2, Crown, Mail, Phone, MapPin, UserPlus, Users, Edit2, CreditCard, X, Lock, Search, Clock, AlertTriangle, Gift } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Minus, Image as ImageIcon, Mic, Video, MoreHorizontal, Calendar, Share2, BookOpen, Printer, CheckCircle, Bell, QrCode, Baby, LogOut, Settings, User, Sparkles, ShoppingBag, FolderHeart, Trash2, Crown, Mail, Phone, MapPin, UserPlus, Users, Edit2, CreditCard, X, Lock, Search, Clock, AlertTriangle, Gift, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import type { Book } from "@shared/schema";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +27,44 @@ export default function Prototype() {
   ]);
   
   const babyName = typeof window !== "undefined" ? localStorage.getItem("babyName") || "Léo" : "Léo";
+  
+  const queryClient = useQueryClient();
+  const [activeBookId, setActiveBookId] = useState<string | null>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("activeBookId");
+    }
+    return null;
+  });
+  
+  const { data: booksData, isLoading: booksLoading } = useQuery<{ books: Book[] }>({
+    queryKey: ["/api/books"],
+    queryFn: async () => {
+      const response = await fetch("/api/books", { credentials: "include" });
+      if (!response.ok) return { books: [] };
+      return response.json();
+    },
+  });
+  
+  const userBooks = booksData?.books || [];
+  const activeBook = userBooks.find(b => b.id === activeBookId) || userBooks[0];
+  
+  const setActiveBookMutation = useMutation({
+    mutationFn: async (bookId: string) => {
+      localStorage.setItem("activeBookId", bookId);
+      setActiveBookId(bookId);
+      const book = userBooks.find(b => b.id === bookId);
+      if (book) {
+        localStorage.setItem("babyName", book.childName);
+        localStorage.setItem("babyStatus", book.babyStatus || "");
+        localStorage.setItem("babyGender", book.babyGender || "");
+        if (book.birthDate) {
+          localStorage.setItem("babyDate", book.birthDate.toString().split("T")[0]);
+          localStorage.setItem("babyBirthDate", book.birthDate.toString().split("T")[0]);
+        }
+      }
+      return bookId;
+    },
+  });
 
   const [userPlan, setUserPlan] = useState<"base" | "premium" | "platine">("base");
   
@@ -1445,7 +1485,7 @@ export default function Prototype() {
                     <div className="flex items-center gap-4">
                       <div className="w-16 h-20 rounded-lg overflow-hidden shadow-md">
                         <img 
-                          src="https://images.unsplash.com/photo-1544126566-475d8528f69f?q=80&w=800&auto=format&fit=crop" 
+                          src={activeBook?.coverImage || "https://images.unsplash.com/photo-1544126566-475d8528f69f?q=80&w=800&auto=format&fit=crop"} 
                           className="w-full h-full object-cover" 
                           alt="Couverture"
                         />
@@ -1455,7 +1495,7 @@ export default function Prototype() {
                           <BookOpen size={14} className="text-primary" />
                           <span className="text-[10px] text-primary font-medium uppercase tracking-wide">En cours</span>
                         </div>
-                        <h4 className="font-bold text-stone-800">L'histoire de {babyName}</h4>
+                        <h4 className="font-bold text-stone-800">L'histoire de {activeBook?.childName || babyName}</h4>
                         <p className="text-xs text-stone-500">{bookPages.length} pages • {Math.round((bookPages.length / 50) * 100)}% complet</p>
                       </div>
                       <ChevronRight size={20} className="text-stone-400" />
@@ -1468,38 +1508,52 @@ export default function Prototype() {
               <div className="px-4 mb-4">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="text-xs font-bold text-stone-700 uppercase tracking-wide">Mes livres</h4>
-                  <button className="text-xs text-primary font-medium">Voir tout</button>
+                  <span className="text-xs text-stone-500">{userBooks.length} livre{userBooks.length > 1 ? 's' : ''}</span>
                 </div>
                 <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
-                  {[
-                    { id: 1, title: `L'histoire de ${babyName}`, image: "https://images.unsplash.com/photo-1544126566-475d8528f69f?q=80&w=800&auto=format&fit=crop", pages: bookPages.length, isActive: true },
-                    { id: 2, title: "Première année", image: "https://images.unsplash.com/photo-1519689680058-324335c77eba?q=80&w=800&auto=format&fit=crop", pages: 12, isActive: false },
-                    { id: 3, title: "Grossesse", image: "https://images.unsplash.com/photo-1493894473891-10fc1e5dbd22?q=80&w=800&auto=format&fit=crop", pages: 8, isActive: false },
-                  ].map((book, idx) => (
-                    <motion.div 
-                      key={book.id}
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: idx * 0.1 }}
-                      className={`flex-shrink-0 w-28 cursor-pointer group ${book.isActive ? '' : 'opacity-60'}`}
-                      data-testid={`dashboard-book-${book.id}`}
-                    >
-                      <div className={`w-28 h-36 rounded-xl overflow-hidden shadow-md mb-2 relative ${book.isActive ? 'ring-2 ring-primary' : ''}`}>
-                        <img 
-                          src={book.image} 
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform" 
-                          alt={book.title}
-                        />
-                        {book.isActive && (
-                          <div className="absolute top-2 right-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
-                            <CheckCircle size={12} className="text-white" />
+                  {booksLoading ? (
+                    <div className="flex items-center justify-center w-full py-8">
+                      <Loader2 className="animate-spin text-primary" size={24} />
+                    </div>
+                  ) : userBooks.length > 0 ? (
+                    userBooks.map((book, idx) => {
+                      const isActive = activeBook?.id === book.id;
+                      const bookImage = book.coverImage || "https://images.unsplash.com/photo-1544126566-475d8528f69f?q=80&w=800&auto=format&fit=crop";
+                      return (
+                        <motion.div 
+                          key={book.id}
+                          initial={{ opacity: 0, x: 20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: idx * 0.1 }}
+                          onClick={() => setActiveBookMutation.mutate(book.id)}
+                          className={`flex-shrink-0 w-28 cursor-pointer group ${isActive ? '' : 'opacity-60 hover:opacity-80'}`}
+                          data-testid={`dashboard-book-${book.id}`}
+                        >
+                          <div className={`w-28 h-36 rounded-xl overflow-hidden shadow-md mb-2 relative ${isActive ? 'ring-2 ring-primary' : ''}`}>
+                            <img 
+                              src={bookImage} 
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform" 
+                              alt={book.childName}
+                            />
+                            {isActive && (
+                              <div className="absolute top-2 right-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                                <CheckCircle size={12} className="text-white" />
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                      <p className="text-xs font-medium text-stone-800 line-clamp-1">{book.title}</p>
-                      <p className="text-[10px] text-stone-500">{book.pages} pages</p>
-                    </motion.div>
-                  ))}
+                          <p className="text-xs font-medium text-stone-800 line-clamp-1">{book.childName}</p>
+                          <p className="text-[10px] text-stone-500">
+                            {book.birthDate ? new Date(book.birthDate).toLocaleDateString('fr-CA', { month: 'short', year: 'numeric' }) : 'En cours'}
+                          </p>
+                        </motion.div>
+                      );
+                    })
+                  ) : (
+                    <div className="text-center py-6 w-full">
+                      <Baby size={32} className="text-stone-300 mx-auto mb-2" />
+                      <p className="text-xs text-stone-500">Aucun livre créé</p>
+                    </div>
+                  )}
                   {/* Add new book button */}
                   <Link href="/onboarding">
                     <motion.div 

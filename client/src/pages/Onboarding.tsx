@@ -1,13 +1,16 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, Baby, Bell, BellRing } from "lucide-react";
+import { ChevronLeft, Baby, Bell, BellRing, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link } from "wouter";
+import { useLocation } from "wouter";
 import { Switch } from "@/components/ui/switch";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 type OnboardingStep = "baby-status" | "date" | "gender" | "name" | "notifications" | "complete";
 
 export default function Onboarding() {
+  const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
   const [step, setStep] = useState<OnboardingStep>("baby-status");
   const [babyStatus, setBabyStatus] = useState<"born" | "expecting" | "adoption" | null>(null);
   const [babyDate, setBabyDate] = useState("");
@@ -15,6 +18,55 @@ export default function Onboarding() {
   const [babyName, setBabyName] = useState("");
   const [notificationFrequency, setNotificationFrequency] = useState<string>("");
   const [pushNotificationsEnabled, setPushNotificationsEnabled] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+
+  const createBookMutation = useMutation({
+    mutationFn: async (bookData: {
+      childName: string;
+      babyStatus: string;
+      babyGender: string;
+      birthDate: string;
+    }) => {
+      const response = await fetch("/api/books", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          childName: bookData.childName,
+          babyStatus: bookData.babyStatus,
+          babyGender: bookData.babyGender,
+          birthDate: new Date(bookData.birthDate).toISOString(),
+        }),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to create book");
+      }
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/books"] });
+      localStorage.setItem("activeBookId", data.book.id);
+      localStorage.setItem("babyName", babyName);
+      localStorage.setItem("babyStatus", babyStatus || "");
+      localStorage.setItem("babyDate", babyDate);
+      localStorage.setItem("babyBirthDate", babyDate);
+      localStorage.setItem("babyGender", babyGender);
+      localStorage.setItem("notificationFrequency", notificationFrequency);
+      localStorage.setItem("pushNotificationsEnabled", String(pushNotificationsEnabled));
+      setLocation("/app");
+    },
+    onError: (error) => {
+      console.error("Error creating book:", error);
+      localStorage.setItem("babyName", babyName);
+      localStorage.setItem("babyStatus", babyStatus || "");
+      localStorage.setItem("babyDate", babyDate);
+      localStorage.setItem("babyBirthDate", babyDate);
+      localStorage.setItem("babyGender", babyGender);
+      localStorage.setItem("notificationFrequency", notificationFrequency);
+      localStorage.setItem("pushNotificationsEnabled", String(pushNotificationsEnabled));
+      setLocation("/app");
+    },
+  });
 
   const handleNext = () => {
     if (step === "baby-status" && babyStatus) setStep("date");
@@ -39,6 +91,18 @@ export default function Onboarding() {
     return false;
   };
 
+  const handleCreateBook = async () => {
+    if (!babyName || !babyStatus || !babyDate || !babyGender) return;
+    
+    setIsCreating(true);
+    createBookMutation.mutate({
+      childName: babyName,
+      babyStatus: babyStatus,
+      babyGender: babyGender,
+      birthDate: babyDate,
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-stone-50 via-stone-50 to-secondary/5 flex flex-col">
       {/* Header */}
@@ -50,7 +114,7 @@ export default function Onboarding() {
         >
           <ChevronLeft className="text-stone-700" />
         </button>
-        <h1 className="text-xl font-serif font-bold text-stone-900">Bienvenue à Memoria</h1>
+        <h1 className="text-xl font-serif font-bold text-stone-900">Nouveau livre</h1>
         <div className="w-10" />
       </div>
 
@@ -398,25 +462,21 @@ export default function Onboarding() {
                 </p>
               </div>
 
-              <Link href="/app">
-                <Button 
-                  onClick={() => {
-                    if (babyName && babyStatus && babyDate && babyGender) {
-                      localStorage.setItem("babyName", babyName);
-                      localStorage.setItem("babyStatus", babyStatus);
-                      localStorage.setItem("babyDate", babyDate);
-                      localStorage.setItem("babyBirthDate", babyDate);
-                      localStorage.setItem("babyGender", babyGender);
-                      localStorage.setItem("notificationFrequency", notificationFrequency);
-                      localStorage.setItem("pushNotificationsEnabled", String(pushNotificationsEnabled));
-                    }
-                  }}
-                  className="w-full bg-primary hover:bg-primary/90 text-white h-12 rounded-lg" 
-                  data-testid="button-start-app"
-                >
-                  Commencer à créer le livre
-                </Button>
-              </Link>
+              <Button 
+                onClick={handleCreateBook}
+                disabled={isCreating}
+                className="w-full bg-primary hover:bg-primary/90 text-white h-12 rounded-lg" 
+                data-testid="button-start-app"
+              >
+                {isCreating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Création en cours...
+                  </>
+                ) : (
+                  "Commencer à créer le livre"
+                )}
+              </Button>
             </motion.div>
           )}
         </AnimatePresence>

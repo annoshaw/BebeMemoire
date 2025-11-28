@@ -52,10 +52,15 @@ export const books = pgTable("books", {
   birthHeight: text("birth_height"),
   birthTime: text("birth_time"),
   familyName: text("family_name"),
+  babyStatus: text("baby_status"), // born, expecting, adoption
+  babyGender: text("baby_gender"),
+  isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const insertBookSchema = createInsertSchema(books).omit({
+export const insertBookSchema = createInsertSchema(books, {
+  birthDate: z.coerce.date().optional(),
+}).omit({
   id: true,
   createdAt: true,
 });

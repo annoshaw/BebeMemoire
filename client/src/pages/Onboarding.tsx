@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, Baby } from "lucide-react";
+import { ChevronLeft, Baby, Bell, BellRing } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
+import { Switch } from "@/components/ui/switch";
 
-type OnboardingStep = "baby-status" | "date" | "gender" | "name" | "complete";
+type OnboardingStep = "baby-status" | "date" | "gender" | "name" | "notifications" | "complete";
 
 export default function Onboarding() {
   const [step, setStep] = useState<OnboardingStep>("baby-status");
@@ -12,16 +13,19 @@ export default function Onboarding() {
   const [babyDate, setBabyDate] = useState("");
   const [babyGender, setBabyGender] = useState<string>("");
   const [babyName, setBabyName] = useState("");
+  const [notificationFrequency, setNotificationFrequency] = useState<string>("");
+  const [pushNotificationsEnabled, setPushNotificationsEnabled] = useState(false);
 
   const handleNext = () => {
     if (step === "baby-status" && babyStatus) setStep("date");
     else if (step === "date" && babyDate) setStep("gender");
     else if (step === "gender" && babyGender) setStep("name");
-    else if (step === "name" && babyName) setStep("complete");
+    else if (step === "name" && babyName) setStep("notifications");
+    else if (step === "notifications" && notificationFrequency) setStep("complete");
   };
 
   const handleBack = () => {
-    const steps: OnboardingStep[] = ["baby-status", "date", "gender", "name", "complete"];
+    const steps: OnboardingStep[] = ["baby-status", "date", "gender", "name", "notifications", "complete"];
     const currentIdx = steps.indexOf(step);
     if (currentIdx > 0) setStep(steps[currentIdx - 1]);
   };
@@ -31,6 +35,7 @@ export default function Onboarding() {
     if (step === "date") return babyDate !== "";
     if (step === "gender") return babyGender !== "";
     if (step === "name") return babyName.trim() !== "";
+    if (step === "notifications") return notificationFrequency !== "";
     return false;
   };
 
@@ -52,11 +57,11 @@ export default function Onboarding() {
       {/* Progress Bar */}
       <div className="px-4 lg:px-6 py-4">
         <div className="flex gap-2">
-          {["baby-status", "date", "gender", "name", "complete"].map((s, idx) => (
+          {["baby-status", "date", "gender", "name", "notifications", "complete"].map((s, idx) => (
             <div
               key={s}
               className={`h-1 flex-1 rounded-full transition-all ${
-                ["baby-status", "date", "gender", "name", "complete"].indexOf(step) >= idx
+                ["baby-status", "date", "gender", "name", "notifications", "complete"].indexOf(step) >= idx
                   ? "bg-primary"
                   : "bg-stone-200"
               }`}
@@ -284,7 +289,88 @@ export default function Onboarding() {
             </motion.div>
           )}
 
-          {/* Step 5: Complete */}
+          {/* Step 5: Notifications */}
+          {step === "notifications" && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="max-w-lg mx-auto w-full space-y-8"
+            >
+              <div className="text-center">
+                <div className="flex justify-center mb-4">
+                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+                    <BellRing size={32} className="text-primary" />
+                  </div>
+                </div>
+                <h2 className="text-3xl font-serif font-bold text-stone-900 mb-2">
+                  Restez connecté
+                </h2>
+                <p className="text-stone-600">
+                  À quelle fréquence souhaitez-vous recevoir des rappels pour capturer des moments?
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                {[
+                  { value: "daily", label: "Chaque jour", description: "Un rappel quotidien" },
+                  { value: "weekly", label: "Chaque semaine", description: "Un rappel hebdomadaire" },
+                  { value: "biweekly", label: "Chaque 2 semaines", description: "Deux fois par mois" },
+                  { value: "monthly", label: "Chaque mois", description: "Un rappel mensuel" },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => setNotificationFrequency(option.value)}
+                    className={`w-full p-4 rounded-lg border-2 transition-all text-left ${
+                      notificationFrequency === option.value
+                        ? "border-primary bg-primary/5"
+                        : "border-stone-200 hover:border-primary"
+                    }`}
+                    data-testid={`button-notification-${option.value}`}
+                  >
+                    <p className="font-bold text-stone-900">{option.label}</p>
+                    <p className="text-sm text-stone-600">{option.description}</p>
+                  </button>
+                ))}
+              </div>
+
+              <div className="bg-stone-50 rounded-lg p-4 border border-stone-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Bell size={20} className="text-stone-600" />
+                    <div>
+                      <p className="font-medium text-stone-900">Notifications push</p>
+                      <p className="text-sm text-stone-600">Recevez des alertes sur votre appareil</p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={pushNotificationsEnabled}
+                    onCheckedChange={setPushNotificationsEnabled}
+                    data-testid="switch-push-notifications"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  onClick={handleBack}
+                  variant="outline"
+                  className="flex-1 h-12 rounded-lg border-stone-200"
+                >
+                  Retour
+                </Button>
+                <Button
+                  onClick={handleNext}
+                  disabled={!canContinue()}
+                  className="flex-1 bg-primary hover:bg-primary/90 text-white h-12 rounded-lg disabled:opacity-50"
+                >
+                  Continuer
+                </Button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Step 6: Complete */}
           {step === "complete" && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -320,6 +406,8 @@ export default function Onboarding() {
                       localStorage.setItem("babyStatus", babyStatus);
                       localStorage.setItem("babyDate", babyDate);
                       localStorage.setItem("babyGender", babyGender);
+                      localStorage.setItem("notificationFrequency", notificationFrequency);
+                      localStorage.setItem("pushNotificationsEnabled", String(pushNotificationsEnabled));
                     }
                   }}
                   className="w-full bg-primary hover:bg-primary/90 text-white h-12 rounded-lg" 

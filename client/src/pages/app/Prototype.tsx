@@ -1320,16 +1320,185 @@ export default function Prototype() {
               </button>
             </div>
           ) : (
-            // Mes créations - Book View
-            <div className="flex-1 flex flex-col pb-20">
-              {/* Book Title */}
-              <div className="p-4 text-center">
-                <h3 className="text-lg font-serif font-bold text-stone-800">L'histoire de {babyName}</h3>
-                <p className="text-xs text-stone-500">Page {currentPage + 1} sur {bookPages.length}</p>
+            // Mes créations - Dashboard View
+            <div className="flex-1 flex flex-col pb-20 overflow-y-auto">
+              {/* Dashboard Header */}
+              <div className="p-4 pb-2">
+                <h3 className="text-sm font-bold text-stone-800 mb-1">Tableau de bord</h3>
+                <p className="text-xs text-stone-500">Accédez rapidement à vos créations</p>
               </div>
 
-              {/* Book Page Display */}
-              <div className="flex-1 px-4 relative">
+              {/* Quick Access - Current Book */}
+              <div className="px-4 mb-4">
+                <Link href="/app/edit">
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-2xl p-4 border border-primary/20 cursor-pointer hover:shadow-md transition-all"
+                    data-testid="dashboard-current-book"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-16 h-20 rounded-lg overflow-hidden shadow-md">
+                        <img 
+                          src="https://images.unsplash.com/photo-1544126566-475d8528f69f?q=80&w=800&auto=format&fit=crop" 
+                          className="w-full h-full object-cover" 
+                          alt="Couverture"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <BookOpen size={14} className="text-primary" />
+                          <span className="text-[10px] text-primary font-medium uppercase tracking-wide">En cours</span>
+                        </div>
+                        <h4 className="font-bold text-stone-800">L'histoire de {babyName}</h4>
+                        <p className="text-xs text-stone-500">{bookPages.length} pages • {Math.round((bookPages.length / 50) * 100)}% complet</p>
+                      </div>
+                      <ChevronRight size={20} className="text-stone-400" />
+                    </div>
+                  </motion.div>
+                </Link>
+              </div>
+
+              {/* Recent Books Section */}
+              <div className="px-4 mb-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-xs font-bold text-stone-700 uppercase tracking-wide">Mes livres</h4>
+                  <button className="text-xs text-primary font-medium">Voir tout</button>
+                </div>
+                <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
+                  {[
+                    { id: 1, title: `L'histoire de ${babyName}`, image: "https://images.unsplash.com/photo-1544126566-475d8528f69f?q=80&w=800&auto=format&fit=crop", pages: bookPages.length, isActive: true },
+                    { id: 2, title: "Première année", image: "https://images.unsplash.com/photo-1519689680058-324335c77eba?q=80&w=800&auto=format&fit=crop", pages: 12, isActive: false },
+                    { id: 3, title: "Grossesse", image: "https://images.unsplash.com/photo-1493894473891-10fc1e5dbd22?q=80&w=800&auto=format&fit=crop", pages: 8, isActive: false },
+                  ].map((book, idx) => (
+                    <motion.div 
+                      key={book.id}
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.1 }}
+                      className={`flex-shrink-0 w-28 cursor-pointer group ${book.isActive ? '' : 'opacity-60'}`}
+                      data-testid={`dashboard-book-${book.id}`}
+                    >
+                      <div className={`w-28 h-36 rounded-xl overflow-hidden shadow-md mb-2 relative ${book.isActive ? 'ring-2 ring-primary' : ''}`}>
+                        <img 
+                          src={book.image} 
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform" 
+                          alt={book.title}
+                        />
+                        {book.isActive && (
+                          <div className="absolute top-2 right-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                            <CheckCircle size={12} className="text-white" />
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-xs font-medium text-stone-800 line-clamp-1">{book.title}</p>
+                      <p className="text-[10px] text-stone-500">{book.pages} pages</p>
+                    </motion.div>
+                  ))}
+                  {/* Add new book button */}
+                  <motion.div 
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3 }}
+                    className="flex-shrink-0 w-28 cursor-pointer"
+                    data-testid="dashboard-add-book"
+                  >
+                    <div className="w-28 h-36 rounded-xl border-2 border-dashed border-stone-300 flex flex-col items-center justify-center mb-2 hover:border-primary hover:bg-primary/5 transition-all">
+                      <Plus size={24} className="text-stone-400 mb-1" />
+                      <span className="text-[10px] text-stone-400">Nouveau</span>
+                    </div>
+                  </motion.div>
+                </div>
+              </div>
+
+              {/* Recent Activity Section */}
+              <div className="px-4 mb-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-xs font-bold text-stone-700 uppercase tracking-wide">Activité récente</h4>
+                  <Clock size={14} className="text-stone-400" />
+                </div>
+                <div className="space-y-2">
+                  {[
+                    { id: 1, action: "Photo ajoutée", title: "Première rencontre", time: "Il y a 2h", icon: ImageIcon, color: "bg-blue-100 text-blue-600" },
+                    { id: 2, action: "Étape importante", title: "Premiers pas", time: "Hier", icon: Calendar, color: "bg-primary/10 text-primary" },
+                    { id: 3, action: "Vidéo ajoutée", title: "Fous rires dans le bain", time: "Il y a 3 jours", icon: Video, color: "bg-purple-100 text-purple-600" },
+                    { id: 4, action: "Page créée", title: "Naissance", time: "Il y a 1 semaine", icon: BookOpen, color: "bg-secondary/10 text-secondary" },
+                  ].map((activity, idx) => (
+                    <motion.div 
+                      key={activity.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.05 }}
+                      className="flex items-center gap-3 p-3 bg-white rounded-xl border border-stone-100 hover:shadow-sm transition-shadow cursor-pointer"
+                      data-testid={`activity-${activity.id}`}
+                    >
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${activity.color}`}>
+                        <activity.icon size={18} />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-xs text-stone-500">{activity.action}</p>
+                        <p className="text-sm font-medium text-stone-800">{activity.title}</p>
+                      </div>
+                      <span className="text-[10px] text-stone-400">{activity.time}</span>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Quick Actions */}
+              <div className="px-4 mb-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-xs font-bold text-stone-700 uppercase tracking-wide">Actions rapides</h4>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <motion.button 
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.1 }}
+                    className="flex flex-col items-center gap-2 p-4 bg-white rounded-xl border border-stone-100 hover:shadow-md hover:border-primary/30 transition-all"
+                    data-testid="quick-action-photo"
+                  >
+                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                      <ImageIcon size={18} className="text-blue-600" />
+                    </div>
+                    <span className="text-[10px] font-medium text-stone-600">Photo</span>
+                  </motion.button>
+                  <motion.button 
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.15 }}
+                    className="flex flex-col items-center gap-2 p-4 bg-white rounded-xl border border-stone-100 hover:shadow-md hover:border-primary/30 transition-all"
+                    data-testid="quick-action-video"
+                  >
+                    <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                      <Video size={18} className="text-purple-600" />
+                    </div>
+                    <span className="text-[10px] font-medium text-stone-600">Vidéo</span>
+                  </motion.button>
+                  <motion.button 
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.2 }}
+                    className="flex flex-col items-center gap-2 p-4 bg-white rounded-xl border border-stone-100 hover:shadow-md hover:border-primary/30 transition-all"
+                    data-testid="quick-action-milestone"
+                  >
+                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                      <Calendar size={18} className="text-primary" />
+                    </div>
+                    <span className="text-[10px] font-medium text-stone-600">Étape</span>
+                  </motion.button>
+                </div>
+              </div>
+
+              {/* Book Preview Section - Smaller */}
+              <div className="px-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-xs font-bold text-stone-700 uppercase tracking-wide">Aperçu du livre</h4>
+                  <span className="text-[10px] text-stone-400">Page {currentPage + 1}/{bookPages.length}</span>
+                </div>
+
+                {/* Book Page Display */}
+                <div className="relative mb-4">
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={currentPage}
@@ -1445,6 +1614,7 @@ export default function Prototype() {
                 >
                   <ChevronRight size={24} className="text-stone-700" />
                 </button>
+                </div>
               </div>
 
               {/* Page Controls */}

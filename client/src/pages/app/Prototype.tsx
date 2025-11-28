@@ -185,6 +185,47 @@ export default function Prototype() {
   });
   const isTrialActive = trialDaysLeft > 0;
   const [showTrialExpiredModal, setShowTrialExpiredModal] = useState(false);
+  const [showBookSelectorModal, setShowBookSelectorModal] = useState(false);
+  const [pendingInspirationPage, setPendingInspirationPage] = useState<{title: string, icon: string, color: string} | null>(null);
+  
+  const [pageAddedFeedback, setPageAddedFeedback] = useState<{bookName: string, pageTitle: string} | null>(null);
+  
+  const handleAddInspirationPage = (page: {title: string, icon: string, color: string}) => {
+    if (userBooks.length > 1) {
+      setPendingInspirationPage(page);
+      setShowBookSelectorModal(true);
+    } else if (userBooks.length === 1) {
+      addPageToBook(page, userBooks[0].id);
+    } else {
+      addPageToBook(page, null);
+    }
+  };
+  
+  const addPageToBook = (page: {title: string, icon: string, color: string}, bookId: string | null) => {
+    const targetBook = bookId ? userBooks.find(b => b.id === bookId) : activeBook;
+    const bookName = targetBook?.childName || "votre livre";
+    
+    if (bookId && bookId !== activeBookId) {
+      setActiveBookMutation.mutate(bookId);
+    }
+    
+    const newPage = {
+      id: Date.now(),
+      type: "inspiration",
+      title: page.title,
+      desc: "Ajoutez votre contenu ici...",
+      date: "",
+      image: "",
+      stats: undefined
+    };
+    setBookPages([...bookPages, newPage as any]);
+    setCurrentPage(bookPages.length);
+    setShowBookSelectorModal(false);
+    setPendingInspirationPage(null);
+    
+    setPageAddedFeedback({ bookName, pageTitle: page.title });
+    setTimeout(() => setPageAddedFeedback(null), 3000);
+  };
   
   useEffect(() => {
     if (!isTrialActive && userPlan === "base") {
@@ -923,7 +964,13 @@ export default function Prototype() {
                           <div className="flex-1">
                             <h4 className="font-bold text-stone-800 text-sm">{subPage.title}</h4>
                           </div>
-                          <Button size="sm" variant="outline" className="h-8 text-xs" data-testid={`button-add-subpage-${subPage.id}`}>
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="h-8 text-xs" 
+                            data-testid={`button-add-subpage-${subPage.id}`}
+                            onClick={() => handleAddInspirationPage(subPage)}
+                          >
                             <Plus size={14} className="mr-1" /> Ajouter
                           </Button>
                         </div>
@@ -971,7 +1018,13 @@ export default function Prototype() {
                           <div className="flex-1">
                             <h4 className="font-bold text-stone-800 text-sm">{subPage.title}</h4>
                           </div>
-                          <Button size="sm" variant="outline" className="h-8 text-xs" data-testid={`button-add-echo-${subPage.id}`}>
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="h-8 text-xs" 
+                            data-testid={`button-add-echo-${subPage.id}`}
+                            onClick={() => handleAddInspirationPage(subPage)}
+                          >
                             <Plus size={14} className="mr-1" /> Ajouter
                           </Button>
                         </div>
@@ -1020,7 +1073,13 @@ export default function Prototype() {
                           <div className="flex-1">
                             <h4 className="font-bold text-stone-800 text-sm">{subPage.title}</h4>
                           </div>
-                          <Button size="sm" variant="outline" className="h-8 text-xs" data-testid={`button-add-event-${subPage.id}`}>
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="h-8 text-xs" 
+                            data-testid={`button-add-event-${subPage.id}`}
+                            onClick={() => handleAddInspirationPage(subPage)}
+                          >
                             <Plus size={14} className="mr-1" /> Ajouter
                           </Button>
                         </div>
@@ -1074,7 +1133,13 @@ export default function Prototype() {
                           <div className="flex-1">
                             <h4 className="font-bold text-stone-800 text-sm">{subPage.title}</h4>
                           </div>
-                          <Button size="sm" variant="outline" className="h-8 text-xs" data-testid={`button-add-famille-${subPage.id}`}>
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="h-8 text-xs" 
+                            data-testid={`button-add-famille-${subPage.id}`}
+                            onClick={() => handleAddInspirationPage(subPage)}
+                          >
                             <Plus size={14} className="mr-1" /> Ajouter
                           </Button>
                         </div>
@@ -2459,6 +2524,143 @@ export default function Prototype() {
                 <p className="text-[10px] text-stone-400 text-center">
                   Annulez à tout moment. Vos données sont sauvegardées.
                 </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Page Added Feedback Toast */}
+      <AnimatePresence>
+        {pageAddedFeedback && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className="fixed bottom-24 left-4 right-4 z-[70] pointer-events-none"
+          >
+            <div className="bg-primary text-white rounded-xl p-4 shadow-lg flex items-center gap-3 max-w-md mx-auto">
+              <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                <CheckCircle size={18} className="text-white" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium">Page ajoutée</p>
+                <p className="text-xs text-white/80">
+                  "{pageAddedFeedback.pageTitle}" dans le livre de {pageAddedFeedback.bookName}
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Book Selector Modal */}
+      <AnimatePresence>
+        {showBookSelectorModal && pendingInspirationPage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-[60] flex items-end sm:items-center justify-center"
+            onClick={() => {
+              setShowBookSelectorModal(false);
+              setPendingInspirationPage(null);
+            }}
+          >
+            <motion.div
+              initial={{ y: 100, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 100, opacity: 0 }}
+              className="bg-white rounded-t-3xl sm:rounded-2xl w-full max-w-md overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="p-4 border-b border-stone-100">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-bold text-stone-800">Choisir un livre</h3>
+                    <p className="text-xs text-stone-500">Dans quel livre ajouter cette page ?</p>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      setShowBookSelectorModal(false);
+                      setPendingInspirationPage(null);
+                    }}
+                    className="p-2 hover:bg-stone-100 rounded-full transition-colors"
+                    data-testid="button-close-book-selector"
+                  >
+                    <X size={20} className="text-stone-500" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Page being added */}
+              <div className="px-4 py-3 bg-stone-50 border-b border-stone-100">
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 bg-gradient-to-b ${pendingInspirationPage.color} to-stone-50 rounded-xl flex items-center justify-center`}>
+                    <span className="text-lg">{pendingInspirationPage.icon}</span>
+                  </div>
+                  <div>
+                    <p className="text-xs text-stone-500">Page à ajouter</p>
+                    <p className="text-sm font-medium text-stone-800">{pendingInspirationPage.title}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Book List */}
+              <div className="p-4 space-y-2 max-h-[50vh] overflow-y-auto">
+                {userBooks.map((book) => {
+                  const bookImage = book.coverImage || "https://images.unsplash.com/photo-1544126566-475d8528f69f?q=80&w=800&auto=format&fit=crop";
+                  const isActive = activeBook?.id === book.id;
+                  
+                  return (
+                    <motion.div
+                      key={book.id}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => addPageToBook(pendingInspirationPage, book.id)}
+                      className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all ${
+                        isActive 
+                          ? 'bg-primary/10 border-2 border-primary' 
+                          : 'bg-white border border-stone-200 hover:border-primary/50'
+                      }`}
+                      data-testid={`book-selector-${book.id}`}
+                    >
+                      <div className="w-10 h-12 rounded-lg overflow-hidden shadow-sm">
+                        <img 
+                          src={bookImage} 
+                          className="w-full h-full object-cover" 
+                          alt={book.childName}
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-stone-800">{book.childName}</p>
+                        <p className="text-xs text-stone-500">
+                          {book.birthDate ? new Date(book.birthDate).toLocaleDateString('fr-CA', { month: 'short', year: 'numeric' }) : 'En cours'}
+                        </p>
+                      </div>
+                      {isActive && (
+                        <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
+                          <CheckCircle size={14} className="text-white" />
+                        </div>
+                      )}
+                    </motion.div>
+                  );
+                })}
+              </div>
+
+              {/* Cancel Button */}
+              <div className="p-4 border-t border-stone-100">
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => {
+                    setShowBookSelectorModal(false);
+                    setPendingInspirationPage(null);
+                  }}
+                  data-testid="button-cancel-book-selector"
+                >
+                  Annuler
+                </Button>
               </div>
             </motion.div>
           </motion.div>

@@ -1092,32 +1092,39 @@ export default function Prototype() {
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       onClick={() => setPaymentMethod("card")}
-                      className={`p-3 rounded-xl border-2 flex flex-col items-center justify-center gap-1 transition-all ${
+                      className={`p-4 rounded-xl border-2 flex flex-col items-center justify-center gap-2 transition-all ${
                         paymentMethod === "card" ? "border-primary bg-primary/5" : "border-stone-200"
                       }`}
                     >
-                      <div className="flex items-center gap-1">
-                        <svg viewBox="0 0 48 48" className="w-8 h-5">
-                          <rect fill="#1A1F71" x="2" y="14" width="44" height="20" rx="2"/>
-                          <polygon fill="#F7B600" points="20,17 28,17 28,31 20,31"/>
-                          <circle fill="#EB001B" cx="18" cy="24" r="6"/>
-                          <circle fill="#F79E1B" cx="30" cy="24" r="6"/>
+                      <div className="flex items-center gap-2">
+                        <svg viewBox="0 0 50 30" className="w-12 h-8">
+                          <rect fill="#FFF" x="0" y="0" width="50" height="30" rx="3" stroke="#E5E5E5"/>
+                          <circle fill="#EB001B" cx="18" cy="15" r="9"/>
+                          <circle fill="#F79E1B" cx="32" cy="15" r="9"/>
+                          <path fill="#FF5F00" d="M25,7.5 C27.5,9.5 29,12 29,15 C29,18 27.5,20.5 25,22.5 C22.5,20.5 21,18 21,15 C21,12 22.5,9.5 25,7.5Z"/>
                         </svg>
-                        <svg viewBox="0 0 48 48" className="w-8 h-5">
-                          <rect fill="#1A1F71" x="2" y="14" width="44" height="20" rx="2"/>
-                          <text x="24" y="27" fontSize="10" fill="#FFF" textAnchor="middle" fontWeight="bold" fontStyle="italic">VISA</text>
+                        <svg viewBox="0 0 50 30" className="w-12 h-8">
+                          <rect fill="#1A1F71" x="0" y="0" width="50" height="30" rx="3"/>
+                          <text x="25" y="19" fontSize="12" fill="#FFF" textAnchor="middle" fontWeight="bold" fontStyle="italic">VISA</text>
                         </svg>
                       </div>
-                      <span className={`text-xs font-medium ${paymentMethod === "card" ? "text-primary" : "text-stone-600"}`}>Carte</span>
+                      <span className={`text-xs font-medium ${paymentMethod === "card" ? "text-primary" : "text-stone-600"}`}>Carte de crédit</span>
                     </button>
                     <button
                       onClick={() => setPaymentMethod("paypal")}
-                      className={`p-3 rounded-xl border-2 flex items-center justify-center gap-2 transition-all ${
+                      className={`p-4 rounded-xl border-2 flex flex-col items-center justify-center gap-2 transition-all ${
                         paymentMethod === "paypal" ? "border-blue-500 bg-blue-50" : "border-stone-200"
                       }`}
                     >
-                      <span className={`text-lg ${paymentMethod === "paypal" ? "text-blue-600" : "text-stone-500"}`}>P</span>
-                      <span className={`text-sm font-medium ${paymentMethod === "paypal" ? "text-blue-600" : "text-stone-600"}`}>PayPal</span>
+                      <svg viewBox="0 0 80 30" className="w-16 h-8">
+                        <path fill="#003087" d="M29.5,7.5 C29.5,7.5 27,7.5 26.5,7.5 C26,7.5 25.5,7.8 25.3,8.3 L22,22 C22,22.2 22.1,22.4 22.3,22.4 L24.8,22.4 C25.1,22.4 25.3,22.2 25.4,21.9 L26.2,17.5 C26.3,17 26.7,16.7 27.2,16.7 L29,16.7 C32.5,16.7 34.5,14.8 35.1,11.5 C35.4,10 35.1,8.8 34.4,8 C33.5,7.1 32,7.5 29.5,7.5Z"/>
+                        <path fill="#003087" d="M30.2,11.8 C29.9,13.8 28.4,13.8 27,13.8 L26.2,13.8 L26.8,10.2 C26.8,10 27,9.8 27.2,9.8 L27.6,9.8 C28.6,9.8 29.5,9.8 30,10.4 C30.3,10.7 30.4,11.2 30.2,11.8Z"/>
+                        <path fill="#0070E0" d="M45.5,11.7 L43,11.7 C42.8,11.7 42.6,11.9 42.6,12.1 L42.5,12.7 L42.3,12.4 C41.7,11.5 40.3,11.2 38.9,11.2 C35.6,11.2 32.8,13.6 32.2,17 C31.9,18.7 32.3,20.3 33.2,21.4 C34,22.4 35.2,22.9 36.6,22.9 C39,22.9 40.3,21.4 40.3,21.4 L40.2,22 C40.2,22.2 40.3,22.4 40.5,22.4 L42.8,22.4 C43.1,22.4 43.4,22.2 43.5,21.9 L44.9,12.2 C44.9,12 44.8,11.7 45.5,11.7Z"/>
+                        <path fill="#0070E0" d="M41.2,17.1 C40.9,18.7 39.6,19.9 38,19.9 C37.2,19.9 36.5,19.6 36.1,19.1 C35.7,18.6 35.5,17.9 35.6,17.1 C35.9,15.5 37.2,14.3 38.8,14.3 C39.6,14.3 40.3,14.6 40.7,15.1 C41.1,15.6 41.3,16.3 41.2,17.1Z"/>
+                        <text x="55" y="18" fontSize="8" fill="#003087" fontWeight="bold">Pay</text>
+                        <text x="68" y="18" fontSize="8" fill="#0070E0" fontWeight="bold">Pal</text>
+                      </svg>
+                      <span className={`text-xs font-medium ${paymentMethod === "paypal" ? "text-blue-600" : "text-stone-600"}`}>PayPal</span>
                     </button>
                   </div>
                 </div>

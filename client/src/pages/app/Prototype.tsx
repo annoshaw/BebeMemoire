@@ -463,7 +463,7 @@ export default function Prototype() {
                     </div>
                     <div className="text-right">
                       <span className="text-lg font-bold text-stone-800">19,99 $</span>
-                      <p className="text-[10px] text-stone-400">50 pages</p>
+                      <p className="text-[10px] text-stone-400">+ 0,05$/page supp.</p>
                     </div>
                   </motion.div>
                 </div>

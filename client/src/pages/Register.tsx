@@ -30,6 +30,10 @@ const formSchema = z.object({
   gender: z.string({
     required_error: "Veuillez sélectionner une option",
   }),
+  phone: z.string().min(10, "Le numéro de téléphone doit avoir au moins 10 chiffres"),
+  country: z.string({
+    required_error: "Veuillez sélectionner un pays",
+  }),
 });
 
 export default function Register() {
@@ -43,6 +47,8 @@ export default function Register() {
       email: "",
       address: "",
       gender: "",
+      phone: "",
+      country: "",
     },
   });
 
@@ -154,6 +160,47 @@ export default function Register() {
                     <FormControl>
                       <Input placeholder="123 rue des Érables, Montréal, QC" {...field} />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Numéro de téléphone</FormLabel>
+                    <FormControl>
+                      <Input placeholder="+1 (555) 123-4567" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="country"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Pays</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Sélectionnez votre pays" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent side="top" sideOffset={8}>
+                        <SelectItem value="canada">Canada</SelectItem>
+                        <SelectItem value="france">France</SelectItem>
+                        <SelectItem value="united-states">États-Unis</SelectItem>
+                        <SelectItem value="belgium">Belgique</SelectItem>
+                        <SelectItem value="switzerland">Suisse</SelectItem>
+                        <SelectItem value="luxembourg">Luxembourg</SelectItem>
+                        <SelectItem value="other">Autre</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}

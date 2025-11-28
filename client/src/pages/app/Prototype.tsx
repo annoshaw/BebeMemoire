@@ -40,6 +40,7 @@ export default function Prototype() {
   const [showAddUser, setShowAddUser] = useState(false);
   const [newUserName, setNewUserName] = useState("");
   const [newUserEmail, setNewUserEmail] = useState("");
+  const [showAddPageMenu, setShowAddPageMenu] = useState(false);
 
   const addInvitedUser = () => {
     if (newUserName && newUserEmail) {
@@ -54,18 +55,24 @@ export default function Prototype() {
     setInvitedUsers(invitedUsers.filter(u => u.id !== id));
   };
 
-  const addPage = () => {
+  const addBasicPage = () => {
     const newPage = {
       id: Date.now(),
-      type: "empty",
-      title: `Nouvelle page ${bookPages.length}`,
-      desc: "Cliquez pour ajouter du contenu",
+      type: "basic",
+      title: `Nouvelle page`,
+      desc: "Ajoutez votre texte ici...",
       date: "",
       image: "",
       stats: undefined
     };
     setBookPages([...bookPages, newPage as any]);
     setCurrentPage(bookPages.length);
+    setShowAddPageMenu(false);
+  };
+
+  const goToInspiration = () => {
+    setActiveTab('inspiration');
+    setShowAddPageMenu(false);
   };
 
   const deletePage = () => {
@@ -610,6 +617,30 @@ export default function Prototype() {
                         <p className="text-sm text-stone-500 mb-4">{bookPages[currentPage].date}</p>
                         <p className="text-stone-600">{bookPages[currentPage].desc}</p>
                       </div>
+                    ) : bookPages[currentPage]?.type === "basic" ? (
+                      <div className="h-full flex flex-col bg-white">
+                        <div className="flex-1 bg-stone-100 flex items-center justify-center border-b border-stone-200">
+                          <button className="flex flex-col items-center gap-2 text-stone-400 hover:text-stone-600 transition-colors">
+                            <div className="w-16 h-16 border-2 border-dashed border-stone-300 rounded-xl flex items-center justify-center">
+                              <ImageIcon size={28} />
+                            </div>
+                            <span className="text-sm">Ajouter une photo</span>
+                          </button>
+                        </div>
+                        <div className="p-4 flex-1">
+                          <input 
+                            type="text"
+                            defaultValue={bookPages[currentPage].title}
+                            placeholder="Titre de la page"
+                            className="w-full text-lg font-bold text-stone-800 bg-transparent border-none outline-none mb-2 placeholder:text-stone-300"
+                          />
+                          <textarea
+                            defaultValue={bookPages[currentPage].desc}
+                            placeholder="Ajoutez votre texte ici..."
+                            className="w-full text-sm text-stone-600 bg-transparent border-none outline-none resize-none h-24 placeholder:text-stone-300"
+                          />
+                        </div>
+                      </div>
                     ) : (
                       <div className="h-full p-6 flex flex-col items-center justify-center text-center bg-stone-50">
                         <div className="w-16 h-16 bg-stone-200 rounded-full flex items-center justify-center mb-4">
@@ -666,15 +697,41 @@ export default function Prototype() {
                     />
                   ))}
                 </div>
-                <Button 
-                  size="sm" 
-                  onClick={addPage}
-                  className="h-10 px-4 gap-2"
-                  data-testid="button-add-page"
-                >
-                  <Plus size={16} />
-                  Ajouter
-                </Button>
+                <div className="relative">
+                  <Button 
+                    size="sm" 
+                    onClick={() => setShowAddPageMenu(!showAddPageMenu)}
+                    className="h-10 px-4 gap-2"
+                    data-testid="button-add-page"
+                  >
+                    <Plus size={16} />
+                    Ajouter
+                  </Button>
+                  {showAddPageMenu && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      className="absolute bottom-full mb-2 right-0 bg-white rounded-xl shadow-lg border border-stone-200 overflow-hidden min-w-[200px] z-50"
+                    >
+                      <button
+                        onClick={goToInspiration}
+                        className="w-full px-4 py-3 text-left text-sm font-medium text-stone-800 hover:bg-stone-50 flex items-center gap-3 border-b border-stone-100"
+                        data-testid="button-go-to-inspiration"
+                      >
+                        <Sparkles size={18} className="text-primary" />
+                        Aller à l'Inspiration
+                      </button>
+                      <button
+                        onClick={addBasicPage}
+                        className="w-full px-4 py-3 text-left text-sm font-medium text-stone-800 hover:bg-stone-50 flex items-center gap-3"
+                        data-testid="button-add-basic-page"
+                      >
+                        <ImageIcon size={18} className="text-secondary" />
+                        Page texte et photo
+                      </button>
+                    </motion.div>
+                  )}
+                </div>
               </div>
             </div>
           )}

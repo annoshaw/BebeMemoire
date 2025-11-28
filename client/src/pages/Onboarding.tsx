@@ -8,7 +8,7 @@ type OnboardingStep = "baby-status" | "date" | "gender" | "name" | "complete";
 
 export default function Onboarding() {
   const [step, setStep] = useState<OnboardingStep>("baby-status");
-  const [babyStatus, setBabyStatus] = useState<"born" | "expecting" | null>(null);
+  const [babyStatus, setBabyStatus] = useState<"born" | "expecting" | "adoption" | null>(null);
   const [babyDate, setBabyDate] = useState("");
   const [babyGender, setBabyGender] = useState<string>("");
   const [babyName, setBabyName] = useState("");
@@ -83,7 +83,7 @@ export default function Onboarding() {
                 <h2 className="text-3xl font-serif font-bold text-stone-900 mb-2">
                   L'aventure commence!
                 </h2>
-                <p className="text-stone-600">L'enfant est-il né ou à naître?</p>
+                <p className="text-stone-600">Quel est votre parcours?</p>
               </div>
 
               <div className="space-y-3">
@@ -112,6 +112,19 @@ export default function Onboarding() {
                   <p className="font-bold text-stone-900">À naître</p>
                   <p className="text-sm text-stone-600">Je prépare l'arrivée</p>
                 </button>
+
+                <button
+                  onClick={() => setBabyStatus("adoption")}
+                  className={`w-full p-4 rounded-lg border-2 transition-all ${
+                    babyStatus === "adoption"
+                      ? "border-primary bg-primary/5"
+                      : "border-stone-200 hover:border-primary"
+                  }`}
+                  data-testid="button-baby-adoption"
+                >
+                  <p className="font-bold text-stone-900">Adoption</p>
+                  <p className="text-sm text-stone-600">Notre histoire d'amour commence</p>
+                </button>
               </div>
 
               <Button
@@ -134,11 +147,13 @@ export default function Onboarding() {
             >
               <div>
                 <h2 className="text-3xl font-serif font-bold text-stone-900 mb-2">
-                  {babyStatus === "born" ? "Date de naissance" : "Date prévue d'accouchement"}
+                  {babyStatus === "born" ? "Date de naissance" : babyStatus === "adoption" ? "Date d'arrivée" : "Date prévue d'accouchement"}
                 </h2>
                 <p className="text-stone-600">
                   {babyStatus === "born"
                     ? "Quand est né votre bébé?"
+                    : babyStatus === "adoption"
+                    ? "Quand est-il/elle arrivé(e) dans votre famille?"
                     : "Quand est prévue l'arrivée?"}
                 </p>
               </div>
@@ -293,7 +308,7 @@ export default function Onboarding() {
                 </p>
                 <p className="text-sm">
                   <span className="font-bold">Statut:</span>{" "}
-                  {babyStatus === "born" ? "Né" : "À naître"}
+                  {babyStatus === "born" ? "Né" : babyStatus === "adoption" ? "Adopté" : "À naître"}
                 </p>
               </div>
 

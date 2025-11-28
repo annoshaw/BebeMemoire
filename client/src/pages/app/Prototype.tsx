@@ -658,16 +658,17 @@ export default function Prototype() {
                   </div>
                   
                   {[
-                    { id: 1, title: "Arbre généalogique", icon: "🌳", color: "from-green-100" },
-                    { id: 2, title: "Tes parents", icon: "👨‍👩", color: "from-pink-100" },
-                    { id: 3, title: "Tes grands-parents", icon: "👴👵", color: "from-amber-100" },
-                    { id: 4, title: "Ton/Tes oncle(s)", icon: "👨", color: "from-blue-100" },
-                    { id: 5, title: "Ta/Tes tante(s)", icon: "👩", color: "from-purple-100" },
-                    { id: 6, title: "Ton/Tes parrain(s)", icon: "🤵", color: "from-indigo-100" },
-                    { id: 7, title: "Ta/Tes marraine(s)", icon: "👸", color: "from-rose-100" },
-                    { id: 8, title: "Les cousin(e)s", icon: "👧👦", color: "from-cyan-100" },
-                    { id: 9, title: "Les amis qui sont devenus notre famille", icon: "💝", color: "from-red-100" },
-                    { id: 10, title: "Animaux de compagnie", icon: "🐾", color: "from-orange-100" },
+                    { id: 1, title: "Ta famille", icon: "👨‍👩‍👧‍👦", color: "from-teal-100" },
+                    { id: 2, title: "Arbre généalogique", icon: "🌳", color: "from-green-100" },
+                    { id: 3, title: "Tes parents", icon: "👨‍👩", color: "from-pink-100" },
+                    { id: 4, title: "Tes grands-parents", icon: "👴👵", color: "from-amber-100" },
+                    { id: 5, title: "Ton/Tes oncle(s)", icon: "👨", color: "from-blue-100" },
+                    { id: 6, title: "Ta/Tes tante(s)", icon: "👩", color: "from-purple-100" },
+                    { id: 7, title: "Ton/Tes parrain(s)", icon: "🤵", color: "from-indigo-100" },
+                    { id: 8, title: "Ta/Tes marraine(s)", icon: "👸", color: "from-rose-100" },
+                    { id: 9, title: "Les cousin(e)s", icon: "👧👦", color: "from-cyan-100" },
+                    { id: 10, title: "Les amis qui sont devenus notre famille", icon: "💝", color: "from-red-100" },
+                    { id: 11, title: "Animaux de compagnie", icon: "🐾", color: "from-orange-100" },
                   ].map((subPage, idx) => (
                     <motion.div 
                       key={subPage.id}

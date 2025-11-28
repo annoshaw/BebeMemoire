@@ -265,25 +265,30 @@ export default function Home() {
             
             <div className="order-1 lg:order-2 space-y-8">
               <h2 className="text-4xl font-serif font-bold text-stone-900">
-                Simple comme un jeu d'enfant.
+                Comment ça marche.
               </h2>
               
               <div className="space-y-8">
                 {[
                   {
                     step: "01",
-                    title: "Capturez l'instant",
-                    desc: "Une photo, une note vocale ou une anecdote rapide. Enregistrez le moment dès qu'il arrive."
+                    title: "Choisissez votre fréquence",
+                    desc: "Sélectionnez à quelle fréquence vous souhaitez recevoir des notifications push. Nous vous rappellerons les moments importants pour capturer des souvenirs."
                   },
                   {
                     step: "02",
-                    title: "Organisez sans effort",
-                    desc: "L'application trie chronologiquement vos souvenirs. Réorganisez, modifiez et embellissez quand vous avez le temps."
+                    title: "Capturez vos moments",
+                    desc: "Capturez les moments qui vous sont chers : photos, vidéos, anecdotes. Ajoutez-les à votre livre en un clic."
                   },
                   {
                     step: "03",
-                    title: "Partagez ou Imprimez",
-                    desc: "Partagez une version numérique avec la famille éloignée, ou commandez un livre d'art imprimé."
+                    title: "Personnalisez totalement",
+                    desc: "Enrichissez votre livre avec des pages d'inspiration : le moment où vous avez appris sa venue, le premier échographie, son gender reveal, son baby shower et bien plus."
+                  },
+                  {
+                    step: "04",
+                    title: "Commandez votre livre",
+                    desc: "Choisissez votre format : E-book pour partager instantanément, ou version imprimée avec photos développées et codes QR intégrés pour revivre vos vidéos."
                   }
                 ].map((item) => (
                   <div key={item.step} className="flex gap-6">

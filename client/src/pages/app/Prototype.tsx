@@ -104,6 +104,92 @@ export default function Prototype() {
   const [showNotificationInstructions, setShowNotificationInstructions] = useState(false);
   const [notificationStatus, setNotificationStatus] = useState<"default" | "granted" | "denied" | "unsupported">("default");
 
+  // Tutorial system
+  const [showTutorial, setShowTutorial] = useState(() => {
+    if (typeof window !== "undefined") {
+      return !localStorage.getItem("tutorialCompleted");
+    }
+    return true;
+  });
+  const [tutorialStep, setTutorialStep] = useState(0);
+  
+  const tutorialSteps = [
+    {
+      id: "welcome",
+      title: "Bienvenue sur Memoria!",
+      description: "Je vais vous guider à travers les fonctionnalités principales pour créer votre premier livre de souvenirs.",
+      icon: "👋",
+      target: null
+    },
+    {
+      id: "dashboard",
+      title: "Votre tableau de bord",
+      description: "Ici, vous voyez tous vos livres et votre activité récente. Cliquez sur un livre pour l'éditer.",
+      icon: "📊",
+      target: "dashboard"
+    },
+    {
+      id: "add-photo",
+      title: "Ajouter des souvenirs",
+      description: "Utilisez les boutons rapides pour ajouter des photos, vidéos ou étapes importantes à votre livre.",
+      icon: "📸",
+      target: "quick-actions"
+    },
+    {
+      id: "inspiration",
+      title: "Pages d'inspiration",
+      description: "Explorez notre bibliothèque de pages prêtes à l'emploi: annonce de grossesse, échographies, et plus encore!",
+      icon: "✨",
+      target: "inspiration"
+    },
+    {
+      id: "order",
+      title: "Commander votre livre",
+      description: "Une fois votre livre prêt, commandez-le en version imprimée ou numérique avec codes QR pour les vidéos!",
+      icon: "📖",
+      target: "order"
+    },
+    {
+      id: "complete",
+      title: "Vous êtes prêt!",
+      description: "Vous savez maintenant utiliser Memoria. Commencez à créer des souvenirs inoubliables!",
+      icon: "🎉",
+      target: null
+    }
+  ];
+
+  const nextTutorialStep = () => {
+    if (tutorialStep < tutorialSteps.length - 1) {
+      setTutorialStep(tutorialStep + 1);
+      // Navigate to relevant tab if needed
+      if (tutorialSteps[tutorialStep + 1].target === "inspiration") {
+        setActiveTab("inspiration");
+      } else if (tutorialSteps[tutorialStep + 1].target === "order") {
+        setActiveTab("order");
+      } else if (tutorialSteps[tutorialStep + 1].target === "dashboard" || tutorialSteps[tutorialStep + 1].target === "quick-actions") {
+        setActiveTab("creations");
+      }
+    } else {
+      completeTutorial();
+    }
+  };
+
+  const skipTutorial = () => {
+    completeTutorial();
+  };
+
+  const completeTutorial = () => {
+    setShowTutorial(false);
+    localStorage.setItem("tutorialCompleted", "true");
+  };
+
+  const restartTutorial = () => {
+    setTutorialStep(0);
+    setActiveTab("creations");
+    setShowTutorial(true);
+    localStorage.removeItem("tutorialCompleted");
+  };
+
   const handleEnableNotifications = async () => {
     if (!("Notification" in window)) {
       setNotificationStatus("unsupported");
@@ -1310,6 +1396,25 @@ export default function Prototype() {
                 </div>
               </div>
 
+              {/* Help Section */}
+              <div className="bg-white rounded-2xl shadow-sm border border-stone-100 p-4">
+                <h4 className="font-bold text-stone-800 text-sm mb-3">Aide</h4>
+                <button 
+                  className="w-full p-3 bg-primary/5 rounded-xl flex items-center gap-3 hover:bg-primary/10 transition-colors mb-2"
+                  onClick={restartTutorial}
+                  data-testid="button-restart-tutorial"
+                >
+                  <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                    <BookOpen size={18} className="text-primary" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-medium text-stone-800">Revoir le tutoriel</p>
+                    <p className="text-xs text-stone-500">Apprenez à utiliser l'application</p>
+                  </div>
+                  <ChevronRight size={16} className="text-stone-400" />
+                </button>
+              </div>
+
               {/* Logout Button */}
               <button 
                 className="w-full p-4 bg-white rounded-2xl shadow-sm border border-stone-100 flex items-center justify-center gap-2 hover:bg-red-50 transition-colors text-red-600"
@@ -2189,6 +2294,172 @@ export default function Prototype() {
                 <p className="text-[10px] text-stone-400 text-center">
                   Annulez à tout moment. Vos données sont sauvegardées.
                 </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Interactive Tutorial Modal */}
+      <AnimatePresence>
+        {showTutorial && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 z-[70] flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Progress Bar */}
+              <div className="h-1 bg-stone-100">
+                <motion.div 
+                  className="h-full bg-primary"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${((tutorialStep + 1) / tutorialSteps.length) * 100}%` }}
+                  transition={{ duration: 0.3 }}
+                />
+              </div>
+
+              {/* Tutorial Content */}
+              <div className="p-6 text-center">
+                {/* Step Indicator */}
+                <div className="flex justify-center gap-1.5 mb-6">
+                  {tutorialSteps.map((_, idx) => (
+                    <div 
+                      key={idx}
+                      className={`w-2 h-2 rounded-full transition-all ${
+                        idx === tutorialStep 
+                          ? 'bg-primary w-6' 
+                          : idx < tutorialStep 
+                            ? 'bg-primary' 
+                            : 'bg-stone-200'
+                      }`}
+                    />
+                  ))}
+                </div>
+
+                {/* Icon */}
+                <motion.div
+                  key={tutorialStep}
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: "spring", duration: 0.5 }}
+                  className="w-20 h-20 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-3xl flex items-center justify-center mx-auto mb-6"
+                >
+                  <span className="text-4xl">{tutorialSteps[tutorialStep].icon}</span>
+                </motion.div>
+
+                {/* Title & Description */}
+                <motion.div
+                  key={`content-${tutorialStep}`}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <h2 className="text-xl font-bold text-stone-800 mb-3">
+                    {tutorialSteps[tutorialStep].title}
+                  </h2>
+                  <p className="text-sm text-stone-600 leading-relaxed mb-6">
+                    {tutorialSteps[tutorialStep].description}
+                  </p>
+                </motion.div>
+
+                {/* Visual Hint for specific steps */}
+                {tutorialSteps[tutorialStep].target === "quick-actions" && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="flex justify-center gap-4 mb-6"
+                  >
+                    <div className="flex flex-col items-center gap-1 p-3 bg-blue-50 rounded-xl">
+                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                        <ImageIcon size={18} className="text-blue-600" />
+                      </div>
+                      <span className="text-[10px] text-blue-600 font-medium">Photo</span>
+                    </div>
+                    <div className="flex flex-col items-center gap-1 p-3 bg-purple-50 rounded-xl">
+                      <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                        <Video size={18} className="text-purple-600" />
+                      </div>
+                      <span className="text-[10px] text-purple-600 font-medium">Vidéo</span>
+                    </div>
+                    <div className="flex flex-col items-center gap-1 p-3 bg-primary/5 rounded-xl">
+                      <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                        <Calendar size={18} className="text-primary" />
+                      </div>
+                      <span className="text-[10px] text-primary font-medium">Étape</span>
+                    </div>
+                  </motion.div>
+                )}
+
+                {tutorialSteps[tutorialStep].target === "inspiration" && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="flex justify-center gap-2 mb-6 overflow-x-auto"
+                  >
+                    {["👨‍👩‍👧‍👦", "🤰", "🔊", "🎉"].map((emoji, idx) => (
+                      <div key={idx} className="flex-shrink-0 w-12 h-12 bg-stone-100 rounded-xl flex items-center justify-center">
+                        <span className="text-xl">{emoji}</span>
+                      </div>
+                    ))}
+                  </motion.div>
+                )}
+
+                {tutorialSteps[tutorialStep].target === "order" && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="flex justify-center gap-3 mb-6"
+                  >
+                    <div className="flex flex-col items-center p-3 bg-stone-50 rounded-xl">
+                      <Printer size={24} className="text-stone-600 mb-1" />
+                      <span className="text-[10px] text-stone-600 font-medium">Imprimé</span>
+                    </div>
+                    <div className="flex flex-col items-center p-3 bg-blue-50 rounded-xl">
+                      <QrCode size={24} className="text-blue-600 mb-1" />
+                      <span className="text-[10px] text-blue-600 font-medium">E-Book</span>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Buttons */}
+                <div className="flex gap-3">
+                  {tutorialStep === 0 ? (
+                    <button
+                      onClick={skipTutorial}
+                      className="flex-1 py-3 text-sm text-stone-500 hover:text-stone-700 transition-colors"
+                      data-testid="tutorial-skip"
+                    >
+                      Passer le tutoriel
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setTutorialStep(Math.max(0, tutorialStep - 1))}
+                      className="flex-1 py-3 text-sm text-stone-500 hover:text-stone-700 transition-colors"
+                      data-testid="tutorial-prev"
+                    >
+                      Précédent
+                    </button>
+                  )}
+                  <Button
+                    onClick={nextTutorialStep}
+                    className="flex-1 h-12 gap-2"
+                    data-testid="tutorial-next"
+                  >
+                    {tutorialStep === tutorialSteps.length - 1 ? (
+                      <>Commencer <CheckCircle size={16} /></>
+                    ) : (
+                      <>Suivant <ChevronRight size={16} /></>
+                    )}
+                  </Button>
+                </div>
               </div>
             </motion.div>
           </motion.div>

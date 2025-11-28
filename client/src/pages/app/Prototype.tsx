@@ -58,6 +58,7 @@ export default function Prototype() {
     cvv: ""
   });
   const [inspirationSearch, setInspirationSearch] = useState("");
+  const [selectedInspiration, setSelectedInspiration] = useState<string | null>(null);
 
   const handleSelectProduct = (name: string, price: string) => {
     setSelectedProduct({ name, price });
@@ -495,65 +496,125 @@ export default function Prototype() {
           ) : activeTab === 'inspiration' ? (
             // Inspiration tab
             <div className="p-4 space-y-4 pb-24">
-              <div className="mb-4">
-                <h3 className="text-sm font-bold text-stone-800 mb-1">Pages d'inspiration</h3>
-                <p className="text-xs text-stone-500">Ajoutez ces pages spéciales à votre livre</p>
-              </div>
-              
-              {/* Search Bar */}
-              <div className="relative">
-                <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
-                <input
-                  type="text"
-                  placeholder="Rechercher par mot-clé..."
-                  value={inspirationSearch}
-                  onChange={(e) => setInspirationSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-stone-200 bg-white focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-                  data-testid="input-inspiration-search"
-                />
-              </div>
-              
-              {[
-                { title: "Annonce de grossesse", desc: "Partagez la grande nouvelle", icon: "🤰", color: "from-pink-100", keywords: ["annonce", "grossesse", "nouvelle", "enceinte"] },
-                { title: "Échographie", desc: "Les premiers aperçus", icon: "🔊", color: "from-purple-100", keywords: ["échographie", "scan", "médical", "bébé"] },
-                { title: "Révélation du sexe", desc: "Fille ou garçon?", icon: "🎀", color: "from-blue-100", keywords: ["sexe", "révélation", "fille", "garçon", "gender"] },
-                { title: "Baby Shower", desc: "Célébrez avec vos proches", icon: "🎉", color: "from-yellow-100", keywords: ["baby shower", "fête", "célébration", "cadeau"] },
-                { title: "Chambre de bébé", desc: "Le nid douillet", icon: "🛏️", color: "from-green-100", keywords: ["chambre", "décoration", "nursery", "lit"] },
-                { title: "Lettre à bébé", desc: "Vos mots d'amour", icon: "💌", color: "from-red-100", keywords: ["lettre", "message", "amour", "souvenir"] },
-                { title: "Premier sourire", desc: "Ce moment inoubliable", icon: "😊", color: "from-orange-100", keywords: ["sourire", "premier", "joie", "émotion"] },
-                { title: "Premiers pas", desc: "Une grande étape", icon: "👣", color: "from-teal-100", keywords: ["pas", "marche", "étape", "développement"] },
-                { title: "Premier mot", desc: "Maman ou Papa?", icon: "💬", color: "from-indigo-100", keywords: ["mot", "parler", "langage", "maman", "papa"] },
-                { title: "Première dent", desc: "Un sourire tout neuf", icon: "🦷", color: "from-cyan-100", keywords: ["dent", "sourire", "bébé"] },
-              ].filter(item => {
-                if (!inspirationSearch.trim()) return true;
-                const searchLower = inspirationSearch.toLowerCase();
-                return item.title.toLowerCase().includes(searchLower) || 
-                       item.desc.toLowerCase().includes(searchLower) ||
-                       item.keywords.some(k => k.toLowerCase().includes(searchLower));
-              }).map((item, idx) => (
-                <motion.div 
-                  key={item.title}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.05 }}
-                  className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
-                >
-                  <div className="p-4">
-                    <div className="flex items-center gap-4">
-                      <div className={`w-12 h-12 bg-gradient-to-b ${item.color} to-stone-50 rounded-xl flex items-center justify-center`}>
-                        <span className="text-xl">{item.icon}</span>
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-bold text-stone-800 text-sm">{item.title}</h4>
-                        <p className="text-xs text-stone-500">{item.desc}</p>
-                      </div>
-                      <Button size="sm" variant="outline" className="h-8 text-xs">
-                        <Plus size={14} className="mr-1" /> Ajouter
-                      </Button>
+              {selectedInspiration === "Annonce de grossesse" ? (
+                // Sub-pages for "Annonce de grossesse"
+                <>
+                  <div className="flex items-center gap-3 mb-4">
+                    <button 
+                      onClick={() => setSelectedInspiration(null)}
+                      className="p-2 hover:bg-stone-100 rounded-full transition-colors"
+                      data-testid="button-back-inspiration"
+                    >
+                      <ChevronLeft size={20} className="text-stone-600" />
+                    </button>
+                    <div>
+                      <h3 className="text-sm font-bold text-stone-800">Annonce de grossesse</h3>
+                      <p className="text-xs text-stone-500">Choisissez une page à ajouter</p>
                     </div>
                   </div>
-                </motion.div>
-              ))}
+                  
+                  {[
+                    { id: 1, title: "Quand j'ai appris la nouvelle", icon: "💝", color: "from-pink-100" },
+                    { id: 2, title: "Quand ton père a appris la nouvelle", icon: "👨", color: "from-blue-100" },
+                    { id: 3, title: "Quand ta mère a appris la nouvelle", icon: "👩", color: "from-purple-100" },
+                    { id: 4, title: "Quand tes grands-parents ont appris la nouvelle", icon: "👴👵", color: "from-amber-100" },
+                    { id: 5, title: "Quand nous avons appris la nouvelle", icon: "💑", color: "from-red-100" },
+                    { id: 6, title: "Quand la famille a appris la nouvelle", icon: "👨‍👩‍👧‍👦", color: "from-green-100" },
+                  ].map((subPage, idx) => (
+                    <motion.div 
+                      key={subPage.id}
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.05 }}
+                      className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                      data-testid={`inspiration-subpage-${subPage.id}`}
+                    >
+                      <div className="p-4">
+                        <div className="flex items-center gap-4">
+                          <div className={`w-12 h-12 bg-gradient-to-b ${subPage.color} to-stone-50 rounded-xl flex items-center justify-center`}>
+                            <span className="text-xl">{subPage.icon}</span>
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="font-bold text-stone-800 text-sm">{subPage.title}</h4>
+                          </div>
+                          <Button size="sm" variant="outline" className="h-8 text-xs" data-testid={`button-add-subpage-${subPage.id}`}>
+                            <Plus size={14} className="mr-1" /> Ajouter
+                          </Button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </>
+              ) : (
+                // Main inspiration list
+                <>
+                  <div className="mb-4">
+                    <h3 className="text-sm font-bold text-stone-800 mb-1">Pages d'inspiration</h3>
+                    <p className="text-xs text-stone-500">Ajoutez ces pages spéciales à votre livre</p>
+                  </div>
+                  
+                  {/* Search Bar */}
+                  <div className="relative">
+                    <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
+                    <input
+                      type="text"
+                      placeholder="Rechercher par mot-clé..."
+                      value={inspirationSearch}
+                      onChange={(e) => setInspirationSearch(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-stone-200 bg-white focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                      data-testid="input-inspiration-search"
+                    />
+                  </div>
+                  
+                  {[
+                    { title: "Annonce de grossesse", desc: "Partagez la grande nouvelle", icon: "🤰", color: "from-pink-100", keywords: ["annonce", "grossesse", "nouvelle", "enceinte"], hasSubPages: true },
+                    { title: "Échographie", desc: "Les premiers aperçus", icon: "🔊", color: "from-purple-100", keywords: ["échographie", "scan", "médical", "bébé"], hasSubPages: false },
+                    { title: "Révélation du sexe", desc: "Fille ou garçon?", icon: "🎀", color: "from-blue-100", keywords: ["sexe", "révélation", "fille", "garçon", "gender"], hasSubPages: false },
+                    { title: "Baby Shower", desc: "Célébrez avec vos proches", icon: "🎉", color: "from-yellow-100", keywords: ["baby shower", "fête", "célébration", "cadeau"], hasSubPages: false },
+                    { title: "Chambre de bébé", desc: "Le nid douillet", icon: "🛏️", color: "from-green-100", keywords: ["chambre", "décoration", "nursery", "lit"], hasSubPages: false },
+                    { title: "Lettre à bébé", desc: "Vos mots d'amour", icon: "💌", color: "from-red-100", keywords: ["lettre", "message", "amour", "souvenir"], hasSubPages: false },
+                    { title: "Premier sourire", desc: "Ce moment inoubliable", icon: "😊", color: "from-orange-100", keywords: ["sourire", "premier", "joie", "émotion"], hasSubPages: false },
+                    { title: "Premiers pas", desc: "Une grande étape", icon: "👣", color: "from-teal-100", keywords: ["pas", "marche", "étape", "développement"], hasSubPages: false },
+                    { title: "Premier mot", desc: "Maman ou Papa?", icon: "💬", color: "from-indigo-100", keywords: ["mot", "parler", "langage", "maman", "papa"], hasSubPages: false },
+                    { title: "Première dent", desc: "Un sourire tout neuf", icon: "🦷", color: "from-cyan-100", keywords: ["dent", "sourire", "bébé"], hasSubPages: false },
+                  ].filter(item => {
+                    if (!inspirationSearch.trim()) return true;
+                    const searchLower = inspirationSearch.toLowerCase();
+                    return item.title.toLowerCase().includes(searchLower) || 
+                           item.desc.toLowerCase().includes(searchLower) ||
+                           item.keywords.some(k => k.toLowerCase().includes(searchLower));
+                  }).map((item, idx) => (
+                    <motion.div 
+                      key={item.title}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.05 }}
+                      className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                      onClick={() => item.hasSubPages && setSelectedInspiration(item.title)}
+                      data-testid={`inspiration-${item.title.toLowerCase().replace(/\s+/g, '-')}`}
+                    >
+                      <div className="p-4">
+                        <div className="flex items-center gap-4">
+                          <div className={`w-12 h-12 bg-gradient-to-b ${item.color} to-stone-50 rounded-xl flex items-center justify-center`}>
+                            <span className="text-xl">{item.icon}</span>
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="font-bold text-stone-800 text-sm">{item.title}</h4>
+                            <p className="text-xs text-stone-500">{item.desc}</p>
+                          </div>
+                          {item.hasSubPages ? (
+                            <ChevronRight size={20} className="text-stone-400" />
+                          ) : (
+                            <Button size="sm" variant="outline" className="h-8 text-xs">
+                              <Plus size={14} className="mr-1" /> Ajouter
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </>
+              )}
             </div>
           ) : activeTab === 'account' ? (
             // Account tab

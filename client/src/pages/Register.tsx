@@ -83,7 +83,12 @@ export default function Register() {
           className="bg-white py-8 px-4 shadow sm:rounded-xl sm:px-10 border border-stone-100 relative overflow-visible"
         >
           <div className="grid grid-cols-2 gap-3 mb-6">
-            <Button variant="outline" className="w-full flex items-center gap-2" onClick={() => console.log("Google login")}>
+            <Button 
+              variant="outline" 
+              className="w-full flex items-center gap-2" 
+              onClick={() => window.location.href = "/api/login"}
+              data-testid="button-google-login"
+            >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -104,10 +109,20 @@ export default function Register() {
               </svg>
               Google
             </Button>
-            <Button variant="outline" className="w-full flex items-center gap-2" onClick={() => console.log("Facebook login")}>
-              <Facebook className="w-5 h-5 text-blue-600 fill-current" />
-              Facebook
-            </Button>
+            <div className="relative">
+              <Button 
+                variant="outline" 
+                className="w-full flex items-center gap-2 opacity-50 cursor-not-allowed" 
+                disabled
+                data-testid="button-facebook-login"
+              >
+                <Facebook className="w-5 h-5 text-blue-600 fill-current" />
+                Facebook
+              </Button>
+              <span className="absolute -top-2 -right-2 bg-amber-100 text-amber-800 text-xs px-2 py-0.5 rounded-full font-medium">
+                Bientôt
+              </span>
+            </div>
           </div>
 
           <div className="relative mb-6">

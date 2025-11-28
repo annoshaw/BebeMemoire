@@ -10,6 +10,7 @@ import { setupAuth, isAuthenticated } from "./replitAuth";
 declare global {
   namespace Express {
     interface User {
+      id?: string;
       claims?: {
         sub: string;
         email?: string;
@@ -24,9 +25,9 @@ declare global {
   }
 }
 
-// Legacy authentication middleware for backward compatibility
+// Authentication middleware that works with Replit Auth
 function requireAuth(req: Request, res: Response, next: NextFunction) {
-  if (!req.isAuthenticated()) {
+  if (!req.isAuthenticated() || !req.user?.id) {
     return res.status(401).json({ message: "Non autorisé" });
   }
   next();

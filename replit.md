@@ -127,6 +127,12 @@ All API routes require authentication via session-based middleware.
 - `REPL_ID` - Replit application identifier
 - `NODE_ENV` - Environment flag (development/production)
 
+**Password Reset**
+- Password reset functionality implemented without external email service
+- In development mode, reset links are displayed in UI after requesting reset
+- Reset tokens expire after 1 hour and can only be used once
+- Note: For production, connect an email service (Resend, SendGrid) for sending reset emails
+
 **Multi-Language Support**
 - Application UI supports French (primary) and English
 - Language toggle functionality in Navbar component

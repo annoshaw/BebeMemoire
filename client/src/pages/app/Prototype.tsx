@@ -49,6 +49,7 @@ export default function Prototype() {
   const [checkoutForm, setCheckoutForm] = useState({
     name: "",
     email: "",
+    phone: "",
     address: "",
     city: "",
     postalCode: "",
@@ -1147,6 +1148,14 @@ export default function Prototype() {
                     onChange={(e) => setCheckoutForm({...checkoutForm, email: e.target.value})}
                     className="w-full px-3 py-2.5 text-sm rounded-lg border border-stone-200 focus:border-primary focus:outline-none"
                     data-testid="input-checkout-email"
+                  />
+                  <input
+                    type="tel"
+                    placeholder="Numéro de téléphone"
+                    value={checkoutForm.phone}
+                    onChange={(e) => setCheckoutForm({...checkoutForm, phone: e.target.value})}
+                    className="w-full px-3 py-2.5 text-sm rounded-lg border border-stone-200 focus:border-primary focus:outline-none"
+                    data-testid="input-checkout-phone"
                   />
                 </div>
 

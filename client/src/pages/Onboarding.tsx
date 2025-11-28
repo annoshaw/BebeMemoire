@@ -55,8 +55,28 @@ export default function Onboarding() {
       localStorage.setItem("pushNotificationsEnabled", String(pushNotificationsEnabled));
       setLocation("/app");
     },
-    onError: (error) => {
-      console.error("Error creating book:", error);
+    onError: async (error: any) => {
+      console.error("Error creating book via API:", error);
+      
+      const response = await fetch("/api/auth/user", { credentials: "include" });
+      const isAuthError = !response.ok;
+      
+      if (isAuthError) {
+        const localBooks = JSON.parse(localStorage.getItem("localBooks") || "[]");
+        const newBook = {
+          id: `local_${Date.now()}`,
+          childName: babyName,
+          babyStatus: babyStatus,
+          babyGender: babyGender,
+          birthDate: babyDate,
+          createdAt: new Date().toISOString(),
+          synced: false,
+        };
+        localBooks.push(newBook);
+        localStorage.setItem("localBooks", JSON.stringify(localBooks));
+        localStorage.setItem("activeBookId", newBook.id);
+      }
+      
       localStorage.setItem("babyName", babyName);
       localStorage.setItem("babyStatus", babyStatus || "");
       localStorage.setItem("babyDate", babyDate);

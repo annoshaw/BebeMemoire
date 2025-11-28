@@ -67,7 +67,8 @@ export async function registerRoutes(
   // Get all books for current user
   app.get("/api/books", requireAuth, async (req: Request, res: Response) => {
     try {
-      const books = await storage.getBooksByUserId(req.user!.id);
+      const userId = req.user!.id as string;
+      const books = await storage.getBooksByUserId(userId);
       res.json({ books });
     } catch (error) {
       console.error("Get books error:", error);
@@ -78,9 +79,10 @@ export async function registerRoutes(
   // Create a new book
   app.post("/api/books", requireAuth, async (req: Request, res: Response) => {
     try {
+      const userId = req.user!.id as string;
       const validation = insertBookSchema.safeParse({
         ...req.body,
-        userId: req.user!.id,
+        userId: userId,
       });
 
       if (!validation.success) {

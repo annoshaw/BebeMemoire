@@ -45,7 +45,104 @@ export default function Prototype() {
     },
   });
   
-  const userBooks = booksData?.books || [];
+  const [localBooks, setLocalBooks] = useState<Array<{
+    id: string;
+    childName: string;
+    babyStatus: string;
+    babyGender: string;
+    birthDate: string;
+    createdAt: string;
+    coverImage?: string;
+    synced?: boolean;
+  }>>(() => {
+    if (typeof window !== "undefined") {
+      return JSON.parse(localStorage.getItem("localBooks") || "[]");
+    }
+    return [];
+  });
+  
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [hasSyncedThisSession, setHasSyncedThisSession] = useState(false);
+  
+  useEffect(() => {
+    const syncLocalBooks = async () => {
+      if (localBooks.length === 0 || isSyncing || hasSyncedThisSession) return;
+      
+      const unsyncedBooks = localBooks.filter(b => !b.synced);
+      if (unsyncedBooks.length === 0) {
+        localStorage.setItem("localBooks", "[]");
+        setLocalBooks([]);
+        return;
+      }
+      
+      setIsSyncing(true);
+      setHasSyncedThisSession(true);
+      const successfullySynced: string[] = [];
+      const alreadyExistsOnServer: string[] = [];
+      const serverBooks = booksData?.books || [];
+      
+      for (const book of unsyncedBooks) {
+        const existsOnServer = serverBooks.some(sb => 
+          sb.childName === book.childName && 
+          sb.babyStatus === book.babyStatus &&
+          sb.birthDate && new Date(sb.birthDate).toDateString() === new Date(book.birthDate).toDateString()
+        );
+        
+        if (existsOnServer) {
+          alreadyExistsOnServer.push(book.id);
+          continue;
+        }
+        
+        try {
+          const response = await fetch("/api/books", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({
+              childName: book.childName,
+              babyStatus: book.babyStatus,
+              babyGender: book.babyGender,
+              birthDate: new Date(book.birthDate).toISOString(),
+            }),
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            successfullySynced.push(book.id);
+            if (localStorage.getItem("activeBookId") === book.id) {
+              localStorage.setItem("activeBookId", data.book.id);
+              setActiveBookId(data.book.id);
+            }
+          }
+        } catch (error) {
+          console.error("Error syncing book:", error);
+        }
+      }
+      
+      const toRemove = [...successfullySynced, ...alreadyExistsOnServer];
+      if (toRemove.length > 0) {
+        const remainingBooks = localBooks.filter(b => !toRemove.includes(b.id));
+        localStorage.setItem("localBooks", JSON.stringify(remainingBooks));
+        setLocalBooks(remainingBooks);
+        if (successfullySynced.length > 0) {
+          queryClient.invalidateQueries({ queryKey: ["/api/books"] });
+        }
+      }
+      
+      setIsSyncing(false);
+    };
+    
+    if (booksData && booksData.books !== undefined) {
+      syncLocalBooks();
+    }
+  }, [booksData]);
+  
+  const apiBooks = booksData?.books || [];
+  const allBooks = [
+    ...apiBooks.map(b => ({ ...b, isLocal: false })),
+    ...localBooks.map(b => ({ ...b, isLocal: true, userId: "" }))
+  ];
+  const userBooks = allBooks;
   const activeBook = userBooks.find(b => b.id === activeBookId) || userBooks[0];
   
   const setActiveBookMutation = useMutation({
@@ -57,9 +154,12 @@ export default function Prototype() {
         localStorage.setItem("babyName", book.childName);
         localStorage.setItem("babyStatus", book.babyStatus || "");
         localStorage.setItem("babyGender", book.babyGender || "");
-        if (book.birthDate) {
-          localStorage.setItem("babyDate", book.birthDate.toString().split("T")[0]);
-          localStorage.setItem("babyBirthDate", book.birthDate.toString().split("T")[0]);
+        const birthDateStr = typeof book.birthDate === 'string' 
+          ? book.birthDate.split("T")[0] 
+          : book.birthDate ? new Date(book.birthDate).toISOString().split("T")[0] : "";
+        if (birthDateStr) {
+          localStorage.setItem("babyDate", birthDateStr);
+          localStorage.setItem("babyBirthDate", birthDateStr);
         }
       }
       return bookId;

@@ -1094,7 +1094,9 @@ export default function Prototype() {
               <div className="bg-white rounded-2xl shadow-sm border border-stone-100 p-4">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="font-bold text-stone-800 text-sm">Informations personnelles</h4>
-                  <button className="text-xs text-primary font-medium">Modifier</button>
+                  <Link href="/app/profile">
+                    <button className="text-xs text-primary font-medium" data-testid="button-modify-info">Modifier</button>
+                  </Link>
                 </div>
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">

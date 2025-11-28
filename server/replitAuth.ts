@@ -46,10 +46,10 @@ function updateUserSession(
 ) {
   const claims = tokens.claims();
   user.claims = claims;
-  user.id = claims.sub;
+  user.id = claims?.sub;
   user.access_token = tokens.access_token;
   user.refresh_token = tokens.refresh_token;
-  user.expires_at = user.claims?.exp;
+  user.expires_at = claims?.exp;
 }
 
 async function upsertUser(claims: any) {
@@ -99,8 +99,35 @@ export async function setupAuth(app: Express) {
     }
   };
 
-  passport.serializeUser((user: Express.User, cb) => cb(null, user));
-  passport.deserializeUser((user: Express.User, cb) => cb(null, user));
+  passport.serializeUser((user: Express.User, cb) => {
+    const userData = user as any;
+    if (userData.claims) {
+      cb(null, { type: 'replit', data: user });
+    } else if (userData.id) {
+      cb(null, { type: 'local', id: userData.id });
+    } else {
+      cb(new Error('Invalid user object'));
+    }
+  });
+  
+  passport.deserializeUser(async (serialized: any, cb) => {
+    try {
+      if (serialized.type === 'replit') {
+        cb(null, serialized.data);
+      } else if (serialized.type === 'local') {
+        const user = await storage.getUser(serialized.id);
+        if (user) {
+          cb(null, { id: user.id, email: user.email, fullName: user.fullName } as any);
+        } else {
+          cb(null, false);
+        }
+      } else {
+        cb(null, false);
+      }
+    } catch (error) {
+      cb(error);
+    }
+  });
 
   app.get("/api/login", (req, res, next) => {
     ensureStrategy(req.hostname);

@@ -25,11 +25,17 @@ declare global {
   }
 }
 
-// Authentication middleware that works with Replit Auth
+// Authentication middleware that works with both Replit Auth and email/password
 function requireAuth(req: Request, res: Response, next: NextFunction) {
-  if (!req.isAuthenticated() || !req.user?.id) {
+  if (!req.isAuthenticated() || !req.user) {
     return res.status(401).json({ message: "Non autorisé" });
   }
+  const user = req.user as any;
+  const userId = user.claims?.sub || user.id;
+  if (!userId) {
+    return res.status(401).json({ message: "Non autorisé" });
+  }
+  (req as any).userId = userId;
   next();
 }
 
@@ -42,12 +48,123 @@ export async function registerRoutes(
 
   // AUTH ROUTES
 
-  // Get current user (Replit Auth)
-  app.get("/api/auth/user", isAuthenticated, async (req: any, res: Response) => {
+  // Register with email/password
+  app.post("/api/auth/register", async (req: Request, res: Response) => {
     try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      res.json(user);
+      const { email, password, fullName, address, gender, phone, country } = req.body;
+      
+      if (!email || typeof email !== 'string' || !email.includes('@')) {
+        return res.status(400).json({ message: "Adresse email invalide" });
+      }
+      
+      if (!password || typeof password !== 'string' || password.length < 8) {
+        return res.status(400).json({ message: "Le mot de passe doit contenir au moins 8 caractères" });
+      }
+      
+      if (!fullName || typeof fullName !== 'string' || fullName.length < 2) {
+        return res.status(400).json({ message: "Le nom complet est requis" });
+      }
+      
+      const existingUser = await storage.getUserByEmail(email.toLowerCase().trim());
+      if (existingUser) {
+        return res.status(400).json({ message: "Un compte avec cet email existe déjà" });
+      }
+      
+      const hashedPassword = await bcrypt.hash(password, 10);
+      
+      const user = await storage.createUser({
+        email: email.toLowerCase().trim(),
+        password: hashedPassword,
+        fullName: fullName.trim(),
+        address: address || null,
+        gender: gender || null,
+        phone: phone || null,
+        country: country || null,
+        authProvider: "email",
+      });
+      
+      req.login({ id: user.id } as any, (err) => {
+        if (err) {
+          console.error("Login error after registration:", err);
+          return res.status(500).json({ message: "Erreur lors de la connexion" });
+        }
+        res.status(201).json({ 
+          message: "Compte créé avec succès",
+          user: { id: user.id, email: user.email, fullName: user.fullName }
+        });
+      });
+    } catch (error) {
+      console.error("Register error:", error);
+      res.status(500).json({ message: "Erreur lors de la création du compte" });
+    }
+  });
+
+  // Login with email/password
+  app.post("/api/auth/login", async (req: Request, res: Response) => {
+    try {
+      const { email, password } = req.body;
+      
+      if (!email || !password) {
+        return res.status(400).json({ message: "Email et mot de passe requis" });
+      }
+      
+      const user = await storage.getUserByEmail(email);
+      if (!user || !user.password) {
+        return res.status(401).json({ message: "Email ou mot de passe incorrect" });
+      }
+      
+      const isValid = await bcrypt.compare(password, user.password);
+      if (!isValid) {
+        return res.status(401).json({ message: "Email ou mot de passe incorrect" });
+      }
+      
+      req.login({ id: user.id } as any, (err) => {
+        if (err) {
+          console.error("Login error:", err);
+          return res.status(500).json({ message: "Erreur lors de la connexion" });
+        }
+        res.json({ 
+          message: "Connexion réussie",
+          user: { id: user.id, email: user.email, fullName: user.fullName }
+        });
+      });
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ message: "Erreur lors de la connexion" });
+    }
+  });
+
+  // Logout
+  app.post("/api/auth/logout", (req: Request, res: Response) => {
+    req.logout((err) => {
+      if (err) {
+        console.error("Logout error:", err);
+        return res.status(500).json({ message: "Erreur lors de la déconnexion" });
+      }
+      res.json({ message: "Déconnexion réussie" });
+    });
+  });
+
+  // Get current user (supports both Replit Auth and email/password)
+  app.get("/api/auth/user", async (req: any, res: Response) => {
+    try {
+      if (!req.isAuthenticated() || !req.user) {
+        return res.status(401).json({ message: "Non autorisé" });
+      }
+      
+      const user = req.user as any;
+      const userId = user.claims?.sub || user.id;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "Non autorisé" });
+      }
+      
+      const dbUser = await storage.getUser(userId);
+      if (!dbUser) {
+        return res.status(401).json({ message: "Utilisateur non trouvé" });
+      }
+      
+      res.json(dbUser);
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
@@ -67,7 +184,7 @@ export async function registerRoutes(
   // Get all books for current user
   app.get("/api/books", requireAuth, async (req: Request, res: Response) => {
     try {
-      const userId = req.user!.id as string;
+      const userId = (req as any).userId;
       const books = await storage.getBooksByUserId(userId);
       res.json({ books });
     } catch (error) {
@@ -79,7 +196,7 @@ export async function registerRoutes(
   // Create a new book
   app.post("/api/books", requireAuth, async (req: Request, res: Response) => {
     try {
-      const userId = req.user!.id as string;
+      const userId = (req as any).userId;
       const validation = insertBookSchema.safeParse({
         ...req.body,
         userId: userId,
@@ -102,11 +219,12 @@ export async function registerRoutes(
   // Get a specific book
   app.get("/api/books/:id", requireAuth, async (req: Request, res: Response) => {
     try {
+      const userId = (req as any).userId;
       const book = await storage.getBook(req.params.id);
       if (!book) {
         return res.status(404).json({ message: "Livre non trouvé" });
       }
-      if (book.userId !== req.user!.id) {
+      if (book.userId !== userId) {
         return res.status(403).json({ message: "Accès refusé" });
       }
       res.json({ book });
@@ -119,11 +237,12 @@ export async function registerRoutes(
   // Update a book
   app.patch("/api/books/:id", requireAuth, async (req: Request, res: Response) => {
     try {
+      const userId = (req as any).userId;
       const book = await storage.getBook(req.params.id);
       if (!book) {
         return res.status(404).json({ message: "Livre non trouvé" });
       }
-      if (book.userId !== req.user!.id) {
+      if (book.userId !== userId) {
         return res.status(403).json({ message: "Accès refusé" });
       }
 
@@ -138,11 +257,12 @@ export async function registerRoutes(
   // Delete a book
   app.delete("/api/books/:id", requireAuth, async (req: Request, res: Response) => {
     try {
+      const userId = (req as any).userId;
       const book = await storage.getBook(req.params.id);
       if (!book) {
         return res.status(404).json({ message: "Livre non trouvé" });
       }
-      if (book.userId !== req.user!.id) {
+      if (book.userId !== userId) {
         return res.status(403).json({ message: "Accès refusé" });
       }
 
@@ -159,11 +279,12 @@ export async function registerRoutes(
   // Get all memories for a book
   app.get("/api/books/:bookId/memories", requireAuth, async (req: Request, res: Response) => {
     try {
+      const userId = (req as any).userId;
       const book = await storage.getBook(req.params.bookId);
       if (!book) {
         return res.status(404).json({ message: "Livre non trouvé" });
       }
-      if (book.userId !== req.user!.id) {
+      if (book.userId !== userId) {
         return res.status(403).json({ message: "Accès refusé" });
       }
 
@@ -178,11 +299,12 @@ export async function registerRoutes(
   // Create a memory
   app.post("/api/books/:bookId/memories", requireAuth, async (req: Request, res: Response) => {
     try {
+      const userId = (req as any).userId;
       const book = await storage.getBook(req.params.bookId);
       if (!book) {
         return res.status(404).json({ message: "Livre non trouvé" });
       }
-      if (book.userId !== req.user!.id) {
+      if (book.userId !== userId) {
         return res.status(403).json({ message: "Accès refusé" });
       }
 
@@ -208,13 +330,14 @@ export async function registerRoutes(
   // Update a memory
   app.patch("/api/memories/:id", requireAuth, async (req: Request, res: Response) => {
     try {
+      const userId = (req as any).userId;
       const memory = await storage.getMemory(req.params.id);
       if (!memory) {
         return res.status(404).json({ message: "Souvenir non trouvé" });
       }
 
       const book = await storage.getBook(memory.bookId);
-      if (!book || book.userId !== req.user!.id) {
+      if (!book || book.userId !== userId) {
         return res.status(403).json({ message: "Accès refusé" });
       }
 
@@ -229,13 +352,14 @@ export async function registerRoutes(
   // Delete a memory
   app.delete("/api/memories/:id", requireAuth, async (req: Request, res: Response) => {
     try {
+      const userId = (req as any).userId;
       const memory = await storage.getMemory(req.params.id);
       if (!memory) {
         return res.status(404).json({ message: "Souvenir non trouvé" });
       }
 
       const book = await storage.getBook(memory.bookId);
-      if (!book || book.userId !== req.user!.id) {
+      if (!book || book.userId !== userId) {
         return res.status(403).json({ message: "Accès refusé" });
       }
 

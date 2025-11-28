@@ -26,6 +26,8 @@ import { motion } from "framer-motion";
 const formSchema = z.object({
   fullName: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
   email: z.string().email("Adresse email invalide"),
+  password: z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères"),
+  confirmPassword: z.string(),
   address: z.string().min(5, "L'adresse doit être complète"),
   gender: z.string({
     required_error: "Veuillez sélectionner une option",
@@ -34,17 +36,24 @@ const formSchema = z.object({
   country: z.string({
     required_error: "Veuillez sélectionner un pays",
   }),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Les mots de passe ne correspondent pas",
+  path: ["confirmPassword"],
 });
 
 export default function Register() {
   const [location, setLocation] = useLocation();
   const [isLoading, setIsLoading] = useState(false);
 
+  const [registerError, setRegisterError] = useState<string | null>(null);
+  
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       fullName: "",
       email: "",
+      password: "",
+      confirmPassword: "",
       address: "",
       gender: "",
       phone: "",
@@ -52,21 +61,46 @@ export default function Register() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    // Store user info in localStorage
-    localStorage.setItem("userName", values.fullName);
-    localStorage.setItem("userEmail", values.email);
-    localStorage.setItem("userAddress", values.address);
-    localStorage.setItem("userPhone", values.phone);
-    localStorage.setItem("userGender", values.gender === "female" ? "Femme" : values.gender === "male" ? "Homme" : values.gender === "non-binary" ? "Non-binaire" : "Non spécifié");
-    localStorage.setItem("userCountry", values.country);
+    setRegisterError(null);
     
-    setTimeout(() => {
-      console.log(values);
+    try {
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          fullName: values.fullName,
+          email: values.email,
+          password: values.password,
+          address: values.address,
+          gender: values.gender,
+          phone: values.phone,
+          country: values.country,
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || "Erreur lors de la création du compte");
+      }
+      
+      // Store user info in localStorage
+      localStorage.setItem("userName", values.fullName);
+      localStorage.setItem("userEmail", values.email);
+      localStorage.setItem("userAddress", values.address);
+      localStorage.setItem("userPhone", values.phone);
+      localStorage.setItem("userGender", values.gender === "female" ? "Femme" : values.gender === "male" ? "Homme" : values.gender === "non-binary" ? "Non-binaire" : "Non spécifié");
+      localStorage.setItem("userCountry", values.country);
+      
+      setLocation("/onboarding");
+    } catch (error) {
+      setRegisterError(error instanceof Error ? error.message : "Une erreur est survenue");
+    } finally {
       setIsLoading(false);
-      setLocation("/onboarding"); // Redirect to onboarding after signup
-    }, 1500);
+    }
   }
 
   return (
@@ -164,7 +198,35 @@ export default function Register() {
                   <FormItem>
                     <FormLabel>Adresse courriel</FormLabel>
                     <FormControl>
-                      <Input placeholder="jean@exemple.com" type="email" {...field} />
+                      <Input placeholder="jean@exemple.com" type="email" {...field} data-testid="input-email" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Mot de passe</FormLabel>
+                    <FormControl>
+                      <Input placeholder="••••••••" type="password" {...field} data-testid="input-password" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Confirmer le mot de passe</FormLabel>
+                    <FormControl>
+                      <Input placeholder="••••••••" type="password" {...field} data-testid="input-confirm-password" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -250,10 +312,17 @@ export default function Register() {
                 )}
               />
 
+              {registerError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm text-red-600">{registerError}</p>
+                </div>
+              )}
+
               <Button 
                 type="submit" 
                 className="w-full bg-stone-900 hover:bg-stone-800 text-white py-6 rounded-lg text-lg mt-4"
                 disabled={isLoading}
+                data-testid="button-submit-register"
               >
                 {isLoading ? (
                   <>
@@ -267,13 +336,21 @@ export default function Register() {
             </form>
           </Form>
           
-          <div className="mt-6 text-center">
-              <Link href="/">
-                  <a className="text-sm text-stone-500 hover:text-stone-900 flex items-center justify-center gap-1">
-                      <ArrowLeft size={14} />
-                      Retour à l'accueil
-                  </a>
+          <div className="mt-6 text-center space-y-3">
+            <p className="text-sm text-stone-600">
+              Vous avez déjà un compte?{" "}
+              <Link href="/login">
+                <a className="text-primary font-medium hover:underline" data-testid="link-login">
+                  Se connecter
+                </a>
               </Link>
+            </p>
+            <Link href="/">
+              <a className="text-sm text-stone-500 hover:text-stone-900 flex items-center justify-center gap-1">
+                <ArrowLeft size={14} />
+                Retour à l'accueil
+              </a>
+            </Link>
           </div>
         </div>
       </div>

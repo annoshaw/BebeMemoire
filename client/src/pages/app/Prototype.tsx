@@ -716,6 +716,7 @@ export default function Prototype() {
                   </div>
                   
                   {[
+                    { title: "La présentation de la famille", desc: "Qui sommes-nous?", icon: "👨‍👩‍👧‍👦", color: "from-teal-100", keywords: ["famille", "présentation", "parents", "proches"], hasSubPages: true },
                     { title: "Annonce de grossesse", desc: "Partagez la grande nouvelle", icon: "🤰", color: "from-pink-100", keywords: ["annonce", "grossesse", "nouvelle", "enceinte"], hasSubPages: true },
                     { title: "Échographie", desc: "Les premiers aperçus", icon: "🔊", color: "from-purple-100", keywords: ["échographie", "scan", "médical", "bébé"], hasSubPages: true },
                     { title: "Adoption", desc: "Notre parcours d'adoption", icon: "💕", color: "from-blue-100", keywords: ["adoption", "famille", "parcours", "accueil"], hasSubPages: false },
@@ -723,7 +724,6 @@ export default function Prototype() {
                     { title: "Événements lors de la grossesse", desc: "Célébrez avec vos proches", icon: "🎉", color: "from-yellow-100", keywords: ["baby shower", "fête", "célébration", "cadeau", "événement", "grossesse"], hasSubPages: true },
                     { title: "Chambre de bébé", desc: "Le nid douillet", icon: "🛏️", color: "from-green-100", keywords: ["chambre", "décoration", "nursery", "lit"], hasSubPages: false },
                     { title: "Lettre à bébé", desc: "Vos mots d'amour", icon: "💌", color: "from-red-100", keywords: ["lettre", "message", "amour", "souvenir"], hasSubPages: false },
-                    { title: "La présentation de la famille", desc: "Qui sommes-nous?", icon: "👨‍👩‍👧‍👦", color: "from-teal-100", keywords: ["famille", "présentation", "parents", "proches"], hasSubPages: true },
                     { title: "Premier mot", desc: "Maman ou Papa?", icon: "💬", color: "from-indigo-100", keywords: ["mot", "parler", "langage", "maman", "papa"], hasSubPages: false },
                     { title: "Première dent", desc: "Un sourire tout neuf", icon: "🦷", color: "from-cyan-100", keywords: ["dent", "sourire", "bébé"], hasSubPages: false },
                   ].filter(item => {

@@ -618,7 +618,7 @@ export default function Prototype() {
                     { title: "Annonce de grossesse", desc: "Partagez la grande nouvelle", icon: "🤰", color: "from-pink-100", keywords: ["annonce", "grossesse", "nouvelle", "enceinte"], hasSubPages: true },
                     { title: "Échographie", desc: "Les premiers aperçus", icon: "🔊", color: "from-purple-100", keywords: ["échographie", "scan", "médical", "bébé"], hasSubPages: true },
                     { title: "Révélation du sexe", desc: "Fille ou garçon?", icon: "🎀", color: "from-blue-100", keywords: ["sexe", "révélation", "fille", "garçon", "gender"], hasSubPages: false },
-                    { title: "Baby Shower", desc: "Célébrez avec vos proches", icon: "🎉", color: "from-yellow-100", keywords: ["baby shower", "fête", "célébration", "cadeau"], hasSubPages: false },
+                    { title: "Événements lors de la grossesse", desc: "Célébrez avec vos proches", icon: "🎉", color: "from-yellow-100", keywords: ["baby shower", "fête", "célébration", "cadeau", "événement", "grossesse"], hasSubPages: false },
                     { title: "Chambre de bébé", desc: "Le nid douillet", icon: "🛏️", color: "from-green-100", keywords: ["chambre", "décoration", "nursery", "lit"], hasSubPages: false },
                     { title: "Lettre à bébé", desc: "Vos mots d'amour", icon: "💌", color: "from-red-100", keywords: ["lettre", "message", "amour", "souvenir"], hasSubPages: false },
                     { title: "Premier sourire", desc: "Ce moment inoubliable", icon: "😊", color: "from-orange-100", keywords: ["sourire", "premier", "joie", "émotion"], hasSubPages: false },

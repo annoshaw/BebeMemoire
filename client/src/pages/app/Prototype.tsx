@@ -94,6 +94,27 @@ export default function Prototype() {
     }
     return true;
   });
+  const [showNotificationInstructions, setShowNotificationInstructions] = useState(false);
+  const [notificationStatus, setNotificationStatus] = useState<"default" | "granted" | "denied" | "unsupported">("default");
+
+  const handleEnableNotifications = async () => {
+    if (!("Notification" in window)) {
+      setNotificationStatus("unsupported");
+      setShowNotificationInstructions(true);
+      return;
+    }
+
+    const permission = await Notification.requestPermission();
+    setNotificationStatus(permission as any);
+    
+    if (permission === "granted") {
+      localStorage.setItem("notificationsEnabled", "true");
+      localStorage.setItem("notificationBubbleDismissed", "true");
+      setShowNotificationBubble(false);
+    } else if (permission === "denied") {
+      setShowNotificationInstructions(true);
+    }
+  };
 
   const handleSelectProduct = (name: string, price: string) => {
     setSelectedProduct({ name, price });
@@ -941,11 +962,7 @@ export default function Prototype() {
                   <Button 
                     size="sm" 
                     className="h-7 text-[10px]"
-                    onClick={() => {
-                      localStorage.setItem("notificationsEnabled", "true");
-                      localStorage.setItem("notificationBubbleDismissed", "true");
-                      setShowNotificationBubble(false);
-                    }}
+                    onClick={handleEnableNotifications}
                     data-testid="button-enable-push"
                   >
                     <Bell size={12} className="mr-1" />
@@ -1464,6 +1481,93 @@ export default function Prototype() {
             <Button variant="outline" className="w-full mt-4">Retour à l'accueil</Button>
         </Link>
       </div>
+
+      {/* Notification Instructions Modal */}
+      <AnimatePresence>
+        {showNotificationInstructions && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+            onClick={() => setShowNotificationInstructions(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="bg-gradient-to-br from-primary to-primary/80 p-6 text-white text-center">
+                <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Settings size={28} className="text-white" />
+                </div>
+                <h3 className="text-lg font-bold mb-1">Activer dans les réglages</h3>
+                <p className="text-sm text-white/90">
+                  Les notifications doivent être activées dans les paramètres de votre appareil
+                </p>
+              </div>
+              
+              <div className="p-5 space-y-4">
+                {/iPhone|iPad|iPod/.test(typeof navigator !== "undefined" ? navigator.userAgent : "") ? (
+                  <div className="space-y-3">
+                    <p className="text-xs font-bold text-stone-800">Sur iPhone/iPad :</p>
+                    <ol className="space-y-2 text-xs text-stone-600">
+                      <li className="flex items-start gap-2">
+                        <span className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold flex-shrink-0">1</span>
+                        Ouvrez l'app <span className="font-medium">Réglages</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold flex-shrink-0">2</span>
+                        Descendez et appuyez sur <span className="font-medium">Safari</span> (ou votre navigateur)
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold flex-shrink-0">3</span>
+                        Appuyez sur <span className="font-medium">Notifications</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold flex-shrink-0">4</span>
+                        Activez les notifications pour <span className="font-medium">Memoria</span>
+                      </li>
+                    </ol>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <p className="text-xs font-bold text-stone-800">Sur Android :</p>
+                    <ol className="space-y-2 text-xs text-stone-600">
+                      <li className="flex items-start gap-2">
+                        <span className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold flex-shrink-0">1</span>
+                        Appuyez longuement sur l'icône du navigateur
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold flex-shrink-0">2</span>
+                        Sélectionnez <span className="font-medium">Infos sur l'appli</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold flex-shrink-0">3</span>
+                        Appuyez sur <span className="font-medium">Notifications</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold flex-shrink-0">4</span>
+                        Activez les notifications pour ce site
+                      </li>
+                    </ol>
+                  </div>
+                )}
+                
+                <Button
+                  className="w-full"
+                  onClick={() => setShowNotificationInstructions(false)}
+                  data-testid="button-close-instructions"
+                >
+                  Compris
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Checkout Modal */}
       <AnimatePresence>

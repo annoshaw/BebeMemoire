@@ -1,6 +1,6 @@
 import { db } from "./db";
-import { users, books, memories, userPlans, qrCodes, type User, type InsertUser, type UpsertUser, type Book, type InsertBook, type Memory, type InsertMemory, type UserPlan, type InsertUserPlan, type QRCode, type InsertQRCode } from "@shared/schema";
-import { eq, desc } from "drizzle-orm";
+import { users, books, memories, userPlans, qrCodes, passwordResetTokens, type User, type InsertUser, type UpsertUser, type Book, type InsertBook, type Memory, type InsertMemory, type UserPlan, type InsertUserPlan, type QRCode, type InsertQRCode, type PasswordResetToken, type InsertPasswordResetToken } from "@shared/schema";
+import { eq, desc, and, gt } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (Replit Auth)
@@ -33,6 +33,12 @@ export interface IStorage {
   getQRCode(memoryId: string): Promise<QRCode | undefined>;
   createQRCode(qrCode: InsertQRCode): Promise<QRCode>;
   deleteQRCode(memoryId: string): Promise<boolean>;
+  
+  // Password Reset Token operations
+  createPasswordResetToken(userId: string, token: string, expiresAt: Date): Promise<PasswordResetToken>;
+  getValidPasswordResetToken(token: string): Promise<PasswordResetToken | undefined>;
+  markPasswordResetTokenAsUsed(token: string): Promise<void>;
+  updateUserPassword(userId: string, hashedPassword: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -156,6 +162,46 @@ export class DatabaseStorage implements IStorage {
   async deleteQRCode(memoryId: string): Promise<boolean> {
     const result = await db.delete(qrCodes).where(eq(qrCodes.memoryId, memoryId)).returning();
     return result.length > 0;
+  }
+
+  // Password Reset Token operations
+  async createPasswordResetToken(userId: string, token: string, expiresAt: Date): Promise<PasswordResetToken> {
+    const result = await db.insert(passwordResetTokens).values({
+      userId,
+      token,
+      expiresAt,
+    }).returning();
+    return result[0];
+  }
+
+  async getValidPasswordResetToken(token: string): Promise<PasswordResetToken | undefined> {
+    const result = await db.select()
+      .from(passwordResetTokens)
+      .where(
+        and(
+          eq(passwordResetTokens.token, token),
+          gt(passwordResetTokens.expiresAt, new Date())
+        )
+      )
+      .limit(1);
+    
+    const resetToken = result[0];
+    if (resetToken && resetToken.usedAt) {
+      return undefined;
+    }
+    return resetToken;
+  }
+
+  async markPasswordResetTokenAsUsed(token: string): Promise<void> {
+    await db.update(passwordResetTokens)
+      .set({ usedAt: new Date() })
+      .where(eq(passwordResetTokens.token, token));
+  }
+
+  async updateUserPassword(userId: string, hashedPassword: string): Promise<void> {
+    await db.update(users)
+      .set({ password: hashedPassword, updatedAt: new Date() })
+      .where(eq(users.id, userId));
   }
 }
 

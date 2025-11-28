@@ -640,6 +640,59 @@ export default function Prototype() {
                     </motion.div>
                   ))}
                 </>
+              ) : selectedInspiration === "La présentation de la famille" ? (
+                // Sub-pages for "La présentation de la famille"
+                <>
+                  <div className="flex items-center gap-3 mb-4">
+                    <button 
+                      onClick={() => setSelectedInspiration(null)}
+                      className="p-2 hover:bg-stone-100 rounded-full transition-colors"
+                      data-testid="button-back-famille"
+                    >
+                      <ChevronLeft size={20} className="text-stone-600" />
+                    </button>
+                    <div>
+                      <h3 className="text-sm font-bold text-stone-800">La présentation de la famille</h3>
+                      <p className="text-xs text-stone-500">Choisissez une page à ajouter</p>
+                    </div>
+                  </div>
+                  
+                  {[
+                    { id: 1, title: "Arbre généalogique", icon: "🌳", color: "from-green-100" },
+                    { id: 2, title: "Tes parents", icon: "👨‍👩", color: "from-pink-100" },
+                    { id: 3, title: "Tes grands-parents", icon: "👴👵", color: "from-amber-100" },
+                    { id: 4, title: "Ton/Tes oncle(s)", icon: "👨", color: "from-blue-100" },
+                    { id: 5, title: "Ta/Tes tante(s)", icon: "👩", color: "from-purple-100" },
+                    { id: 6, title: "Ton/Tes parrain(s)", icon: "🤵", color: "from-indigo-100" },
+                    { id: 7, title: "Ta/Tes marraine(s)", icon: "👸", color: "from-rose-100" },
+                    { id: 8, title: "Les cousin(e)s", icon: "👧👦", color: "from-cyan-100" },
+                    { id: 9, title: "Les amis qui sont devenus notre famille", icon: "💝", color: "from-red-100" },
+                    { id: 10, title: "Animaux de compagnie", icon: "🐾", color: "from-orange-100" },
+                  ].map((subPage, idx) => (
+                    <motion.div 
+                      key={subPage.id}
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.05 }}
+                      className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                      data-testid={`famille-subpage-${subPage.id}`}
+                    >
+                      <div className="p-4">
+                        <div className="flex items-center gap-4">
+                          <div className={`w-12 h-12 bg-gradient-to-b ${subPage.color} to-stone-50 rounded-xl flex items-center justify-center`}>
+                            <span className="text-xl">{subPage.icon}</span>
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="font-bold text-stone-800 text-sm">{subPage.title}</h4>
+                          </div>
+                          <Button size="sm" variant="outline" className="h-8 text-xs" data-testid={`button-add-famille-${subPage.id}`}>
+                            <Plus size={14} className="mr-1" /> Ajouter
+                          </Button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </>
               ) : (
                 // Main inspiration list
                 <>
@@ -669,7 +722,7 @@ export default function Prototype() {
                     { title: "Événements lors de la grossesse", desc: "Célébrez avec vos proches", icon: "🎉", color: "from-yellow-100", keywords: ["baby shower", "fête", "célébration", "cadeau", "événement", "grossesse"], hasSubPages: true },
                     { title: "Chambre de bébé", desc: "Le nid douillet", icon: "🛏️", color: "from-green-100", keywords: ["chambre", "décoration", "nursery", "lit"], hasSubPages: false },
                     { title: "Lettre à bébé", desc: "Vos mots d'amour", icon: "💌", color: "from-red-100", keywords: ["lettre", "message", "amour", "souvenir"], hasSubPages: false },
-                    { title: "La présentation de la famille", desc: "Qui sommes-nous?", icon: "👨‍👩‍👧‍👦", color: "from-teal-100", keywords: ["famille", "présentation", "parents", "proches"], hasSubPages: false },
+                    { title: "La présentation de la famille", desc: "Qui sommes-nous?", icon: "👨‍👩‍👧‍👦", color: "from-teal-100", keywords: ["famille", "présentation", "parents", "proches"], hasSubPages: true },
                     { title: "Premier mot", desc: "Maman ou Papa?", icon: "💬", color: "from-indigo-100", keywords: ["mot", "parler", "langage", "maman", "papa"], hasSubPages: false },
                     { title: "Première dent", desc: "Un sourire tout neuf", icon: "🦷", color: "from-cyan-100", keywords: ["dent", "sourire", "bébé"], hasSubPages: false },
                   ].filter(item => {

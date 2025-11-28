@@ -41,6 +41,7 @@ export default function Prototype() {
   const [newUserName, setNewUserName] = useState("");
   const [newUserEmail, setNewUserEmail] = useState("");
   const [showAddPageMenu, setShowAddPageMenu] = useState(false);
+  const [bookStyle, setBookStyle] = useState<"moderne" | "classique" | "colore" | "animation">("moderne");
 
   const addInvitedUser = () => {
     if (newUserName && newUserEmail) {
@@ -573,6 +574,41 @@ export default function Prototype() {
                     Passer à {userPlan === "base" ? "Premium" : "Platine"}
                   </Button>
                 )}
+              </div>
+
+              {/* Book Style */}
+              <div className="bg-white rounded-2xl shadow-sm border border-stone-100 p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Sparkles size={18} className="text-primary" />
+                  <h4 className="font-bold text-stone-800 text-sm">Style du livre</h4>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { id: "moderne", label: "Moderne", icon: "✨", desc: "Épuré et minimaliste" },
+                    { id: "classique", label: "Classique", icon: "📖", desc: "Traditionnel et élégant" },
+                    { id: "colore", label: "Coloré", icon: "🎨", desc: "Vif et joyeux" },
+                    { id: "animation", label: "Animation", icon: "🎬", desc: "Ludique et animé" },
+                  ].map((style) => (
+                    <button
+                      key={style.id}
+                      onClick={() => setBookStyle(style.id as any)}
+                      className={`p-3 rounded-xl border-2 transition-all text-left ${
+                        bookStyle === style.id
+                          ? "border-primary bg-primary/5"
+                          : "border-stone-200 hover:border-stone-300"
+                      }`}
+                      data-testid={`button-style-${style.id}`}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-lg">{style.icon}</span>
+                        <p className={`font-bold text-xs ${bookStyle === style.id ? "text-primary" : "text-stone-700"}`}>
+                          {style.label}
+                        </p>
+                      </div>
+                      <p className="text-[10px] text-stone-500">{style.desc}</p>
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Personal Information */}

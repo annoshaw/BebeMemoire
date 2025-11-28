@@ -1696,6 +1696,94 @@ export default function Prototype() {
           ) : (
             // Mes créations - Dashboard View
             <div className="flex-1 flex flex-col pb-20 overflow-y-auto">
+              {/* Active Book Preview - Featured at Top */}
+              {activeBook && (
+                <div className="px-4 pt-4 pb-2">
+                  <motion.div 
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-gradient-to-br from-primary/10 via-white to-secondary/10 rounded-3xl p-5 border border-primary/20 shadow-lg"
+                    data-testid="active-book-preview"
+                  >
+                    <div className="flex items-center gap-2 mb-3">
+                      <Sparkles size={14} className="text-primary" />
+                      <span className="text-xs font-bold text-primary uppercase tracking-wide">Livre actif</span>
+                    </div>
+                    
+                    <div className="flex gap-4">
+                      {/* Book Cover Preview */}
+                      <div className="relative">
+                        <div className="w-24 h-32 rounded-xl overflow-hidden shadow-xl border-2 border-white">
+                          <img 
+                            src={activeBook.coverImage || "https://images.unsplash.com/photo-1544126566-475d8528f69f?q=80&w=800&auto=format&fit=crop"} 
+                            className="w-full h-full object-cover" 
+                            alt={activeBook.childName}
+                          />
+                        </div>
+                        {/* Mini pages stack effect */}
+                        <div className="absolute -right-2 top-2 w-20 h-28 bg-white/80 rounded-lg shadow-md -z-10 rotate-3"></div>
+                        <div className="absolute -right-3 top-3 w-18 h-26 bg-white/60 rounded-lg shadow-sm -z-20 rotate-6"></div>
+                      </div>
+                      
+                      {/* Book Info */}
+                      <div className="flex-1 flex flex-col justify-between py-1">
+                        <div>
+                          <h3 className="text-lg font-bold text-stone-800 mb-1">L'histoire de {activeBook.childName}</h3>
+                          <p className="text-xs text-stone-500 mb-2">
+                            {activeBook.birthDate 
+                              ? new Date(activeBook.birthDate).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' }) 
+                              : 'Date à définir'}
+                          </p>
+                          <div className="flex items-center gap-3 text-xs text-stone-600">
+                            <span className="flex items-center gap-1">
+                              <BookOpen size={12} />
+                              {bookPages.length} pages
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <ImageIcon size={12} />
+                              {bookPages.filter(p => p.type === 'photo').length} photos
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <Link href="/app/edit">
+                          <Button size="sm" className="w-full mt-3 gap-2" data-testid="button-edit-active-book">
+                            <Edit2 size={14} />
+                            Continuer l'édition
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+                    
+                    {/* Page Thumbnails */}
+                    <div className="mt-4 pt-3 border-t border-stone-200/50">
+                      <p className="text-[10px] text-stone-500 uppercase tracking-wide mb-2">Aperçu des pages</p>
+                      <div className="flex gap-2 overflow-x-auto pb-1">
+                        {bookPages.slice(0, 5).map((page, idx) => (
+                          <div 
+                            key={page.id} 
+                            className="w-12 h-16 rounded-lg overflow-hidden shadow-sm border border-stone-200 flex-shrink-0 bg-white"
+                          >
+                            {page.image ? (
+                              <img src={page.image} className="w-full h-full object-cover" alt={page.title} />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-stone-100">
+                                <span className="text-[8px] text-stone-400 text-center px-1">{page.title}</span>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                        {bookPages.length > 5 && (
+                          <div className="w-12 h-16 rounded-lg bg-stone-100 flex items-center justify-center flex-shrink-0 border border-stone-200">
+                            <span className="text-xs text-stone-500">+{bookPages.length - 5}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                </div>
+              )}
+
               {/* Dashboard Header */}
               <div className="p-4 pb-2">
                 <h3 className="text-sm font-bold text-stone-800 mb-1">Tableau de bord</h3>

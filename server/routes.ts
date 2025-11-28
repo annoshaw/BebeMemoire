@@ -145,6 +145,109 @@ export async function registerRoutes(
     });
   });
 
+  // Forgot password - Request password reset
+  app.post("/api/auth/forgot-password", async (req: Request, res: Response) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email || typeof email !== 'string' || !email.includes('@')) {
+        return res.status(400).json({ message: "Adresse email invalide" });
+      }
+      
+      const user = await storage.getUserByEmail(email.toLowerCase().trim());
+      
+      // Always return success to prevent email enumeration attacks
+      if (!user || user.authProvider !== 'email') {
+        return res.json({ 
+          message: "Si un compte existe avec cet email, vous recevrez un lien de réinitialisation." 
+        });
+      }
+      
+      // Generate a secure token
+      const crypto = await import('crypto');
+      const token = crypto.randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour expiry
+      
+      await storage.createPasswordResetToken(user.id, token, expiresAt);
+      
+      // Build the reset URL
+      const resetUrl = `${req.protocol}://${req.get('host')}/reset-password?token=${token}`;
+      
+      // Log the reset link (in production, this would be sent via email)
+      console.log("=".repeat(60));
+      console.log("PASSWORD RESET LINK (for development):");
+      console.log(`Email: ${email}`);
+      console.log(`Reset URL: ${resetUrl}`);
+      console.log("=".repeat(60));
+      
+      res.json({ 
+        message: "Si un compte existe avec cet email, vous recevrez un lien de réinitialisation.",
+        // In development mode, include the reset URL in the response
+        ...(process.env.NODE_ENV === 'development' && { resetUrl })
+      });
+    } catch (error) {
+      console.error("Forgot password error:", error);
+      res.status(500).json({ message: "Erreur lors de la demande de réinitialisation" });
+    }
+  });
+
+  // Reset password - Verify token and update password
+  app.post("/api/auth/reset-password", async (req: Request, res: Response) => {
+    try {
+      const { token, password } = req.body;
+      
+      if (!token || typeof token !== 'string') {
+        return res.status(400).json({ message: "Token invalide" });
+      }
+      
+      if (!password || typeof password !== 'string' || password.length < 8) {
+        return res.status(400).json({ message: "Le mot de passe doit contenir au moins 8 caractères" });
+      }
+      
+      const resetToken = await storage.getValidPasswordResetToken(token);
+      
+      if (!resetToken) {
+        return res.status(400).json({ message: "Ce lien de réinitialisation est invalide ou a expiré" });
+      }
+      
+      // Hash the new password
+      const hashedPassword = await bcrypt.hash(password, 10);
+      
+      // Update the user's password
+      await storage.updateUserPassword(resetToken.userId, hashedPassword);
+      
+      // Mark the token as used
+      await storage.markPasswordResetTokenAsUsed(token);
+      
+      res.json({ message: "Mot de passe réinitialisé avec succès" });
+    } catch (error) {
+      console.error("Reset password error:", error);
+      res.status(500).json({ message: "Erreur lors de la réinitialisation du mot de passe" });
+    }
+  });
+
+  // Verify reset token (check if token is valid without resetting)
+  app.get("/api/auth/verify-reset-token", async (req: Request, res: Response) => {
+    try {
+      const { token } = req.query;
+      
+      if (!token || typeof token !== 'string') {
+        return res.status(400).json({ valid: false, message: "Token invalide" });
+      }
+      
+      const resetToken = await storage.getValidPasswordResetToken(token);
+      
+      if (!resetToken) {
+        return res.status(400).json({ valid: false, message: "Ce lien de réinitialisation est invalide ou a expiré" });
+      }
+      
+      res.json({ valid: true });
+    } catch (error) {
+      console.error("Verify token error:", error);
+      res.status(500).json({ valid: false, message: "Erreur lors de la vérification du token" });
+    }
+  });
+
   // Get current user (supports both Replit Auth and email/password)
   app.get("/api/auth/user", async (req: any, res: Response) => {
     try {

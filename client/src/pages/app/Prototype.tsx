@@ -811,7 +811,14 @@ export default function Prototype() {
                   ].map((plan) => (
                     <button
                       key={plan.id}
-                      onClick={() => setUserPlan(plan.id as any)}
+                      onClick={() => {
+                        if (plan.id === "base") {
+                          setUserPlan("base");
+                        } else if (plan.id !== userPlan) {
+                          setSelectedProduct({ name: `Abonnement ${plan.label}`, price: plan.price.replace("/mois", "") });
+                          setShowCheckout(true);
+                        }
+                      }}
                       className={`p-3 rounded-xl border-2 transition-all text-center ${
                         userPlan === plan.id
                           ? plan.id === "platine" 
@@ -831,7 +838,15 @@ export default function Prototype() {
                   ))}
                 </div>
                 {userPlan !== "platine" && (
-                  <Button size="sm" className="w-full mt-3 h-8 text-xs">
+                  <Button 
+                    size="sm" 
+                    className="w-full mt-3 h-8 text-xs"
+                    onClick={() => {
+                      const nextPlan = userPlan === "base" ? { name: "Abonnement Premium", price: "1,99$" } : { name: "Abonnement Platine", price: "4,99$" };
+                      setSelectedProduct(nextPlan);
+                      setShowCheckout(true);
+                    }}
+                  >
                     Passer à {userPlan === "base" ? "Premium" : "Platine"}
                   </Button>
                 )}
@@ -1468,25 +1483,30 @@ export default function Prototype() {
                 <div className="bg-stone-50 rounded-xl p-4 space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-stone-600">{selectedProduct.name}</span>
-                    <span className="font-medium text-stone-800">{selectedProduct.price}</span>
+                    <span className="font-medium text-stone-800">{selectedProduct.price}{selectedProduct.name.includes("Abonnement") ? "/mois" : ""}</span>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-stone-600">Livraison Postes Canada</span>
-                    <span className="font-medium text-stone-800">12,00 $</span>
-                  </div>
+                  {!selectedProduct.name.includes("Abonnement") && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-stone-600">Livraison Postes Canada</span>
+                      <span className="font-medium text-stone-800">12,00 $</span>
+                    </div>
+                  )}
                   {(() => {
-                    const productPrice = parseFloat(selectedProduct.price.replace(',', '.').replace(' $', ''));
-                    const shipping = 12;
+                    const productPrice = parseFloat(selectedProduct.price.replace(',', '.').replace(' $', '').replace('$', ''));
+                    const isSubscription = selectedProduct.name.includes("Abonnement");
+                    const shipping = isSubscription ? 0 : 12;
                     const subtotal = productPrice + shipping;
                     const tps = subtotal * 0.05;
                     const tvq = subtotal * 0.09975;
                     const total = subtotal + tps + tvq;
                     return (
                       <>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-stone-600">Sous-total</span>
-                          <span className="font-medium text-stone-800">{subtotal.toFixed(2).replace('.', ',')} $</span>
-                        </div>
+                        {!isSubscription && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-stone-600">Sous-total</span>
+                            <span className="font-medium text-stone-800">{subtotal.toFixed(2).replace('.', ',')} $</span>
+                          </div>
+                        )}
                         <div className="flex justify-between text-sm">
                           <span className="text-stone-600">TPS (5%)</span>
                           <span className="font-medium text-stone-800">{tps.toFixed(2).replace('.', ',')} $</span>
@@ -1496,8 +1516,8 @@ export default function Prototype() {
                           <span className="font-medium text-stone-800">{tvq.toFixed(2).replace('.', ',')} $</span>
                         </div>
                         <div className="border-t border-stone-200 pt-2 flex justify-between">
-                          <span className="font-bold text-stone-800">Total</span>
-                          <span className="font-bold text-stone-800">{total.toFixed(2).replace('.', ',')} $</span>
+                          <span className="font-bold text-stone-800">Total{isSubscription ? " mensuel" : ""}</span>
+                          <span className="font-bold text-stone-800">{total.toFixed(2).replace('.', ',')} ${isSubscription ? "/mois" : ""}</span>
                         </div>
                       </>
                     );

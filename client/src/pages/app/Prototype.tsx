@@ -563,7 +563,7 @@ export default function Prototype() {
                   </div>
                   
                   {[
-                    { id: 1, title: "Ton premier échographie", icon: "🔊", color: "from-purple-100" },
+                    { id: 1, title: "Ta première échographie", icon: "🔊", color: "from-purple-100" },
                     { id: 2, title: "Ta deuxième échographie", icon: "🔊", color: "from-indigo-100" },
                     { id: 3, title: "Ta troisième échographie", icon: "🔊", color: "from-blue-100" },
                     { id: 4, title: "Les échographies de suivi", icon: "📋", color: "from-teal-100" },

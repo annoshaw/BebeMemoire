@@ -312,7 +312,8 @@ export default function Prototype() {
                       </div>
                       <div>
                         <h4 className="font-bold text-stone-800 text-sm">Premium</h4>
-                        <span className="text-lg font-bold text-blue-600">9,99$/mois</span>
+                        <span className="text-lg font-bold text-blue-600">1,99$/mois</span>
+                        <span className="text-[10px] text-stone-500 block">(23,88$/an)</span>
                       </div>
                     </div>
                     {userPlan === 'premium' && (
@@ -362,7 +363,8 @@ export default function Prototype() {
                       </div>
                       <div>
                         <h4 className="font-bold text-stone-800 text-sm">Platine</h4>
-                        <span className="text-lg font-bold text-amber-700">19,99$/mois</span>
+                        <span className="text-lg font-bold text-amber-700">4,99$/mois</span>
+                        <span className="text-[10px] text-stone-500 block">(59,88$/an)</span>
                       </div>
                     </div>
                     {userPlan === 'platine' && (

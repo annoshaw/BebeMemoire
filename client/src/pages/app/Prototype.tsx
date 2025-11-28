@@ -393,6 +393,86 @@ export default function Prototype() {
                   </Button>
                 </div>
               </motion.div>
+
+              {/* Price Chart for Books */}
+              <div className="mt-6 pt-4 border-t border-stone-200">
+                <h3 className="text-sm font-bold text-stone-800 mb-3">Charte de prix - Impression</h3>
+                <p className="text-xs text-stone-500 mb-4">Prix pour un livre de 50 pages</p>
+                
+                <div className="space-y-3">
+                  {/* Softcover */}
+                  <motion.div 
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="bg-white rounded-xl border border-stone-200 p-3 flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-14 bg-gradient-to-b from-secondary/20 to-stone-100 rounded-lg flex items-center justify-center">
+                        <BookOpen size={18} className="text-secondary" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-stone-800 text-sm">Couverture souple</h4>
+                        <p className="text-[10px] text-stone-500">Reliure légère et pratique</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-lg font-bold text-stone-800">43,24 $</span>
+                      <p className="text-[10px] text-stone-400">+ 0,50$/page supp.</p>
+                    </div>
+                  </motion.div>
+
+                  {/* Hardcover */}
+                  <motion.div 
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.1 }}
+                    className="bg-white rounded-xl border border-stone-200 p-3 flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-14 bg-gradient-to-b from-primary/20 to-stone-100 rounded-lg flex items-center justify-center">
+                        <BookOpen size={18} className="text-primary" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-stone-800 text-sm">Couverture rigide</h4>
+                        <p className="text-[10px] text-stone-500">Qualité premium durable</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-lg font-bold text-stone-800">54,99 $</span>
+                      <p className="text-[10px] text-stone-400">+ 0,65$/page supp.</p>
+                    </div>
+                  </motion.div>
+
+                  {/* E-Book */}
+                  <motion.div 
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="bg-white rounded-xl border border-stone-200 p-3 flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-14 bg-gradient-to-b from-blue-100 to-stone-100 rounded-lg flex items-center justify-center">
+                        <QrCode size={18} className="text-blue-600" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-stone-800 text-sm">E-Book</h4>
+                        <p className="text-[10px] text-stone-500">Version numérique + QR codes vidéos</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-lg font-bold text-stone-800">19,99 $</span>
+                      <p className="text-[10px] text-stone-400">Pages illimitées</p>
+                    </div>
+                  </motion.div>
+                </div>
+
+                {/* Note */}
+                <div className="bg-stone-50 rounded-xl p-3 mt-4">
+                  <p className="text-[11px] text-stone-500 text-center">
+                    Livraison standard incluse au Canada. Frais supplémentaires pour l'international.
+                  </p>
+                </div>
+              </div>
             </div>
           ) : activeTab === 'inspiration' ? (
             // Inspiration tab

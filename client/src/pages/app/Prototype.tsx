@@ -338,17 +338,30 @@ export default function Prototype() {
           {/* Stats / Actions */}
           <div className="flex justify-between items-center p-4 px-6 bg-white border-b border-stone-100">
             <div className="text-center">
-              <span className="block text-lg font-bold text-stone-800">42</span>
+              <span className="block text-lg font-bold text-stone-800" data-testid="stat-souvenirs">{memories.length + bookPages.length}</span>
               <span className="text-[10px] uppercase tracking-wider text-stone-400">Souvenirs</span>
             </div>
             <div className="h-8 w-px bg-stone-100"></div>
             <div className="text-center">
-              <span className="block text-lg font-bold text-stone-800">12</span>
+              <span className="block text-lg font-bold text-stone-800" data-testid="stat-mois">
+                {(() => {
+                  const birthDateStr = typeof window !== "undefined" ? localStorage.getItem("babyBirthDate") : null;
+                  if (birthDateStr) {
+                    const birthDate = new Date(birthDateStr);
+                    const now = new Date();
+                    const months = (now.getFullYear() - birthDate.getFullYear()) * 12 + (now.getMonth() - birthDate.getMonth());
+                    return Math.max(0, months);
+                  }
+                  return 0;
+                })()}
+              </span>
               <span className="text-[10px] uppercase tracking-wider text-stone-400">Mois</span>
             </div>
             <div className="h-8 w-px bg-stone-100"></div>
              <div className="text-center">
-              <span className="block text-lg font-bold text-stone-800">85%</span>
+              <span className="block text-lg font-bold text-stone-800" data-testid="stat-complet">
+                {Math.min(100, Math.round(((memories.length + bookPages.length) / 50) * 100))}%
+              </span>
               <span className="text-[10px] uppercase tracking-wider text-stone-400">Complet</span>
             </div>
           </div>

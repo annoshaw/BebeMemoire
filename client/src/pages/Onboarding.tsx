@@ -405,6 +405,7 @@ export default function Onboarding() {
                       localStorage.setItem("babyName", babyName);
                       localStorage.setItem("babyStatus", babyStatus);
                       localStorage.setItem("babyDate", babyDate);
+                      localStorage.setItem("babyBirthDate", babyDate);
                       localStorage.setItem("babyGender", babyGender);
                       localStorage.setItem("notificationFrequency", notificationFrequency);
                       localStorage.setItem("pushNotificationsEnabled", String(pushNotificationsEnabled));

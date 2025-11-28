@@ -1508,10 +1508,10 @@ export default function Prototype() {
                     className="flex-shrink-0 w-28 cursor-pointer"
                     data-testid="dashboard-add-book"
                   >
-                    <div className="w-28 h-36 rounded-xl border-2 border-dashed border-stone-300 flex flex-col items-center justify-center mb-2 hover:border-primary hover:bg-primary/5 transition-all">
-                      <Plus size={24} className="text-stone-400 mb-1" />
-                      <span className="text-[10px] text-stone-400">Nouveau</span>
+                    <div className="w-28 h-36 rounded-xl bg-primary flex flex-col items-center justify-center mb-2 hover:bg-primary/90 transition-all shadow-lg shadow-primary/30">
+                      <Plus size={28} className="text-white" />
                     </div>
+                    <p className="text-xs font-medium text-stone-800 text-center">Nouveau livre</p>
                   </motion.div>
                 </div>
               </div>

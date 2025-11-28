@@ -668,7 +668,7 @@ export default function Prototype() {
                     { title: "Événements lors de la grossesse", desc: "Célébrez avec vos proches", icon: "🎉", color: "from-yellow-100", keywords: ["baby shower", "fête", "célébration", "cadeau", "événement", "grossesse"], hasSubPages: true },
                     { title: "Chambre de bébé", desc: "Le nid douillet", icon: "🛏️", color: "from-green-100", keywords: ["chambre", "décoration", "nursery", "lit"], hasSubPages: false },
                     { title: "Lettre à bébé", desc: "Vos mots d'amour", icon: "💌", color: "from-red-100", keywords: ["lettre", "message", "amour", "souvenir"], hasSubPages: false },
-                    { title: "Premier sourire", desc: "Ce moment inoubliable", icon: "😊", color: "from-orange-100", keywords: ["sourire", "premier", "joie", "émotion"], hasSubPages: false },
+                    { title: "FIV", desc: "Notre parcours de fertilité", icon: "🌱", color: "from-orange-100", keywords: ["fiv", "fertilité", "parcours", "ivf", "procréation"], hasSubPages: false },
                     { title: "Premiers pas", desc: "Une grande étape", icon: "👣", color: "from-teal-100", keywords: ["pas", "marche", "étape", "développement"], hasSubPages: false },
                     { title: "Premier mot", desc: "Maman ou Papa?", icon: "💬", color: "from-indigo-100", keywords: ["mot", "parler", "langage", "maman", "papa"], hasSubPages: false },
                     { title: "Première dent", desc: "Un sourire tout neuf", icon: "🦷", color: "from-cyan-100", keywords: ["dent", "sourire", "bébé"], hasSubPages: false },

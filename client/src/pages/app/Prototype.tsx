@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Plus, Minus, Image as ImageIcon, Mic, Video, MoreHorizontal, Calendar, Share2, BookOpen, Printer, CheckCircle, Bell, QrCode, Baby, LogOut, Settings, User, Sparkles, ShoppingBag, FolderHeart, Trash2, Crown, Mail, Phone, MapPin, UserPlus, Users, Edit2, CreditCard, X, Lock } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Minus, Image as ImageIcon, Mic, Video, MoreHorizontal, Calendar, Share2, BookOpen, Printer, CheckCircle, Bell, QrCode, Baby, LogOut, Settings, User, Sparkles, ShoppingBag, FolderHeart, Trash2, Crown, Mail, Phone, MapPin, UserPlus, Users, Edit2, CreditCard, X, Lock, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
 import {
@@ -57,6 +57,7 @@ export default function Prototype() {
     expiry: "",
     cvv: ""
   });
+  const [inspirationSearch, setInspirationSearch] = useState("");
 
   const handleSelectProduct = (name: string, price: string) => {
     setSelectedProduct({ name, price });
@@ -499,14 +500,37 @@ export default function Prototype() {
                 <p className="text-xs text-stone-500">Ajoutez ces pages spéciales à votre livre</p>
               </div>
               
+              {/* Search Bar */}
+              <div className="relative">
+                <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
+                <input
+                  type="text"
+                  placeholder="Rechercher par mot-clé..."
+                  value={inspirationSearch}
+                  onChange={(e) => setInspirationSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-stone-200 bg-white focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                  data-testid="input-inspiration-search"
+                />
+              </div>
+              
               {[
-                { title: "Annonce de grossesse", desc: "Partagez la grande nouvelle", icon: "🤰", color: "from-pink-100" },
-                { title: "Échographie", desc: "Les premiers aperçus", icon: "🔊", color: "from-purple-100" },
-                { title: "Révélation du sexe", desc: "Fille ou garçon?", icon: "🎀", color: "from-blue-100" },
-                { title: "Baby Shower", desc: "Célébrez avec vos proches", icon: "🎉", color: "from-yellow-100" },
-                { title: "Chambre de bébé", desc: "Le nid douillet", icon: "🛏️", color: "from-green-100" },
-                { title: "Lettre à bébé", desc: "Vos mots d'amour", icon: "💌", color: "from-red-100" },
-              ].map((item, idx) => (
+                { title: "Annonce de grossesse", desc: "Partagez la grande nouvelle", icon: "🤰", color: "from-pink-100", keywords: ["annonce", "grossesse", "nouvelle", "enceinte"] },
+                { title: "Échographie", desc: "Les premiers aperçus", icon: "🔊", color: "from-purple-100", keywords: ["échographie", "scan", "médical", "bébé"] },
+                { title: "Révélation du sexe", desc: "Fille ou garçon?", icon: "🎀", color: "from-blue-100", keywords: ["sexe", "révélation", "fille", "garçon", "gender"] },
+                { title: "Baby Shower", desc: "Célébrez avec vos proches", icon: "🎉", color: "from-yellow-100", keywords: ["baby shower", "fête", "célébration", "cadeau"] },
+                { title: "Chambre de bébé", desc: "Le nid douillet", icon: "🛏️", color: "from-green-100", keywords: ["chambre", "décoration", "nursery", "lit"] },
+                { title: "Lettre à bébé", desc: "Vos mots d'amour", icon: "💌", color: "from-red-100", keywords: ["lettre", "message", "amour", "souvenir"] },
+                { title: "Premier sourire", desc: "Ce moment inoubliable", icon: "😊", color: "from-orange-100", keywords: ["sourire", "premier", "joie", "émotion"] },
+                { title: "Premiers pas", desc: "Une grande étape", icon: "👣", color: "from-teal-100", keywords: ["pas", "marche", "étape", "développement"] },
+                { title: "Premier mot", desc: "Maman ou Papa?", icon: "💬", color: "from-indigo-100", keywords: ["mot", "parler", "langage", "maman", "papa"] },
+                { title: "Première dent", desc: "Un sourire tout neuf", icon: "🦷", color: "from-cyan-100", keywords: ["dent", "sourire", "bébé"] },
+              ].filter(item => {
+                if (!inspirationSearch.trim()) return true;
+                const searchLower = inspirationSearch.toLowerCase();
+                return item.title.toLowerCase().includes(searchLower) || 
+                       item.desc.toLowerCase().includes(searchLower) ||
+                       item.keywords.some(k => k.toLowerCase().includes(searchLower));
+              }).map((item, idx) => (
                 <motion.div 
                   key={item.title}
                   initial={{ opacity: 0, y: 20 }}

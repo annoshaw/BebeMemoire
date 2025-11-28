@@ -54,7 +54,14 @@ export default function Register() {
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    // Simulate API call
+    // Store user info in localStorage
+    localStorage.setItem("userName", values.fullName);
+    localStorage.setItem("userEmail", values.email);
+    localStorage.setItem("userAddress", values.address);
+    localStorage.setItem("userPhone", values.phone);
+    localStorage.setItem("userGender", values.gender === "female" ? "Femme" : values.gender === "male" ? "Homme" : values.gender === "non-binary" ? "Non-binaire" : "Non spécifié");
+    localStorage.setItem("userCountry", values.country);
+    
     setTimeout(() => {
       console.log(values);
       setIsLoading(false);

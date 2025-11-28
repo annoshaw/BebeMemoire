@@ -27,12 +27,23 @@ export default function Prototype() {
   const babyName = typeof window !== "undefined" ? localStorage.getItem("babyName") || "Léo" : "Léo";
 
   const [userPlan, setUserPlan] = useState<"base" | "premium" | "platine">("base");
-  const [userInfo, setUserInfo] = useState({
-    name: "Marie Dupond-Martin",
-    email: "marie@example.com",
-    phone: "+1 (514) 555-1234",
-    address: "123 Rue des Érables, Montréal, QC",
-    gender: "Femme"
+  const [userInfo, setUserInfo] = useState(() => {
+    if (typeof window !== "undefined") {
+      return {
+        name: localStorage.getItem("userName") || "Marie Dupond-Martin",
+        email: localStorage.getItem("userEmail") || "marie@example.com",
+        phone: localStorage.getItem("userPhone") || "+1 (514) 555-1234",
+        address: localStorage.getItem("userAddress") || "123 Rue des Érables, Montréal, QC",
+        gender: localStorage.getItem("userGender") || "Femme"
+      };
+    }
+    return {
+      name: "Marie Dupond-Martin",
+      email: "marie@example.com",
+      phone: "+1 (514) 555-1234",
+      address: "123 Rue des Érables, Montréal, QC",
+      gender: "Femme"
+    };
   });
   const [invitedUsers, setInvitedUsers] = useState([
     { id: 1, name: "Jean Martin", email: "jean@example.com" }

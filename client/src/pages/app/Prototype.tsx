@@ -367,6 +367,12 @@ export default function Prototype() {
                       variant={userPlan === 'premium' ? 'outline' : 'default'}
                       className={`w-full h-7 text-[10px] ${userPlan !== 'premium' ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
                       data-testid="button-select-premium"
+                      onClick={() => {
+                        if (userPlan !== 'premium') {
+                          setSelectedProduct({ name: "Abonnement Premium", price: "1,99$" });
+                          setShowCheckout(true);
+                        }
+                      }}
                     >
                       {userPlan === 'premium' ? 'Actuel' : 'Choisir'}
                     </Button>
@@ -414,6 +420,12 @@ export default function Prototype() {
                       variant={userPlan === 'platine' ? 'outline' : 'default'}
                       className={`w-full h-7 text-[10px] ${userPlan !== 'platine' ? 'bg-amber-600 hover:bg-amber-700' : ''}`}
                       data-testid="button-select-platine"
+                      onClick={() => {
+                        if (userPlan !== 'platine') {
+                          setSelectedProduct({ name: "Abonnement Platine", price: "4,99$" });
+                          setShowCheckout(true);
+                        }
+                      }}
                     >
                       {userPlan === 'platine' ? 'Actuel' : 'Choisir'}
                     </Button>

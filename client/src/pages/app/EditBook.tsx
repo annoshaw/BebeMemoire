@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Type, Camera, Video, X, QrCode, Layout, Plus, LayoutTemplate, Sparkles, ImagePlus, Wand2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Type, Camera, Video, X, QrCode, Layout, Plus, LayoutTemplate, Sparkles, ImagePlus, Wand2, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 
@@ -49,12 +49,41 @@ export default function EditBook() {
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [selectedText, setSelectedText] = useState("");
   const [showLayoutPicker, setShowLayoutPicker] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   
-  const photoInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   
   const babyName = typeof window !== "undefined" ? localStorage.getItem("babyName") || "Léo" : "Léo";
   const [selectedVideoUrl, setSelectedVideoUrl] = useState("");
+
+  const handleFileUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    
+    setIsUploading(true);
+    const newImages: string[] = [];
+    
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (file.type.startsWith('image/')) {
+        const dataUrl = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(file);
+        });
+        newImages.push(dataUrl);
+      }
+    }
+    
+    if (newImages.length > 0) {
+      const newPages = [...pages];
+      newPages[currentPageIndex].images = [...currentPage.images, ...newImages];
+      setPages(newPages);
+    }
+    
+    setIsUploading(false);
+  };
 
   const generateQRCodeDataUrl = (text: string) => {
     const encodedText = encodeURIComponent(text);
@@ -731,50 +760,85 @@ export default function EditBook() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-3 gap-2 mb-4">
-                {currentPage.images.map((img, idx) => (
-                  <div key={idx} className="aspect-square rounded-lg overflow-hidden relative group" data-testid={`img-thumbnail-${idx}`}>
-                    <img src={img} className="w-full h-full object-cover" alt="" />
-                    <button
-                      onClick={() => {
-                        const newPages = [...pages];
-                        newPages[currentPageIndex].images = currentPage.images.filter((_, i) => i !== idx);
-                        setPages(newPages);
-                      }}
-                      className="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                      data-testid={`button-remove-photo-${idx}`}
-                    >
-                      <X size={12} />
-                    </button>
-                  </div>
-                ))}
+              {currentPage.images.length > 0 && (
+                <div className="grid grid-cols-3 gap-2 mb-4">
+                  {currentPage.images.map((img, idx) => (
+                    <div key={idx} className="aspect-square rounded-lg overflow-hidden relative group" data-testid={`img-thumbnail-${idx}`}>
+                      <img src={img} className="w-full h-full object-cover" alt="" />
+                      <button
+                        onClick={() => {
+                          const newPages = [...pages];
+                          newPages[currentPageIndex].images = currentPage.images.filter((_, i) => i !== idx);
+                          setPages(newPages);
+                        }}
+                        className="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        data-testid={`button-remove-photo-${idx}`}
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-3 mb-4">
                 <button
-                  onClick={() => {
-                    const randomImg = sampleImages[Math.floor(Math.random() * sampleImages.length)];
-                    const newPages = [...pages];
-                    newPages[currentPageIndex].images = [...currentPage.images, randomImg];
-                    setPages(newPages);
-                  }}
-                  className="aspect-square rounded-lg border-2 border-dashed border-stone-300 flex items-center justify-center hover:border-primary hover:bg-primary/5 transition-colors"
-                  data-testid="button-add-sample-photo"
+                  onClick={() => cameraInputRef.current?.click()}
+                  disabled={isUploading}
+                  className="flex flex-col items-center gap-3 p-6 border-2 border-dashed border-stone-200 rounded-xl hover:border-primary hover:bg-primary/5 transition-colors"
+                  data-testid="button-take-photo"
                 >
-                  <Plus size={24} className="text-stone-400" />
+                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg">
+                    <Camera size={28} className="text-white" />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-stone-700">Prendre une photo</p>
+                    <p className="text-xs text-stone-400 mt-1">Ouvrir l'appareil photo</p>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => galleryInputRef.current?.click()}
+                  disabled={isUploading}
+                  className="flex flex-col items-center gap-3 p-6 border-2 border-dashed border-stone-200 rounded-xl hover:border-violet-500 hover:bg-violet-50 transition-colors"
+                  data-testid="button-gallery"
+                >
+                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center shadow-lg">
+                    <ImageIcon size={28} className="text-white" />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-stone-700">Galerie</p>
+                    <p className="text-xs text-stone-400 mt-1">Choisir une photo existante</p>
+                  </div>
                 </button>
               </div>
 
-              <div className="border-2 border-dashed border-stone-200 rounded-xl p-6 text-center mb-4 hover:border-primary transition-colors cursor-pointer" data-testid="dropzone-photo">
-                <Camera size={32} className="mx-auto text-stone-400 mb-2" />
-                <p className="text-sm text-stone-600">Cliquer pour ajouter des photos</p>
-                <p className="text-xs text-stone-400 mt-1">JPG, PNG jusqu'à 10 Mo</p>
-                <input
-                  ref={photoInputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="hidden"
-                  data-testid="input-photo-file"
-                />
-              </div>
+              <input
+                ref={cameraInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={(e) => handleFileUpload(e.target.files)}
+                className="hidden"
+                data-testid="input-camera"
+              />
+
+              <input
+                ref={galleryInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => handleFileUpload(e.target.files)}
+                className="hidden"
+                data-testid="input-gallery"
+              />
+
+              {isUploading && (
+                <div className="flex items-center justify-center gap-2 py-3 text-sm text-primary">
+                  <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  <span>Ajout en cours...</span>
+                </div>
+              )}
 
               <Button onClick={closeEditor} className="w-full" data-testid="button-finish-photo">
                 Terminer

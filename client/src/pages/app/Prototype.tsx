@@ -2029,25 +2029,27 @@ export default function Prototype() {
                   </button>
                 </div>
 
-                <div className="flex items-center justify-center gap-3">
-                  <div className="flex gap-1">
-                    {bookPages.map((_, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => setCurrentPage(idx)}
-                        className={`w-2 h-2 rounded-full transition-colors ${currentPage === idx ? 'bg-primary' : 'bg-stone-300'}`}
-                      />
-                    ))}
-                  </div>
-                  <button
-                    onClick={addBasicPage}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-medium rounded-full hover:bg-primary/90 transition-colors shadow-sm"
-                    data-testid="button-add-page"
-                  >
-                    <Plus size={14} />
-                    Ajouter une page
-                  </button>
+                <div className="flex items-center justify-center gap-1">
+                  {bookPages.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setCurrentPage(idx)}
+                      className={`w-2 h-2 rounded-full transition-colors ${currentPage === idx ? 'bg-primary' : 'bg-stone-300'}`}
+                    />
+                  ))}
                 </div>
+              </div>
+
+              {/* Add Page Button - Separate section */}
+              <div className="px-4 py-3">
+                <button
+                  onClick={addBasicPage}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white border-2 border-dashed border-stone-200 text-stone-600 text-sm font-medium rounded-xl hover:border-primary hover:bg-primary/5 hover:text-primary transition-colors"
+                  data-testid="button-add-page"
+                >
+                  <Plus size={18} />
+                  Ajouter une nouvelle page
+                </button>
               </div>
 
               {/* Dashboard Header */}

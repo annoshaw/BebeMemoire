@@ -179,6 +179,21 @@ export default function EditBook() {
     setSelectedText("");
   };
 
+  const addNewPage = () => {
+    const newPage: BookPage = {
+      id: Date.now(),
+      title: "NOUVELLE",
+      subtitle: "PAGE",
+      date: new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, ' / '),
+      description: "Ajoutez votre texte ici...",
+      images: [],
+      layoutStyle: "auto",
+      content: []
+    };
+    setPages([...pages, newPage]);
+    setCurrentPageIndex(pages.length);
+  };
+
   const getCurrentLayoutName = () => {
     const style = layoutStyles.find(s => s.id === currentPage.layoutStyle);
     return style?.name || "Automatique";
@@ -477,6 +492,15 @@ export default function EditBook() {
         >
           <QrCode size={18} />
           <span className="text-sm">QR</span>
+        </button>
+        <div className="w-px h-6 bg-white/30 mx-1" />
+        <button
+          onClick={addNewPage}
+          className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary hover:bg-primary/90 text-white transition-colors"
+          data-testid="button-add-new-page"
+        >
+          <Plus size={18} />
+          <span className="text-sm">Nouvelle page</span>
         </button>
       </div>
 

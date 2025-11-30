@@ -1886,6 +1886,160 @@ export default function Prototype() {
                 </div>
               )}
 
+              {/* Quick Actions - Moved up */}
+              <div className="px-4 py-3">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-xs font-bold text-stone-700 uppercase tracking-wide">Actions rapides</h4>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <motion.button 
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.1 }}
+                    onClick={() => setShowPhotoModal(true)}
+                    className="flex flex-col items-center gap-2 p-4 bg-white rounded-xl border border-stone-100 hover:shadow-md hover:border-primary/30 transition-all"
+                    data-testid="quick-action-photo"
+                  >
+                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                      <ImageIcon size={18} className="text-blue-600" />
+                    </div>
+                    <span className="text-[10px] font-medium text-stone-600">Photo</span>
+                  </motion.button>
+                  <motion.button 
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.15 }}
+                    className="flex flex-col items-center gap-2 p-4 bg-white rounded-xl border border-stone-100 hover:shadow-md hover:border-primary/30 transition-all"
+                    data-testid="quick-action-video"
+                  >
+                    <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                      <Video size={18} className="text-purple-600" />
+                    </div>
+                    <span className="text-[10px] font-medium text-stone-600">Vidéo</span>
+                  </motion.button>
+                  <motion.button 
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.2 }}
+                    className="flex flex-col items-center gap-2 p-4 bg-white rounded-xl border border-stone-100 hover:shadow-md hover:border-primary/30 transition-all"
+                    data-testid="quick-action-milestone"
+                  >
+                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                      <Calendar size={18} className="text-primary" />
+                    </div>
+                    <span className="text-[10px] font-medium text-stone-600">Étape</span>
+                  </motion.button>
+                </div>
+              </div>
+
+              {/* Book Preview Section - Moved up */}
+              <div className="px-4 mb-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-xs font-bold text-stone-700 uppercase tracking-wide">Aperçu du livre</h4>
+                  <span className="text-[10px] text-stone-400">Page {currentPage + 1}/{bookPages.length}</span>
+                </div>
+
+                <div className="relative mb-3">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={currentPage}
+                      initial={{ opacity: 0, x: 50 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -50 }}
+                      className="bg-white rounded-2xl shadow-lg border border-stone-200 overflow-hidden h-full min-h-[300px]"
+                    >
+                      {bookPages[currentPage]?.type === "cover" ? (
+                        <div className="h-full relative min-h-[300px]">
+                          <img 
+                            src={bookPages[currentPage].image} 
+                            className="w-full h-full object-cover" 
+                            alt="Couverture"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex flex-col justify-end p-6">
+                            <h2 className="text-2xl font-serif font-bold text-white">L'histoire de {babyName}</h2>
+                            <p className="text-white/80 text-sm">Famille Dupond-Martin</p>
+                          </div>
+                        </div>
+                      ) : bookPages[currentPage]?.type === "birth" ? (
+                        <div className="h-full p-6 bg-gradient-to-br from-secondary/10 to-white flex flex-col justify-center min-h-[300px]">
+                          <div className="text-center mb-6">
+                            <Baby size={48} className="text-secondary mx-auto mb-3" />
+                            <h3 className="text-xl font-serif font-bold text-stone-800">{bookPages[currentPage].title}</h3>
+                            <p className="text-sm text-stone-500">{bookPages[currentPage].date}</p>
+                          </div>
+                          <div className="grid grid-cols-3 gap-3">
+                            {bookPages[currentPage].stats && Object.entries(bookPages[currentPage].stats).map(([key, value]) => (
+                              <div key={key} className="bg-white border border-stone-100 rounded-xl p-3 text-center shadow-sm">
+                                <span className="block text-lg font-bold text-stone-800">{value as string}</span>
+                                <span className="text-xs text-stone-400 uppercase">{key}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : bookPages[currentPage]?.type === "photo" ? (
+                        <div className="h-full flex flex-col min-h-[300px]">
+                          <div className="flex-1 relative">
+                            <img 
+                              src={bookPages[currentPage].image} 
+                              className="w-full h-full object-cover" 
+                              alt={bookPages[currentPage].title}
+                            />
+                          </div>
+                          <div className="p-4 bg-white">
+                            <h3 className="font-bold text-stone-800">{bookPages[currentPage].title}</h3>
+                            <p className="text-sm text-stone-600">{bookPages[currentPage].desc}</p>
+                          </div>
+                        </div>
+                      ) : bookPages[currentPage]?.type === "milestone" ? (
+                        <div className="h-full p-6 bg-gradient-to-br from-primary/10 to-white flex flex-col justify-center text-center min-h-[300px]">
+                          <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Calendar size={32} className="text-primary" />
+                          </div>
+                          <h3 className="text-xl font-serif font-bold text-stone-800 mb-2">{bookPages[currentPage].title}</h3>
+                          <p className="text-sm text-stone-500 mb-4">{bookPages[currentPage].date}</p>
+                          <p className="text-stone-600">{bookPages[currentPage].desc}</p>
+                        </div>
+                      ) : (
+                        <div className="h-full p-6 flex flex-col items-center justify-center text-center bg-stone-50 min-h-[300px]">
+                          <div className="w-16 h-16 bg-stone-200 rounded-full flex items-center justify-center mb-4">
+                            <Plus size={32} className="text-stone-400" />
+                          </div>
+                          <h3 className="font-bold text-stone-600 mb-2">{bookPages[currentPage]?.title || "Page vide"}</h3>
+                          <p className="text-sm text-stone-400">{bookPages[currentPage]?.desc || "Ajoutez du contenu"}</p>
+                        </div>
+                      )}
+                    </motion.div>
+                  </AnimatePresence>
+
+                  <button 
+                    onClick={prevPage}
+                    disabled={currentPage === 0}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/90 backdrop-blur rounded-full shadow-lg flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white transition-colors"
+                    data-testid="button-prev-page"
+                  >
+                    <ChevronLeft size={20} className="text-stone-700" />
+                  </button>
+                  <button 
+                    onClick={nextPage}
+                    disabled={currentPage === bookPages.length - 1}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/90 backdrop-blur rounded-full shadow-lg flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white transition-colors"
+                    data-testid="button-next-page"
+                  >
+                    <ChevronRight size={20} className="text-stone-700" />
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-center gap-1">
+                  {bookPages.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setCurrentPage(idx)}
+                      className={`w-2 h-2 rounded-full transition-colors ${currentPage === idx ? 'bg-primary' : 'bg-stone-300'}`}
+                    />
+                  ))}
+                </div>
+              </div>
+
               {/* Dashboard Header */}
               <div className="p-4 pb-2">
                 <h3 className="text-sm font-bold text-stone-800 mb-1">Tableau de bord</h3>
@@ -2026,238 +2180,6 @@ export default function Prototype() {
                     </Link>
                   </div>
                 )}
-              </div>
-
-              {/* Quick Actions */}
-              <div className="px-4 mb-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-xs font-bold text-stone-700 uppercase tracking-wide">Actions rapides</h4>
-                </div>
-                <div className="grid grid-cols-3 gap-3">
-                  <motion.button 
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.1 }}
-                    onClick={() => setShowPhotoModal(true)}
-                    className="flex flex-col items-center gap-2 p-4 bg-white rounded-xl border border-stone-100 hover:shadow-md hover:border-primary/30 transition-all"
-                    data-testid="quick-action-photo"
-                  >
-                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                      <ImageIcon size={18} className="text-blue-600" />
-                    </div>
-                    <span className="text-[10px] font-medium text-stone-600">Photo</span>
-                  </motion.button>
-                  <motion.button 
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.15 }}
-                    className="flex flex-col items-center gap-2 p-4 bg-white rounded-xl border border-stone-100 hover:shadow-md hover:border-primary/30 transition-all"
-                    data-testid="quick-action-video"
-                  >
-                    <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                      <Video size={18} className="text-purple-600" />
-                    </div>
-                    <span className="text-[10px] font-medium text-stone-600">Vidéo</span>
-                  </motion.button>
-                  <motion.button 
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.2 }}
-                    className="flex flex-col items-center gap-2 p-4 bg-white rounded-xl border border-stone-100 hover:shadow-md hover:border-primary/30 transition-all"
-                    data-testid="quick-action-milestone"
-                  >
-                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                      <Calendar size={18} className="text-primary" />
-                    </div>
-                    <span className="text-[10px] font-medium text-stone-600">Étape</span>
-                  </motion.button>
-                </div>
-              </div>
-
-              {/* Book Preview Section - Smaller */}
-              <div className="px-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-xs font-bold text-stone-700 uppercase tracking-wide">Aperçu du livre</h4>
-                  <span className="text-[10px] text-stone-400">Page {currentPage + 1}/{bookPages.length}</span>
-                </div>
-
-                {/* Book Page Display */}
-                <div className="relative mb-4">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={currentPage}
-                    initial={{ opacity: 0, x: 50 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -50 }}
-                    className="bg-white rounded-2xl shadow-lg border border-stone-200 overflow-hidden h-full min-h-[350px]"
-                  >
-                    {bookPages[currentPage]?.type === "cover" ? (
-                      <div className="h-full relative">
-                        <img 
-                          src={bookPages[currentPage].image} 
-                          className="w-full h-full object-cover" 
-                          alt="Couverture"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex flex-col justify-end p-6">
-                          <h2 className="text-2xl font-serif font-bold text-white">L'histoire de {babyName}</h2>
-                          <p className="text-white/80 text-sm">Famille Dupond-Martin</p>
-                        </div>
-                      </div>
-                    ) : bookPages[currentPage]?.type === "birth" ? (
-                      <div className="h-full p-6 bg-gradient-to-br from-secondary/10 to-white flex flex-col justify-center">
-                        <div className="text-center mb-6">
-                          <Baby size={48} className="text-secondary mx-auto mb-3" />
-                          <h3 className="text-xl font-serif font-bold text-stone-800">{bookPages[currentPage].title}</h3>
-                          <p className="text-sm text-stone-500">{bookPages[currentPage].date}</p>
-                        </div>
-                        <div className="grid grid-cols-3 gap-3">
-                          {bookPages[currentPage].stats && Object.entries(bookPages[currentPage].stats).map(([key, value]) => (
-                            <div key={key} className="bg-white border border-stone-100 rounded-xl p-3 text-center shadow-sm">
-                              <span className="block text-lg font-bold text-stone-800">{value as string}</span>
-                              <span className="text-xs text-stone-400 uppercase">{key}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ) : bookPages[currentPage]?.type === "photo" ? (
-                      <div className="h-full flex flex-col">
-                        <div className="flex-1 relative">
-                          <img 
-                            src={bookPages[currentPage].image} 
-                            className="w-full h-full object-cover" 
-                            alt={bookPages[currentPage].title}
-                          />
-                        </div>
-                        <div className="p-4 bg-white">
-                          <h3 className="font-bold text-stone-800">{bookPages[currentPage].title}</h3>
-                          <p className="text-sm text-stone-600">{bookPages[currentPage].desc}</p>
-                        </div>
-                      </div>
-                    ) : bookPages[currentPage]?.type === "milestone" ? (
-                      <div className="h-full p-6 bg-gradient-to-br from-primary/10 to-white flex flex-col justify-center text-center">
-                        <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                          <Calendar size={32} className="text-primary" />
-                        </div>
-                        <h3 className="text-xl font-serif font-bold text-stone-800 mb-2">{bookPages[currentPage].title}</h3>
-                        <p className="text-sm text-stone-500 mb-4">{bookPages[currentPage].date}</p>
-                        <p className="text-stone-600">{bookPages[currentPage].desc}</p>
-                      </div>
-                    ) : bookPages[currentPage]?.type === "basic" ? (
-                      <div className="h-full flex flex-col bg-white">
-                        <div className="flex-1 bg-stone-100 flex items-center justify-center border-b border-stone-200">
-                          <button className="flex flex-col items-center gap-2 text-stone-400 hover:text-stone-600 transition-colors">
-                            <div className="w-16 h-16 border-2 border-dashed border-stone-300 rounded-xl flex items-center justify-center">
-                              <ImageIcon size={28} />
-                            </div>
-                            <span className="text-sm">Ajouter une photo</span>
-                          </button>
-                        </div>
-                        <div className="p-4 flex-1">
-                          <input 
-                            type="text"
-                            defaultValue={bookPages[currentPage].title}
-                            placeholder="Titre de la page"
-                            className="w-full text-lg font-bold text-stone-800 bg-transparent border-none outline-none mb-2 placeholder:text-stone-300"
-                          />
-                          <textarea
-                            defaultValue={bookPages[currentPage].desc}
-                            placeholder="Ajoutez votre texte ici..."
-                            className="w-full text-sm text-stone-600 bg-transparent border-none outline-none resize-none h-24 placeholder:text-stone-300"
-                          />
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="h-full p-6 flex flex-col items-center justify-center text-center bg-stone-50">
-                        <div className="w-16 h-16 bg-stone-200 rounded-full flex items-center justify-center mb-4">
-                          <Plus size={32} className="text-stone-400" />
-                        </div>
-                        <h3 className="font-bold text-stone-600 mb-2">{bookPages[currentPage]?.title || "Page vide"}</h3>
-                        <p className="text-sm text-stone-400">{bookPages[currentPage]?.desc || "Ajoutez du contenu"}</p>
-                        <Button className="mt-4" size="sm">
-                          <ImageIcon size={16} className="mr-2" /> Ajouter une photo
-                        </Button>
-                      </div>
-                    )}
-                  </motion.div>
-                </AnimatePresence>
-
-                {/* Navigation Arrows */}
-                <button 
-                  onClick={prevPage}
-                  disabled={currentPage === 0}
-                  className="absolute left-6 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 backdrop-blur rounded-full shadow-lg flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white transition-colors"
-                  data-testid="button-prev-page"
-                >
-                  <ChevronLeft size={24} className="text-stone-700" />
-                </button>
-                <button 
-                  onClick={nextPage}
-                  disabled={currentPage === bookPages.length - 1}
-                  className="absolute right-6 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 backdrop-blur rounded-full shadow-lg flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white transition-colors"
-                  data-testid="button-next-page"
-                >
-                  <ChevronRight size={24} className="text-stone-700" />
-                </button>
-                </div>
-              </div>
-
-              {/* Page Controls */}
-              <div className="p-4 flex items-center justify-center gap-4">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={deletePage}
-                  disabled={currentPage === 0 || bookPages.length <= 1}
-                  className="h-10 px-4 gap-2"
-                  data-testid="button-delete-page"
-                >
-                  <Minus size={16} />
-                  Supprimer
-                </Button>
-                <div className="flex gap-1">
-                  {bookPages.map((_, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setCurrentPage(idx)}
-                      className={`w-2 h-2 rounded-full transition-colors ${currentPage === idx ? 'bg-primary' : 'bg-stone-300'}`}
-                    />
-                  ))}
-                </div>
-                <div className="relative">
-                  <Button 
-                    size="sm" 
-                    onClick={() => setShowAddPageMenu(!showAddPageMenu)}
-                    className="h-10 px-4 gap-2"
-                    data-testid="button-add-page"
-                  >
-                    <Plus size={16} />
-                    Ajouter
-                  </Button>
-                  {showAddPageMenu && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      className="absolute bottom-full mb-2 right-0 bg-white rounded-xl shadow-lg border border-stone-200 overflow-hidden min-w-[200px] z-50"
-                    >
-                      <button
-                        onClick={goToInspiration}
-                        className="w-full px-4 py-3 text-left text-sm font-medium text-stone-800 hover:bg-stone-50 flex items-center gap-3 border-b border-stone-100"
-                        data-testid="button-go-to-inspiration"
-                      >
-                        <Sparkles size={18} className="text-primary" />
-                        Aller à l'Inspiration
-                      </button>
-                      <button
-                        onClick={addBasicPage}
-                        className="w-full px-4 py-3 text-left text-sm font-medium text-stone-800 hover:bg-stone-50 flex items-center gap-3"
-                        data-testid="button-add-basic-page"
-                      >
-                        <ImageIcon size={18} className="text-secondary" />
-                        Page texte et photo
-                      </button>
-                    </motion.div>
-                  )}
-                </div>
               </div>
             </div>
           )}

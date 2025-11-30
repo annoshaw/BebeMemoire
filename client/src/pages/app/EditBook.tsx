@@ -1,31 +1,45 @@
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, Type, Camera, Video, X, QrCode as QrCodeIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, Type, Camera, Video, X, QrCode as QrCodeIcon, Layout, Plus, Grid3X3, LayoutTemplate, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 
-type EditorMode = "view" | "text" | "photo" | "video" | "qrcode";
+type EditorMode = "view" | "text" | "photo" | "video" | "qrcode" | "layout";
+type LayoutType = "classic" | "collage1" | "collage2" | "collage3" | "story" | "grid";
 
 type ContentItem = {
   type: "text" | "photo" | "video" | "qrcode";
   value?: string;
   videoUrl?: string;
+  imageUrl?: string;
 };
 
 type BookPage = {
   id: number;
   title: string;
   subtitle: string;
-  image: string;
+  date: string;
   description: string;
+  layout: LayoutType;
+  images: string[];
   content: ContentItem[];
 };
+
+const sampleImages = [
+  "https://images.unsplash.com/photo-1519689680058-324335c77eba?q=80&w=400&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1503454537688-e47546fe5d37?q=80&w=400&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1555252333-9f8e92e65df9?q=80&w=400&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1544126566-475d8528f69f?q=80&w=400&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1492725764893-90b379c2b6e7?q=80&w=400&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1476703993599-0035a21b17a9?q=80&w=400&auto=format&fit=crop",
+];
 
 export default function EditBook() {
   const [editorMode, setEditorMode] = useState<EditorMode>("view");
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [selectedText, setSelectedText] = useState("");
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
+  const [showLayoutPicker, setShowLayoutPicker] = useState(false);
   
   const photoInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
@@ -38,34 +52,57 @@ export default function EditBook() {
     return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodedText}`;
   };
 
-  const pages: BookPage[] = [
+  const [pages, setPages] = useState<BookPage[]>([
     {
       id: 1,
-      title: "Bienvenue Léo !",
-      subtitle: "12 Janvier 2025",
-      image: "https://images.unsplash.com/photo-1519689680058-324335c77eba?q=80&w=800&auto=format&fit=crop",
-      description: "Le plus beau jour de notre vie. Léo est arrivé pesant 3.4 kg et mesurant 50 cm.",
+      title: "BIENVENUE",
+      subtitle: `L'ARRIVÉE DE ${babyName.toUpperCase()}`,
+      date: "12 / 01 / 2025",
+      description: "Un moment inoubliable, gravé à jamais dans nos cœurs.\n\nLe jour où tu es arrivé(e) parmi nous, le monde s'est illuminé d'une lumière nouvelle.",
+      layout: "collage1",
+      images: sampleImages.slice(0, 6),
       content: []
     },
     {
       id: 2,
-      title: "Première rencontre",
-      subtitle: "27 Novembre 2025",
-      image: "https://images.unsplash.com/photo-1503454537688-e47546fe5d37?q=80&w=800&auto=format&fit=crop",
-      description: "Le moment magique où Léo a rencontré sa petite sœur.",
+      title: "PREMIERS",
+      subtitle: "MOMENTS",
+      date: "15 / 01 / 2025",
+      description: "Ces instants précieux de découverte.\n\nChaque regard, chaque sourire, chaque petit geste devient un trésor que nous chérissons.",
+      layout: "collage2",
+      images: sampleImages.slice(0, 4),
       content: []
     },
     {
       id: 3,
-      title: "Premiers pas",
-      subtitle: "15 Octobre 2025",
-      image: "https://images.unsplash.com/photo-1555252333-9f8e92e65df9?q=80&w=800&auto=format&fit=crop",
-      description: "Ça y est! Après des semaines d'attente, ses premiers pas.",
+      title: "NOTRE",
+      subtitle: "FAMILLE",
+      date: "20 / 02 / 2025",
+      description: "L'amour qui nous unit.\n\nEnsemble, nous créons les plus beaux souvenirs, un jour à la fois.",
+      layout: "collage3",
+      images: sampleImages.slice(0, 5),
+      content: []
+    },
+    {
+      id: 4,
+      title: "SOUVENIR",
+      subtitle: "D'UN JOUR SPÉCIAL",
+      date: "18 / 06 / 2025",
+      description: "Un instant simple, en toute intimité, et un week-end rien que pour nous deux afin de célébrer ce moment.\n\nUne parenthèse enchantée où seuls comptaient l'amour et la complicité qui nous unissaient.",
+      layout: "story",
+      images: sampleImages.slice(0, 6),
       content: []
     }
-  ];
+  ]);
 
   const currentPage = pages[currentPageIndex];
+
+  const updatePageLayout = (layout: LayoutType) => {
+    const newPages = [...pages];
+    newPages[currentPageIndex].layout = layout;
+    setPages(newPages);
+    setShowLayoutPicker(false);
+  };
 
   const goToNextPage = () => {
     if (currentPageIndex < pages.length - 1) {
@@ -84,12 +121,174 @@ export default function EditBook() {
     setSelectedText("");
   };
 
+  const layoutTemplates = [
+    { id: "collage1", name: "Collage Moderne", icon: "🎨", desc: "6 photos en grille créative" },
+    { id: "collage2", name: "Duo & Texte", icon: "📖", desc: "2 grandes photos + texte" },
+    { id: "collage3", name: "Mosaïque", icon: "✨", desc: "5 photos asymétriques" },
+    { id: "story", name: "Histoire", icon: "📝", desc: "Grille + texte narratif" },
+    { id: "grid", name: "Grille Simple", icon: "⊞", desc: "4 photos en carré" },
+    { id: "classic", name: "Classique", icon: "🖼️", desc: "1 grande photo + texte" },
+  ];
+
+  const renderCollageLayout = (page: BookPage) => {
+    const { layout, images, title, subtitle, date, description } = page;
+
+    switch (layout) {
+      case "collage1":
+        return (
+          <div className="w-full h-full bg-white p-6 flex flex-col" data-testid="layout-collage1">
+            <div className="grid grid-cols-3 gap-2 mb-4">
+              <div className="aspect-square rounded-lg overflow-hidden">
+                <img src={images[0]} className="w-full h-full object-cover" alt="" data-testid="img-collage-0" />
+              </div>
+              <div className="aspect-[4/3] col-span-2 row-span-2 rounded-lg overflow-hidden">
+                <img src={images[1]} className="w-full h-full object-cover" alt="" data-testid="img-collage-1" />
+              </div>
+              <div className="aspect-square rounded-lg overflow-hidden">
+                <img src={images[2]} className="w-full h-full object-cover" alt="" data-testid="img-collage-2" />
+              </div>
+            </div>
+            <div className="flex-1 flex">
+              <div className="flex-1 pr-4">
+                <p className="text-xs text-stone-400 tracking-widest mb-2" data-testid="text-page-date">{date}</p>
+                <h2 className="text-2xl font-serif font-bold text-stone-800 leading-tight" data-testid="text-page-title">{title}</h2>
+                <h3 className="text-2xl font-serif font-bold text-stone-800 leading-tight mb-3" data-testid="text-page-subtitle">{subtitle}</h3>
+                <p className="text-xs text-stone-600 leading-relaxed whitespace-pre-line" data-testid="text-page-description">{description}</p>
+              </div>
+              <div className="w-1/3 grid grid-cols-2 gap-2">
+                <div className="aspect-square rounded-lg overflow-hidden">
+                  <img src={images[3]} className="w-full h-full object-cover" alt="" data-testid="img-collage-3" />
+                </div>
+                <div className="aspect-square rounded-lg overflow-hidden">
+                  <img src={images[4]} className="w-full h-full object-cover" alt="" data-testid="img-collage-4" />
+                </div>
+                <div className="col-span-2 aspect-[2/1] rounded-lg overflow-hidden">
+                  <img src={images[5] || images[0]} className="w-full h-full object-cover" alt="" data-testid="img-collage-5" />
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      case "collage2":
+        return (
+          <div className="w-full h-full bg-white p-6 flex flex-col" data-testid="layout-collage2">
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div className="aspect-[3/4] rounded-xl overflow-hidden shadow-md">
+                <img src={images[0]} className="w-full h-full object-cover" alt="" data-testid="img-duo-0" />
+              </div>
+              <div className="aspect-[3/4] rounded-xl overflow-hidden shadow-md">
+                <img src={images[1]} className="w-full h-full object-cover" alt="" data-testid="img-duo-1" />
+              </div>
+            </div>
+            <div className="flex-1 text-center px-6">
+              <p className="text-xs text-stone-400 tracking-widest mb-2" data-testid="text-page-date">{date}</p>
+              <h2 className="text-3xl font-serif font-bold text-stone-800 leading-tight mb-1" data-testid="text-page-title">{title}</h2>
+              <h3 className="text-xl font-serif text-stone-600 mb-4" data-testid="text-page-subtitle">{subtitle}</h3>
+              <p className="text-sm text-stone-600 leading-relaxed whitespace-pre-line" data-testid="text-page-description">{description}</p>
+            </div>
+          </div>
+        );
+
+      case "collage3":
+        return (
+          <div className="w-full h-full bg-white p-5" data-testid="layout-collage3">
+            <div className="grid grid-cols-3 grid-rows-3 gap-2 h-full">
+              <div className="col-span-2 row-span-2 rounded-xl overflow-hidden shadow-md">
+                <img src={images[0]} className="w-full h-full object-cover" alt="" data-testid="img-mosaic-0" />
+              </div>
+              <div className="rounded-lg overflow-hidden">
+                <img src={images[1]} className="w-full h-full object-cover" alt="" data-testid="img-mosaic-1" />
+              </div>
+              <div className="rounded-lg overflow-hidden">
+                <img src={images[2]} className="w-full h-full object-cover" alt="" data-testid="img-mosaic-2" />
+              </div>
+              <div className="rounded-lg overflow-hidden">
+                <img src={images[3]} className="w-full h-full object-cover" alt="" data-testid="img-mosaic-3" />
+              </div>
+              <div className="col-span-2 bg-stone-50 rounded-xl p-4 flex flex-col justify-center">
+                <p className="text-[10px] text-stone-400 tracking-widest mb-1" data-testid="text-page-date">{date}</p>
+                <h2 className="text-xl font-serif font-bold text-stone-800" data-testid="text-page-title">{title}</h2>
+                <h3 className="text-lg font-serif text-stone-700" data-testid="text-page-subtitle">{subtitle}</h3>
+                <p className="text-xs text-stone-600 mt-2 line-clamp-3" data-testid="text-page-description">{description.split('\n')[0]}</p>
+              </div>
+            </div>
+          </div>
+        );
+
+      case "story":
+        return (
+          <div className="w-full h-full bg-[#faf9f7] p-5" data-testid="layout-story">
+            <div className="grid grid-cols-3 gap-2 mb-2">
+              {images.slice(0, 3).map((img, idx) => (
+                <div key={idx} className="aspect-square rounded-lg overflow-hidden shadow-sm">
+                  <img src={img} className="w-full h-full object-cover" alt="" data-testid={`img-story-top-${idx}`} />
+                </div>
+              ))}
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="col-span-1 bg-white rounded-lg p-4 flex flex-col justify-center">
+                <p className="text-[10px] text-stone-400 tracking-widest mb-2" data-testid="text-page-date">{date}</p>
+                <h2 className="text-lg font-serif font-bold text-stone-800 leading-tight" data-testid="text-page-title">{title}</h2>
+                <h3 className="text-lg font-serif font-bold text-stone-800 leading-tight" data-testid="text-page-subtitle">{subtitle}</h3>
+              </div>
+              <div className="col-span-2 bg-white rounded-lg p-4">
+                <p className="text-xs text-stone-600 leading-relaxed whitespace-pre-line" data-testid="text-page-description">{description}</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-2 mt-2">
+              {images.slice(3, 6).map((img, idx) => (
+                <div key={idx} className="aspect-[4/3] rounded-lg overflow-hidden shadow-sm">
+                  <img src={img} className="w-full h-full object-cover" alt="" data-testid={`img-story-bottom-${idx}`} />
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      case "grid":
+        return (
+          <div className="w-full h-full bg-white p-6" data-testid="layout-grid">
+            <div className="text-center mb-4">
+              <p className="text-xs text-stone-400 tracking-widest" data-testid="text-page-date">{date}</p>
+              <h2 className="text-2xl font-serif font-bold text-stone-800" data-testid="text-page-title">{title}</h2>
+              <h3 className="text-xl font-serif text-stone-600" data-testid="text-page-subtitle">{subtitle}</h3>
+            </div>
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              {images.slice(0, 4).map((img, idx) => (
+                <div key={idx} className="aspect-square rounded-xl overflow-hidden shadow-md">
+                  <img src={img} className="w-full h-full object-cover" alt="" data-testid={`img-grid-${idx}`} />
+                </div>
+              ))}
+            </div>
+            <p className="text-sm text-stone-600 text-center leading-relaxed" data-testid="text-page-description">{description.split('\n')[0]}</p>
+          </div>
+        );
+
+      case "classic":
+      default:
+        return (
+          <div className="w-full h-full bg-white flex flex-col" data-testid="layout-classic">
+            <div className="flex-1 relative">
+              <img src={images[0]} className="w-full h-full object-cover" alt="" data-testid="img-classic-main" />
+            </div>
+            <div className="p-6 bg-gradient-to-br from-stone-50 to-white">
+              <p className="text-xs text-stone-400 tracking-widest mb-1" data-testid="text-page-date">{date}</p>
+              <h2 className="text-xl font-serif font-bold text-stone-900" data-testid="text-page-title">{title}</h2>
+              <h3 className="text-lg font-serif text-stone-700" data-testid="text-page-subtitle">{subtitle}</h3>
+              <p className="text-sm text-stone-600 mt-2" data-testid="text-page-description">{description.split('\n')[0]}</p>
+            </div>
+          </div>
+        );
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-stone-900 via-stone-800 to-stone-900 flex flex-col items-center justify-center p-4">
       {/* Header */}
       <div className="absolute top-4 left-4 z-20">
         <Link href="/app">
-          <button className="p-2 hover:bg-stone-700 rounded-full transition-colors">
+          <button className="p-2 hover:bg-stone-700 rounded-full transition-colors" data-testid="button-back">
             <ChevronLeft className="text-white" size={24} />
           </button>
         </Link>
@@ -100,146 +299,192 @@ export default function EditBook() {
         <h1 className="text-white font-serif text-xl font-bold">L'histoire de {babyName}</h1>
       </div>
 
-      {/* Page Counter */}
-      <div className="absolute top-4 right-4 z-20">
+      {/* Page Counter & Layout Button */}
+      <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
+        <button 
+          onClick={() => setShowLayoutPicker(true)}
+          className="flex items-center gap-1 text-sm font-medium text-stone-300 bg-stone-700/50 backdrop-blur px-3 py-1 rounded-full hover:bg-stone-600/50 transition-colors"
+          data-testid="button-change-layout"
+        >
+          <Layout size={14} />
+          Mise en page
+        </button>
         <span className="text-sm font-medium text-stone-300 bg-stone-700/50 backdrop-blur px-3 py-1 rounded-full">
           Page {currentPageIndex + 1} / {pages.length}
         </span>
       </div>
 
-      {/* Book Container - Open Book View */}
-      <motion.div
-        key={currentPageIndex}
-        initial={{ opacity: 0, rotateY: 20 }}
-        animate={{ opacity: 1, rotateY: 0 }}
-        exit={{ opacity: 0, rotateY: -20 }}
-        transition={{ duration: 0.4 }}
-        className="w-full max-w-5xl relative"
+      {/* Navigation Arrows */}
+      <button
+        onClick={goToPreviousPage}
+        disabled={currentPageIndex === 0}
+        className={`absolute left-8 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full transition-all ${
+          currentPageIndex === 0 
+            ? "opacity-30 cursor-not-allowed" 
+            : "bg-white/10 hover:bg-white/20 backdrop-blur"
+        }`}
+        data-testid="button-prev-page"
       >
-        {editorMode === "view" && (
-          <div className="grid grid-cols-2 gap-8">
-            {/* Left Page */}
-            <div className="aspect-[4/5] bg-white rounded-lg shadow-2xl overflow-hidden flex flex-col">
-              <div className="flex-1 relative bg-stone-100">
-                <img
-                  src={currentPage.image}
-                  alt={currentPage.title}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="p-6 bg-gradient-to-br from-stone-50 to-white">
-                <h2 className="text-xl font-serif font-bold text-stone-900">{currentPage.title}</h2>
-                <p className="text-xs text-stone-400 mt-1">{currentPage.subtitle}</p>
-              </div>
-            </div>
+        <ChevronLeft className="text-white" size={28} />
+      </button>
 
-            {/* Right Page - Editable Content */}
-            <div className="aspect-[4/5] bg-white rounded-lg shadow-2xl overflow-hidden flex flex-col p-8 relative">
-              <div className="flex-1 flex flex-col justify-between">
-                {/* Content Area */}
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-stone-600 leading-relaxed text-sm mb-6">
-                      {currentPage.description}
-                    </p>
-                  </div>
+      <button
+        onClick={goToNextPage}
+        disabled={currentPageIndex === pages.length - 1}
+        className={`absolute right-8 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full transition-all ${
+          currentPageIndex === pages.length - 1 
+            ? "opacity-30 cursor-not-allowed" 
+            : "bg-white/10 hover:bg-white/20 backdrop-blur"
+        }`}
+        data-testid="button-next-page"
+      >
+        <ChevronRight className="text-white" size={28} />
+      </button>
 
-                  {/* Content Items */}
-                  <div className="space-y-3">
-                    {currentPage.content.map((item, idx) => (
-                      <div key={idx} className="p-3 bg-stone-50 rounded-lg border border-stone-100">
-                        {item.type === "text" && (
-                          <p className="text-sm text-stone-700">{item.value}</p>
-                        )}
-                        {item.type === "photo" && (
-                          <p className="text-xs text-stone-500">📷 Photo ajoutée</p>
-                        )}
-                        {item.type === "video" && (
-                          <p className="text-xs text-stone-500">🎥 Vidéo ajoutée</p>
-                        )}
-                        {item.type === "qrcode" && item.videoUrl && (
-                          <div className="flex flex-col items-center gap-2">
-                            <p className="text-xs text-stone-500">📱 QR Code pour vidéo</p>
-                            <img 
-                              src={generateQRCodeDataUrl(item.videoUrl)} 
-                              alt="QR Code" 
-                              className="w-16 h-16"
-                            />
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Add Content Buttons */}
-                <div className="flex gap-3 mt-8">
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => setEditorMode("text")}
-                    className="flex-1 flex items-center justify-center gap-2 p-3 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg transition-colors"
-                    data-testid="button-add-text"
-                  >
-                    <Type size={18} />
-                    <span className="text-sm font-medium">Texte</span>
-                  </motion.button>
-
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => setEditorMode("photo")}
-                    className="flex-1 flex items-center justify-center gap-2 p-3 bg-secondary/20 hover:bg-secondary/30 text-secondary-foreground rounded-lg transition-colors"
-                    data-testid="button-add-photo"
-                  >
-                    <Camera size={18} />
-                    <span className="text-sm font-medium">Photo</span>
-                  </motion.button>
-
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => setEditorMode("video")}
-                    className="flex-1 flex items-center justify-center gap-2 p-3 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg transition-colors"
-                    data-testid="button-add-video"
-                  >
-                    <Video size={18} />
-                    <span className="text-sm font-medium">Vidéo</span>
-                  </motion.button>
-
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => setEditorMode("qrcode")}
-                    className="flex-1 flex items-center justify-center gap-2 p-3 bg-purple-100 hover:bg-purple-200 text-purple-600 rounded-lg transition-colors"
-                    data-testid="button-add-qrcode"
-                  >
-                    <QrCodeIcon size={18} />
-                    <span className="text-sm font-medium">QR Code</span>
-                  </motion.button>
-                </div>
-              </div>
-            </div>
+      {/* Book Page */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={currentPageIndex}
+          initial={{ opacity: 0, x: 50 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -50 }}
+          transition={{ duration: 0.3 }}
+          className="w-full max-w-lg"
+        >
+          <div className="aspect-[3/4] bg-white rounded-2xl shadow-2xl overflow-hidden">
+            {renderCollageLayout(currentPage)}
           </div>
-        )}
+        </motion.div>
+      </AnimatePresence>
 
-        {/* QR Code Modal */}
-        <AnimatePresence>
-          {editorMode === "qrcode" && (
+      {/* Action Bar */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-white/10 backdrop-blur-xl rounded-full p-2">
+        <button
+          onClick={() => setEditorMode("text")}
+          className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-white/20 text-white transition-colors"
+          data-testid="button-add-text"
+        >
+          <Type size={18} />
+          <span className="text-sm">Texte</span>
+        </button>
+        <button
+          onClick={() => setEditorMode("photo")}
+          className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-white/20 text-white transition-colors"
+          data-testid="button-add-photo"
+        >
+          <Camera size={18} />
+          <span className="text-sm">Photo</span>
+        </button>
+        <button
+          onClick={() => setEditorMode("video")}
+          className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-white/20 text-white transition-colors"
+          data-testid="button-add-video"
+        >
+          <Video size={18} />
+          <span className="text-sm">Vidéo</span>
+        </button>
+        <button
+          onClick={() => setEditorMode("qrcode")}
+          className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-white/20 text-white transition-colors"
+          data-testid="button-add-qrcode"
+        >
+          <QrCodeIcon size={18} />
+          <span className="text-sm">QR</span>
+        </button>
+      </div>
+
+      {/* Layout Picker Modal */}
+      <AnimatePresence>
+        {showLayoutPicker && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
+            onClick={() => setShowLayoutPicker(false)}
+          >
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="absolute inset-0 bg-white rounded-lg shadow-2xl p-8 flex flex-col z-50"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl w-full max-w-md overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-2xl font-serif font-bold text-stone-900">Générer un QR Code</h3>
-                <button onClick={closeEditor} className="p-2 hover:bg-stone-100 rounded-full">
-                  <X size={24} className="text-stone-600" />
+              <div className="p-4 border-b border-stone-100 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <LayoutTemplate size={20} className="text-primary" />
+                  <h3 className="font-bold text-stone-800" data-testid="text-layout-modal-title">Choisir une mise en page</h3>
+                </div>
+                <button 
+                  onClick={() => setShowLayoutPicker(false)}
+                  className="p-2 hover:bg-stone-100 rounded-full"
+                  data-testid="button-close-layout-modal"
+                >
+                  <X size={20} className="text-stone-500" />
                 </button>
               </div>
 
-              <div className="flex-1 mb-6">
+              <div className="p-4 grid grid-cols-2 gap-3 max-h-[60vh] overflow-y-auto">
+                {layoutTemplates.map((layout) => (
+                  <button
+                    key={layout.id}
+                    onClick={() => updatePageLayout(layout.id as LayoutType)}
+                    className={`p-4 rounded-xl border-2 transition-all text-left ${
+                      currentPage.layout === layout.id 
+                        ? "border-primary bg-primary/5" 
+                        : "border-stone-200 hover:border-stone-300"
+                    }`}
+                    data-testid={`button-layout-${layout.id}`}
+                  >
+                    <div className="text-2xl mb-2">{layout.icon}</div>
+                    <p className={`font-bold text-sm ${currentPage.layout === layout.id ? "text-primary" : "text-stone-700"}`}>
+                      {layout.name}
+                    </p>
+                    <p className="text-xs text-stone-500">{layout.desc}</p>
+                  </button>
+                ))}
+              </div>
+
+              <div className="p-4 border-t border-stone-100">
+                <Button 
+                  className="w-full"
+                  onClick={() => setShowLayoutPicker(false)}
+                  data-testid="button-apply-layout"
+                >
+                  <Sparkles size={16} className="mr-2" />
+                  Appliquer
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* QR Code Modal */}
+      <AnimatePresence>
+        {editorMode === "qrcode" && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
+            onClick={closeEditor}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl w-full max-w-md p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-stone-900" data-testid="text-qr-modal-title">Générer un QR Code</h3>
+                <button onClick={closeEditor} className="p-2 hover:bg-stone-100 rounded-full" data-testid="button-close-qr-modal">
+                  <X size={20} className="text-stone-600" />
+                </button>
+              </div>
+
+              <div className="mb-6">
                 <label className="block text-sm font-medium text-stone-700 mb-2">
                   URL de la vidéo
                 </label>
@@ -248,7 +493,8 @@ export default function EditBook() {
                   value={selectedVideoUrl}
                   onChange={(e) => setSelectedVideoUrl(e.target.value)}
                   placeholder="https://example.com/video.mp4"
-                  className="w-full p-4 border border-stone-200 rounded-lg focus:outline-none focus:border-primary text-sm"
+                  className="w-full p-3 border border-stone-200 rounded-lg focus:outline-none focus:border-primary text-sm"
+                  data-testid="input-qr-url"
                 />
               </div>
 
@@ -257,254 +503,232 @@ export default function EditBook() {
                   <img 
                     src={generateQRCodeDataUrl(selectedVideoUrl)} 
                     alt="QR Code preview" 
-                    className="w-48 h-48"
+                    className="w-40 h-40"
                   />
                 </div>
               )}
 
               <div className="flex gap-3">
-                <Button
-                  onClick={closeEditor}
-                  variant="outline"
-                  className="flex-1"
-                >
+                <Button onClick={closeEditor} variant="outline" className="flex-1" data-testid="button-cancel-qr">
                   Annuler
                 </Button>
                 <Button
                   onClick={() => {
                     if (selectedVideoUrl) {
-                      currentPage.content.push({ type: "qrcode", videoUrl: selectedVideoUrl });
                       setSelectedVideoUrl("");
                       closeEditor();
                     }
                   }}
-                  className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
+                  className="flex-1 bg-purple-600 hover:bg-purple-700"
+                  disabled={!selectedVideoUrl}
+                  data-testid="button-add-qr"
                 >
-                  Ajouter le QR Code
+                  Ajouter
                 </Button>
               </div>
             </motion.div>
-          )}
-        </AnimatePresence>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-        {/* Text Editor Modal */}
-        <AnimatePresence>
-          {editorMode === "text" && (
+      {/* Text Editor Modal */}
+      <AnimatePresence>
+        {editorMode === "text" && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
+            onClick={closeEditor}
+          >
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="absolute inset-0 bg-white rounded-lg shadow-2xl p-8 flex flex-col z-50"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl w-full max-w-md p-6"
+              onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-2xl font-serif font-bold text-stone-900">Ajouter du texte</h3>
-                <button onClick={closeEditor} className="p-2 hover:bg-stone-100 rounded-full">
-                  <X size={24} className="text-stone-600" />
+                <h3 className="text-xl font-bold text-stone-900" data-testid="text-editor-modal-title">Modifier le texte</h3>
+                <button onClick={closeEditor} className="p-2 hover:bg-stone-100 rounded-full" data-testid="button-close-text-modal">
+                  <X size={20} className="text-stone-600" />
                 </button>
               </div>
 
-              <div className="flex-1 mb-6">
-                <textarea
-                  value={selectedText}
-                  onChange={(e) => setSelectedText(e.target.value)}
-                  placeholder="Écrivez votre texte ici..."
-                  className="w-full h-full p-4 border border-stone-200 rounded-lg focus:outline-none focus:border-primary resize-none text-sm"
+              <div className="space-y-4 mb-6">
+                <div>
+                  <label className="block text-sm font-medium text-stone-700 mb-2">Titre</label>
+                  <input
+                    type="text"
+                    value={currentPage.title}
+                    onChange={(e) => {
+                      const newPages = [...pages];
+                      newPages[currentPageIndex].title = e.target.value;
+                      setPages(newPages);
+                    }}
+                    className="w-full p-3 border border-stone-200 rounded-lg focus:outline-none focus:border-primary text-sm"
+                    data-testid="input-page-title"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-stone-700 mb-2">Sous-titre</label>
+                  <input
+                    type="text"
+                    value={currentPage.subtitle}
+                    onChange={(e) => {
+                      const newPages = [...pages];
+                      newPages[currentPageIndex].subtitle = e.target.value;
+                      setPages(newPages);
+                    }}
+                    className="w-full p-3 border border-stone-200 rounded-lg focus:outline-none focus:border-primary text-sm"
+                    data-testid="input-page-subtitle"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-stone-700 mb-2">Date</label>
+                  <input
+                    type="text"
+                    value={currentPage.date}
+                    onChange={(e) => {
+                      const newPages = [...pages];
+                      newPages[currentPageIndex].date = e.target.value;
+                      setPages(newPages);
+                    }}
+                    className="w-full p-3 border border-stone-200 rounded-lg focus:outline-none focus:border-primary text-sm"
+                    placeholder="JJ / MM / AAAA"
+                    data-testid="input-page-date"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-stone-700 mb-2">Description</label>
+                  <textarea
+                    value={currentPage.description}
+                    onChange={(e) => {
+                      const newPages = [...pages];
+                      newPages[currentPageIndex].description = e.target.value;
+                      setPages(newPages);
+                    }}
+                    rows={4}
+                    className="w-full p-3 border border-stone-200 rounded-lg focus:outline-none focus:border-primary text-sm resize-none"
+                    placeholder="Racontez votre histoire..."
+                    data-testid="input-page-description"
+                  />
+                </div>
+              </div>
+
+              <Button onClick={closeEditor} className="w-full" data-testid="button-save-text">
+                Enregistrer
+              </Button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Photo Upload Modal */}
+      <AnimatePresence>
+        {editorMode === "photo" && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
+            onClick={closeEditor}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl w-full max-w-md p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-stone-900" data-testid="text-photo-modal-title">Ajouter des photos</h3>
+                <button onClick={closeEditor} className="p-2 hover:bg-stone-100 rounded-full" data-testid="button-close-photo-modal">
+                  <X size={20} className="text-stone-600" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 mb-4">
+                {currentPage.images.map((img, idx) => (
+                  <div key={idx} className="aspect-square rounded-lg overflow-hidden relative group">
+                    <img src={img} className="w-full h-full object-cover" alt="" />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <span className="text-white text-xs font-medium">Photo {idx + 1}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="border-2 border-dashed border-stone-200 rounded-xl p-6 text-center mb-4 hover:border-primary transition-colors cursor-pointer" data-testid="dropzone-photo">
+                <Camera size={32} className="mx-auto text-stone-400 mb-2" />
+                <p className="text-sm text-stone-600">Cliquer pour ajouter des photos</p>
+                <p className="text-xs text-stone-400 mt-1">JPG, PNG jusqu'à 10 Mo</p>
+                <input
+                  ref={photoInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  data-testid="input-photo-file"
                 />
               </div>
 
-              <div className="flex gap-3">
-                <Button
-                  onClick={closeEditor}
-                  variant="outline"
-                  className="flex-1 h-12 rounded-lg border-stone-200"
-                >
-                  Annuler
-                </Button>
-                <Button
-                  onClick={closeEditor}
-                  className="flex-1 bg-primary hover:bg-primary/90 text-white h-12 rounded-lg"
-                  data-testid="button-save-text"
-                >
-                  Ajouter
-                </Button>
-              </div>
+              <Button onClick={closeEditor} className="w-full" data-testid="button-finish-photo">
+                Terminer
+              </Button>
             </motion.div>
-          )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-          {editorMode === "photo" && (
+      {/* Video Upload Modal */}
+      <AnimatePresence>
+        {editorMode === "video" && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
+            onClick={closeEditor}
+          >
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="absolute inset-0 bg-white rounded-lg shadow-2xl p-8 flex flex-col z-50"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl w-full max-w-md p-6"
+              onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-2xl font-serif font-bold text-stone-900">Ajouter une photo</h3>
-                <button onClick={closeEditor} className="p-2 hover:bg-stone-100 rounded-full">
-                  <X size={24} className="text-stone-600" />
+                <h3 className="text-xl font-bold text-stone-900" data-testid="text-video-modal-title">Ajouter une vidéo</h3>
+                <button onClick={closeEditor} className="p-2 hover:bg-stone-100 rounded-full" data-testid="button-close-video-modal">
+                  <X size={20} className="text-stone-600" />
                 </button>
               </div>
 
-              {!selectedPhoto ? (
-                <>
-                  <input
-                    ref={photoInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        const reader = new FileReader();
-                        reader.onload = (event) => {
-                          setSelectedPhoto(event.target?.result as string);
-                        };
-                        reader.readAsDataURL(file);
-                      }
-                    }}
-                    className="hidden"
-                    data-testid="input-photo-file"
-                  />
-                  <div
-                    onClick={() => photoInputRef.current?.click()}
-                    className="flex-1 border-2 border-dashed border-stone-300 rounded-lg flex flex-col items-center justify-center mb-6 hover:border-primary transition-colors cursor-pointer group"
-                    data-testid="button-select-photo"
-                  >
-                    <Camera size={48} className="text-stone-300 mb-4 group-hover:text-primary transition-colors" />
-                    <p className="text-stone-600 font-medium mb-2">Cliquez pour sélectionner une photo</p>
-                    <p className="text-xs text-stone-500">ou glissez-déposez une image</p>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="flex-1 mb-6 rounded-lg overflow-hidden border border-stone-200">
-                    <img
-                      src={selectedPhoto}
-                      alt="Preview"
-                      className="w-full h-full object-contain bg-stone-50"
-                    />
-                  </div>
-                  <button
-                    onClick={() => setSelectedPhoto(null)}
-                    className="mb-6 text-sm text-primary hover:text-primary/80 transition-colors"
-                    data-testid="button-change-photo"
-                  >
-                    Changer la photo
-                  </button>
-                </>
-              )}
-
-              <div className="flex gap-3">
-                <Button
-                  onClick={closeEditor}
-                  variant="outline"
-                  className="flex-1 h-12 rounded-lg border-stone-200"
-                >
-                  Annuler
-                </Button>
-                <Button
-                  onClick={closeEditor}
-                  disabled={!selectedPhoto}
-                  className="flex-1 bg-primary hover:bg-primary/90 text-white h-12 rounded-lg disabled:opacity-50"
-                  data-testid="button-save-photo"
-                >
-                  Ajouter
-                </Button>
-              </div>
-            </motion.div>
-          )}
-
-          {editorMode === "video" && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="absolute inset-0 bg-white rounded-lg shadow-2xl p-8 flex flex-col z-50"
-            >
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-2xl font-serif font-bold text-stone-900">Ajouter une vidéo</h3>
-                <button onClick={closeEditor} className="p-2 hover:bg-stone-100 rounded-full">
-                  <X size={24} className="text-stone-600" />
-                </button>
-              </div>
-
-              <div
-                onClick={() => videoInputRef.current?.click()}
-                className="flex-1 border-2 border-dashed border-stone-300 rounded-lg flex flex-col items-center justify-center mb-6 hover:border-primary transition-colors cursor-pointer group"
-              >
-                <Video size={48} className="text-stone-300 mb-4 group-hover:text-primary transition-colors" />
-                <p className="text-stone-600 font-medium mb-2">Cliquez pour sélectionner une vidéo</p>
-                <p className="text-xs text-stone-500">ou glissez-déposez un fichier vidéo</p>
+              <div className="border-2 border-dashed border-stone-200 rounded-xl p-8 text-center mb-4 hover:border-red-400 transition-colors cursor-pointer" data-testid="dropzone-video">
+                <Video size={40} className="mx-auto text-stone-400 mb-3" />
+                <p className="text-sm text-stone-600">Cliquer pour ajouter une vidéo</p>
+                <p className="text-xs text-stone-400 mt-1">MP4, MOV jusqu'à 500 Mo</p>
                 <input
                   ref={videoInputRef}
                   type="file"
                   accept="video/*"
-                  capture="environment"
-                  onChange={(e) => {
-                    // Handle video upload
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      console.log("Vidéo sélectionnée:", file.name);
-                    }
-                  }}
                   className="hidden"
                   data-testid="input-video-file"
                 />
               </div>
 
-              <div className="flex gap-3">
-                <Button
-                  onClick={closeEditor}
-                  variant="outline"
-                  className="flex-1 h-12 rounded-lg border-stone-200"
-                >
-                  Annuler
-                </Button>
-                <Button
-                  onClick={closeEditor}
-                  className="flex-1 bg-primary hover:bg-primary/90 text-white h-12 rounded-lg"
-                  data-testid="button-save-video"
-                >
-                  Ajouter
-                </Button>
-              </div>
+              <p className="text-xs text-stone-500 text-center mb-4" data-testid="text-video-info">
+                La vidéo sera convertie en QR code pour l'impression du livre
+              </p>
+
+              <Button onClick={closeEditor} className="w-full" data-testid="button-finish-video">
+                Terminer
+              </Button>
             </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
-
-      {/* Navigation */}
-      <div className="flex items-center justify-center gap-8 mt-12">
-        <button
-          onClick={goToPreviousPage}
-          disabled={currentPageIndex === 0}
-          className="p-3 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-white border border-white/20"
-          data-testid="button-previous-page"
-        >
-          <ChevronLeft size={28} />
-        </button>
-
-        <div className="flex gap-2">
-          {pages.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentPageIndex(index)}
-              className={`h-2 rounded-full transition-all ${
-                index === currentPageIndex ? "bg-white w-8" : "bg-white/40 w-2"
-              }`}
-              data-testid={`dot-page-${index}`}
-            />
-          ))}
-        </div>
-
-        <button
-          onClick={goToNextPage}
-          disabled={currentPageIndex === pages.length - 1}
-          className="p-3 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-white border border-white/20"
-          data-testid="button-next-page"
-        >
-          <ChevronLeft size={28} className="rotate-180" />
-        </button>
-      </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

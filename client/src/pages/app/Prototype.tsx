@@ -2028,40 +2028,6 @@ export default function Prototype() {
                 )}
               </div>
 
-              {/* Recent Activity Section */}
-              <div className="px-4 mb-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-xs font-bold text-stone-700 uppercase tracking-wide">Activité récente</h4>
-                  <Clock size={14} className="text-stone-400" />
-                </div>
-                <div className="space-y-2">
-                  {[
-                    { id: 1, action: "Photo ajoutée", title: "Première rencontre", time: "Il y a 2h", icon: ImageIcon, color: "bg-blue-100 text-blue-600" },
-                    { id: 2, action: "Étape importante", title: "Premiers pas", time: "Hier", icon: Calendar, color: "bg-primary/10 text-primary" },
-                    { id: 3, action: "Vidéo ajoutée", title: "Fous rires dans le bain", time: "Il y a 3 jours", icon: Video, color: "bg-purple-100 text-purple-600" },
-                    { id: 4, action: "Page créée", title: "Naissance", time: "Il y a 1 semaine", icon: BookOpen, color: "bg-secondary/10 text-secondary" },
-                  ].map((activity, idx) => (
-                    <motion.div 
-                      key={activity.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.05 }}
-                      className="flex items-center gap-3 p-3 bg-white rounded-xl border border-stone-100 hover:shadow-sm transition-shadow cursor-pointer"
-                      data-testid={`activity-${activity.id}`}
-                    >
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${activity.color}`}>
-                        <activity.icon size={18} />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-xs text-stone-500">{activity.action}</p>
-                        <p className="text-sm font-medium text-stone-800">{activity.title}</p>
-                      </div>
-                      <span className="text-[10px] text-stone-400">{activity.time}</span>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-
               {/* Quick Actions */}
               <div className="px-4 mb-4">
                 <div className="flex items-center justify-between mb-3">

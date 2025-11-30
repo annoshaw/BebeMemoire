@@ -2029,14 +2029,24 @@ export default function Prototype() {
                   </button>
                 </div>
 
-                <div className="flex items-center justify-center gap-1">
-                  {bookPages.map((_, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setCurrentPage(idx)}
-                      className={`w-2 h-2 rounded-full transition-colors ${currentPage === idx ? 'bg-primary' : 'bg-stone-300'}`}
-                    />
-                  ))}
+                <div className="flex items-center justify-center gap-3">
+                  <div className="flex gap-1">
+                    {bookPages.map((_, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setCurrentPage(idx)}
+                        className={`w-2 h-2 rounded-full transition-colors ${currentPage === idx ? 'bg-primary' : 'bg-stone-300'}`}
+                      />
+                    ))}
+                  </div>
+                  <button
+                    onClick={addBasicPage}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-medium rounded-full hover:bg-primary/90 transition-colors shadow-sm"
+                    data-testid="button-add-page"
+                  >
+                    <Plus size={14} />
+                    Ajouter une page
+                  </button>
                 </div>
               </div>
 

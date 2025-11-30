@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Plus, Minus, Image as ImageIcon, Mic, Video, MoreHorizontal, Calendar, Share2, BookOpen, Printer, CheckCircle, Bell, QrCode, Baby, LogOut, Settings, User, Sparkles, ShoppingBag, FolderHeart, Trash2, Crown, Mail, Phone, MapPin, UserPlus, Users, Edit2, CreditCard, X, Lock, Search, Clock, AlertTriangle, Gift, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Minus, Image as ImageIcon, Mic, Video, MoreHorizontal, Calendar, Share2, BookOpen, Printer, CheckCircle, Bell, QrCode, Baby, LogOut, Settings, User, Sparkles, ShoppingBag, FolderHeart, Trash2, Crown, Mail, Phone, MapPin, UserPlus, Users, Edit2, CreditCard, X, Lock, Search, Clock, AlertTriangle, Gift, Loader2, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -27,6 +27,41 @@ export default function Prototype() {
   ]);
   
   const babyName = typeof window !== "undefined" ? localStorage.getItem("babyName") || "Léo" : "Léo";
+  
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
+  
+  const handlePhotoUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    
+    setIsUploading(true);
+    
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (file.type.startsWith('image/')) {
+        const dataUrl = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(file);
+        });
+        
+        const newPage = {
+          id: Date.now() + i,
+          type: "photo" as const,
+          title: "Nouveau souvenir",
+          image: dataUrl,
+          desc: "Ajouté le " + new Date().toLocaleDateString("fr-FR")
+        };
+        
+        setBookPages(prev => [...prev, newPage]);
+      }
+    }
+    
+    setIsUploading(false);
+    setShowPhotoModal(false);
+  };
   
   const queryClient = useQueryClient();
   const [activeBookId, setActiveBookId] = useState<string | null>(() => {
@@ -2037,6 +2072,7 @@ export default function Prototype() {
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.1 }}
+                    onClick={() => setShowPhotoModal(true)}
                     className="flex flex-col items-center gap-2 p-4 bg-white rounded-xl border border-stone-100 hover:shadow-md hover:border-primary/30 transition-all"
                     data-testid="quick-action-photo"
                   >
@@ -3352,6 +3388,97 @@ export default function Prototype() {
                   </Button>
                 </div>
               </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Photo Upload Modal */}
+      <AnimatePresence>
+        {showPhotoModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 z-[100] flex items-center justify-center p-4"
+            onClick={() => setShowPhotoModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl w-full max-w-md p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-stone-900" data-testid="text-photo-modal-title">Ajouter une photo</h3>
+                <button onClick={() => setShowPhotoModal(false)} className="p-2 hover:bg-stone-100 rounded-full" data-testid="button-close-photo-modal">
+                  <X size={20} className="text-stone-600" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <button
+                  onClick={() => cameraInputRef.current?.click()}
+                  disabled={isUploading}
+                  className="flex flex-col items-center gap-3 p-6 border-2 border-dashed border-stone-200 rounded-xl hover:border-primary hover:bg-primary/5 transition-colors"
+                  data-testid="button-take-photo"
+                >
+                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg">
+                    <Camera size={28} className="text-white" />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-stone-700">Prendre une photo</p>
+                    <p className="text-xs text-stone-400 mt-1">Ouvrir l'appareil photo</p>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => galleryInputRef.current?.click()}
+                  disabled={isUploading}
+                  className="flex flex-col items-center gap-3 p-6 border-2 border-dashed border-stone-200 rounded-xl hover:border-violet-500 hover:bg-violet-50 transition-colors"
+                  data-testid="button-gallery"
+                >
+                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center shadow-lg">
+                    <ImageIcon size={28} className="text-white" />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-stone-700">Galerie</p>
+                    <p className="text-xs text-stone-400 mt-1">Choisir une photo existante</p>
+                  </div>
+                </button>
+              </div>
+
+              <input
+                ref={cameraInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={(e) => handlePhotoUpload(e.target.files)}
+                className="hidden"
+                data-testid="input-camera"
+              />
+
+              <input
+                ref={galleryInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => handlePhotoUpload(e.target.files)}
+                className="hidden"
+                data-testid="input-gallery"
+              />
+
+              {isUploading && (
+                <div className="flex items-center justify-center gap-2 py-3 text-sm text-primary">
+                  <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  <span>Ajout en cours...</span>
+                </div>
+              )}
+
+              <Button onClick={() => setShowPhotoModal(false)} variant="outline" className="w-full" data-testid="button-cancel-photo">
+                Fermer
+              </Button>
             </motion.div>
           </motion.div>
         )}

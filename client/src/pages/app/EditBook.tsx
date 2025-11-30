@@ -460,10 +460,10 @@ export default function EditBook() {
       </AnimatePresence>
 
       {/* Action Bar */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-white/10 backdrop-blur-xl rounded-full p-2">
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-white rounded-full p-2 shadow-lg">
         <button
           onClick={() => setEditorMode("text")}
-          className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-white/20 text-white transition-colors"
+          className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-stone-100 text-stone-700 transition-colors"
           data-testid="button-add-text"
         >
           <Type size={18} />
@@ -471,7 +471,7 @@ export default function EditBook() {
         </button>
         <button
           onClick={() => setEditorMode("photo")}
-          className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-white/20 text-white transition-colors"
+          className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-stone-100 text-stone-700 transition-colors"
           data-testid="button-add-photo"
         >
           <Camera size={18} />
@@ -479,7 +479,7 @@ export default function EditBook() {
         </button>
         <button
           onClick={() => setEditorMode("video")}
-          className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-white/20 text-white transition-colors"
+          className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-stone-100 text-stone-700 transition-colors"
           data-testid="button-add-video"
         >
           <Video size={18} />
@@ -487,13 +487,13 @@ export default function EditBook() {
         </button>
         <button
           onClick={() => setEditorMode("qrcode")}
-          className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-white/20 text-white transition-colors"
+          className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-stone-100 text-stone-700 transition-colors"
           data-testid="button-add-qrcode"
         >
           <QrCode size={18} />
           <span className="text-sm">QR</span>
         </button>
-        <div className="w-px h-6 bg-white/30 mx-1" />
+        <div className="w-px h-6 bg-stone-200 mx-1" />
         <button
           onClick={addNewPage}
           className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary hover:bg-primary/90 text-white transition-colors"

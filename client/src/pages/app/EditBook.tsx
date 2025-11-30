@@ -1,10 +1,11 @@
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Type, Camera, Video, X, QrCode as QrCodeIcon, Layout, Plus, Grid3X3, LayoutTemplate, Sparkles, ImagePlus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Type, Camera, Video, X, QrCode, Layout, Plus, LayoutTemplate, Sparkles, ImagePlus, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 
 type EditorMode = "view" | "text" | "photo" | "video" | "qrcode" | "layout";
+type LayoutStyle = "auto" | "classic" | "modern" | "elegant" | "playful" | "minimal" | "story";
 
 type ContentItem = {
   type: "text" | "photo" | "video" | "qrcode";
@@ -20,6 +21,7 @@ type BookPage = {
   date: string;
   description: string;
   images: string[];
+  layoutStyle: LayoutStyle;
   content: ContentItem[];
 };
 
@@ -32,11 +34,20 @@ const sampleImages = [
   "https://images.unsplash.com/photo-1476703993599-0035a21b17a9?q=80&w=400&auto=format&fit=crop",
 ];
 
+const layoutStyles = [
+  { id: "auto", name: "Automatique", icon: "✨", desc: "S'adapte au nombre de photos", color: "from-violet-500 to-purple-500" },
+  { id: "classic", name: "Classique", icon: "🖼️", desc: "Photo principale + texte élégant", color: "from-amber-500 to-orange-500" },
+  { id: "modern", name: "Moderne", icon: "🎨", desc: "Grille dynamique créative", color: "from-blue-500 to-cyan-500" },
+  { id: "elegant", name: "Élégant", icon: "💎", desc: "Mise en page raffinée", color: "from-rose-500 to-pink-500" },
+  { id: "playful", name: "Ludique", icon: "🎈", desc: "Disposition amusante", color: "from-green-500 to-emerald-500" },
+  { id: "minimal", name: "Minimal", icon: "◻️", desc: "Épuré et simple", color: "from-stone-500 to-slate-500" },
+  { id: "story", name: "Histoire", icon: "📖", desc: "Narration visuelle", color: "from-indigo-500 to-blue-500" },
+];
+
 export default function EditBook() {
   const [editorMode, setEditorMode] = useState<EditorMode>("view");
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [selectedText, setSelectedText] = useState("");
-  const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const [showLayoutPicker, setShowLayoutPicker] = useState(false);
   
   const photoInputRef = useRef<HTMLInputElement>(null);
@@ -58,6 +69,7 @@ export default function EditBook() {
       date: "12 / 01 / 2025",
       description: "Un moment inoubliable, gravé à jamais dans nos cœurs.\n\nLe jour où tu es arrivé(e) parmi nous, le monde s'est illuminé d'une lumière nouvelle.",
       images: sampleImages.slice(0, 6),
+      layoutStyle: "auto",
       content: []
     },
     {
@@ -67,6 +79,7 @@ export default function EditBook() {
       date: "15 / 01 / 2025",
       description: "Ces instants précieux de découverte.\n\nChaque regard, chaque sourire, chaque petit geste devient un trésor que nous chérissons.",
       images: sampleImages.slice(0, 2),
+      layoutStyle: "elegant",
       content: []
     },
     {
@@ -76,6 +89,7 @@ export default function EditBook() {
       date: "20 / 02 / 2025",
       description: "L'amour qui nous unit.\n\nEnsemble, nous créons les plus beaux souvenirs, un jour à la fois.",
       images: sampleImages.slice(0, 4),
+      layoutStyle: "modern",
       content: []
     },
     {
@@ -85,6 +99,7 @@ export default function EditBook() {
       date: "18 / 06 / 2025",
       description: "Un instant simple, en toute intimité, et un week-end rien que pour nous deux afin de célébrer ce moment.\n\nUne parenthèse enchantée où seuls comptaient l'amour et la complicité qui nous unissaient.",
       images: sampleImages.slice(0, 1),
+      layoutStyle: "classic",
       content: []
     },
     {
@@ -94,6 +109,7 @@ export default function EditBook() {
       date: "25 / 03 / 2025",
       description: "Chaque jour apporte son lot de découvertes et de bonheur.",
       images: sampleImages.slice(0, 3),
+      layoutStyle: "playful",
       content: []
     },
     {
@@ -103,11 +119,19 @@ export default function EditBook() {
       date: "10 / 04 / 2025",
       description: "Ces instants de pure joie qui illuminent notre quotidien.",
       images: sampleImages.slice(0, 5),
+      layoutStyle: "story",
       content: []
     }
   ]);
 
   const currentPage = pages[currentPageIndex];
+
+  const updateLayoutStyle = (style: LayoutStyle) => {
+    const newPages = [...pages];
+    newPages[currentPageIndex].layoutStyle = style;
+    setPages(newPages);
+    setShowLayoutPicker(false);
+  };
 
   const goToNextPage = () => {
     if (currentPageIndex < pages.length - 1) {
@@ -126,18 +150,13 @@ export default function EditBook() {
     setSelectedText("");
   };
 
-  const getLayoutName = (photoCount: number) => {
-    if (photoCount === 0) return "Vide";
-    if (photoCount === 1) return "Solo";
-    if (photoCount === 2) return "Duo";
-    if (photoCount === 3) return "Trio";
-    if (photoCount === 4) return "Quatuor";
-    if (photoCount === 5) return "Mosaïque";
-    return "Collage";
+  const getCurrentLayoutName = () => {
+    const style = layoutStyles.find(s => s.id === currentPage.layoutStyle);
+    return style?.name || "Automatique";
   };
 
-  const renderAdaptiveLayout = (page: BookPage) => {
-    const { images, title, subtitle, date, description } = page;
+  const renderLayout = (page: BookPage) => {
+    const { images, title, subtitle, date, description, layoutStyle } = page;
     const photoCount = images.length;
 
     if (photoCount === 0) {
@@ -155,12 +174,12 @@ export default function EditBook() {
       );
     }
 
-    if (photoCount === 1) {
+    if (layoutStyle === "classic" || (layoutStyle === "auto" && photoCount === 1)) {
       return (
-        <div className="w-full h-full bg-white flex flex-col" data-testid="layout-solo">
+        <div className="w-full h-full bg-white flex flex-col" data-testid="layout-classic">
           <div className="flex-1 relative">
-            <img src={images[0]} className="w-full h-full object-cover" alt="" data-testid="img-solo-0" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+            <img src={images[0]} className="w-full h-full object-cover" alt="" data-testid="img-main-0" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
               <p className="text-xs tracking-widest mb-2 opacity-80" data-testid="text-page-date">{date}</p>
               <h2 className="text-3xl font-serif font-bold leading-tight" data-testid="text-page-title">{title}</h2>
@@ -174,127 +193,149 @@ export default function EditBook() {
       );
     }
 
-    if (photoCount === 2) {
+    if (layoutStyle === "elegant" || (layoutStyle === "auto" && photoCount === 2)) {
       return (
-        <div className="w-full h-full bg-white p-5 flex flex-col" data-testid="layout-duo">
-          <div className="grid grid-cols-2 gap-3 flex-1">
-            <div className="rounded-xl overflow-hidden shadow-md">
-              <img src={images[0]} className="w-full h-full object-cover" alt="" data-testid="img-duo-0" />
+        <div className="w-full h-full bg-gradient-to-br from-stone-50 to-white p-6 flex flex-col" data-testid="layout-elegant">
+          <div className="grid grid-cols-2 gap-4 flex-1">
+            <div className="rounded-2xl overflow-hidden shadow-lg border-4 border-white">
+              <img src={images[0]} className="w-full h-full object-cover" alt="" data-testid="img-elegant-0" />
             </div>
-            <div className="rounded-xl overflow-hidden shadow-md">
-              <img src={images[1]} className="w-full h-full object-cover" alt="" data-testid="img-duo-1" />
+            <div className="rounded-2xl overflow-hidden shadow-lg border-4 border-white">
+              <img src={images[1] || images[0]} className="w-full h-full object-cover" alt="" data-testid="img-elegant-1" />
             </div>
           </div>
-          <div className="pt-4 text-center">
-            <p className="text-xs text-stone-400 tracking-widest mb-1" data-testid="text-page-date">{date}</p>
+          <div className="pt-5 text-center">
+            <div className="inline-block px-4 py-1 bg-stone-100 rounded-full mb-2">
+              <p className="text-xs text-stone-500 tracking-widest" data-testid="text-page-date">{date}</p>
+            </div>
             <h2 className="text-2xl font-serif font-bold text-stone-800" data-testid="text-page-title">{title}</h2>
-            <h3 className="text-lg font-serif text-stone-600 mb-2" data-testid="text-page-subtitle">{subtitle}</h3>
-            <p className="text-sm text-stone-600" data-testid="text-page-description">{description.split('\n')[0]}</p>
+            <h3 className="text-lg font-serif text-stone-500 mb-2" data-testid="text-page-subtitle">{subtitle}</h3>
+            <p className="text-sm text-stone-600 italic" data-testid="text-page-description">{description.split('\n')[0]}</p>
           </div>
         </div>
       );
     }
 
-    if (photoCount === 3) {
+    if (layoutStyle === "modern" || (layoutStyle === "auto" && photoCount >= 4)) {
       return (
-        <div className="w-full h-full bg-white p-5" data-testid="layout-trio">
-          <div className="grid grid-cols-2 gap-2 h-full">
-            <div className="row-span-2 rounded-xl overflow-hidden shadow-md">
-              <img src={images[0]} className="w-full h-full object-cover" alt="" data-testid="img-trio-0" />
+        <div className="w-full h-full bg-white p-4" data-testid="layout-modern">
+          <div className="grid grid-cols-3 gap-2 h-full">
+            <div className="col-span-2 row-span-2 rounded-xl overflow-hidden">
+              <img src={images[0]} className="w-full h-full object-cover" alt="" data-testid="img-modern-0" />
             </div>
-            <div className="rounded-xl overflow-hidden shadow-md">
-              <img src={images[1]} className="w-full h-full object-cover" alt="" data-testid="img-trio-1" />
+            <div className="rounded-lg overflow-hidden">
+              <img src={images[1] || images[0]} className="w-full h-full object-cover" alt="" data-testid="img-modern-1" />
             </div>
-            <div className="rounded-xl overflow-hidden shadow-md">
-              <img src={images[2]} className="w-full h-full object-cover" alt="" data-testid="img-trio-2" />
+            <div className="rounded-lg overflow-hidden">
+              <img src={images[2] || images[0]} className="w-full h-full object-cover" alt="" data-testid="img-modern-2" />
             </div>
-          </div>
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white to-transparent p-5">
-            <p className="text-[10px] text-stone-400 tracking-widest" data-testid="text-page-date">{date}</p>
-            <h2 className="text-lg font-serif font-bold text-stone-800" data-testid="text-page-title">{title}</h2>
-            <h3 className="text-sm font-serif text-stone-600" data-testid="text-page-subtitle">{subtitle}</h3>
-            <p className="text-xs text-stone-500 mt-1 line-clamp-2" data-testid="text-page-description">{description.split('\n')[0]}</p>
+            <div className="bg-primary/10 rounded-xl p-3 flex flex-col justify-center">
+              <p className="text-[10px] text-primary tracking-widest mb-1" data-testid="text-page-date">{date}</p>
+              <h2 className="text-lg font-serif font-bold text-stone-800 leading-tight" data-testid="text-page-title">{title}</h2>
+              <h3 className="text-sm font-serif text-stone-600" data-testid="text-page-subtitle">{subtitle}</h3>
+            </div>
+            <div className="col-span-2 grid grid-cols-2 gap-2">
+              <div className="rounded-lg overflow-hidden">
+                <img src={images[3] || images[0]} className="w-full h-full object-cover" alt="" data-testid="img-modern-3" />
+              </div>
+              <div className="bg-stone-50 rounded-lg p-3 flex items-center">
+                <p className="text-[10px] text-stone-600 leading-relaxed line-clamp-4" data-testid="text-page-description">{description}</p>
+              </div>
+            </div>
           </div>
         </div>
       );
     }
 
-    if (photoCount === 4) {
+    if (layoutStyle === "playful" || (layoutStyle === "auto" && photoCount === 3)) {
       return (
-        <div className="w-full h-full bg-white p-5 flex flex-col" data-testid="layout-quatuor">
-          <div className="text-center mb-3">
-            <p className="text-xs text-stone-400 tracking-widest" data-testid="text-page-date">{date}</p>
+        <div className="w-full h-full bg-gradient-to-br from-amber-50 via-rose-50 to-violet-50 p-5" data-testid="layout-playful">
+          <div className="grid grid-cols-2 gap-3 h-full">
+            <div className="row-span-2 rounded-3xl overflow-hidden shadow-lg rotate-[-2deg] hover:rotate-0 transition-transform">
+              <img src={images[0]} className="w-full h-full object-cover" alt="" data-testid="img-playful-0" />
+            </div>
+            <div className="rounded-3xl overflow-hidden shadow-lg rotate-[2deg] hover:rotate-0 transition-transform">
+              <img src={images[1] || images[0]} className="w-full h-full object-cover" alt="" data-testid="img-playful-1" />
+            </div>
+            <div className="rounded-3xl overflow-hidden shadow-lg rotate-[-1deg] hover:rotate-0 transition-transform">
+              <img src={images[2] || images[0]} className="w-full h-full object-cover" alt="" data-testid="img-playful-2" />
+            </div>
+          </div>
+          <div className="absolute bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm p-4 rounded-t-3xl">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-lg">🎈</span>
+              <p className="text-xs text-rose-500 tracking-widest font-medium" data-testid="text-page-date">{date}</p>
+            </div>
             <h2 className="text-xl font-serif font-bold text-stone-800" data-testid="text-page-title">{title}</h2>
-            <h3 className="text-lg font-serif text-stone-600" data-testid="text-page-subtitle">{subtitle}</h3>
+            <h3 className="text-sm font-serif text-rose-600" data-testid="text-page-subtitle">{subtitle}</h3>
+            <p className="text-xs text-stone-500 mt-1" data-testid="text-page-description">{description.split('\n')[0]}</p>
           </div>
-          <div className="grid grid-cols-2 gap-2 flex-1">
-            {images.slice(0, 4).map((img, idx) => (
-              <div key={idx} className="rounded-xl overflow-hidden shadow-md">
-                <img src={img} className="w-full h-full object-cover" alt="" data-testid={`img-quatuor-${idx}`} />
+        </div>
+      );
+    }
+
+    if (layoutStyle === "minimal") {
+      return (
+        <div className="w-full h-full bg-white p-8 flex flex-col" data-testid="layout-minimal">
+          <div className="text-center mb-6">
+            <p className="text-[10px] text-stone-400 tracking-[0.3em] uppercase" data-testid="text-page-date">{date}</p>
+          </div>
+          <div className="flex-1 flex items-center justify-center">
+            <div className="w-3/4 aspect-square rounded-sm overflow-hidden">
+              <img src={images[0]} className="w-full h-full object-cover" alt="" data-testid="img-minimal-0" />
+            </div>
+          </div>
+          <div className="text-center mt-6">
+            <h2 className="text-xl font-light tracking-wide text-stone-800" data-testid="text-page-title">{title}</h2>
+            <h3 className="text-sm font-light text-stone-400 mt-1" data-testid="text-page-subtitle">{subtitle}</h3>
+            <div className="w-8 h-px bg-stone-300 mx-auto my-3" />
+            <p className="text-xs text-stone-500 max-w-xs mx-auto" data-testid="text-page-description">{description.split('\n')[0]}</p>
+          </div>
+        </div>
+      );
+    }
+
+    if (layoutStyle === "story" || (layoutStyle === "auto" && photoCount >= 5)) {
+      return (
+        <div className="w-full h-full bg-[#f8f6f3] p-4" data-testid="layout-story">
+          <div className="grid grid-cols-3 gap-2 mb-2">
+            {images.slice(0, 3).map((img, idx) => (
+              <div key={idx} className="aspect-square rounded-lg overflow-hidden shadow-sm">
+                <img src={img} className="w-full h-full object-cover" alt="" data-testid={`img-story-${idx}`} />
               </div>
             ))}
           </div>
-          <p className="text-xs text-stone-500 text-center mt-3 line-clamp-2" data-testid="text-page-description">{description.split('\n')[0]}</p>
-        </div>
-      );
-    }
-
-    if (photoCount === 5) {
-      return (
-        <div className="w-full h-full bg-white p-4" data-testid="layout-mosaique">
-          <div className="grid grid-cols-3 grid-rows-3 gap-2 h-full">
-            <div className="col-span-2 row-span-2 rounded-xl overflow-hidden shadow-md">
-              <img src={images[0]} className="w-full h-full object-cover" alt="" data-testid="img-mosaique-0" />
-            </div>
-            <div className="rounded-lg overflow-hidden shadow-sm">
-              <img src={images[1]} className="w-full h-full object-cover" alt="" data-testid="img-mosaique-1" />
-            </div>
-            <div className="rounded-lg overflow-hidden shadow-sm">
-              <img src={images[2]} className="w-full h-full object-cover" alt="" data-testid="img-mosaique-2" />
-            </div>
-            <div className="rounded-lg overflow-hidden shadow-sm">
-              <img src={images[3]} className="w-full h-full object-cover" alt="" data-testid="img-mosaique-3" />
-            </div>
-            <div className="col-span-2 bg-stone-50 rounded-xl p-3 flex flex-col justify-center">
+          <div className="grid grid-cols-3 gap-2 mb-2">
+            <div className="col-span-1 bg-white rounded-lg p-3 flex flex-col justify-center shadow-sm">
               <p className="text-[10px] text-stone-400 tracking-widest mb-1" data-testid="text-page-date">{date}</p>
-              <h2 className="text-lg font-serif font-bold text-stone-800" data-testid="text-page-title">{title}</h2>
+              <h2 className="text-base font-serif font-bold text-stone-800 leading-tight" data-testid="text-page-title">{title}</h2>
               <h3 className="text-sm font-serif text-stone-600" data-testid="text-page-subtitle">{subtitle}</h3>
-              <p className="text-[10px] text-stone-500 mt-1 line-clamp-2" data-testid="text-page-description">{description.split('\n')[0]}</p>
+            </div>
+            <div className="col-span-2 bg-white rounded-lg p-3 shadow-sm">
+              <p className="text-[10px] text-stone-600 leading-relaxed" data-testid="text-page-description">{description}</p>
             </div>
           </div>
-          <div className="absolute bottom-4 right-4 w-20 h-20 rounded-lg overflow-hidden shadow-md">
-            <img src={images[4]} className="w-full h-full object-cover" alt="" data-testid="img-mosaique-4" />
+          <div className="grid grid-cols-3 gap-2">
+            {images.slice(3, 6).map((img, idx) => (
+              <div key={idx} className="aspect-[4/3] rounded-lg overflow-hidden shadow-sm">
+                <img src={img} className="w-full h-full object-cover" alt="" data-testid={`img-story-${idx + 3}`} />
+              </div>
+            ))}
           </div>
         </div>
       );
     }
 
     return (
-      <div className="w-full h-full bg-[#faf9f7] p-4" data-testid="layout-collage">
-        <div className="grid grid-cols-3 gap-2 mb-2">
-          <div className="aspect-square rounded-lg overflow-hidden shadow-sm">
-            <img src={images[0]} className="w-full h-full object-cover" alt="" data-testid="img-collage-0" />
-          </div>
-          <div className="aspect-[4/3] col-span-2 rounded-lg overflow-hidden shadow-sm">
-            <img src={images[1]} className="w-full h-full object-cover" alt="" data-testid="img-collage-1" />
-          </div>
+      <div className="w-full h-full bg-white p-5 flex flex-col" data-testid="layout-default">
+        <div className="flex-1 rounded-xl overflow-hidden">
+          <img src={images[0]} className="w-full h-full object-cover" alt="" data-testid="img-default-0" />
         </div>
-        <div className="grid grid-cols-3 gap-2 mb-2">
-          <div className="col-span-1 bg-white rounded-lg p-3 flex flex-col justify-center">
-            <p className="text-[10px] text-stone-400 tracking-widest mb-1" data-testid="text-page-date">{date}</p>
-            <h2 className="text-sm font-serif font-bold text-stone-800 leading-tight" data-testid="text-page-title">{title}</h2>
-            <h3 className="text-sm font-serif text-stone-600" data-testid="text-page-subtitle">{subtitle}</h3>
-          </div>
-          <div className="col-span-2 bg-white rounded-lg p-3">
-            <p className="text-[10px] text-stone-600 leading-relaxed line-clamp-4" data-testid="text-page-description">{description}</p>
-          </div>
-        </div>
-        <div className="grid grid-cols-4 gap-2">
-          {images.slice(2, 6).map((img, idx) => (
-            <div key={idx} className="aspect-square rounded-lg overflow-hidden shadow-sm">
-              <img src={img} className="w-full h-full object-cover" alt="" data-testid={`img-collage-${idx + 2}`} />
-            </div>
-          ))}
+        <div className="pt-4 text-center">
+          <p className="text-xs text-stone-400 tracking-widest" data-testid="text-page-date">{date}</p>
+          <h2 className="text-xl font-serif font-bold text-stone-800" data-testid="text-page-title">{title}</h2>
+          <h3 className="text-lg font-serif text-stone-600" data-testid="text-page-subtitle">{subtitle}</h3>
+          <p className="text-sm text-stone-500 mt-2" data-testid="text-page-description">{description.split('\n')[0]}</p>
         </div>
       </div>
     );
@@ -316,14 +357,18 @@ export default function EditBook() {
         <h1 className="text-white font-serif text-xl font-bold">L'histoire de {babyName}</h1>
       </div>
 
-      {/* Page Counter & Layout Info */}
+      {/* Page Counter & Layout Button */}
       <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
-        <span className="flex items-center gap-1 text-sm font-medium text-stone-300 bg-stone-700/50 backdrop-blur px-3 py-1 rounded-full" data-testid="text-layout-info">
-          <Camera size={14} />
-          {currentPage.images.length} photos · {getLayoutName(currentPage.images.length)}
-        </span>
-        <span className="text-sm font-medium text-stone-300 bg-stone-700/50 backdrop-blur px-3 py-1 rounded-full" data-testid="text-page-counter">
-          Page {currentPageIndex + 1} / {pages.length}
+        <button 
+          onClick={() => setShowLayoutPicker(true)}
+          className="flex items-center gap-2 text-sm font-medium text-stone-300 bg-stone-700/50 backdrop-blur px-3 py-1.5 rounded-full hover:bg-stone-600/50 transition-colors"
+          data-testid="button-change-layout"
+        >
+          <Layout size={14} />
+          <span>{getCurrentLayoutName()}</span>
+        </button>
+        <span className="text-sm font-medium text-stone-300 bg-stone-700/50 backdrop-blur px-3 py-1.5 rounded-full" data-testid="text-page-counter">
+          {currentPageIndex + 1} / {pages.length}
         </span>
       </div>
 
@@ -357,7 +402,7 @@ export default function EditBook() {
       {/* Book Page */}
       <AnimatePresence mode="wait">
         <motion.div
-          key={currentPageIndex}
+          key={`${currentPageIndex}-${currentPage.layoutStyle}`}
           initial={{ opacity: 0, x: 50 }}
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -50 }}
@@ -365,7 +410,7 @@ export default function EditBook() {
           className="w-full max-w-lg relative"
         >
           <div className="aspect-[3/4] bg-white rounded-2xl shadow-2xl overflow-hidden relative">
-            {renderAdaptiveLayout(currentPage)}
+            {renderLayout(currentPage)}
           </div>
         </motion.div>
       </AnimatePresence>
@@ -401,10 +446,89 @@ export default function EditBook() {
           className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-white/20 text-white transition-colors"
           data-testid="button-add-qrcode"
         >
-          <QrCodeIcon size={18} />
+          <QrCode size={18} />
           <span className="text-sm">QR</span>
         </button>
       </div>
+
+      {/* Layout Picker Modal */}
+      <AnimatePresence>
+        {showLayoutPicker && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
+            onClick={() => setShowLayoutPicker(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl w-full max-w-md overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-4 border-b border-stone-100 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <LayoutTemplate size={20} className="text-primary" />
+                  <h3 className="font-bold text-stone-800" data-testid="text-layout-modal-title">Style de collage</h3>
+                </div>
+                <button 
+                  onClick={() => setShowLayoutPicker(false)}
+                  className="p-2 hover:bg-stone-100 rounded-full"
+                  data-testid="button-close-layout-modal"
+                >
+                  <X size={20} className="text-stone-500" />
+                </button>
+              </div>
+
+              <div className="p-4 space-y-2 max-h-[60vh] overflow-y-auto">
+                {layoutStyles.map((style) => (
+                  <button
+                    key={style.id}
+                    onClick={() => updateLayoutStyle(style.id as LayoutStyle)}
+                    className={`w-full p-4 rounded-xl border-2 transition-all text-left flex items-center gap-4 ${
+                      currentPage.layoutStyle === style.id 
+                        ? "border-primary bg-primary/5" 
+                        : "border-stone-200 hover:border-stone-300"
+                    }`}
+                    data-testid={`button-layout-${style.id}`}
+                  >
+                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${style.color} flex items-center justify-center text-2xl shadow-lg`}>
+                      {style.icon}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className={`font-bold ${currentPage.layoutStyle === style.id ? "text-primary" : "text-stone-700"}`}>
+                          {style.name}
+                        </p>
+                        {style.id === "auto" && (
+                          <span className="text-[10px] bg-violet-100 text-violet-600 px-2 py-0.5 rounded-full font-medium">
+                            Recommandé
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-stone-500">{style.desc}</p>
+                    </div>
+                    {currentPage.layoutStyle === style.id && (
+                      <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+                        <Sparkles size={14} className="text-white" />
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              <div className="p-4 border-t border-stone-100 bg-stone-50">
+                <p className="text-xs text-stone-500 text-center flex items-center justify-center gap-1">
+                  <Wand2 size={12} />
+                  Le mode Automatique s'adapte au nombre de photos
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* QR Code Modal */}
       <AnimatePresence>
@@ -601,7 +725,9 @@ export default function EditBook() {
                   <span className="text-xs text-primary font-medium">{currentPage.images.length} photo(s)</span>
                 </div>
                 <p className="text-xs text-stone-500">
-                  La mise en page s'adapte automatiquement au nombre de photos
+                  {currentPage.layoutStyle === "auto" 
+                    ? "La mise en page s'adapte automatiquement au nombre de photos"
+                    : `Style actuel: ${getCurrentLayoutName()}`}
                 </p>
               </div>
 

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 
 type EditorMode = "view" | "text" | "photo" | "video" | "qrcode" | "layout";
-type LayoutStyle = "auto" | "classic" | "modern" | "elegant" | "playful" | "minimal" | "story" | "colorful" | "family" | "journi" | "mosaic";
+type LayoutStyle = "auto" | "classic" | "modern" | "elegant" | "playful" | "minimal" | "story" | "colorful" | "family" | "familyTree" | "journi" | "mosaic";
 
 type ContentItem = {
   type: "text" | "photo" | "video" | "qrcode";
@@ -21,6 +21,16 @@ type FamilyMember = {
   description: string;
 };
 
+type TreeLevel = "grandparents" | "parents" | "child";
+
+type TreeMember = {
+  id: number;
+  level: TreeLevel;
+  photo: string;
+  name: string;
+  role: string;
+};
+
 type BookPage = {
   id: number;
   title: string;
@@ -31,6 +41,7 @@ type BookPage = {
   layoutStyle: LayoutStyle;
   content: ContentItem[];
   familyMembers?: FamilyMember[];
+  treeMembers?: TreeMember[];
 };
 
 const sampleImages = [
@@ -52,6 +63,7 @@ const layoutStyles = [
   { id: "story", name: "Histoire", icon: "📖", desc: "Narration visuelle", color: "from-indigo-500 to-blue-500" },
   { id: "colorful", name: "Coloré", icon: "🌈", desc: "Couleurs extraites de la photo", color: "from-pink-500 to-yellow-500" },
   { id: "family", name: "Famille", icon: "👨‍👩‍👧‍👦", desc: "Portraits de famille (1-4 personnes)", color: "from-rose-400 to-orange-400" },
+  { id: "familyTree", name: "Arbre", icon: "🌳", desc: "Arbre généalogique adaptatif", color: "from-green-500 to-emerald-500" },
   { id: "journi", name: "Journi", icon: "📸", desc: "Style magazine asymétrique", color: "from-teal-500 to-cyan-500" },
   { id: "mosaic", name: "Mosaïque", icon: "🧩", desc: "Collage créatif varié", color: "from-fuchsia-500 to-pink-500" },
 ];
@@ -85,7 +97,7 @@ const inspirationCategories = [
 const inspirationTemplates: InspirationTemplate[] = [
   // FAMILLE - Présentation de la famille
   { id: "famille1", category: "famille", title: "TA", subtitle: "FAMILLE", description: "Qui sommes-nous? Une présentation de ceux qui t'aiment.", layoutStyle: "family", icon: "👨‍👩‍👧‍👦", color: "from-teal-300 to-emerald-400" },
-  { id: "arbre", category: "famille", title: "ARBRE", subtitle: "GÉNÉALOGIQUE", description: "Tes racines et ton histoire familiale.", layoutStyle: "mosaic", icon: "🌳", color: "from-green-300 to-teal-400" },
+  { id: "arbre", category: "famille", title: "ARBRE", subtitle: "GÉNÉALOGIQUE", description: "Tes racines et ton histoire familiale.", layoutStyle: "familyTree", icon: "🌳", color: "from-green-300 to-teal-400" },
   { id: "parents", category: "famille", title: "TES", subtitle: "PARENTS", description: "Maman et Papa, ceux qui veillent sur toi.", layoutStyle: "elegant", icon: "💑", color: "from-rose-300 to-pink-400" },
   { id: "grandparents", category: "famille", title: "TES", subtitle: "GRANDS-PARENTS", description: "Mamie et Papi, leurs bras sont toujours ouverts.", layoutStyle: "journi", icon: "👵", color: "from-amber-300 to-orange-400" },
   { id: "oncles", category: "famille", title: "TES ONCLES", subtitle: "& TANTES", description: "La famille élargie qui t'entoure d'amour.", layoutStyle: "modern", icon: "👫", color: "from-blue-300 to-indigo-400" },
@@ -215,9 +227,13 @@ export default function EditBook() {
   const [editingMemberIndex, setEditingMemberIndex] = useState<number | null>(null);
   const [showInspirationModal, setShowInspirationModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<InspirationCategory | null>(null);
+  const [showTreeEditor, setShowTreeEditor] = useState(false);
+  const [editingTreeMemberIndex, setEditingTreeMemberIndex] = useState<number | null>(null);
+  const [selectedTreeLevel, setSelectedTreeLevel] = useState<TreeLevel>("parents");
   
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const familyPhotoInputRef = useRef<HTMLInputElement>(null);
+  const treePhotoInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const videoCameraRef = useRef<HTMLInputElement>(null);
@@ -386,7 +402,8 @@ export default function EditBook() {
       images: [],
       layoutStyle: template.layoutStyle,
       content: [],
-      familyMembers: template.layoutStyle === "family" ? [] : undefined
+      familyMembers: template.layoutStyle === "family" ? [] : undefined,
+      treeMembers: template.layoutStyle === "familyTree" ? [] : undefined
     };
     setPages([...pages, newPage]);
     setCurrentPageIndex(pages.length);
@@ -700,6 +717,121 @@ export default function EditBook() {
       );
     }
 
+    if (layoutStyle === "familyTree") {
+      const members = page.treeMembers || [];
+      const grandparents = members.filter(m => m.level === "grandparents");
+      const parents = members.filter(m => m.level === "parents");
+      const children = members.filter(m => m.level === "child");
+      
+      const hasAnyMembers = members.length > 0;
+      
+      if (!hasAnyMembers) {
+        return (
+          <div className="w-full h-full bg-gradient-to-b from-emerald-50 via-white to-green-50 p-4 flex flex-col items-center justify-center" data-testid="layout-familytree-empty">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center mb-3 shadow-lg">
+              <span className="text-2xl">🌳</span>
+            </div>
+            <h2 className="text-lg font-serif font-bold text-stone-800 mb-1" data-testid="text-page-title">{title}</h2>
+            <h3 className="text-sm font-serif text-stone-500 mb-3" data-testid="text-page-subtitle">{subtitle}</h3>
+            <p className="text-xs text-stone-400 text-center max-w-[200px] mb-4">
+              Construisez votre arbre généalogique en ajoutant les membres de la famille
+            </p>
+            <div className="flex items-center gap-1.5 text-emerald-600">
+              <Plus size={14} />
+              <span className="text-xs font-medium">Cliquez sur "Texte" pour ajouter</span>
+            </div>
+          </div>
+        );
+      }
+
+      const renderMember = (member: TreeMember, size: "sm" | "md" | "lg" = "md") => {
+        const sizeClasses = {
+          sm: "w-10 h-10",
+          md: "w-12 h-12",
+          lg: "w-14 h-14"
+        };
+        const textSize = size === "sm" ? "text-[9px]" : size === "md" ? "text-[10px]" : "text-xs";
+        
+        return (
+          <div key={member.id} className="flex flex-col items-center" data-testid={`tree-member-${member.id}`}>
+            <div className={`${sizeClasses[size]} rounded-full overflow-hidden border-2 border-white shadow-md bg-stone-100`}>
+              {member.photo ? (
+                <img src={member.photo} className="w-full h-full object-cover" alt={member.name} />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-emerald-100 to-green-100">
+                  <Users size={size === "sm" ? 14 : size === "md" ? 16 : 20} className="text-emerald-400" />
+                </div>
+              )}
+            </div>
+            <p className={`${textSize} font-medium text-stone-700 mt-1 text-center leading-tight max-w-[60px] truncate`}>
+              {member.name || "Nom"}
+            </p>
+            <p className={`${size === "sm" ? "text-[8px]" : "text-[9px]"} text-emerald-600 leading-tight`}>
+              {member.role || "Rôle"}
+            </p>
+          </div>
+        );
+      };
+
+      return (
+        <div className="w-full h-full bg-gradient-to-b from-emerald-50 via-white to-green-50 p-3 flex flex-col" data-testid="layout-familytree">
+          <div className="text-center mb-2">
+            <h2 className="text-base font-serif font-bold text-stone-800" data-testid="text-page-title">{title}</h2>
+            <h3 className="text-xs font-serif text-emerald-600" data-testid="text-page-subtitle">{subtitle}</h3>
+          </div>
+          
+          <div className="flex-1 flex flex-col justify-center relative">
+            <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }}>
+              {grandparents.length > 0 && parents.length > 0 && (
+                <line 
+                  x1="50%" y1="22%" 
+                  x2="50%" y2="45%" 
+                  stroke="#86efac" 
+                  strokeWidth="2" 
+                  strokeDasharray="4 2"
+                />
+              )}
+              {parents.length > 0 && children.length > 0 && (
+                <line 
+                  x1="50%" y1="55%" 
+                  x2="50%" y2="78%" 
+                  stroke="#86efac" 
+                  strokeWidth="2" 
+                  strokeDasharray="4 2"
+                />
+              )}
+            </svg>
+            
+            {grandparents.length > 0 && (
+              <div className="flex justify-center gap-3 mb-3 relative z-10">
+                {grandparents.map(m => renderMember(m, grandparents.length > 2 ? "sm" : "md"))}
+              </div>
+            )}
+            
+            {parents.length > 0 && (
+              <div className="flex justify-center gap-4 mb-3 relative z-10">
+                {parents.map(m => renderMember(m, parents.length > 2 ? "md" : "lg"))}
+              </div>
+            )}
+            
+            {children.length > 0 && (
+              <div className="flex justify-center gap-3 relative z-10">
+                <div className="bg-gradient-to-br from-emerald-100 to-green-100 rounded-2xl p-3 shadow-inner">
+                  <div className="flex justify-center gap-3">
+                    {children.map(m => renderMember(m, "lg"))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          <div className="text-center mt-1">
+            <p className="text-[9px] text-stone-400" data-testid="text-page-date">{date}</p>
+          </div>
+        </div>
+      );
+    }
+
     if (layoutStyle === "journi") {
       if (photoCount === 1) {
         return (
@@ -997,6 +1129,16 @@ export default function EditBook() {
           >
             <Users size={16} />
             <span className="text-xs">Famille</span>
+          </button>
+        )}
+        {currentPage.layoutStyle === "familyTree" && (
+          <button
+            onClick={() => setShowTreeEditor(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors"
+            data-testid="button-edit-tree"
+          >
+            <Users size={16} />
+            <span className="text-xs">Arbre</span>
           </button>
         )}
         <button
@@ -1777,6 +1919,209 @@ export default function EditBook() {
                   Ajoutez de 1 à 4 membres de votre famille
                 </p>
                 <Button onClick={() => setShowFamilyEditor(false)} className="w-full" data-testid="button-save-family">
+                  Enregistrer
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Tree Editor Modal */}
+      <AnimatePresence>
+        {showTreeEditor && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
+            onClick={() => setShowTreeEditor(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">🌳</span>
+                  <h3 className="text-xl font-bold text-stone-900" data-testid="text-tree-modal-title">Arbre généalogique</h3>
+                </div>
+                <button 
+                  onClick={() => setShowTreeEditor(false)} 
+                  className="p-2 hover:bg-stone-100 rounded-full transition-colors"
+                  data-testid="button-close-tree-modal"
+                >
+                  <X size={20} className="text-stone-600" />
+                </button>
+              </div>
+
+              {/* Level selector tabs */}
+              <div className="flex gap-1 mb-4 bg-stone-100 p-1 rounded-xl">
+                {[
+                  { level: "grandparents" as TreeLevel, label: "Grands-parents", icon: "👴" },
+                  { level: "parents" as TreeLevel, label: "Parents", icon: "👨‍👩‍👧" },
+                  { level: "child" as TreeLevel, label: "Enfant", icon: "👶" },
+                ].map(({ level, label, icon }) => (
+                  <button
+                    key={level}
+                    onClick={() => setSelectedTreeLevel(level)}
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg text-xs font-medium transition-colors ${
+                      selectedTreeLevel === level 
+                        ? "bg-white text-emerald-600 shadow-sm" 
+                        : "text-stone-500 hover:text-stone-700"
+                    }`}
+                    data-testid={`button-tree-level-${level}`}
+                  >
+                    <span>{icon}</span>
+                    <span className="hidden sm:inline">{label}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Members in selected level */}
+              <div className="space-y-3 mb-4">
+                {(currentPage.treeMembers || [])
+                  .filter(m => m.level === selectedTreeLevel)
+                  .map((member, idx) => {
+                    const globalIdx = (currentPage.treeMembers || []).findIndex(m => m.id === member.id);
+                    return (
+                      <div 
+                        key={member.id}
+                        className="flex items-center gap-3 p-3 bg-stone-50 rounded-xl"
+                        data-testid={`tree-member-row-${idx}`}
+                      >
+                        <div 
+                          className="w-14 h-14 rounded-full overflow-hidden bg-emerald-100 flex-shrink-0 cursor-pointer relative group"
+                          onClick={() => {
+                            setEditingTreeMemberIndex(globalIdx);
+                            treePhotoInputRef.current?.click();
+                          }}
+                        >
+                          {member.photo ? (
+                            <>
+                              <img src={member.photo} className="w-full h-full object-cover" alt={member.name} />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                <Camera size={16} className="text-white" />
+                              </div>
+                            </>
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <ImagePlus size={20} className="text-emerald-300" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <input
+                            type="text"
+                            value={member.name}
+                            onChange={(e) => {
+                              const newPages = [...pages];
+                              if (newPages[currentPageIndex].treeMembers) {
+                                newPages[currentPageIndex].treeMembers![globalIdx].name = e.target.value;
+                                setPages(newPages);
+                              }
+                            }}
+                            placeholder="Nom"
+                            className="w-full text-sm font-medium text-stone-800 bg-transparent border-none focus:outline-none focus:ring-0 p-0 mb-1"
+                            data-testid={`input-tree-name-${idx}`}
+                          />
+                          <input
+                            type="text"
+                            value={member.role}
+                            onChange={(e) => {
+                              const newPages = [...pages];
+                              if (newPages[currentPageIndex].treeMembers) {
+                                newPages[currentPageIndex].treeMembers![globalIdx].role = e.target.value;
+                                setPages(newPages);
+                              }
+                            }}
+                            placeholder={selectedTreeLevel === "grandparents" ? "Ex: Papi, Mamie" : selectedTreeLevel === "parents" ? "Ex: Papa, Maman" : "Ex: Bébé"}
+                            className="w-full text-xs text-stone-500 bg-transparent border-none focus:outline-none focus:ring-0 p-0"
+                            data-testid={`input-tree-role-${idx}`}
+                          />
+                        </div>
+                        <button
+                          onClick={() => {
+                            const newPages = [...pages];
+                            if (newPages[currentPageIndex].treeMembers) {
+                              newPages[currentPageIndex].treeMembers = newPages[currentPageIndex].treeMembers!.filter((_, i) => i !== globalIdx);
+                              setPages(newPages);
+                            }
+                          }}
+                          className="p-2 text-stone-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                          data-testid={`button-remove-tree-${idx}`}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    );
+                  })}
+              </div>
+
+              {/* Add member button */}
+              <button
+                onClick={() => {
+                  const newPages = [...pages];
+                  const members = newPages[currentPageIndex].treeMembers || [];
+                  members.push({
+                    id: Date.now(),
+                    level: selectedTreeLevel,
+                    photo: "",
+                    name: "",
+                    role: ""
+                  });
+                  newPages[currentPageIndex].treeMembers = members;
+                  setPages(newPages);
+                }}
+                className="w-full p-4 border-2 border-dashed border-emerald-200 rounded-xl text-emerald-600 hover:border-emerald-400 hover:bg-emerald-50 transition-colors flex items-center justify-center gap-2"
+                data-testid="button-add-tree-member"
+              >
+                <Plus size={18} />
+                <span className="text-sm font-medium">
+                  Ajouter {selectedTreeLevel === "grandparents" ? "un grand-parent" : selectedTreeLevel === "parents" ? "un parent" : "un enfant"}
+                </span>
+              </button>
+
+              <input
+                ref={treePhotoInputRef}
+                type="file"
+                accept="image/*"
+                onChange={async (e) => {
+                  const files = e.target.files;
+                  if (!files || files.length === 0 || editingTreeMemberIndex === null) return;
+                  
+                  const file = files[0];
+                  const dataUrl = await new Promise<string>((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result as string);
+                    reader.readAsDataURL(file);
+                  });
+                  
+                  const newPages = [...pages];
+                  if (newPages[currentPageIndex].treeMembers) {
+                    newPages[currentPageIndex].treeMembers![editingTreeMemberIndex].photo = dataUrl;
+                    setPages(newPages);
+                  }
+                  setEditingTreeMemberIndex(null);
+                  e.target.value = "";
+                }}
+                className="hidden"
+                data-testid="input-tree-photo"
+              />
+
+              <div className="mt-4 pt-4 border-t border-stone-100">
+                <div className="flex items-center gap-2 text-xs text-stone-400 mb-3">
+                  <span>📊</span>
+                  <span>
+                    {(currentPage.treeMembers || []).filter(m => m.level === "grandparents").length} grands-parents • 
+                    {(currentPage.treeMembers || []).filter(m => m.level === "parents").length} parents • 
+                    {(currentPage.treeMembers || []).filter(m => m.level === "child").length} enfants
+                  </span>
+                </div>
+                <Button onClick={() => setShowTreeEditor(false)} className="w-full bg-emerald-600 hover:bg-emerald-700" data-testid="button-save-tree">
                   Enregistrer
                 </Button>
               </div>

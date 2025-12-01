@@ -499,14 +499,6 @@ export default function EditBook() {
           <Video size={16} />
           <span className="text-xs">Vidéo</span>
         </button>
-        <button
-          onClick={() => setEditorMode("qrcode")}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-stone-100 text-stone-700 transition-colors"
-          data-testid="button-add-qrcode"
-        >
-          <QrCode size={16} />
-          <span className="text-xs">QR</span>
-        </button>
         <div className="w-px h-5 bg-stone-200" />
         <button
           onClick={addNewPage}

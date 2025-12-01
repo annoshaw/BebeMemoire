@@ -35,6 +35,7 @@ type FamilyMember = {
 };
 
 type TreeLevel = "grandparents" | "parents" | "siblings" | "child";
+type ParentSide = "maternal" | "paternal";
 
 type TreeMember = {
   id: number;
@@ -42,6 +43,7 @@ type TreeMember = {
   photo: string;
   name: string;
   role: string;
+  parentSide?: ParentSide;
 };
 
 type BookPage = {
@@ -540,6 +542,14 @@ export default function EditBook() {
         );
       };
 
+      const maternalSiblings = siblings.filter(m => m.parentSide === "maternal");
+      const paternalSiblings = siblings.filter(m => m.parentSide === "paternal");
+      const unassignedSiblings = siblings.filter(m => !m.parentSide);
+      
+      const maternalGrandparents = grandparents.filter(m => m.parentSide === "maternal");
+      const paternalGrandparents = grandparents.filter(m => m.parentSide === "paternal");
+      const unassignedGrandparents = grandparents.filter(m => !m.parentSide);
+
       return (
         <div 
           className="w-full h-full p-3 flex flex-col relative" 
@@ -556,20 +566,40 @@ export default function EditBook() {
           
           <div className="flex-1 flex flex-col justify-center gap-2 relative z-10">
             {grandparents.length > 0 && (
-              <div className="flex justify-center gap-3">
-                {grandparents.map(m => renderMember(m, grandparents.length > 2 ? "sm" : "md"))}
+              <div className="flex justify-between items-start px-2">
+                <div className="flex flex-col items-center gap-1">
+                  {maternalGrandparents.map(m => renderMember(m, "sm"))}
+                </div>
+                {unassignedGrandparents.length > 0 && (
+                  <div className="flex gap-2 justify-center">
+                    {unassignedGrandparents.map(m => renderMember(m, "sm"))}
+                  </div>
+                )}
+                <div className="flex flex-col items-center gap-1">
+                  {paternalGrandparents.map(m => renderMember(m, "sm"))}
+                </div>
+              </div>
+            )}
+            
+            {siblings.length > 0 && (
+              <div className="flex justify-between items-center px-4">
+                <div className="flex flex-col items-center gap-1">
+                  {maternalSiblings.map(m => renderMember(m, "sm"))}
+                </div>
+                {unassignedSiblings.length > 0 && (
+                  <div className="flex gap-2 justify-center">
+                    {unassignedSiblings.map(m => renderMember(m, "sm"))}
+                  </div>
+                )}
+                <div className="flex flex-col items-center gap-1">
+                  {paternalSiblings.map(m => renderMember(m, "sm"))}
+                </div>
               </div>
             )}
             
             {parents.length > 0 && (
               <div className="flex justify-center gap-4">
                 {parents.map(m => renderMember(m, parents.length > 2 ? "md" : "lg"))}
-              </div>
-            )}
-            
-            {siblings.length > 0 && (
-              <div className="flex justify-center gap-3">
-                {siblings.map(m => renderMember(m, siblings.length > 3 ? "sm" : "md"))}
               </div>
             )}
             
@@ -2251,6 +2281,52 @@ export default function EditBook() {
                             className="w-full text-xs text-stone-500 bg-transparent border-none focus:outline-none focus:ring-0 p-0"
                             data-testid={`input-tree-role-${idx}`}
                           />
+                          {(selectedTreeLevel === "siblings" || selectedTreeLevel === "grandparents") && (
+                            <div className="flex gap-1 mt-2">
+                              <button
+                                onClick={() => {
+                                  setPages(prevPages => {
+                                    const newPages = [...prevPages];
+                                    if (newPages[currentPageIndex].treeMembers) {
+                                      const newMembers = [...newPages[currentPageIndex].treeMembers!];
+                                      newMembers[globalIdx] = { ...newMembers[globalIdx], parentSide: "maternal" };
+                                      newPages[currentPageIndex] = { ...newPages[currentPageIndex], treeMembers: newMembers };
+                                    }
+                                    return newPages;
+                                  });
+                                }}
+                                className={`flex-1 text-[10px] py-1 px-2 rounded ${
+                                  member.parentSide === "maternal" 
+                                    ? "bg-pink-100 text-pink-700 font-medium" 
+                                    : "bg-stone-100 text-stone-500 hover:bg-stone-200"
+                                }`}
+                                data-testid={`button-side-maternal-${idx}`}
+                              >
+                                Côté maman
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setPages(prevPages => {
+                                    const newPages = [...prevPages];
+                                    if (newPages[currentPageIndex].treeMembers) {
+                                      const newMembers = [...newPages[currentPageIndex].treeMembers!];
+                                      newMembers[globalIdx] = { ...newMembers[globalIdx], parentSide: "paternal" };
+                                      newPages[currentPageIndex] = { ...newPages[currentPageIndex], treeMembers: newMembers };
+                                    }
+                                    return newPages;
+                                  });
+                                }}
+                                className={`flex-1 text-[10px] py-1 px-2 rounded ${
+                                  member.parentSide === "paternal" 
+                                    ? "bg-blue-100 text-blue-700 font-medium" 
+                                    : "bg-stone-100 text-stone-500 hover:bg-stone-200"
+                                }`}
+                                data-testid={`button-side-paternal-${idx}`}
+                              >
+                                Côté papa
+                              </button>
+                            </div>
+                          )}
                         </div>
                         <button
                           onClick={() => {

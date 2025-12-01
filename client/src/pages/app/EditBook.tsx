@@ -1482,17 +1482,16 @@ export default function EditBook() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white rounded-2xl w-full max-w-md overflow-hidden"
+              className="bg-white rounded-2xl w-full max-w-[280px] overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="p-4 border-b border-stone-100 flex items-center justify-between">
+              <div className="p-3 border-b border-stone-100 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center">
-                    <span className="text-xl">🌳</span>
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center">
+                    <span className="text-base">🌳</span>
                   </div>
                   <div>
-                    <h3 className="font-bold text-stone-800" data-testid="text-background-modal-title">Choisir un arrière-plan</h3>
-                    <p className="text-xs text-stone-500">Personnalisez votre arbre généalogique</p>
+                    <h3 className="font-bold text-sm text-stone-800" data-testid="text-background-modal-title">Choisir un arrière-plan</h3>
                   </div>
                 </div>
                 <button 
@@ -1500,18 +1499,18 @@ export default function EditBook() {
                     setShowBackgroundSelector(false);
                     setPendingTemplate(null);
                   }}
-                  className="p-2 hover:bg-stone-100 rounded-full"
+                  className="p-1.5 hover:bg-stone-100 rounded-full"
                   data-testid="button-close-background-modal"
                 >
-                  <X size={20} className="text-stone-500" />
+                  <X size={18} className="text-stone-500" />
                 </button>
               </div>
 
-              <div className="p-4">
+              <div className="p-3">
                 {/* Carrousel */}
-                <div className="relative">
+                <div className="relative max-w-[200px] mx-auto">
                   {/* Image principale */}
-                  <div className="aspect-[3/4] rounded-xl overflow-hidden border-2 border-emerald-200 shadow-lg">
+                  <div className="aspect-[3/4] rounded-lg overflow-hidden border-2 border-emerald-200 shadow-lg">
                     {treeBackgrounds[backgroundIndex].src ? (
                       <img 
                         src={treeBackgrounds[backgroundIndex].src} 
@@ -1520,7 +1519,7 @@ export default function EditBook() {
                       />
                     ) : (
                       <div className="w-full h-full bg-gradient-to-b from-emerald-50 via-white to-green-50 flex items-center justify-center">
-                        <span className="text-6xl">🌳</span>
+                        <span className="text-4xl">🌳</span>
                       </div>
                     )}
                   </div>
@@ -1532,10 +1531,10 @@ export default function EditBook() {
                       setBackgroundIndex(newIndex);
                       setSelectedBackground(treeBackgrounds[newIndex].src);
                     }}
-                    className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 shadow-lg flex items-center justify-center hover:bg-white transition-colors"
+                    className="absolute -left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 shadow-lg flex items-center justify-center hover:bg-white transition-colors"
                     data-testid="button-bg-prev"
                   >
-                    <ChevronLeft size={24} className="text-stone-700" />
+                    <ChevronLeft size={18} className="text-stone-700" />
                   </button>
                   
                   {/* Flèche droite */}
@@ -1545,20 +1544,20 @@ export default function EditBook() {
                       setBackgroundIndex(newIndex);
                       setSelectedBackground(treeBackgrounds[newIndex].src);
                     }}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 shadow-lg flex items-center justify-center hover:bg-white transition-colors"
+                    className="absolute -right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 shadow-lg flex items-center justify-center hover:bg-white transition-colors"
                     data-testid="button-bg-next"
                   >
-                    <ChevronRight size={24} className="text-stone-700" />
+                    <ChevronRight size={18} className="text-stone-700" />
                   </button>
                 </div>
                 
                 {/* Nom du fond */}
-                <p className="text-center text-lg font-bold text-stone-800 mt-4">
+                <p className="text-center text-sm font-bold text-stone-800 mt-2">
                   {treeBackgrounds[backgroundIndex].name}
                 </p>
                 
                 {/* Indicateurs */}
-                <div className="flex justify-center gap-2 mt-3">
+                <div className="flex justify-center gap-1.5 mt-2">
                   {treeBackgrounds.map((bg, idx) => (
                     <button
                       key={bg.id}
@@ -1566,9 +1565,9 @@ export default function EditBook() {
                         setBackgroundIndex(idx);
                         setSelectedBackground(bg.src);
                       }}
-                      className={`w-2.5 h-2.5 rounded-full transition-all ${
+                      className={`w-2 h-2 rounded-full transition-all ${
                         idx === backgroundIndex 
-                          ? 'bg-emerald-500 w-6' 
+                          ? 'bg-emerald-500 w-4' 
                           : 'bg-stone-300 hover:bg-stone-400'
                       }`}
                       data-testid={`button-bg-dot-${idx}`}
@@ -1577,7 +1576,7 @@ export default function EditBook() {
                 </div>
               </div>
 
-              <div className="p-4 border-t border-stone-100 flex gap-3">
+              <div className="p-3 border-t border-stone-100 flex gap-2">
                 <Button
                   variant="outline"
                   className="flex-1"

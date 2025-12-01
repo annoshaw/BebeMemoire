@@ -566,18 +566,8 @@ export default function EditBook() {
           
           <div className="flex-1 flex flex-col justify-center gap-2 relative z-10">
             {grandparents.length > 0 && (
-              <div className="flex justify-between items-start px-2">
-                <div className="flex flex-col items-center gap-1">
-                  {maternalGrandparents.map(m => renderMember(m, "sm"))}
-                </div>
-                {unassignedGrandparents.length > 0 && (
-                  <div className="flex gap-2 justify-center">
-                    {unassignedGrandparents.map(m => renderMember(m, "sm"))}
-                  </div>
-                )}
-                <div className="flex flex-col items-center gap-1">
-                  {paternalGrandparents.map(m => renderMember(m, "sm"))}
-                </div>
+              <div className="flex justify-center gap-3">
+                {grandparents.map(m => renderMember(m, grandparents.length > 2 ? "sm" : "md"))}
               </div>
             )}
             
@@ -2281,7 +2271,7 @@ export default function EditBook() {
                             className="w-full text-xs text-stone-500 bg-transparent border-none focus:outline-none focus:ring-0 p-0"
                             data-testid={`input-tree-role-${idx}`}
                           />
-                          {(selectedTreeLevel === "siblings" || selectedTreeLevel === "grandparents") && (
+                          {selectedTreeLevel === "siblings" && (
                             <div className="flex gap-1 mt-2">
                               <button
                                 onClick={() => {

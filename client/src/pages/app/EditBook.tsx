@@ -7,7 +7,7 @@ import { Link } from "wouter";
 import treeBackground1 from "@assets/generated_images/watercolor_family_tree_background.png";
 import treeBackground2 from "@assets/generated_images/minimalist_elegant_tree_background.png";
 import treeBackground3 from "@assets/generated_images/vintage_sepia_tree_background.png";
-import treeBackground4 from "@assets/generated_images/pastel_whimsical_tree_background.png";
+import treeBackground4 from "@assets/generated_images/whimsical_watercolor_tree_house.png";
 
 const treeBackgrounds = [
   { id: "watercolor", name: "Aquarelle", src: treeBackground1 },
@@ -34,7 +34,7 @@ type FamilyMember = {
   description: string;
 };
 
-type TreeLevel = "grandparents" | "parents" | "child";
+type TreeLevel = "grandparents" | "parents" | "siblings" | "child";
 
 type TreeMember = {
   id: number;
@@ -477,6 +477,7 @@ export default function EditBook() {
       const members = page.treeMembers || [];
       const grandparents = members.filter(m => m.level === "grandparents");
       const parents = members.filter(m => m.level === "parents");
+      const siblings = members.filter(m => m.level === "siblings");
       const children = members.filter(m => m.level === "child");
       
       const hasAnyMembers = members.length > 0;
@@ -546,54 +547,35 @@ export default function EditBook() {
           style={bgImage ? { backgroundImage: `url(${bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
         >
           {!bgImage && <div className="absolute inset-0 bg-gradient-to-b from-emerald-50 via-white to-green-50" />}
-          {bgImage && <div className="absolute inset-0 bg-white/30" />}
+          {bgImage && <div className="absolute inset-0 bg-white/20" />}
           
           <div className="text-center mb-2 relative z-10">
             <h2 className="text-base font-serif font-bold text-stone-800" data-testid="text-page-title">{title}</h2>
             <h3 className="text-xs font-serif text-emerald-600" data-testid="text-page-subtitle">{subtitle}</h3>
           </div>
           
-          <div className="flex-1 flex flex-col justify-center relative z-10">
-            <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }}>
-              {grandparents.length > 0 && parents.length > 0 && (
-                <line 
-                  x1="50%" y1="22%" 
-                  x2="50%" y2="45%" 
-                  stroke="#86efac" 
-                  strokeWidth="2" 
-                  strokeDasharray="4 2"
-                />
-              )}
-              {parents.length > 0 && children.length > 0 && (
-                <line 
-                  x1="50%" y1="55%" 
-                  x2="50%" y2="78%" 
-                  stroke="#86efac" 
-                  strokeWidth="2" 
-                  strokeDasharray="4 2"
-                />
-              )}
-            </svg>
-            
+          <div className="flex-1 flex flex-col justify-center gap-2 relative z-10">
             {grandparents.length > 0 && (
-              <div className="flex justify-center gap-3 mb-3 relative z-10">
+              <div className="flex justify-center gap-3">
                 {grandparents.map(m => renderMember(m, grandparents.length > 2 ? "sm" : "md"))}
               </div>
             )}
             
             {parents.length > 0 && (
-              <div className="flex justify-center gap-4 mb-3 relative z-10">
+              <div className="flex justify-center gap-4">
                 {parents.map(m => renderMember(m, parents.length > 2 ? "md" : "lg"))}
               </div>
             )}
             
+            {siblings.length > 0 && (
+              <div className="flex justify-center gap-3">
+                {siblings.map(m => renderMember(m, siblings.length > 3 ? "sm" : "md"))}
+              </div>
+            )}
+            
             {children.length > 0 && (
-              <div className="flex justify-center gap-3 relative z-10">
-                <div className="bg-gradient-to-br from-emerald-100 to-green-100 rounded-2xl p-3 shadow-inner">
-                  <div className="flex justify-center gap-3">
-                    {children.map(m => renderMember(m, "lg"))}
-                  </div>
-                </div>
+              <div className="flex justify-center gap-3">
+                {children.map(m => renderMember(m, "lg"))}
               </div>
             )}
           </div>
@@ -2175,16 +2157,17 @@ export default function EditBook() {
               </div>
 
               {/* Level selector tabs */}
-              <div className="flex gap-1 mb-4 bg-stone-100 p-1 rounded-xl">
+              <div className="flex gap-1 mb-4 bg-stone-100 p-1 rounded-xl overflow-x-auto">
                 {[
                   { level: "grandparents" as TreeLevel, label: "Grands-parents", icon: "👴" },
                   { level: "parents" as TreeLevel, label: "Parents", icon: "👨‍👩‍👧" },
+                  { level: "siblings" as TreeLevel, label: "Oncles/Tantes", icon: "👫" },
                   { level: "child" as TreeLevel, label: "Enfant", icon: "👶" },
                 ].map(({ level, label, icon }) => (
                   <button
                     key={level}
                     onClick={() => setSelectedTreeLevel(level)}
-                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg text-xs font-medium transition-colors ${
+                    className={`flex-1 flex items-center justify-center gap-1 py-2 px-1.5 rounded-lg text-[10px] font-medium transition-colors whitespace-nowrap ${
                       selectedTreeLevel === level 
                         ? "bg-white text-emerald-600 shadow-sm" 
                         : "text-stone-500 hover:text-stone-700"
@@ -2264,7 +2247,7 @@ export default function EditBook() {
                                 return newPages;
                               });
                             }}
-                            placeholder={selectedTreeLevel === "grandparents" ? "Ex: Papi, Mamie" : selectedTreeLevel === "parents" ? "Ex: Papa, Maman" : "Ex: Bébé"}
+                            placeholder={selectedTreeLevel === "grandparents" ? "Ex: Papi, Mamie" : selectedTreeLevel === "parents" ? "Ex: Papa, Maman" : selectedTreeLevel === "siblings" ? "Ex: Tonton, Tata" : "Ex: Bébé"}
                             className="w-full text-xs text-stone-500 bg-transparent border-none focus:outline-none focus:ring-0 p-0"
                             data-testid={`input-tree-role-${idx}`}
                           />
@@ -2318,7 +2301,7 @@ export default function EditBook() {
               >
                 <Plus size={18} />
                 <span className="text-sm font-medium">
-                  Ajouter {selectedTreeLevel === "grandparents" ? "un grand-parent" : selectedTreeLevel === "parents" ? "un parent" : "un enfant"}
+                  Ajouter {selectedTreeLevel === "grandparents" ? "un grand-parent" : selectedTreeLevel === "parents" ? "un parent" : selectedTreeLevel === "siblings" ? "un oncle/tante" : "un enfant"}
                 </span>
               </button>
 

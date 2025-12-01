@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Type, Camera, Video, X, QrCode, Layout, Plus, LayoutTemplate, Sparkles, ImagePlus, Wand2, Image as ImageIcon, Users, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Type, Camera, Video, X, QrCode, Layout, Plus, LayoutTemplate, Sparkles, ImagePlus, Wand2, Image as ImageIcon, Users, Trash2, Lightbulb, Baby, Heart, Star, Cake, Sun, Moon, Gift, Footprints, Smile } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 
@@ -54,6 +54,57 @@ const layoutStyles = [
   { id: "family", name: "Famille", icon: "👨‍👩‍👧‍👦", desc: "Portraits de famille (1-4 personnes)", color: "from-rose-400 to-orange-400" },
   { id: "journi", name: "Journi", icon: "📸", desc: "Style magazine asymétrique", color: "from-teal-500 to-cyan-500" },
   { id: "mosaic", name: "Mosaïque", icon: "🧩", desc: "Collage créatif varié", color: "from-fuchsia-500 to-pink-500" },
+];
+
+type InspirationCategory = "grossesse" | "naissance" | "premiers" | "fetes" | "famille" | "quotidien";
+
+type InspirationTemplate = {
+  id: string;
+  category: InspirationCategory;
+  title: string;
+  subtitle: string;
+  description: string;
+  layoutStyle: LayoutStyle;
+  icon: string;
+  color: string;
+  previewImage?: string;
+};
+
+const inspirationCategories = [
+  { id: "grossesse", name: "Grossesse", icon: Heart, color: "from-pink-400 to-rose-500" },
+  { id: "naissance", name: "Naissance", icon: Baby, color: "from-blue-400 to-cyan-500" },
+  { id: "premiers", name: "Premiers moments", icon: Footprints, color: "from-amber-400 to-orange-500" },
+  { id: "fetes", name: "Fêtes", icon: Cake, color: "from-purple-400 to-violet-500" },
+  { id: "famille", name: "Famille", icon: Users, color: "from-green-400 to-emerald-500" },
+  { id: "quotidien", name: "Quotidien", icon: Sun, color: "from-yellow-400 to-amber-500" },
+];
+
+const inspirationTemplates: InspirationTemplate[] = [
+  { id: "annonce", category: "grossesse", title: "L'ANNONCE", subtitle: "UN SECRET DÉVOILÉ", description: "Le moment magique où nous avons partagé cette merveilleuse nouvelle avec nos proches.", layoutStyle: "elegant", icon: "💝", color: "from-pink-400 to-rose-400" },
+  { id: "echo", category: "grossesse", title: "PREMIÈRE", subtitle: "ÉCHOGRAPHIE", description: "Notre première rencontre avec toi, une émotion indescriptible.", layoutStyle: "classic", icon: "🩺", color: "from-blue-300 to-indigo-400" },
+  { id: "bump", category: "grossesse", title: "MON VENTRE", subtitle: "QUI S'ARRONDIT", description: "Mois après mois, je te sens grandir en moi.", layoutStyle: "story", icon: "🤰", color: "from-rose-300 to-pink-400" },
+  { id: "shower", category: "grossesse", title: "BABY", subtitle: "SHOWER", description: "Une fête entourée d'amour pour célébrer ton arrivée.", layoutStyle: "playful", icon: "🎀", color: "from-purple-300 to-pink-400" },
+  { id: "chambre", category: "grossesse", title: "TA", subtitle: "CHAMBRE", description: "Nous avons préparé ce petit nid douillet rien que pour toi.", layoutStyle: "minimal", icon: "🏠", color: "from-teal-300 to-cyan-400" },
+  { id: "naissance1", category: "naissance", title: "BIENVENUE", subtitle: "AU MONDE", description: "Le plus beau jour de notre vie, tu es enfin là.", layoutStyle: "classic", icon: "👶", color: "from-blue-400 to-cyan-400" },
+  { id: "poids", category: "naissance", title: "TES PREMIÈRES", subtitle: "MESURES", description: "Ton poids, ta taille... les premiers chiffres de ta vie.", layoutStyle: "minimal", icon: "📏", color: "from-indigo-300 to-blue-400" },
+  { id: "hopital", category: "naissance", title: "À LA", subtitle: "MATERNITÉ", description: "Nos premiers jours ensemble dans ce cocon protégé.", layoutStyle: "journi", icon: "🏥", color: "from-sky-300 to-blue-400" },
+  { id: "retour", category: "naissance", title: "RETOUR", subtitle: "À LA MAISON", description: "Enfin chez nous, une nouvelle aventure commence.", layoutStyle: "elegant", icon: "🏡", color: "from-green-300 to-emerald-400" },
+  { id: "premierSourire", category: "premiers", title: "PREMIER", subtitle: "SOURIRE", description: "Ce sourire qui illumine nos journées.", layoutStyle: "classic", icon: "😊", color: "from-yellow-300 to-amber-400" },
+  { id: "premiersPas", category: "premiers", title: "PREMIERS", subtitle: "PAS", description: "Ces pas hésitants vers l'aventure.", layoutStyle: "story", icon: "👣", color: "from-orange-300 to-amber-400" },
+  { id: "premierMot", category: "premiers", title: "PREMIER", subtitle: "MOT", description: "Ta petite voix qui prononce ses premiers sons.", layoutStyle: "elegant", icon: "💬", color: "from-pink-300 to-rose-400" },
+  { id: "premierDent", category: "premiers", title: "PREMIÈRE", subtitle: "DENT", description: "Cette petite perle blanche tant attendue.", layoutStyle: "playful", icon: "🦷", color: "from-cyan-300 to-blue-400" },
+  { id: "premierBain", category: "premiers", title: "PREMIER", subtitle: "BAIN", description: "Barbotage et découverte de l'eau.", layoutStyle: "journi", icon: "🛁", color: "from-blue-300 to-cyan-400" },
+  { id: "anniversaire1", category: "fetes", title: "1", subtitle: "AN", description: "Ta première bougie, une année de bonheur.", layoutStyle: "playful", icon: "🎂", color: "from-pink-400 to-purple-400" },
+  { id: "noel", category: "fetes", title: "PREMIER", subtitle: "NOËL", description: "La magie de Noël à travers tes yeux émerveillés.", layoutStyle: "mosaic", icon: "🎄", color: "from-red-400 to-green-500" },
+  { id: "paques", category: "fetes", title: "CHASSE", subtitle: "AUX ŒUFS", description: "À la recherche des trésors chocolatés.", layoutStyle: "playful", icon: "🐰", color: "from-yellow-300 to-pink-400" },
+  { id: "halloween", category: "fetes", title: "PREMIER", subtitle: "HALLOWEEN", description: "Ton premier déguisement trop mignon.", layoutStyle: "colorful", icon: "🎃", color: "from-orange-400 to-purple-500" },
+  { id: "famille1", category: "famille", title: "NOTRE", subtitle: "FAMILLE", description: "L'amour qui nous unit, jour après jour.", layoutStyle: "family", icon: "👨‍👩‍👧", color: "from-rose-400 to-orange-400" },
+  { id: "grandparents", category: "famille", title: "AVEC", subtitle: "MAMIE & PAPI", description: "Des moments précieux avec tes grands-parents.", layoutStyle: "elegant", icon: "👵", color: "from-amber-300 to-orange-400" },
+  { id: "fratrie", category: "famille", title: "FRÈRE &", subtitle: "SŒUR", description: "Une complicité qui grandit chaque jour.", layoutStyle: "journi", icon: "👧", color: "from-purple-300 to-pink-400" },
+  { id: "quotidien1", category: "quotidien", title: "REPAS", subtitle: "DÉCOUVERTES", description: "Les joies (et les dégâts) de la diversification.", layoutStyle: "mosaic", icon: "🥄", color: "from-green-300 to-emerald-400" },
+  { id: "dodo", category: "quotidien", title: "DODO", subtitle: "PAISIBLE", description: "Ces moments de calme où tu rêves.", layoutStyle: "minimal", icon: "😴", color: "from-indigo-300 to-purple-400" },
+  { id: "jeux", category: "quotidien", title: "TEMPS", subtitle: "DE JEU", description: "Rires, découvertes et imagination.", layoutStyle: "playful", icon: "🧸", color: "from-yellow-300 to-orange-400" },
+  { id: "promenade", category: "quotidien", title: "BALADE", subtitle: "AU PARC", description: "Explorer le monde à tes côtés.", layoutStyle: "journi", icon: "🌳", color: "from-green-400 to-teal-400" },
 ];
 
 const extractDominantColor = (imageUrl: string): Promise<{ primary: string; secondary: string; text: string }> => {
@@ -115,6 +166,8 @@ export default function EditBook() {
   });
   const [showFamilyEditor, setShowFamilyEditor] = useState(false);
   const [editingMemberIndex, setEditingMemberIndex] = useState<number | null>(null);
+  const [showInspirationModal, setShowInspirationModal] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<InspirationCategory | null>(null);
   
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const familyPhotoInputRef = useRef<HTMLInputElement>(null);
@@ -272,6 +325,24 @@ export default function EditBook() {
     };
     setPages([...pages, newPage]);
     setCurrentPageIndex(pages.length);
+  };
+
+  const addInspirationPage = (template: InspirationTemplate) => {
+    const newPage: BookPage = {
+      id: Date.now(),
+      title: template.title,
+      subtitle: template.subtitle,
+      date: new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, ' / '),
+      description: template.description,
+      images: [],
+      layoutStyle: template.layoutStyle,
+      content: [],
+      familyMembers: template.layoutStyle === "family" ? [] : undefined
+    };
+    setPages([...pages, newPage]);
+    setCurrentPageIndex(pages.length);
+    setShowInspirationModal(false);
+    setSelectedCategory(null);
   };
 
   const getCurrentLayoutName = () => {
@@ -905,6 +976,14 @@ export default function EditBook() {
         </button>
         <div className="w-px h-5 bg-stone-200" />
         <button
+          onClick={() => setShowInspirationModal(true)}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white transition-colors"
+          data-testid="button-inspiration"
+        >
+          <Lightbulb size={16} />
+          <span className="text-xs">Inspiration</span>
+        </button>
+        <button
           onClick={addNewPage}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary hover:bg-primary/90 text-white transition-colors"
           data-testid="button-add-new-page"
@@ -987,6 +1066,126 @@ export default function EditBook() {
                 <p className="text-xs text-stone-500 text-center flex items-center justify-center gap-1">
                   <Wand2 size={12} />
                   Le mode Automatique s'adapte au nombre de photos
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Inspiration Modal */}
+      <AnimatePresence>
+        {showInspirationModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
+            onClick={() => {
+              setShowInspirationModal(false);
+              setSelectedCategory(null);
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl w-full max-w-lg overflow-hidden max-h-[85vh] flex flex-col"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-4 border-b border-stone-100 flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-2">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
+                    <Lightbulb size={20} className="text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-stone-800" data-testid="text-inspiration-modal-title">Inspiration</h3>
+                    <p className="text-xs text-stone-500">Choisissez un modèle de page</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => {
+                    setShowInspirationModal(false);
+                    setSelectedCategory(null);
+                  }}
+                  className="p-2 hover:bg-stone-100 rounded-full"
+                  data-testid="button-close-inspiration-modal"
+                >
+                  <X size={20} className="text-stone-500" />
+                </button>
+              </div>
+
+              {!selectedCategory ? (
+                <div className="p-4 space-y-3 overflow-y-auto">
+                  <p className="text-sm text-stone-600 mb-4">Sélectionnez une catégorie pour découvrir des modèles de pages préfabriquées :</p>
+                  {inspirationCategories.map((category) => {
+                    const CategoryIcon = category.icon;
+                    const templateCount = inspirationTemplates.filter(t => t.category === category.id).length;
+                    return (
+                      <button
+                        key={category.id}
+                        onClick={() => setSelectedCategory(category.id as InspirationCategory)}
+                        className="w-full p-4 rounded-xl border-2 border-stone-200 hover:border-stone-300 transition-all text-left flex items-center gap-4 group"
+                        data-testid={`button-category-${category.id}`}
+                      >
+                        <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${category.color} flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform`}>
+                          <CategoryIcon size={24} className="text-white" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-bold text-stone-700">{category.name}</p>
+                          <p className="text-xs text-stone-500">{templateCount} modèle{templateCount > 1 ? 's' : ''} disponible{templateCount > 1 ? 's' : ''}</p>
+                        </div>
+                        <ChevronRight size={20} className="text-stone-400 group-hover:text-stone-600 transition-colors" />
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <>
+                  <button
+                    onClick={() => setSelectedCategory(null)}
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-stone-600 hover:text-stone-800 transition-colors shrink-0 border-b border-stone-100"
+                    data-testid="button-back-categories"
+                  >
+                    <ChevronLeft size={16} />
+                    <span>Retour aux catégories</span>
+                  </button>
+                  <div className="p-4 space-y-3 overflow-y-auto flex-1">
+                    {inspirationTemplates
+                      .filter(t => t.category === selectedCategory)
+                      .map((template) => (
+                        <button
+                          key={template.id}
+                          onClick={() => addInspirationPage(template)}
+                          className="w-full p-4 rounded-xl border-2 border-stone-200 hover:border-primary hover:bg-primary/5 transition-all text-left flex items-center gap-4 group"
+                          data-testid={`button-template-${template.id}`}
+                        >
+                          <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${template.color} flex items-center justify-center shadow-lg text-2xl group-hover:scale-105 transition-transform`}>
+                            {template.icon}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <p className="font-bold text-stone-700 group-hover:text-primary transition-colors">{template.title}</p>
+                              <p className="text-sm text-stone-500">{template.subtitle}</p>
+                            </div>
+                            <p className="text-xs text-stone-500 line-clamp-2">{template.description}</p>
+                            <div className="flex items-center gap-2 mt-2">
+                              <span className="text-[10px] bg-stone-100 text-stone-600 px-2 py-0.5 rounded-full">
+                                {layoutStyles.find(s => s.id === template.layoutStyle)?.name || template.layoutStyle}
+                              </span>
+                            </div>
+                          </div>
+                          <Plus size={20} className="text-stone-400 group-hover:text-primary transition-colors shrink-0" />
+                        </button>
+                      ))}
+                  </div>
+                </>
+              )}
+
+              <div className="p-4 border-t border-stone-100 bg-gradient-to-r from-amber-50 to-orange-50 shrink-0">
+                <p className="text-xs text-stone-600 text-center flex items-center justify-center gap-1">
+                  <Sparkles size={12} className="text-amber-500" />
+                  Les pages sont entièrement personnalisables après ajout
                 </p>
               </div>
             </motion.div>

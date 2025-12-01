@@ -54,6 +54,21 @@ export default function NotificationSettings() {
         pushNotifications: notificationSettings.pushNotifications,
         reminderDays: notificationSettings.reminderDays
       });
+      
+      const pendingSettings = localStorage.getItem("pendingNotificationSettings");
+      if (pendingSettings) {
+        localStorage.removeItem("pendingNotificationSettings");
+      }
+    } else {
+      const pendingSettings = localStorage.getItem("pendingNotificationSettings");
+      if (pendingSettings) {
+        try {
+          const parsed = JSON.parse(pendingSettings);
+          setSettings(prev => ({ ...prev, ...parsed }));
+        } catch (e) {
+          console.error("Error parsing pending notification settings:", e);
+        }
+      }
     }
   }, [notificationSettings]);
 

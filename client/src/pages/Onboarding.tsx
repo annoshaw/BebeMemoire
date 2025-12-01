@@ -5,8 +5,32 @@ import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { Switch } from "@/components/ui/switch";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 type OnboardingStep = "baby-status" | "date" | "gender" | "name" | "notifications" | "complete";
+
+function mapFrequencyToSettings(frequency: string, pushEnabled: boolean) {
+  const baseSettings = {
+    milestoneReminders: true,
+    birthdayReminders: true,
+    emailNotifications: true,
+    pushNotifications: pushEnabled,
+    reminderDays: 1
+  };
+  
+  switch (frequency) {
+    case "daily":
+      return { ...baseSettings, weeklyDigest: true, monthlyRecap: true };
+    case "weekly":
+      return { ...baseSettings, weeklyDigest: true, monthlyRecap: false };
+    case "biweekly":
+      return { ...baseSettings, weeklyDigest: true, monthlyRecap: false };
+    case "monthly":
+      return { ...baseSettings, weeklyDigest: false, monthlyRecap: true };
+    default:
+      return { ...baseSettings, weeklyDigest: true, monthlyRecap: true };
+  }
+}
 
 export default function Onboarding() {
   const [, setLocation] = useLocation();
@@ -19,6 +43,16 @@ export default function Onboarding() {
   const [notificationFrequency, setNotificationFrequency] = useState<string>("");
   const [pushNotificationsEnabled, setPushNotificationsEnabled] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+
+  const saveNotificationSettings = async (frequency: string, pushEnabled: boolean) => {
+    try {
+      const settings = mapFrequencyToSettings(frequency, pushEnabled);
+      await apiRequest("PATCH", "/api/notification-settings", settings);
+      queryClient.invalidateQueries({ queryKey: ["/api/notification-settings"] });
+    } catch (error) {
+      console.error("Error saving notification settings:", error);
+    }
+  };
 
   const createBookMutation = useMutation({
     mutationFn: async (bookData: {
@@ -43,7 +77,7 @@ export default function Onboarding() {
       }
       return response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/books"] });
       localStorage.setItem("activeBookId", data.book.id);
       localStorage.setItem("babyName", babyName);
@@ -53,6 +87,9 @@ export default function Onboarding() {
       localStorage.setItem("babyGender", babyGender);
       localStorage.setItem("notificationFrequency", notificationFrequency);
       localStorage.setItem("pushNotificationsEnabled", String(pushNotificationsEnabled));
+      
+      await saveNotificationSettings(notificationFrequency, pushNotificationsEnabled);
+      
       setLocation("/app");
     },
     onError: async (error: any) => {
@@ -75,6 +112,11 @@ export default function Onboarding() {
         localBooks.push(newBook);
         localStorage.setItem("localBooks", JSON.stringify(localBooks));
         localStorage.setItem("activeBookId", newBook.id);
+        
+        const pendingSettings = mapFrequencyToSettings(notificationFrequency, pushNotificationsEnabled);
+        localStorage.setItem("pendingNotificationSettings", JSON.stringify(pendingSettings));
+      } else {
+        await saveNotificationSettings(notificationFrequency, pushNotificationsEnabled);
       }
       
       localStorage.setItem("babyName", babyName);

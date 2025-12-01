@@ -1,6 +1,6 @@
 import { db } from "./db";
-import { users, books, memories, userPlans, qrCodes, passwordResetTokens, bookPages, type User, type InsertUser, type UpsertUser, type Book, type InsertBook, type Memory, type InsertMemory, type UserPlan, type InsertUserPlan, type QRCode, type InsertQRCode, type PasswordResetToken, type InsertPasswordResetToken, type BookPage, type InsertBookPage } from "@shared/schema";
-import { eq, desc, and, gt, asc } from "drizzle-orm";
+import { users, books, memories, userPlans, qrCodes, passwordResetTokens, bookPages, notifications, notificationSettings, type User, type InsertUser, type UpsertUser, type Book, type InsertBook, type Memory, type InsertMemory, type UserPlan, type InsertUserPlan, type QRCode, type InsertQRCode, type PasswordResetToken, type InsertPasswordResetToken, type BookPage, type InsertBookPage, type Notification, type InsertNotification, type NotificationSettings, type InsertNotificationSettings } from "@shared/schema";
+import { eq, desc, and, gt, asc, lte, or, isNull } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (Replit Auth)
@@ -44,6 +44,23 @@ export interface IStorage {
   getBookPages(bookId: string): Promise<BookPage[]>;
   saveBookPages(bookId: string, pages: InsertBookPage[]): Promise<BookPage[]>;
   deleteBookPages(bookId: string): Promise<boolean>;
+  
+  // Notification operations
+  getNotifications(userId: string): Promise<Notification[]>;
+  getActiveNotifications(userId: string): Promise<Notification[]>;
+  getUnreadNotificationsCount(userId: string): Promise<number>;
+  createNotification(notification: InsertNotification): Promise<Notification>;
+  createManyNotifications(notifications: InsertNotification[]): Promise<Notification[]>;
+  markNotificationAsRead(id: string): Promise<Notification | undefined>;
+  markAllNotificationsAsRead(userId: string): Promise<void>;
+  dismissNotification(id: string): Promise<Notification | undefined>;
+  deleteNotification(id: string): Promise<boolean>;
+  deleteNotificationsByBookId(bookId: string): Promise<boolean>;
+  
+  // Notification Settings operations
+  getNotificationSettings(userId: string): Promise<NotificationSettings | undefined>;
+  createNotificationSettings(settings: InsertNotificationSettings): Promise<NotificationSettings>;
+  updateNotificationSettings(userId: string, settings: Partial<InsertNotificationSettings>): Promise<NotificationSettings | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -236,6 +253,108 @@ export class DatabaseStorage implements IStorage {
   async deleteBookPages(bookId: string): Promise<boolean> {
     const result = await db.delete(bookPages).where(eq(bookPages.bookId, bookId)).returning();
     return result.length > 0;
+  }
+
+  // Notification operations
+  async getNotifications(userId: string): Promise<Notification[]> {
+    return db.select()
+      .from(notifications)
+      .where(eq(notifications.userId, userId))
+      .orderBy(desc(notifications.triggerDate));
+  }
+
+  async getActiveNotifications(userId: string): Promise<Notification[]> {
+    const now = new Date();
+    return db.select()
+      .from(notifications)
+      .where(
+        and(
+          eq(notifications.userId, userId),
+          eq(notifications.isDismissed, false),
+          lte(notifications.triggerDate, now)
+        )
+      )
+      .orderBy(desc(notifications.triggerDate));
+  }
+
+  async getUnreadNotificationsCount(userId: string): Promise<number> {
+    const now = new Date();
+    const result = await db.select()
+      .from(notifications)
+      .where(
+        and(
+          eq(notifications.userId, userId),
+          eq(notifications.isRead, false),
+          eq(notifications.isDismissed, false),
+          lte(notifications.triggerDate, now)
+        )
+      );
+    return result.length;
+  }
+
+  async createNotification(notification: InsertNotification): Promise<Notification> {
+    const result = await db.insert(notifications).values(notification).returning();
+    return result[0];
+  }
+
+  async createManyNotifications(notificationsList: InsertNotification[]): Promise<Notification[]> {
+    if (notificationsList.length === 0) return [];
+    const result = await db.insert(notifications).values(notificationsList).returning();
+    return result;
+  }
+
+  async markNotificationAsRead(id: string): Promise<Notification | undefined> {
+    const result = await db.update(notifications)
+      .set({ isRead: true })
+      .where(eq(notifications.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async markAllNotificationsAsRead(userId: string): Promise<void> {
+    await db.update(notifications)
+      .set({ isRead: true })
+      .where(eq(notifications.userId, userId));
+  }
+
+  async dismissNotification(id: string): Promise<Notification | undefined> {
+    const result = await db.update(notifications)
+      .set({ isDismissed: true })
+      .where(eq(notifications.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteNotification(id: string): Promise<boolean> {
+    const result = await db.delete(notifications).where(eq(notifications.id, id)).returning();
+    return result.length > 0;
+  }
+
+  async deleteNotificationsByBookId(bookId: string): Promise<boolean> {
+    const result = await db.delete(notifications).where(eq(notifications.bookId, bookId)).returning();
+    return result.length > 0;
+  }
+
+  // Notification Settings operations
+  async getNotificationSettings(userId: string): Promise<NotificationSettings | undefined> {
+    const result = await db.select()
+      .from(notificationSettings)
+      .where(eq(notificationSettings.userId, userId))
+      .limit(1);
+    return result[0];
+  }
+
+  async createNotificationSettings(settings: InsertNotificationSettings): Promise<NotificationSettings> {
+    const result = await db.insert(notificationSettings).values(settings).returning();
+    return result[0];
+  }
+
+  async updateNotificationSettings(userId: string, updateData: Partial<InsertNotificationSettings>): Promise<NotificationSettings | undefined> {
+    const result = await db.update(notificationSettings)
+      .set({ ...updateData, updatedAt: new Date() })
+      .where(eq(notificationSettings.userId, userId))
+      .returning();
+    return result[0];
   }
 }
 

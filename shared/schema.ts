@@ -166,3 +166,51 @@ export const insertBookPageSchema = createInsertSchema(bookPages).omit({
 
 export type InsertBookPage = z.infer<typeof insertBookPageSchema>;
 export type BookPage = typeof bookPages.$inferSelect;
+
+// Notifications table for reminders and milestone alerts
+export const notifications = pgTable("notifications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  bookId: varchar("book_id").references(() => books.id, { onDelete: "cascade" }),
+  type: text("type").notNull(), // milestone, reminder, custom, anniversary
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  icon: text("icon").default("bell"), // bell, cake, baby, heart, star, camera
+  triggerDate: timestamp("trigger_date").notNull(),
+  isRead: boolean("is_read").default(false),
+  isDismissed: boolean("is_dismissed").default(false),
+  actionUrl: text("action_url"), // URL to navigate when clicked
+  milestoneAge: integer("milestone_age"), // Age in days when milestone occurs
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertNotificationSchema = createInsertSchema(notifications).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+export type Notification = typeof notifications.$inferSelect;
+
+// User notification preferences
+export const notificationSettings = pgTable("notification_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }).unique(),
+  emailNotifications: boolean("email_notifications").default(true),
+  pushNotifications: boolean("push_notifications").default(true),
+  milestoneReminders: boolean("milestone_reminders").default(true),
+  weeklyDigest: boolean("weekly_digest").default(false),
+  birthdayReminders: boolean("birthday_reminders").default(true),
+  customReminderDays: integer("custom_reminder_days").default(7), // Days before milestone to remind
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertNotificationSettingsSchema = createInsertSchema(notificationSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertNotificationSettings = z.infer<typeof insertNotificationSettingsSchema>;
+export type NotificationSettings = typeof notificationSettings.$inferSelect;

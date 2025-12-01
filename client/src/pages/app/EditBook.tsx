@@ -1132,14 +1132,27 @@ export default function EditBook() {
           </button>
         )}
         {currentPage.layoutStyle === "familyTree" && (
-          <button
-            onClick={() => setShowTreeEditor(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors"
-            data-testid="button-edit-tree"
-          >
-            <Users size={16} />
-            <span className="text-xs">Arbre</span>
-          </button>
+          <div className="relative">
+            <button
+              onClick={() => setShowTreeEditor(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors"
+              data-testid="button-edit-tree"
+            >
+              <Users size={16} />
+              <span className="text-xs">Arbre</span>
+            </button>
+            {/* Tooltip bubble */}
+            {(currentPage.treeMembers?.length || 0) === 0 && (
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 whitespace-nowrap animate-bounce">
+                <div className="bg-emerald-600 text-white text-xs px-3 py-2 rounded-lg shadow-lg relative">
+                  Clique sur "Arbre" et ajoute tes membres!
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1">
+                    <div className="border-8 border-transparent border-t-emerald-600"></div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         )}
         <button
           onClick={() => setEditorMode("text")}

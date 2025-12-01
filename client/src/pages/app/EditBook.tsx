@@ -449,8 +449,11 @@ export default function EditBook() {
       treeMembers: [],
       backgroundImage: selectedBackground || undefined
     };
-    setPages([...pages, newPage]);
-    setCurrentPageIndex(pages.length);
+    
+    setPages(prevPages => {
+      setCurrentPageIndex(prevPages.length);
+      return [...prevPages, newPage];
+    });
     setShowInspirationModal(false);
     setSelectedCategory(null);
     setShowBackgroundSelector(false);

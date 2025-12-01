@@ -1,8 +1,16 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Type, Camera, Video, X, QrCode, Layout, Plus, LayoutTemplate, Sparkles, ImagePlus, Wand2, Image as ImageIcon, Users, Trash2, Lightbulb, Baby, Heart, Star, Cake, Sun, Moon, Gift, Footprints, Smile, Check, Save, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Type, Camera, Video, X, QrCode, Layout, Plus, LayoutTemplate, Sparkles, ImagePlus, Wand2, Image as ImageIcon, Users, Trash2, Lightbulb, Baby, Heart, Star, Cake, Sun, Moon, Gift, Footprints, Smile, Check, Save, Loader2, SpellCheck, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useParams } from "wouter";
+
+type SpellCorrection = {
+  original: string;
+  suggestion: string;
+  type: "spelling" | "grammar";
+  startIndex: number;
+  endIndex: number;
+};
 
 import treeBackground1 from "@assets/generated_images/watercolor_family_tree_background.png";
 import treeBackground2 from "@assets/generated_images/minimalist_elegant_tree_background.png";
@@ -259,6 +267,9 @@ export default function EditBook() {
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isSpellChecking, setIsSpellChecking] = useState(false);
+  const [spellCorrections, setSpellCorrections] = useState<SpellCorrection[]>([]);
+  const [correctedText, setCorrectedText] = useState<string>("");
   
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const familyPhotoInputRef = useRef<HTMLInputElement>(null);
@@ -539,6 +550,56 @@ export default function EditBook() {
   const closeEditor = () => {
     setEditorMode("view");
     setSelectedText("");
+    setSpellCorrections([]);
+    setCorrectedText("");
+  };
+
+  const checkSpelling = async (text: string) => {
+    if (!text || text.trim().length === 0) {
+      setSpellCorrections([]);
+      setCorrectedText("");
+      return;
+    }
+    
+    setIsSpellChecking(true);
+    try {
+      const response = await fetch('/api/spellcheck', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, language: 'fr' })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setSpellCorrections(data.corrections || []);
+        setCorrectedText(data.correctedText || text);
+      }
+    } catch (error) {
+      console.error("Spell check error:", error);
+    } finally {
+      setIsSpellChecking(false);
+    }
+  };
+
+  const applyCorrection = (correction: SpellCorrection) => {
+    const newPages = [...pages];
+    const currentDesc = newPages[currentPageIndex].description;
+    const newDesc = currentDesc.substring(0, correction.startIndex) + 
+                    correction.suggestion + 
+                    currentDesc.substring(correction.endIndex);
+    newPages[currentPageIndex].description = newDesc;
+    setPages(newPages);
+    setSpellCorrections(prev => prev.filter(c => c !== correction));
+  };
+
+  const applyAllCorrections = () => {
+    if (correctedText) {
+      const newPages = [...pages];
+      newPages[currentPageIndex].description = correctedText;
+      setPages(newPages);
+      setSpellCorrections([]);
+      setCorrectedText("");
+    }
   };
 
   const addNewPage = () => {
@@ -1887,19 +1948,85 @@ export default function EditBook() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-stone-700 mb-2">Description</label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium text-stone-700">Description</label>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => checkSpelling(currentPage.description)}
+                      disabled={isSpellChecking || !currentPage.description}
+                      className="h-7 text-xs gap-1"
+                      data-testid="button-spellcheck"
+                    >
+                      {isSpellChecking ? (
+                        <Loader2 size={12} className="animate-spin" />
+                      ) : (
+                        <SpellCheck size={12} />
+                      )}
+                      Vérifier
+                    </Button>
+                  </div>
                   <textarea
                     value={currentPage.description}
                     onChange={(e) => {
                       const newPages = [...pages];
                       newPages[currentPageIndex].description = e.target.value;
                       setPages(newPages);
+                      setSpellCorrections([]);
                     }}
                     rows={4}
                     className="w-full p-3 border border-stone-200 rounded-lg focus:outline-none focus:border-primary text-sm resize-none"
                     placeholder="Racontez votre histoire..."
                     data-testid="input-page-description"
                   />
+                  
+                  {spellCorrections.length > 0 && (
+                    <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <AlertCircle size={14} className="text-amber-600" />
+                          <span className="text-xs font-medium text-amber-800">
+                            {spellCorrections.length} correction{spellCorrections.length > 1 ? 's' : ''} suggérée{spellCorrections.length > 1 ? 's' : ''}
+                          </span>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={applyAllCorrections}
+                          className="h-6 text-xs text-amber-700 hover:text-amber-900 hover:bg-amber-100"
+                          data-testid="button-apply-all-corrections"
+                        >
+                          Tout corriger
+                        </Button>
+                      </div>
+                      <div className="space-y-2 max-h-32 overflow-y-auto">
+                        {spellCorrections.map((correction, idx) => (
+                          <div 
+                            key={idx} 
+                            className="flex items-center justify-between bg-white p-2 rounded-md border border-amber-100"
+                          >
+                            <div className="flex items-center gap-2 text-xs">
+                              <span className="line-through text-red-500">{correction.original}</span>
+                              <span className="text-stone-400">→</span>
+                              <span className="text-green-600 font-medium">{correction.suggestion}</span>
+                              <span className="text-stone-400 text-[10px]">
+                                ({correction.type === "spelling" ? "orthographe" : "grammaire"})
+                              </span>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => applyCorrection(correction)}
+                              className="h-5 w-5 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
+                              data-testid={`button-apply-correction-${idx}`}
+                            >
+                              <Check size={12} />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 

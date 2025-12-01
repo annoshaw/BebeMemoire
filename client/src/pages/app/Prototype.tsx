@@ -1830,7 +1830,7 @@ export default function Prototype() {
                       {/* Book Info */}
                       <div className="flex-1 flex flex-col justify-between py-1">
                         <div>
-                          <h3 className="text-lg font-bold text-stone-800 mb-1">L'histoire de {activeBook.childName}</h3>
+                          <h3 className="text-lg font-bold text-stone-900 mb-1">L'histoire de {activeBook.childName}</h3>
                           <p className="text-xs text-stone-500 mb-2">
                             {activeBook.birthDate 
                               ? new Date(activeBook.birthDate).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' }) 
@@ -2111,8 +2111,8 @@ export default function Prototype() {
                                 <BookOpen size={14} className="text-primary" />
                                 <span className="text-[10px] text-primary font-medium uppercase tracking-wide">{statusLabel}</span>
                               </div>
-                              <h4 className="font-bold text-stone-800">L'histoire de {book.childName}</h4>
-                              <p className="text-xs text-stone-500">
+                              <h4 className="font-bold text-stone-900 text-base">L'histoire de {book.childName}</h4>
+                              <p className="text-xs text-stone-600">
                                 {book.birthDate ? new Date(book.birthDate).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Date à définir'}
                                 {' • '}{bookPages.length} pages
                               </p>
@@ -3093,7 +3093,7 @@ export default function Prototype() {
                         />
                       </div>
                       <div className="flex-1">
-                        <p className="font-medium text-stone-800">{book.childName}</p>
+                        <p className="font-semibold text-stone-900">{book.childName}</p>
                         <p className="text-xs text-stone-500">
                           {book.birthDate ? new Date(book.birthDate).toLocaleDateString('fr-CA', { month: 'short', year: 'numeric' }) : 'En cours'}
                         </p>

@@ -452,11 +452,8 @@ export default function EditBook() {
       backgroundImage: selectedBackground || undefined
     };
     
-    console.log("[DEBUG] Creating tree page with:", { backgroundImage: newPage.backgroundImage, treeMembers: newPage.treeMembers });
-    
     setPages(prevPages => {
       const newPages = [...prevPages, newPage];
-      console.log("[DEBUG] New pages array:", newPages.map(p => ({ id: p.id, layout: p.layoutStyle, bg: p.backgroundImage, members: p.treeMembers?.length })));
       setCurrentPageIndex(newPages.length - 1);
       return newPages;
     });
@@ -474,6 +471,223 @@ export default function EditBook() {
   const renderLayout = (page: BookPage) => {
     const { images, title, subtitle, date, description, layoutStyle } = page;
     const photoCount = images.length;
+
+    // FamilyTree layout - must be checked BEFORE photoCount === 0 since it doesn't use images
+    if (layoutStyle === "familyTree") {
+      const members = page.treeMembers || [];
+      const grandparents = members.filter(m => m.level === "grandparents");
+      const parents = members.filter(m => m.level === "parents");
+      const children = members.filter(m => m.level === "child");
+      
+      const hasAnyMembers = members.length > 0;
+      
+      const bgImage = page.backgroundImage;
+      
+      if (!hasAnyMembers) {
+        return (
+          <div 
+            className="w-full h-full p-4 flex flex-col items-center justify-center relative" 
+            data-testid="layout-familytree-empty"
+            style={bgImage ? { backgroundImage: `url(${bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
+          >
+            {!bgImage && <div className="absolute inset-0 bg-gradient-to-b from-emerald-50 via-white to-green-50" />}
+            {bgImage && <div className="absolute inset-0 bg-white/40" />}
+            <div className="relative z-10 flex flex-col items-center">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center mb-3 shadow-lg">
+                <span className="text-2xl">🌳</span>
+              </div>
+              <h2 className="text-lg font-serif font-bold text-stone-800 mb-1" data-testid="text-page-title">{title}</h2>
+              <h3 className="text-sm font-serif text-stone-500 mb-3" data-testid="text-page-subtitle">{subtitle}</h3>
+              <p className="text-xs text-stone-400 text-center max-w-[200px] mb-4">
+                Construisez votre arbre généalogique en ajoutant les membres de la famille
+              </p>
+              <div className="flex items-center gap-1.5 text-emerald-600">
+                <Plus size={14} />
+                <span className="text-xs font-medium">Cliquez sur "Arbre" pour ajouter</span>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      const renderMember = (member: TreeMember, size: "sm" | "md" | "lg" = "md") => {
+        const sizeClasses = {
+          sm: "w-10 h-10",
+          md: "w-12 h-12",
+          lg: "w-14 h-14"
+        };
+        const textSize = size === "sm" ? "text-[9px]" : size === "md" ? "text-[10px]" : "text-xs";
+        
+        return (
+          <div key={member.id} className="flex flex-col items-center" data-testid={`tree-member-${member.id}`}>
+            <div className={`${sizeClasses[size]} rounded-full overflow-hidden border-2 border-white shadow-md bg-stone-100`}>
+              {member.photo ? (
+                <img src={member.photo} className="w-full h-full object-cover" alt={member.name} />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-emerald-100 to-green-100">
+                  <Users size={size === "sm" ? 14 : size === "md" ? 16 : 20} className="text-emerald-400" />
+                </div>
+              )}
+            </div>
+            <p className={`${textSize} font-medium text-stone-700 mt-1 text-center leading-tight max-w-[60px] truncate`}>
+              {member.name || "Nom"}
+            </p>
+            <p className={`${size === "sm" ? "text-[8px]" : "text-[9px]"} text-emerald-600 leading-tight`}>
+              {member.role || "Rôle"}
+            </p>
+          </div>
+        );
+      };
+
+      return (
+        <div 
+          className="w-full h-full p-3 flex flex-col relative" 
+          data-testid="layout-familytree"
+          style={bgImage ? { backgroundImage: `url(${bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
+        >
+          {!bgImage && <div className="absolute inset-0 bg-gradient-to-b from-emerald-50 via-white to-green-50" />}
+          {bgImage && <div className="absolute inset-0 bg-white/30" />}
+          
+          <div className="text-center mb-2 relative z-10">
+            <h2 className="text-base font-serif font-bold text-stone-800" data-testid="text-page-title">{title}</h2>
+            <h3 className="text-xs font-serif text-emerald-600" data-testid="text-page-subtitle">{subtitle}</h3>
+          </div>
+          
+          <div className="flex-1 flex flex-col justify-center relative z-10">
+            <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }}>
+              {grandparents.length > 0 && parents.length > 0 && (
+                <line 
+                  x1="50%" y1="22%" 
+                  x2="50%" y2="45%" 
+                  stroke="#86efac" 
+                  strokeWidth="2" 
+                  strokeDasharray="4 2"
+                />
+              )}
+              {parents.length > 0 && children.length > 0 && (
+                <line 
+                  x1="50%" y1="55%" 
+                  x2="50%" y2="78%" 
+                  stroke="#86efac" 
+                  strokeWidth="2" 
+                  strokeDasharray="4 2"
+                />
+              )}
+            </svg>
+            
+            {grandparents.length > 0 && (
+              <div className="flex justify-center gap-3 mb-3 relative z-10">
+                {grandparents.map(m => renderMember(m, grandparents.length > 2 ? "sm" : "md"))}
+              </div>
+            )}
+            
+            {parents.length > 0 && (
+              <div className="flex justify-center gap-4 mb-3 relative z-10">
+                {parents.map(m => renderMember(m, parents.length > 2 ? "md" : "lg"))}
+              </div>
+            )}
+            
+            {children.length > 0 && (
+              <div className="flex justify-center gap-3 relative z-10">
+                <div className="bg-gradient-to-br from-emerald-100 to-green-100 rounded-2xl p-3 shadow-inner">
+                  <div className="flex justify-center gap-3">
+                    {children.map(m => renderMember(m, "lg"))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // Family layout - must be checked BEFORE photoCount === 0 since it doesn't use images
+    if (layoutStyle === "family") {
+      const members = page.familyMembers || [];
+      const memberCount = members.length;
+      
+      if (memberCount === 0) {
+        return (
+          <div className="w-full h-full bg-gradient-to-br from-rose-50 to-orange-50 p-6 flex flex-col items-center justify-center" data-testid="layout-family-empty">
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-rose-400 to-orange-400 flex items-center justify-center mb-4 shadow-lg">
+              <span className="text-3xl">👨‍👩‍👧‍👦</span>
+            </div>
+            <h2 className="text-xl font-serif font-bold text-stone-800 mb-2" data-testid="text-page-title">{title}</h2>
+            <h3 className="text-lg font-serif text-stone-600 mb-4" data-testid="text-page-subtitle">{subtitle}</h3>
+            <p className="text-sm text-stone-500 text-center max-w-xs mb-6">
+              Ajoutez les membres de votre famille pour créer une page personnalisée
+            </p>
+            <div className="flex items-center gap-2 text-rose-500">
+              <Plus size={16} />
+              <span className="text-sm font-medium">Cliquez sur "Texte" pour ajouter des membres</span>
+            </div>
+          </div>
+        );
+      }
+
+      const getGridLayout = () => {
+        switch (memberCount) {
+          case 1: return "grid-cols-1";
+          case 2: return "grid-cols-2";
+          case 3: return "grid-cols-3";
+          case 4: return "grid-cols-2 grid-rows-2";
+          default: return "grid-cols-2";
+        }
+      };
+
+      const getCardSize = () => {
+        switch (memberCount) {
+          case 1: return "max-w-xs mx-auto";
+          case 2: return "";
+          case 3: return "";
+          case 4: return "";
+          default: return "";
+        }
+      };
+
+      return (
+        <div className="w-full h-full bg-gradient-to-br from-rose-50 via-white to-orange-50 p-4 flex flex-col" data-testid="layout-family">
+          <div className="text-center mb-3">
+            <p className="text-xs text-rose-500 tracking-widest uppercase" data-testid="text-page-date">{date}</p>
+            <h2 className="text-xl font-serif font-bold text-stone-800" data-testid="text-page-title">{title}</h2>
+            <h3 className="text-sm font-serif text-stone-500" data-testid="text-page-subtitle">{subtitle}</h3>
+          </div>
+          
+          <div className={`grid ${getGridLayout()} gap-3 flex-1 ${memberCount === 1 ? 'place-content-center' : ''}`}>
+            {members.map((member, idx) => (
+              <div 
+                key={member.id} 
+                className={`flex flex-col bg-white rounded-xl shadow-md overflow-hidden ${getCardSize()}`}
+                data-testid={`family-card-${idx}`}
+              >
+                <div className={`relative ${memberCount <= 2 ? 'aspect-[4/5]' : 'aspect-square'} bg-stone-100`}>
+                  {member.photo ? (
+                    <img 
+                      src={member.photo} 
+                      className="w-full h-full object-cover" 
+                      alt={member.name}
+                      data-testid={`img-family-${idx}`}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-rose-100 to-orange-100">
+                      <ImagePlus size={memberCount <= 2 ? 32 : 24} className="text-rose-300" />
+                    </div>
+                  )}
+                </div>
+                <div className={`p-${memberCount <= 2 ? '3' : '2'} text-center bg-gradient-to-b from-white to-rose-50/30`}>
+                  <p className={`font-serif font-bold text-stone-800 ${memberCount <= 2 ? 'text-base' : 'text-sm'}`} data-testid={`text-family-name-${idx}`}>
+                    {member.name || "Nom"}
+                  </p>
+                  <p className={`text-stone-500 ${memberCount <= 2 ? 'text-sm' : 'text-xs'} line-clamp-2`} data-testid={`text-family-desc-${idx}`}>
+                    {member.description || "Description"}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
 
     if (photoCount === 0) {
       return (
@@ -680,227 +894,6 @@ export default function EditBook() {
             >
               {description.split('\n')[0]}
             </p>
-          </div>
-        </div>
-      );
-    }
-
-    if (layoutStyle === "family") {
-      const members = page.familyMembers || [];
-      const memberCount = members.length;
-      
-      if (memberCount === 0) {
-        return (
-          <div className="w-full h-full bg-gradient-to-br from-rose-50 to-orange-50 p-6 flex flex-col items-center justify-center" data-testid="layout-family-empty">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-rose-400 to-orange-400 flex items-center justify-center mb-4 shadow-lg">
-              <span className="text-3xl">👨‍👩‍👧‍👦</span>
-            </div>
-            <h2 className="text-xl font-serif font-bold text-stone-800 mb-2" data-testid="text-page-title">{title}</h2>
-            <h3 className="text-lg font-serif text-stone-600 mb-4" data-testid="text-page-subtitle">{subtitle}</h3>
-            <p className="text-sm text-stone-500 text-center max-w-xs mb-6">
-              Ajoutez les membres de votre famille pour créer une page personnalisée
-            </p>
-            <div className="flex items-center gap-2 text-rose-500">
-              <Plus size={16} />
-              <span className="text-sm font-medium">Cliquez sur "Texte" pour ajouter des membres</span>
-            </div>
-          </div>
-        );
-      }
-
-      const getGridLayout = () => {
-        switch (memberCount) {
-          case 1: return "grid-cols-1";
-          case 2: return "grid-cols-2";
-          case 3: return "grid-cols-3";
-          case 4: return "grid-cols-2 grid-rows-2";
-          default: return "grid-cols-2";
-        }
-      };
-
-      const getCardSize = () => {
-        switch (memberCount) {
-          case 1: return "max-w-xs mx-auto";
-          case 2: return "";
-          case 3: return "";
-          case 4: return "";
-          default: return "";
-        }
-      };
-
-      return (
-        <div className="w-full h-full bg-gradient-to-br from-rose-50 via-white to-orange-50 p-4 flex flex-col" data-testid="layout-family">
-          <div className="text-center mb-3">
-            <p className="text-xs text-rose-500 tracking-widest uppercase" data-testid="text-page-date">{date}</p>
-            <h2 className="text-xl font-serif font-bold text-stone-800" data-testid="text-page-title">{title}</h2>
-            <h3 className="text-sm font-serif text-stone-500" data-testid="text-page-subtitle">{subtitle}</h3>
-          </div>
-          
-          <div className={`grid ${getGridLayout()} gap-3 flex-1 ${memberCount === 1 ? 'place-content-center' : ''}`}>
-            {members.map((member, idx) => (
-              <div 
-                key={member.id} 
-                className={`flex flex-col bg-white rounded-xl shadow-md overflow-hidden ${getCardSize()}`}
-                data-testid={`family-card-${idx}`}
-              >
-                <div className={`relative ${memberCount <= 2 ? 'aspect-[4/5]' : 'aspect-square'} bg-stone-100`}>
-                  {member.photo ? (
-                    <img 
-                      src={member.photo} 
-                      className="w-full h-full object-cover" 
-                      alt={member.name}
-                      data-testid={`img-family-${idx}`}
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-rose-100 to-orange-100">
-                      <ImagePlus size={memberCount <= 2 ? 32 : 24} className="text-rose-300" />
-                    </div>
-                  )}
-                </div>
-                <div className={`p-${memberCount <= 2 ? '3' : '2'} text-center bg-gradient-to-b from-white to-rose-50/30`}>
-                  <p className={`font-serif font-bold text-stone-800 ${memberCount <= 2 ? 'text-base' : 'text-sm'}`} data-testid={`text-family-name-${idx}`}>
-                    {member.name || "Nom"}
-                  </p>
-                  <p className={`text-stone-500 ${memberCount <= 2 ? 'text-sm' : 'text-xs'} line-clamp-2`} data-testid={`text-family-desc-${idx}`}>
-                    {member.description || "Description"}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    }
-
-    if (layoutStyle === "familyTree") {
-      const members = page.treeMembers || [];
-      const grandparents = members.filter(m => m.level === "grandparents");
-      const parents = members.filter(m => m.level === "parents");
-      const children = members.filter(m => m.level === "child");
-      
-      const hasAnyMembers = members.length > 0;
-      
-      const bgImage = page.backgroundImage;
-      
-      console.log("[DEBUG] Rendering familyTree:", { bgImage, hasAnyMembers, membersCount: members.length, grandparents: grandparents.length, parents: parents.length, children: children.length });
-      
-      if (!hasAnyMembers) {
-        return (
-          <div 
-            className="w-full h-full p-4 flex flex-col items-center justify-center relative" 
-            data-testid="layout-familytree-empty"
-            style={bgImage ? { backgroundImage: `url(${bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
-          >
-            {!bgImage && <div className="absolute inset-0 bg-gradient-to-b from-emerald-50 via-white to-green-50" />}
-            {bgImage && <div className="absolute inset-0 bg-white/40" />}
-            <div className="relative z-10 flex flex-col items-center">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center mb-3 shadow-lg">
-                <span className="text-2xl">🌳</span>
-              </div>
-              <h2 className="text-lg font-serif font-bold text-stone-800 mb-1" data-testid="text-page-title">{title}</h2>
-              <h3 className="text-sm font-serif text-stone-500 mb-3" data-testid="text-page-subtitle">{subtitle}</h3>
-              <p className="text-xs text-stone-400 text-center max-w-[200px] mb-4">
-                Construisez votre arbre généalogique en ajoutant les membres de la famille
-              </p>
-              <div className="flex items-center gap-1.5 text-emerald-600">
-                <Plus size={14} />
-                <span className="text-xs font-medium">Cliquez sur "Arbre" pour ajouter</span>
-              </div>
-            </div>
-          </div>
-        );
-      }
-
-      const renderMember = (member: TreeMember, size: "sm" | "md" | "lg" = "md") => {
-        const sizeClasses = {
-          sm: "w-10 h-10",
-          md: "w-12 h-12",
-          lg: "w-14 h-14"
-        };
-        const textSize = size === "sm" ? "text-[9px]" : size === "md" ? "text-[10px]" : "text-xs";
-        
-        return (
-          <div key={member.id} className="flex flex-col items-center" data-testid={`tree-member-${member.id}`}>
-            <div className={`${sizeClasses[size]} rounded-full overflow-hidden border-2 border-white shadow-md bg-stone-100`}>
-              {member.photo ? (
-                <img src={member.photo} className="w-full h-full object-cover" alt={member.name} />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-emerald-100 to-green-100">
-                  <Users size={size === "sm" ? 14 : size === "md" ? 16 : 20} className="text-emerald-400" />
-                </div>
-              )}
-            </div>
-            <p className={`${textSize} font-medium text-stone-700 mt-1 text-center leading-tight max-w-[60px] truncate`}>
-              {member.name || "Nom"}
-            </p>
-            <p className={`${size === "sm" ? "text-[8px]" : "text-[9px]"} text-emerald-600 leading-tight`}>
-              {member.role || "Rôle"}
-            </p>
-          </div>
-        );
-      };
-
-      return (
-        <div 
-          className="w-full h-full p-3 flex flex-col relative" 
-          data-testid="layout-familytree"
-          style={bgImage ? { backgroundImage: `url(${bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
-        >
-          {!bgImage && <div className="absolute inset-0 bg-gradient-to-b from-emerald-50 via-white to-green-50" />}
-          {bgImage && <div className="absolute inset-0 bg-white/30" />}
-          
-          <div className="text-center mb-2 relative z-10">
-            <h2 className="text-base font-serif font-bold text-stone-800" data-testid="text-page-title">{title}</h2>
-            <h3 className="text-xs font-serif text-emerald-600" data-testid="text-page-subtitle">{subtitle}</h3>
-          </div>
-          
-          <div className="flex-1 flex flex-col justify-center relative z-10">
-            <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }}>
-              {grandparents.length > 0 && parents.length > 0 && (
-                <line 
-                  x1="50%" y1="22%" 
-                  x2="50%" y2="45%" 
-                  stroke="#86efac" 
-                  strokeWidth="2" 
-                  strokeDasharray="4 2"
-                />
-              )}
-              {parents.length > 0 && children.length > 0 && (
-                <line 
-                  x1="50%" y1="55%" 
-                  x2="50%" y2="78%" 
-                  stroke="#86efac" 
-                  strokeWidth="2" 
-                  strokeDasharray="4 2"
-                />
-              )}
-            </svg>
-            
-            {grandparents.length > 0 && (
-              <div className="flex justify-center gap-3 mb-3 relative z-10">
-                {grandparents.map(m => renderMember(m, grandparents.length > 2 ? "sm" : "md"))}
-              </div>
-            )}
-            
-            {parents.length > 0 && (
-              <div className="flex justify-center gap-4 mb-3 relative z-10">
-                {parents.map(m => renderMember(m, parents.length > 2 ? "md" : "lg"))}
-              </div>
-            )}
-            
-            {children.length > 0 && (
-              <div className="flex justify-center gap-3 relative z-10">
-                <div className="bg-gradient-to-br from-emerald-100 to-green-100 rounded-2xl p-3 shadow-inner">
-                  <div className="flex justify-center gap-3">
-                    {children.map(m => renderMember(m, "lg"))}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-          
-          <div className="text-center mt-1">
-            <p className="text-[9px] text-stone-400" data-testid="text-page-date">{date}</p>
           </div>
         </div>
       );
@@ -2302,9 +2295,7 @@ export default function EditBook() {
               {/* Add member button */}
               <button
                 onClick={() => {
-                  console.log("[DEBUG] Adding member, currentPageIndex:", currentPageIndex);
                   setPages(prevPages => {
-                    console.log("[DEBUG] prevPages:", prevPages.map(p => ({ id: p.id, members: p.treeMembers?.length })));
                     const newPages = [...prevPages];
                     const members = [...(newPages[currentPageIndex].treeMembers || [])];
                     const newMember = {
@@ -2319,7 +2310,6 @@ export default function EditBook() {
                       ...newPages[currentPageIndex],
                       treeMembers: members
                     };
-                    console.log("[DEBUG] After adding member:", { pageId: newPages[currentPageIndex].id, membersCount: newPages[currentPageIndex].treeMembers?.length });
                     return newPages;
                   });
                 }}

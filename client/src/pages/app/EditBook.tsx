@@ -247,6 +247,7 @@ export default function EditBook() {
   const [showBackgroundSelector, setShowBackgroundSelector] = useState(false);
   const [pendingTemplate, setPendingTemplate] = useState<InspirationTemplate | null>(null);
   const [selectedBackground, setSelectedBackground] = useState<string>(treeBackgrounds[0].src);
+  const [backgroundIndex, setBackgroundIndex] = useState(0);
   
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const familyPhotoInputRef = useRef<HTMLInputElement>(null);
@@ -412,6 +413,7 @@ export default function EditBook() {
   const addInspirationPage = (template: InspirationTemplate) => {
     if (template.layoutStyle === "familyTree") {
       setPendingTemplate(template);
+      setBackgroundIndex(0);
       setSelectedBackground(treeBackgrounds[0].src);
       setShowBackgroundSelector(true);
       return;
@@ -1506,38 +1508,71 @@ export default function EditBook() {
               </div>
 
               <div className="p-4">
-                <div className="grid grid-cols-2 gap-3">
-                  {treeBackgrounds.map((bg) => (
+                {/* Carrousel */}
+                <div className="relative">
+                  {/* Image principale */}
+                  <div className="aspect-[3/4] rounded-xl overflow-hidden border-2 border-emerald-200 shadow-lg">
+                    {treeBackgrounds[backgroundIndex].src ? (
+                      <img 
+                        src={treeBackgrounds[backgroundIndex].src} 
+                        alt={treeBackgrounds[backgroundIndex].name} 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-b from-emerald-50 via-white to-green-50 flex items-center justify-center">
+                        <span className="text-6xl">🌳</span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Flèche gauche */}
+                  <button
+                    onClick={() => {
+                      const newIndex = backgroundIndex === 0 ? treeBackgrounds.length - 1 : backgroundIndex - 1;
+                      setBackgroundIndex(newIndex);
+                      setSelectedBackground(treeBackgrounds[newIndex].src);
+                    }}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 shadow-lg flex items-center justify-center hover:bg-white transition-colors"
+                    data-testid="button-bg-prev"
+                  >
+                    <ChevronLeft size={24} className="text-stone-700" />
+                  </button>
+                  
+                  {/* Flèche droite */}
+                  <button
+                    onClick={() => {
+                      const newIndex = backgroundIndex === treeBackgrounds.length - 1 ? 0 : backgroundIndex + 1;
+                      setBackgroundIndex(newIndex);
+                      setSelectedBackground(treeBackgrounds[newIndex].src);
+                    }}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 shadow-lg flex items-center justify-center hover:bg-white transition-colors"
+                    data-testid="button-bg-next"
+                  >
+                    <ChevronRight size={24} className="text-stone-700" />
+                  </button>
+                </div>
+                
+                {/* Nom du fond */}
+                <p className="text-center text-lg font-bold text-stone-800 mt-4">
+                  {treeBackgrounds[backgroundIndex].name}
+                </p>
+                
+                {/* Indicateurs */}
+                <div className="flex justify-center gap-2 mt-3">
+                  {treeBackgrounds.map((bg, idx) => (
                     <button
                       key={bg.id}
-                      onClick={() => setSelectedBackground(bg.src)}
-                      className={`relative aspect-[3/4] rounded-xl overflow-hidden border-3 transition-all ${
-                        selectedBackground === bg.src 
-                          ? 'border-emerald-500 ring-2 ring-emerald-200' 
-                          : 'border-stone-200 hover:border-stone-300'
+                      onClick={() => {
+                        setBackgroundIndex(idx);
+                        setSelectedBackground(bg.src);
+                      }}
+                      className={`w-2.5 h-2.5 rounded-full transition-all ${
+                        idx === backgroundIndex 
+                          ? 'bg-emerald-500 w-6' 
+                          : 'bg-stone-300 hover:bg-stone-400'
                       }`}
-                      data-testid={`button-bg-${bg.id}`}
-                    >
-                      {bg.src ? (
-                        <img 
-                          src={bg.src} 
-                          alt={bg.name} 
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-b from-emerald-50 via-white to-green-50 flex items-center justify-center">
-                          <span className="text-3xl">🌳</span>
-                        </div>
-                      )}
-                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2">
-                        <p className="text-white text-xs font-medium text-center">{bg.name}</p>
-                      </div>
-                      {selectedBackground === bg.src && (
-                        <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center">
-                          <Check size={14} className="text-white" />
-                        </div>
-                      )}
-                    </button>
+                      data-testid={`button-bg-dot-${idx}`}
+                    />
                   ))}
                 </div>
               </div>
@@ -1559,7 +1594,7 @@ export default function EditBook() {
                   onClick={confirmAddTreePage}
                   data-testid="button-confirm-background"
                 >
-                  Ajouter la page
+                  Sélectionner
                 </Button>
               </div>
             </motion.div>

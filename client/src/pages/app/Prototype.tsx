@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import NotificationBell from "@/components/NotificationBell";
 
 export default function Prototype() {
   const [activeTab, setActiveTab] = useState("creations");
@@ -666,12 +667,14 @@ export default function Prototype() {
             <h1 className="text-lg font-serif font-bold text-stone-800">Livre de {babyName}</h1>
             <span className="text-[10px] text-stone-400 font-medium bg-stone-100 px-2 py-0.5 rounded-full">Famille Dupond-Martin</span>
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="p-2 hover:bg-stone-50 rounded-full -mr-2">
-                <MoreHorizontal className="text-stone-800" />
-              </button>
-            </DropdownMenuTrigger>
+          <div className="flex items-center gap-1">
+            <NotificationBell />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="p-2 hover:bg-stone-50 rounded-full">
+                  <MoreHorizontal className="text-stone-800" />
+                </button>
+              </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuItem className="cursor-pointer">
                 <User size={16} className="mr-2" />
@@ -690,7 +693,8 @@ export default function Prototype() {
                 <span>Déconnexion</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
-          </DropdownMenu>
+            </DropdownMenu>
+          </div>
         </div>
 
         {/* Content */}

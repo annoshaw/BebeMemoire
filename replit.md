@@ -100,6 +100,11 @@ All API routes require authentication via session-based middleware.
 - **Neon Database** - Serverless PostgreSQL hosting
 - **Google Fonts** - Fraunces (serif) and DM Sans (sans-serif) typography
 
+**Note: AI Features Removed**
+- OpenAI integration was configured but has been removed per user request to conserve Replit credits
+- Removed features: AI-generated family tree backgrounds, spell-checker and grammar corrector
+- Family tree backgrounds now use pre-made static images only
+
 **Key npm Packages**
 - **bcryptjs** - Password hashing (for email auth fallback)
 - **date-fns** - Date manipulation and formatting

@@ -536,6 +536,67 @@ Use soft, warm colors that feel loving and nostalgic.`;
     }
   });
 
+  // SPELL CHECK AND GRAMMAR API
+  app.post("/api/spellcheck", async (req: Request, res: Response) => {
+    try {
+      const { text, language = "fr" } = req.body;
+      
+      if (!text || typeof text !== "string") {
+        return res.status(400).json({ message: "Texte requis" });
+      }
+      
+      if (text.trim().length === 0) {
+        return res.json({ corrections: [], correctedText: text });
+      }
+      
+      const languageName = language === "fr" ? "French" : "English";
+      
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a spell-checker and grammar corrector for ${languageName} text. Analyze the given text and return a JSON response with:
+1. "corrections": an array of objects, each with:
+   - "original": the incorrect word or phrase
+   - "suggestion": the corrected version
+   - "type": either "spelling" or "grammar"
+   - "startIndex": the character position where the error starts
+   - "endIndex": the character position where the error ends
+2. "correctedText": the full text with all corrections applied
+
+If there are no errors, return an empty corrections array and the original text as correctedText.
+Only respond with valid JSON, no additional text.`
+          },
+          {
+            role: "user",
+            content: text
+          }
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.1,
+      });
+      
+      const result = response.choices[0]?.message?.content;
+      if (!result) {
+        return res.json({ corrections: [], correctedText: text });
+      }
+      
+      const parsed = JSON.parse(result);
+      res.json({
+        corrections: parsed.corrections || [],
+        correctedText: parsed.correctedText || text
+      });
+    } catch (error: any) {
+      console.error("Spellcheck error:", error);
+      res.status(500).json({ 
+        message: "Erreur lors de la vérification",
+        corrections: [],
+        correctedText: req.body.text || ""
+      });
+    }
+  });
+
   // BOOK PAGES ROUTES
 
   // Get all pages for a book

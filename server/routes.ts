@@ -531,5 +531,200 @@ export async function registerRoutes(
     }
   });
 
+  // NOTIFICATION ROUTES
+
+  // Get all notifications for user
+  app.get("/api/notifications", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const notifications = await storage.getActiveNotifications(userId);
+      const unreadCount = await storage.getUnreadNotificationsCount(userId);
+      res.json({ notifications, unreadCount });
+    } catch (error) {
+      console.error("Get notifications error:", error);
+      res.status(500).json({ message: "Erreur lors de la récupération des notifications" });
+    }
+  });
+
+  // Get unread count
+  app.get("/api/notifications/unread-count", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const count = await storage.getUnreadNotificationsCount(userId);
+      res.json({ count });
+    } catch (error) {
+      console.error("Get unread count error:", error);
+      res.status(500).json({ message: "Erreur" });
+    }
+  });
+
+  // Mark notification as read
+  app.patch("/api/notifications/:id/read", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const notification = await storage.markNotificationAsRead(req.params.id);
+      if (!notification) {
+        return res.status(404).json({ message: "Notification non trouvée" });
+      }
+      res.json({ notification });
+    } catch (error) {
+      console.error("Mark notification read error:", error);
+      res.status(500).json({ message: "Erreur" });
+    }
+  });
+
+  // Mark all notifications as read
+  app.patch("/api/notifications/read-all", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      await storage.markAllNotificationsAsRead(userId);
+      res.json({ message: "Toutes les notifications marquées comme lues" });
+    } catch (error) {
+      console.error("Mark all read error:", error);
+      res.status(500).json({ message: "Erreur" });
+    }
+  });
+
+  // Dismiss notification
+  app.patch("/api/notifications/:id/dismiss", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const notification = await storage.dismissNotification(req.params.id);
+      if (!notification) {
+        return res.status(404).json({ message: "Notification non trouvée" });
+      }
+      res.json({ notification });
+    } catch (error) {
+      console.error("Dismiss notification error:", error);
+      res.status(500).json({ message: "Erreur" });
+    }
+  });
+
+  // Generate milestone notifications for a book
+  app.post("/api/books/:bookId/generate-notifications", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const book = await storage.getBook(req.params.bookId);
+      
+      if (!book) {
+        return res.status(404).json({ message: "Livre non trouvé" });
+      }
+      
+      if (book.userId !== userId) {
+        return res.status(403).json({ message: "Accès refusé" });
+      }
+
+      if (!book.birthDate) {
+        return res.status(400).json({ message: "Date de naissance requise pour générer les rappels" });
+      }
+
+      // Delete existing notifications for this book
+      await storage.deleteNotificationsByBookId(req.params.bookId);
+
+      // Generate milestone notifications
+      const milestones = generateMilestoneNotifications(book.birthDate, book.childName || "Bébé", req.params.bookId, userId);
+      
+      if (milestones.length > 0) {
+        await storage.createManyNotifications(milestones);
+      }
+
+      res.json({ message: `${milestones.length} rappels générés pour ${book.childName}`, count: milestones.length });
+    } catch (error) {
+      console.error("Generate notifications error:", error);
+      res.status(500).json({ message: "Erreur lors de la génération des rappels" });
+    }
+  });
+
+  // NOTIFICATION SETTINGS ROUTES
+
+  // Get notification settings
+  app.get("/api/notification-settings", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      let settings = await storage.getNotificationSettings(userId);
+      
+      if (!settings) {
+        // Create default settings
+        settings = await storage.createNotificationSettings({ userId });
+      }
+      
+      res.json({ settings });
+    } catch (error) {
+      console.error("Get notification settings error:", error);
+      res.status(500).json({ message: "Erreur" });
+    }
+  });
+
+  // Update notification settings
+  app.patch("/api/notification-settings", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      
+      // Ensure settings exist first
+      let settings = await storage.getNotificationSettings(userId);
+      if (!settings) {
+        settings = await storage.createNotificationSettings({ userId });
+      }
+      
+      const updated = await storage.updateNotificationSettings(userId, req.body);
+      res.json({ settings: updated });
+    } catch (error) {
+      console.error("Update notification settings error:", error);
+      res.status(500).json({ message: "Erreur" });
+    }
+  });
+
   return httpServer;
+}
+
+// Helper function to generate milestone notifications based on baby's birth date
+function generateMilestoneNotifications(birthDate: Date, childName: string, bookId: string, userId: string) {
+  const milestones = [
+    // First weeks
+    { days: 7, title: "1 semaine", message: `${childName} a 1 semaine ! Documentez ces premiers moments précieux.`, icon: "baby" },
+    { days: 14, title: "2 semaines", message: `${childName} a 2 semaines. Comment se passe l'adaptation ?`, icon: "heart" },
+    
+    // First months
+    { days: 30, title: "1 mois", message: `${childName} a 1 mois ! Capturez son premier sourire.`, icon: "camera" },
+    { days: 60, title: "2 mois", message: `${childName} a 2 mois. Les vaccins approchent !`, icon: "baby" },
+    { days: 90, title: "3 mois", message: `${childName} a 3 mois. Commence à suivre les objets des yeux ?`, icon: "star" },
+    { days: 120, title: "4 mois", message: `${childName} a 4 mois. Premier éclat de rire ?`, icon: "heart" },
+    { days: 150, title: "5 mois", message: `${childName} a 5 mois. Essaie de se retourner ?`, icon: "baby" },
+    { days: 180, title: "6 mois", message: `${childName} a 6 mois ! Début de la diversification alimentaire.`, icon: "cake" },
+    { days: 210, title: "7 mois", message: `${childName} a 7 mois. Position assise ?`, icon: "star" },
+    { days: 240, title: "8 mois", message: `${childName} a 8 mois. Premiers mots (maman, papa) ?`, icon: "heart" },
+    { days: 270, title: "9 mois", message: `${childName} a 9 mois. Rampe ou fait du 4 pattes ?`, icon: "baby" },
+    { days: 300, title: "10 mois", message: `${childName} a 10 mois. Se tient debout avec appui ?`, icon: "star" },
+    { days: 330, title: "11 mois", message: `${childName} a 11 mois. Premiers pas bientôt ?`, icon: "heart" },
+    
+    // First year and beyond
+    { days: 365, title: "1 an !", message: `Joyeux 1er anniversaire ${childName} ! Un an de bonheur.`, icon: "cake" },
+    { days: 547, title: "18 mois", message: `${childName} a 18 mois. Court partout maintenant ?`, icon: "baby" },
+    { days: 730, title: "2 ans !", message: `Joyeux 2e anniversaire ${childName} !`, icon: "cake" },
+    { days: 1095, title: "3 ans !", message: `Joyeux 3e anniversaire ${childName} ! Entrée à la maternelle bientôt.`, icon: "cake" },
+  ];
+
+  const now = new Date();
+  const notifications: any[] = [];
+
+  for (const milestone of milestones) {
+    const triggerDate = new Date(birthDate);
+    triggerDate.setDate(triggerDate.getDate() + milestone.days);
+    
+    // Only create notifications for future milestones or very recent ones (last 30 days)
+    const daysDiff = Math.floor((triggerDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    if (daysDiff >= -30) {
+      notifications.push({
+        userId,
+        bookId,
+        type: milestone.days >= 365 ? "anniversary" : "milestone",
+        title: milestone.title,
+        message: milestone.message,
+        icon: milestone.icon,
+        triggerDate,
+        milestoneAge: milestone.days,
+        actionUrl: `/app/book/${bookId}/edit`,
+      });
+    }
+  }
+
+  return notifications;
 }

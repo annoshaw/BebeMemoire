@@ -50,12 +50,14 @@ export default function EditBook() {
   const [selectedText, setSelectedText] = useState("");
   const [showLayoutPicker, setShowLayoutPicker] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [toolbarPosition, setToolbarPosition] = useState({ x: 0, y: 0 });
   
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const videoCameraRef = useRef<HTMLInputElement>(null);
   const videoGalleryRef = useRef<HTMLInputElement>(null);
+  const constraintsRef = useRef<HTMLDivElement>(null);
   
   const babyName = typeof window !== "undefined" ? localStorage.getItem("babyName") || "Léo" : "Léo";
   const [selectedVideoUrl, setSelectedVideoUrl] = useState("");
@@ -388,7 +390,7 @@ export default function EditBook() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-stone-900 via-stone-800 to-stone-900 flex flex-col items-center justify-center p-4">
+    <div ref={constraintsRef} className="min-h-screen bg-gradient-to-br from-stone-900 via-stone-800 to-stone-900 flex flex-col items-center justify-center p-4">
       {/* Header */}
       <div className="absolute top-4 left-4 z-20">
         <Link href="/app">
@@ -461,8 +463,18 @@ export default function EditBook() {
         </motion.div>
       </AnimatePresence>
 
-      {/* Action Bar */}
-      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-white rounded-full p-1.5 shadow-lg">
+      {/* Action Bar - Draggable */}
+      <motion.div 
+        drag
+        dragConstraints={constraintsRef}
+        dragElastic={0.1}
+        className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-white rounded-full p-1.5 shadow-lg cursor-grab active:cursor-grabbing z-30"
+        style={{ x: toolbarPosition.x, y: toolbarPosition.y }}
+        onDragEnd={(_, info) => {
+          setToolbarPosition({ x: info.offset.x, y: info.offset.y });
+        }}
+      >
+        <div className="w-1 h-4 bg-stone-300 rounded-full mx-1" />
         <button
           onClick={() => setEditorMode("text")}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-stone-100 text-stone-700 transition-colors"
@@ -504,7 +516,8 @@ export default function EditBook() {
           <Plus size={16} />
           <span className="text-xs">Page</span>
         </button>
-      </div>
+        <div className="w-1 h-4 bg-stone-300 rounded-full mx-1" />
+      </motion.div>
 
       {/* Layout Picker Modal */}
       <AnimatePresence>

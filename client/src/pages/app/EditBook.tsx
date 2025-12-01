@@ -199,9 +199,11 @@ export default function EditBook() {
     }
     
     if (newImages.length > 0) {
-      const newPages = [...pages];
-      newPages[currentPageIndex].images = [...currentPage.images, ...newImages];
-      setPages(newPages);
+      setPages(prevPages => {
+        const newPages = [...prevPages];
+        newPages[currentPageIndex].images = [...newPages[currentPageIndex].images, ...newImages];
+        return newPages;
+      });
     }
     
     setIsUploading(false);

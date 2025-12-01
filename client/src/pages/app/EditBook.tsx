@@ -56,7 +56,7 @@ const layoutStyles = [
   { id: "mosaic", name: "Mosaïque", icon: "🧩", desc: "Collage créatif varié", color: "from-fuchsia-500 to-pink-500" },
 ];
 
-type InspirationCategory = "grossesse" | "naissance" | "premiers" | "fetes" | "famille" | "quotidien";
+type InspirationCategory = "famille" | "grossesse" | "echographie" | "parcours" | "evenements" | "naissance" | "premiers" | "fetes" | "quotidien";
 
 type InspirationTemplate = {
   id: string;
@@ -71,40 +71,87 @@ type InspirationTemplate = {
 };
 
 const inspirationCategories = [
-  { id: "grossesse", name: "Grossesse", icon: Heart, color: "from-pink-400 to-rose-500" },
+  { id: "famille", name: "Présentation de la famille", icon: Users, color: "from-teal-400 to-emerald-500" },
+  { id: "grossesse", name: "Annonce de grossesse", icon: Heart, color: "from-pink-400 to-rose-500" },
+  { id: "echographie", name: "Échographies", icon: Baby, color: "from-purple-400 to-indigo-500" },
+  { id: "parcours", name: "Parcours spéciaux", icon: Star, color: "from-orange-400 to-amber-500" },
+  { id: "evenements", name: "Événements grossesse", icon: Gift, color: "from-yellow-400 to-orange-500" },
   { id: "naissance", name: "Naissance", icon: Baby, color: "from-blue-400 to-cyan-500" },
-  { id: "premiers", name: "Premiers moments", icon: Footprints, color: "from-amber-400 to-orange-500" },
-  { id: "fetes", name: "Fêtes", icon: Cake, color: "from-purple-400 to-violet-500" },
-  { id: "famille", name: "Famille", icon: Users, color: "from-green-400 to-emerald-500" },
-  { id: "quotidien", name: "Quotidien", icon: Sun, color: "from-yellow-400 to-amber-500" },
+  { id: "premiers", name: "Premières fois", icon: Footprints, color: "from-amber-400 to-orange-500" },
+  { id: "fetes", name: "Fêtes & célébrations", icon: Cake, color: "from-fuchsia-400 to-pink-500" },
+  { id: "quotidien", name: "Vie quotidienne", icon: Sun, color: "from-green-400 to-teal-500" },
 ];
 
 const inspirationTemplates: InspirationTemplate[] = [
-  { id: "annonce", category: "grossesse", title: "L'ANNONCE", subtitle: "UN SECRET DÉVOILÉ", description: "Le moment magique où nous avons partagé cette merveilleuse nouvelle avec nos proches.", layoutStyle: "elegant", icon: "💝", color: "from-pink-400 to-rose-400" },
-  { id: "echo", category: "grossesse", title: "PREMIÈRE", subtitle: "ÉCHOGRAPHIE", description: "Notre première rencontre avec toi, une émotion indescriptible.", layoutStyle: "classic", icon: "🩺", color: "from-blue-300 to-indigo-400" },
-  { id: "bump", category: "grossesse", title: "MON VENTRE", subtitle: "QUI S'ARRONDIT", description: "Mois après mois, je te sens grandir en moi.", layoutStyle: "story", icon: "🤰", color: "from-rose-300 to-pink-400" },
-  { id: "shower", category: "grossesse", title: "BABY", subtitle: "SHOWER", description: "Une fête entourée d'amour pour célébrer ton arrivée.", layoutStyle: "playful", icon: "🎀", color: "from-purple-300 to-pink-400" },
-  { id: "chambre", category: "grossesse", title: "TA", subtitle: "CHAMBRE", description: "Nous avons préparé ce petit nid douillet rien que pour toi.", layoutStyle: "minimal", icon: "🏠", color: "from-teal-300 to-cyan-400" },
+  // FAMILLE - Présentation de la famille
+  { id: "famille1", category: "famille", title: "TA", subtitle: "FAMILLE", description: "Qui sommes-nous? Une présentation de ceux qui t'aiment.", layoutStyle: "family", icon: "👨‍👩‍👧‍👦", color: "from-teal-300 to-emerald-400" },
+  { id: "arbre", category: "famille", title: "ARBRE", subtitle: "GÉNÉALOGIQUE", description: "Tes racines et ton histoire familiale.", layoutStyle: "mosaic", icon: "🌳", color: "from-green-300 to-teal-400" },
+  { id: "parents", category: "famille", title: "TES", subtitle: "PARENTS", description: "Maman et Papa, ceux qui veillent sur toi.", layoutStyle: "elegant", icon: "💑", color: "from-rose-300 to-pink-400" },
+  { id: "grandparents", category: "famille", title: "TES", subtitle: "GRANDS-PARENTS", description: "Mamie et Papi, leurs bras sont toujours ouverts.", layoutStyle: "journi", icon: "👵", color: "from-amber-300 to-orange-400" },
+  { id: "oncles", category: "famille", title: "TES ONCLES", subtitle: "& TANTES", description: "La famille élargie qui t'entoure d'amour.", layoutStyle: "modern", icon: "👫", color: "from-blue-300 to-indigo-400" },
+  { id: "parrain", category: "famille", title: "TON PARRAIN", subtitle: "& TA MARRAINE", description: "Ceux qui ont été choisis pour te guider.", layoutStyle: "classic", icon: "⭐", color: "from-purple-300 to-violet-400" },
+  { id: "cousins", category: "famille", title: "TES COUSINS", subtitle: "& COUSINES", description: "Tes compagnons de jeux et d'aventures.", layoutStyle: "playful", icon: "👧", color: "from-pink-300 to-rose-400" },
+  { id: "amis", category: "famille", title: "LES AMIS", subtitle: "DE LA FAMILLE", description: "Ces personnes spéciales qui font partie de ta vie.", layoutStyle: "journi", icon: "🤝", color: "from-cyan-300 to-blue-400" },
+  { id: "animaux", category: "famille", title: "NOS ANIMAUX", subtitle: "DE COMPAGNIE", description: "Tes compagnons à quatre pattes.", layoutStyle: "mosaic", icon: "🐾", color: "from-amber-300 to-yellow-400" },
+  
+  // GROSSESSE - Annonce de grossesse
+  { id: "annonce1", category: "grossesse", title: "QUAND J'AI", subtitle: "APPRIS LA NOUVELLE", description: "Le moment où tout a basculé, cette émotion incroyable.", layoutStyle: "elegant", icon: "💝", color: "from-pink-400 to-rose-400" },
+  { id: "annoncePere", category: "grossesse", title: "QUAND TON PÈRE", subtitle: "A APPRIS", description: "Sa réaction, ses premiers mots, son émotion.", layoutStyle: "classic", icon: "👨", color: "from-blue-300 to-indigo-400" },
+  { id: "annonceMere", category: "grossesse", title: "QUAND TA MÈRE", subtitle: "A APPRIS", description: "Ce moment unique gravé dans mon cœur.", layoutStyle: "classic", icon: "👩", color: "from-rose-300 to-pink-400" },
+  { id: "annonceGP", category: "grossesse", title: "QUAND LES", subtitle: "GRANDS-PARENTS ONT APPRIS", description: "Leur joie de devenir mamie et papi.", layoutStyle: "journi", icon: "👴", color: "from-amber-300 to-orange-400" },
+  { id: "annonceFamille", category: "grossesse", title: "QUAND LA FAMILLE", subtitle: "A APPRIS", description: "Le bonheur partagé avec nos proches.", layoutStyle: "mosaic", icon: "👨‍👩‍👧‍👦", color: "from-teal-300 to-emerald-400" },
+  
+  // ÉCHOGRAPHIES
+  { id: "echo1", category: "echographie", title: "TA PREMIÈRE", subtitle: "ÉCHOGRAPHIE", description: "Notre première rencontre avec toi, une émotion indescriptible.", layoutStyle: "classic", icon: "🔊", color: "from-purple-300 to-indigo-400" },
+  { id: "echo2", category: "echographie", title: "TA DEUXIÈME", subtitle: "ÉCHOGRAPHIE", description: "Tu grandis et on te découvre un peu plus.", layoutStyle: "elegant", icon: "👶", color: "from-blue-300 to-purple-400" },
+  { id: "echo3", category: "echographie", title: "TA TROISIÈME", subtitle: "ÉCHOGRAPHIE", description: "Bientôt là, on compte les jours.", layoutStyle: "journi", icon: "💜", color: "from-violet-300 to-purple-400" },
+  { id: "echoSuivi", category: "echographie", title: "LES ÉCHOS", subtitle: "DE SUIVI", description: "Suivre ta croissance semaine après semaine.", layoutStyle: "mosaic", icon: "📊", color: "from-indigo-300 to-blue-400" },
+  { id: "coeur", category: "echographie", title: "LA PREMIÈRE FOIS", subtitle: "QUE J'AI ENTENDU TON CŒUR", description: "Ce petit battement qui a fait chavirer le mien.", layoutStyle: "minimal", icon: "💓", color: "from-red-300 to-rose-400" },
+  
+  // PARCOURS SPÉCIAUX
+  { id: "adoption", category: "parcours", title: "NOTRE PARCOURS", subtitle: "D'ADOPTION", description: "L'histoire de comment tu es arrivé(e) dans nos vies.", layoutStyle: "story", icon: "💕", color: "from-blue-300 to-cyan-400" },
+  { id: "fiv", category: "parcours", title: "NOTRE PARCOURS", subtitle: "DE FERTILITÉ", description: "Le chemin qui nous a menés jusqu'à toi.", layoutStyle: "elegant", icon: "🌱", color: "from-green-300 to-emerald-400" },
+  { id: "chambre", category: "parcours", title: "TA", subtitle: "CHAMBRE", description: "Nous avons préparé ce petit nid douillet rien que pour toi.", layoutStyle: "journi", icon: "🛏️", color: "from-teal-300 to-cyan-400" },
+  { id: "lettre", category: "parcours", title: "LETTRE", subtitle: "À BÉBÉ", description: "Nos mots d'amour pour toi, à lire plus tard.", layoutStyle: "minimal", icon: "💌", color: "from-rose-300 to-red-400" },
+  
+  // ÉVÉNEMENTS GROSSESSE
+  { id: "parrain", category: "evenements", title: "L'ANNONCE", subtitle: "DU PARRAIN", description: "Quand il a appris qu'il serait ton parrain.", layoutStyle: "classic", icon: "⭐", color: "from-blue-300 to-indigo-400" },
+  { id: "marraine", category: "evenements", title: "L'ANNONCE", subtitle: "DE LA MARRAINE", description: "Quand elle a appris qu'elle serait ta marraine.", layoutStyle: "classic", icon: "✨", color: "from-purple-300 to-pink-400" },
+  { id: "genderReveal", category: "evenements", title: "LE DÉVOILEMENT", subtitle: "DU SEXE", description: "Fille ou garçon? Le grand moment de vérité!", layoutStyle: "playful", icon: "🎀", color: "from-pink-300 to-blue-400" },
+  { id: "babyShower", category: "evenements", title: "LE BABY", subtitle: "SHOWER", description: "Une fête entourée d'amour pour célébrer ton arrivée.", layoutStyle: "mosaic", icon: "🎉", color: "from-yellow-300 to-orange-400" },
+  { id: "babyMoon", category: "evenements", title: "LE BABY", subtitle: "MOON", description: "Nos dernières vacances avant ton arrivée.", layoutStyle: "journi", icon: "🌙", color: "from-indigo-300 to-purple-400" },
+  { id: "ventre", category: "evenements", title: "MON VENTRE", subtitle: "QUI S'ARRONDIT", description: "Mois après mois, je te sens grandir en moi.", layoutStyle: "story", icon: "🤰", color: "from-rose-300 to-pink-400" },
+  
+  // NAISSANCE
   { id: "naissance1", category: "naissance", title: "BIENVENUE", subtitle: "AU MONDE", description: "Le plus beau jour de notre vie, tu es enfin là.", layoutStyle: "classic", icon: "👶", color: "from-blue-400 to-cyan-400" },
   { id: "poids", category: "naissance", title: "TES PREMIÈRES", subtitle: "MESURES", description: "Ton poids, ta taille... les premiers chiffres de ta vie.", layoutStyle: "minimal", icon: "📏", color: "from-indigo-300 to-blue-400" },
   { id: "hopital", category: "naissance", title: "À LA", subtitle: "MATERNITÉ", description: "Nos premiers jours ensemble dans ce cocon protégé.", layoutStyle: "journi", icon: "🏥", color: "from-sky-300 to-blue-400" },
   { id: "retour", category: "naissance", title: "RETOUR", subtitle: "À LA MAISON", description: "Enfin chez nous, une nouvelle aventure commence.", layoutStyle: "elegant", icon: "🏡", color: "from-green-300 to-emerald-400" },
+  { id: "carteNaissance", category: "naissance", title: "CARTE", subtitle: "DE NAISSANCE", description: "Ton faire-part, l'annonce officielle de ton arrivée.", layoutStyle: "colorful", icon: "📜", color: "from-amber-300 to-yellow-400" },
+  
+  // PREMIÈRES FOIS
   { id: "premierSourire", category: "premiers", title: "PREMIER", subtitle: "SOURIRE", description: "Ce sourire qui illumine nos journées.", layoutStyle: "classic", icon: "😊", color: "from-yellow-300 to-amber-400" },
   { id: "premiersPas", category: "premiers", title: "PREMIERS", subtitle: "PAS", description: "Ces pas hésitants vers l'aventure.", layoutStyle: "story", icon: "👣", color: "from-orange-300 to-amber-400" },
   { id: "premierMot", category: "premiers", title: "PREMIER", subtitle: "MOT", description: "Ta petite voix qui prononce ses premiers sons.", layoutStyle: "elegant", icon: "💬", color: "from-pink-300 to-rose-400" },
   { id: "premierDent", category: "premiers", title: "PREMIÈRE", subtitle: "DENT", description: "Cette petite perle blanche tant attendue.", layoutStyle: "playful", icon: "🦷", color: "from-cyan-300 to-blue-400" },
   { id: "premierBain", category: "premiers", title: "PREMIER", subtitle: "BAIN", description: "Barbotage et découverte de l'eau.", layoutStyle: "journi", icon: "🛁", color: "from-blue-300 to-cyan-400" },
+  { id: "premierRepas", category: "premiers", title: "PREMIER", subtitle: "REPAS SOLIDE", description: "La diversification commence, nouvelles saveurs!", layoutStyle: "mosaic", icon: "🥄", color: "from-green-300 to-emerald-400" },
+  { id: "premierNoel", category: "premiers", title: "PREMIER", subtitle: "NOËL", description: "La magie de Noël à travers tes yeux émerveillés.", layoutStyle: "colorful", icon: "🎄", color: "from-red-400 to-green-500" },
+  
+  // FÊTES & CÉLÉBRATIONS
   { id: "anniversaire1", category: "fetes", title: "1", subtitle: "AN", description: "Ta première bougie, une année de bonheur.", layoutStyle: "playful", icon: "🎂", color: "from-pink-400 to-purple-400" },
-  { id: "noel", category: "fetes", title: "PREMIER", subtitle: "NOËL", description: "La magie de Noël à travers tes yeux émerveillés.", layoutStyle: "mosaic", icon: "🎄", color: "from-red-400 to-green-500" },
+  { id: "anniversaire2", category: "fetes", title: "2", subtitle: "ANS", description: "Deux ans déjà, le temps file!", layoutStyle: "mosaic", icon: "🎈", color: "from-blue-400 to-purple-400" },
   { id: "paques", category: "fetes", title: "CHASSE", subtitle: "AUX ŒUFS", description: "À la recherche des trésors chocolatés.", layoutStyle: "playful", icon: "🐰", color: "from-yellow-300 to-pink-400" },
   { id: "halloween", category: "fetes", title: "PREMIER", subtitle: "HALLOWEEN", description: "Ton premier déguisement trop mignon.", layoutStyle: "colorful", icon: "🎃", color: "from-orange-400 to-purple-500" },
-  { id: "famille1", category: "famille", title: "NOTRE", subtitle: "FAMILLE", description: "L'amour qui nous unit, jour après jour.", layoutStyle: "family", icon: "👨‍👩‍👧", color: "from-rose-400 to-orange-400" },
-  { id: "grandparents", category: "famille", title: "AVEC", subtitle: "MAMIE & PAPI", description: "Des moments précieux avec tes grands-parents.", layoutStyle: "elegant", icon: "👵", color: "from-amber-300 to-orange-400" },
-  { id: "fratrie", category: "famille", title: "FRÈRE &", subtitle: "SŒUR", description: "Une complicité qui grandit chaque jour.", layoutStyle: "journi", icon: "👧", color: "from-purple-300 to-pink-400" },
-  { id: "quotidien1", category: "quotidien", title: "REPAS", subtitle: "DÉCOUVERTES", description: "Les joies (et les dégâts) de la diversification.", layoutStyle: "mosaic", icon: "🥄", color: "from-green-300 to-emerald-400" },
+  { id: "stValentin", category: "fetes", title: "SAINT", subtitle: "VALENTIN", description: "Notre petit amour à nous.", layoutStyle: "elegant", icon: "💘", color: "from-red-300 to-rose-400" },
+  
+  // VIE QUOTIDIENNE
+  { id: "repas", category: "quotidien", title: "L'HEURE", subtitle: "DU REPAS", description: "Les joies (et les dégâts) de manger.", layoutStyle: "mosaic", icon: "🍽️", color: "from-green-300 to-emerald-400" },
   { id: "dodo", category: "quotidien", title: "DODO", subtitle: "PAISIBLE", description: "Ces moments de calme où tu rêves.", layoutStyle: "minimal", icon: "😴", color: "from-indigo-300 to-purple-400" },
   { id: "jeux", category: "quotidien", title: "TEMPS", subtitle: "DE JEU", description: "Rires, découvertes et imagination.", layoutStyle: "playful", icon: "🧸", color: "from-yellow-300 to-orange-400" },
   { id: "promenade", category: "quotidien", title: "BALADE", subtitle: "AU PARC", description: "Explorer le monde à tes côtés.", layoutStyle: "journi", icon: "🌳", color: "from-green-400 to-teal-400" },
+  { id: "lecture", category: "quotidien", title: "MOMENT", subtitle: "LECTURE", description: "Les histoires que nous partageons ensemble.", layoutStyle: "elegant", icon: "📚", color: "from-amber-300 to-orange-400" },
+  { id: "musique", category: "quotidien", title: "MUSIQUE", subtitle: "& DANSE", description: "Tu bouges au rythme de la musique.", layoutStyle: "playful", icon: "🎵", color: "from-purple-300 to-pink-400" },
 ];
 
 const extractDominantColor = (imageUrl: string): Promise<{ primary: string; secondary: string; text: string }> => {

@@ -484,8 +484,8 @@ export async function registerRoutes(
 
   // AI ROUTES
 
-  // Generate family tree background with AI
-  app.post("/api/ai/generate-tree-background", requireAuth, async (req: Request, res: Response) => {
+  // Generate family tree background with AI (no auth required for local books)
+  app.post("/api/ai/generate-tree-background", async (req: Request, res: Response) => {
     try {
       const { memberCount, childName, style } = req.body;
       

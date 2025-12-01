@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, Type, Camera, Video, X, QrCode, Layout, Plus, LayoutTemplate, Sparkles, ImagePlus, Wand2, Image as ImageIcon, Users, Trash2, Lightbulb, Baby, Heart, Star, Cake, Sun, Moon, Gift, Footprints, Smile, Check, Save, Loader2, SpellCheck, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 import { Link, useParams } from "wouter";
 
 type SpellCorrection = {
@@ -238,6 +239,7 @@ const extractDominantColor = (imageUrl: string): Promise<{ primary: string; seco
 export default function EditBook() {
   const params = useParams<{ id: string }>();
   const bookId = params.id;
+  const { toast } = useToast();
   
   const [editorMode, setEditorMode] = useState<EditorMode>("view");
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
@@ -2736,9 +2738,20 @@ export default function EditBook() {
                             };
                             return newPages;
                           });
+                          toast({
+                            title: "Fond généré avec succès",
+                            description: "Votre arrière-plan unique a été créé par l'IA",
+                          });
+                        } else {
+                          throw new Error(data.message || "Erreur lors de la génération");
                         }
-                      } catch (error) {
+                      } catch (error: any) {
                         console.error("Error generating AI background:", error);
+                        toast({
+                          title: "Erreur de génération",
+                          description: error.message || "Impossible de générer l'arrière-plan. Veuillez réessayer.",
+                          variant: "destructive",
+                        });
                       } finally {
                         setIsGeneratingAIBackground(false);
                       }

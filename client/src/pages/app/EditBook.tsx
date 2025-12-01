@@ -377,7 +377,10 @@ export default function EditBook() {
 
   const currentPage = pages[currentPageIndex];
 
-  // Load pages from backend on mount
+  // Check if bookId is local (starts with "local_")
+  const isLocalBook = bookId?.startsWith("local_") || false;
+
+  // Load pages from backend or localStorage on mount
   useEffect(() => {
     const loadPages = async () => {
       if (!bookId) {
@@ -385,6 +388,25 @@ export default function EditBook() {
         return;
       }
       
+      // For local books, load from localStorage
+      if (isLocalBook) {
+        try {
+          const savedPages = localStorage.getItem(`book_pages_${bookId}`);
+          if (savedPages) {
+            const parsedPages = JSON.parse(savedPages);
+            if (Array.isArray(parsedPages) && parsedPages.length > 0) {
+              setPages(parsedPages);
+              console.log("Loaded pages from localStorage:", parsedPages.length);
+            }
+          }
+        } catch (error) {
+          console.error("Error loading pages from localStorage:", error);
+        }
+        setIsLoadingPages(false);
+        return;
+      }
+      
+      // For database books, load from API
       try {
         const response = await fetch(`/api/books/${bookId}/pages`, {
           credentials: 'include'
@@ -417,7 +439,7 @@ export default function EditBook() {
     };
     
     loadPages();
-  }, [bookId]);
+  }, [bookId, isLocalBook]);
 
   // Auto-save pages when they change
   const savePages = useCallback(async (pagesToSave: BookPage[]) => {
@@ -425,6 +447,17 @@ export default function EditBook() {
     
     setIsSaving(true);
     try {
+      // For local books, save to localStorage
+      if (isLocalBook) {
+        localStorage.setItem(`book_pages_${bookId}`, JSON.stringify(pagesToSave));
+        console.log("Saved pages to localStorage:", pagesToSave.length);
+        setLastSaved(new Date());
+        setHasUnsavedChanges(false);
+        setIsSaving(false);
+        return;
+      }
+      
+      // For database books, save to API
       const pagesData = pagesToSave.map((p, index) => ({
         pageIndex: index,
         title: p.title,
@@ -455,7 +488,7 @@ export default function EditBook() {
     } finally {
       setIsSaving(false);
     }
-  }, [bookId, isLoadingPages]);
+  }, [bookId, isLoadingPages, isLocalBook]);
 
   // Debounced auto-save effect
   useEffect(() => {

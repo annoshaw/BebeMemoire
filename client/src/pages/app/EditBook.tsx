@@ -896,17 +896,45 @@ export default function EditBook() {
                 </button>
               </div>
 
-              <div className="border-2 border-dashed border-stone-200 rounded-xl p-8 text-center mb-4 hover:border-red-400 transition-colors cursor-pointer" data-testid="dropzone-video">
-                <Video size={40} className="mx-auto text-stone-400 mb-3" />
-                <p className="text-sm text-stone-600">Cliquer pour ajouter une vidéo</p>
-                <p className="text-xs text-stone-400 mt-1">MP4, MOV jusqu'à 500 Mo</p>
-                <input
-                  ref={videoInputRef}
-                  type="file"
-                  accept="video/*"
-                  className="hidden"
-                  data-testid="input-video-file"
-                />
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <button
+                  onClick={() => {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'video/*';
+                    input.capture = 'environment';
+                    input.click();
+                  }}
+                  className="flex flex-col items-center gap-3 p-6 border-2 border-dashed border-stone-200 rounded-xl hover:border-red-400 hover:bg-red-50 transition-colors"
+                  data-testid="button-record-video"
+                >
+                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-red-500 to-rose-500 flex items-center justify-center shadow-lg">
+                    <Video size={28} className="text-white" />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-stone-700">Enregistrer</p>
+                    <p className="text-xs text-stone-400 mt-1">Ouvrir la caméra</p>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'video/*';
+                    input.click();
+                  }}
+                  className="flex flex-col items-center gap-3 p-6 border-2 border-dashed border-stone-200 rounded-xl hover:border-purple-500 hover:bg-purple-50 transition-colors"
+                  data-testid="button-video-gallery"
+                >
+                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-500 to-violet-500 flex items-center justify-center shadow-lg">
+                    <ImageIcon size={28} className="text-white" />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-stone-700">Galerie</p>
+                    <p className="text-xs text-stone-400 mt-1">Choisir une vidéo</p>
+                  </div>
+                </button>
               </div>
 
               <p className="text-xs text-stone-500 text-center mb-4" data-testid="text-video-info">

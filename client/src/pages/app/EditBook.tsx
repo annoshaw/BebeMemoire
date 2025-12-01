@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 
 type EditorMode = "view" | "text" | "photo" | "video" | "qrcode" | "layout";
-type LayoutStyle = "auto" | "classic" | "modern" | "elegant" | "playful" | "minimal" | "story" | "colorful" | "family";
+type LayoutStyle = "auto" | "classic" | "modern" | "elegant" | "playful" | "minimal" | "story" | "colorful" | "family" | "journi" | "mosaic";
 
 type ContentItem = {
   type: "text" | "photo" | "video" | "qrcode";
@@ -52,6 +52,8 @@ const layoutStyles = [
   { id: "story", name: "Histoire", icon: "📖", desc: "Narration visuelle", color: "from-indigo-500 to-blue-500" },
   { id: "colorful", name: "Coloré", icon: "🌈", desc: "Couleurs extraites de la photo", color: "from-pink-500 to-yellow-500" },
   { id: "family", name: "Famille", icon: "👨‍👩‍👧‍👦", desc: "Portraits de famille (1-4 personnes)", color: "from-rose-400 to-orange-400" },
+  { id: "journi", name: "Journi", icon: "📸", desc: "Style magazine asymétrique", color: "from-teal-500 to-cyan-500" },
+  { id: "mosaic", name: "Mosaïque", icon: "🧩", desc: "Collage créatif varié", color: "from-fuchsia-500 to-pink-500" },
 ];
 
 const extractDominantColor = (imageUrl: string): Promise<{ primary: string; secondary: string; text: string }> => {
@@ -573,6 +575,194 @@ export default function EditBook() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      );
+    }
+
+    if (layoutStyle === "journi") {
+      if (photoCount === 1) {
+        return (
+          <div className="w-full h-full bg-[#fafaf8] p-5 flex flex-col" data-testid="layout-journi">
+            <div className="flex-1 rounded-3xl overflow-hidden shadow-lg">
+              <img src={images[0]} className="w-full h-full object-cover" alt="" data-testid="img-journi-0" />
+            </div>
+            <div className="pt-4 px-2">
+              <p className="text-[10px] text-teal-600 tracking-[0.2em] uppercase font-medium" data-testid="text-page-date">{date}</p>
+              <h2 className="text-xl font-serif font-bold text-stone-800 mt-1" data-testid="text-page-title">{title}</h2>
+              <p className="text-sm text-stone-500 mt-1 line-clamp-2" data-testid="text-page-description">{description.split('\n')[0]}</p>
+            </div>
+          </div>
+        );
+      }
+      if (photoCount === 2) {
+        return (
+          <div className="w-full h-full bg-[#fafaf8] p-4 flex flex-col gap-3" data-testid="layout-journi">
+            <div className="flex gap-3 flex-1">
+              <div className="flex-[1.2] rounded-3xl overflow-hidden shadow-md">
+                <img src={images[0]} className="w-full h-full object-cover" alt="" data-testid="img-journi-0" />
+              </div>
+              <div className="flex-1 rounded-3xl overflow-hidden shadow-md">
+                <img src={images[1]} className="w-full h-full object-cover" alt="" data-testid="img-journi-1" />
+              </div>
+            </div>
+            <div className="bg-white rounded-2xl p-4 shadow-sm">
+              <p className="text-[10px] text-teal-600 tracking-widest uppercase" data-testid="text-page-date">{date}</p>
+              <h2 className="text-lg font-serif font-bold text-stone-800" data-testid="text-page-title">{title}</h2>
+              <p className="text-xs text-stone-500 mt-1" data-testid="text-page-description">{description.split('\n')[0]}</p>
+            </div>
+          </div>
+        );
+      }
+      if (photoCount === 3) {
+        return (
+          <div className="w-full h-full bg-[#fafaf8] p-4" data-testid="layout-journi">
+            <div className="h-full flex flex-col gap-3">
+              <div className="flex-[1.5] rounded-3xl overflow-hidden shadow-md">
+                <img src={images[0]} className="w-full h-full object-cover" alt="" data-testid="img-journi-0" />
+              </div>
+              <div className="flex gap-3 flex-1">
+                <div className="flex-1 rounded-2xl overflow-hidden shadow-md">
+                  <img src={images[1]} className="w-full h-full object-cover" alt="" data-testid="img-journi-1" />
+                </div>
+                <div className="flex-1 rounded-2xl overflow-hidden shadow-md">
+                  <img src={images[2]} className="w-full h-full object-cover" alt="" data-testid="img-journi-2" />
+                </div>
+              </div>
+              <div className="bg-white/80 backdrop-blur rounded-xl px-4 py-2">
+                <div className="flex items-center gap-2">
+                  <p className="text-[10px] text-teal-600 tracking-widest uppercase" data-testid="text-page-date">{date}</p>
+                  <span className="text-stone-300">•</span>
+                  <h2 className="text-sm font-serif font-bold text-stone-800" data-testid="text-page-title">{title}</h2>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
+      return (
+        <div className="w-full h-full bg-[#fafaf8] p-3" data-testid="layout-journi">
+          <div className="h-full flex flex-col gap-2">
+            <div className="flex gap-2 flex-[1.2]">
+              <div className="flex-[1.3] rounded-2xl overflow-hidden shadow-md">
+                <img src={images[0]} className="w-full h-full object-cover" alt="" data-testid="img-journi-0" />
+              </div>
+              <div className="flex-1 flex flex-col gap-2">
+                <div className="flex-1 rounded-2xl overflow-hidden shadow-md">
+                  <img src={images[1] || images[0]} className="w-full h-full object-cover" alt="" data-testid="img-journi-1" />
+                </div>
+                <div className="flex-1 rounded-2xl overflow-hidden shadow-md">
+                  <img src={images[2] || images[0]} className="w-full h-full object-cover" alt="" data-testid="img-journi-2" />
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-2 flex-1">
+              <div className="flex-1 rounded-2xl overflow-hidden shadow-md">
+                <img src={images[3] || images[0]} className="w-full h-full object-cover" alt="" data-testid="img-journi-3" />
+              </div>
+              <div className="flex-[1.5] bg-white rounded-2xl p-3 shadow-sm flex flex-col justify-center">
+                <p className="text-[9px] text-teal-600 tracking-widest uppercase" data-testid="text-page-date">{date}</p>
+                <h2 className="text-base font-serif font-bold text-stone-800 leading-tight" data-testid="text-page-title">{title}</h2>
+                <p className="text-[10px] text-stone-500 mt-1 line-clamp-2" data-testid="text-page-description">{description.split('\n')[0]}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (layoutStyle === "mosaic") {
+      if (photoCount === 1) {
+        return (
+          <div className="w-full h-full bg-gradient-to-br from-fuchsia-50 to-pink-50 p-5" data-testid="layout-mosaic">
+            <div className="h-full flex flex-col">
+              <div className="flex-1 rounded-[2rem] overflow-hidden shadow-xl rotate-[-1deg] hover:rotate-0 transition-transform">
+                <img src={images[0]} className="w-full h-full object-cover" alt="" data-testid="img-mosaic-0" />
+              </div>
+              <div className="mt-4 text-center">
+                <h2 className="text-xl font-serif font-bold text-stone-800" data-testid="text-page-title">{title}</h2>
+                <p className="text-xs text-fuchsia-600 mt-1" data-testid="text-page-date">{date}</p>
+              </div>
+            </div>
+          </div>
+        );
+      }
+      if (photoCount === 2) {
+        return (
+          <div className="w-full h-full bg-gradient-to-br from-fuchsia-50 to-pink-50 p-4" data-testid="layout-mosaic">
+            <div className="h-full flex flex-col gap-3">
+              <div className="flex-1 flex gap-3">
+                <div className="flex-1 rounded-3xl overflow-hidden shadow-lg rotate-[-2deg] hover:rotate-0 transition-transform">
+                  <img src={images[0]} className="w-full h-full object-cover" alt="" data-testid="img-mosaic-0" />
+                </div>
+                <div className="flex-1 rounded-3xl overflow-hidden shadow-lg rotate-[2deg] hover:rotate-0 transition-transform mt-6">
+                  <img src={images[1]} className="w-full h-full object-cover" alt="" data-testid="img-mosaic-1" />
+                </div>
+              </div>
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-3 text-center">
+                <h2 className="text-lg font-serif font-bold text-stone-800" data-testid="text-page-title">{title}</h2>
+                <p className="text-xs text-fuchsia-600" data-testid="text-page-date">{date}</p>
+              </div>
+            </div>
+          </div>
+        );
+      }
+      if (photoCount >= 3 && photoCount <= 4) {
+        return (
+          <div className="w-full h-full bg-gradient-to-br from-fuchsia-50 via-white to-pink-50 p-3" data-testid="layout-mosaic">
+            <div className="h-full grid grid-cols-6 grid-rows-5 gap-2">
+              <div className="col-span-4 row-span-3 rounded-2xl overflow-hidden shadow-lg">
+                <img src={images[0]} className="w-full h-full object-cover" alt="" data-testid="img-mosaic-0" />
+              </div>
+              <div className="col-span-2 row-span-2 rounded-2xl overflow-hidden shadow-md rotate-[1deg]">
+                <img src={images[1]} className="w-full h-full object-cover" alt="" data-testid="img-mosaic-1" />
+              </div>
+              <div className="col-span-2 row-span-2 rounded-2xl overflow-hidden shadow-md">
+                <img src={images[2]} className="w-full h-full object-cover" alt="" data-testid="img-mosaic-2" />
+              </div>
+              <div className="col-span-3 row-span-2 rounded-2xl overflow-hidden shadow-md rotate-[-1deg]">
+                {images[3] ? (
+                  <img src={images[3]} className="w-full h-full object-cover" alt="" data-testid="img-mosaic-3" />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-fuchsia-100 to-pink-100 flex items-center justify-center p-3">
+                    <div className="text-center">
+                      <h2 className="text-base font-serif font-bold text-stone-700" data-testid="text-page-title">{title}</h2>
+                      <p className="text-[10px] text-fuchsia-500 mt-1" data-testid="text-page-date">{date}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="col-span-3 row-span-2 bg-white rounded-2xl p-3 shadow-sm flex flex-col justify-center">
+                <p className="text-[9px] text-fuchsia-600 tracking-widest uppercase" data-testid="text-page-date">{date}</p>
+                <h2 className="text-sm font-serif font-bold text-stone-800" data-testid="text-page-title">{title}</h2>
+                <p className="text-[10px] text-stone-500 mt-1 line-clamp-2" data-testid="text-page-description">{description.split('\n')[0]}</p>
+              </div>
+            </div>
+          </div>
+        );
+      }
+      return (
+        <div className="w-full h-full bg-gradient-to-br from-fuchsia-50 via-white to-pink-50 p-3" data-testid="layout-mosaic">
+          <div className="h-full grid grid-cols-4 grid-rows-4 gap-2">
+            <div className="col-span-2 row-span-2 rounded-2xl overflow-hidden shadow-lg rotate-[-1deg]">
+              <img src={images[0]} className="w-full h-full object-cover" alt="" data-testid="img-mosaic-0" />
+            </div>
+            <div className="col-span-2 row-span-1 rounded-xl overflow-hidden shadow-md">
+              <img src={images[1] || images[0]} className="w-full h-full object-cover" alt="" data-testid="img-mosaic-1" />
+            </div>
+            <div className="col-span-1 row-span-2 rounded-xl overflow-hidden shadow-md rotate-[1deg]">
+              <img src={images[2] || images[0]} className="w-full h-full object-cover" alt="" data-testid="img-mosaic-2" />
+            </div>
+            <div className="col-span-1 row-span-1 rounded-xl overflow-hidden shadow-md">
+              <img src={images[3] || images[0]} className="w-full h-full object-cover" alt="" data-testid="img-mosaic-3" />
+            </div>
+            <div className="col-span-2 row-span-2 rounded-2xl overflow-hidden shadow-lg rotate-[1deg]">
+              <img src={images[4] || images[0]} className="w-full h-full object-cover" alt="" data-testid="img-mosaic-4" />
+            </div>
+            <div className="col-span-2 row-span-1 bg-white/90 backdrop-blur rounded-xl p-2 shadow-sm flex flex-col justify-center">
+              <p className="text-[9px] text-fuchsia-600 tracking-widest uppercase">{date}</p>
+              <h2 className="text-sm font-serif font-bold text-stone-800 leading-tight" data-testid="text-page-title">{title}</h2>
+            </div>
           </div>
         </div>
       );

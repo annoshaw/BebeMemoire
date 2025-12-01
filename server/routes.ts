@@ -110,7 +110,7 @@ export async function registerRoutes(
   // Login with email/password
   app.post("/api/auth/login", async (req: Request, res: Response) => {
     try {
-      const { email, password } = req.body;
+      const { email, password, rememberMe } = req.body;
       
       if (!email || !password) {
         return res.status(400).json({ message: "Email et mot de passe requis" });
@@ -124,6 +124,11 @@ export async function registerRoutes(
       const isValid = await bcrypt.compare(password, user.password);
       if (!isValid) {
         return res.status(401).json({ message: "Email ou mot de passe incorrect" });
+      }
+      
+      // Extend session duration if "remember me" is checked (30 days vs 1 week)
+      if (rememberMe && req.session) {
+        req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days
       }
       
       req.login({ id: user.id } as any, (err) => {

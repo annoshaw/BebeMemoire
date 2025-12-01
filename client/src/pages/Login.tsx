@@ -6,6 +6,7 @@ import { Link, useLocation } from "wouter";
 import { ArrowLeft, Loader2, Facebook } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -18,6 +19,7 @@ import {
 const formSchema = z.object({
   email: z.string().email("Adresse email invalide"),
   password: z.string().min(1, "Le mot de passe est requis"),
+  rememberMe: z.boolean().default(false),
 });
 
 export default function Login() {
@@ -30,6 +32,7 @@ export default function Login() {
     defaultValues: {
       email: "",
       password: "",
+      rememberMe: false,
     },
   });
 
@@ -45,6 +48,7 @@ export default function Login() {
         body: JSON.stringify({
           email: values.email,
           password: values.password,
+          rememberMe: values.rememberMe,
         }),
       });
 
@@ -161,6 +165,25 @@ export default function Login() {
                       <Input placeholder="••••••••" type="password" {...field} data-testid="input-password" />
                     </FormControl>
                     <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="rememberMe"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        data-testid="checkbox-remember-me"
+                      />
+                    </FormControl>
+                    <FormLabel className="text-sm font-normal text-stone-600 cursor-pointer">
+                      Rester connecté
+                    </FormLabel>
                   </FormItem>
                 )}
               />

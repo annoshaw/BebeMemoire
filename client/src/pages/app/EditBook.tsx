@@ -769,13 +769,17 @@ export default function EditBook() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white rounded-2xl w-full max-w-md p-6"
+              className="bg-white rounded-2xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold text-stone-900" data-testid="text-photo-modal-title">Gérer les photos</h3>
-                <button onClick={closeEditor} className="p-2 hover:bg-stone-100 rounded-full" data-testid="button-close-photo-modal">
-                  <X size={20} className="text-stone-600" />
+                <button 
+                  onClick={closeEditor} 
+                  className="p-2 bg-stone-100 hover:bg-stone-200 rounded-full transition-colors"
+                  data-testid="button-close-photo-modal"
+                >
+                  <X size={24} className="text-stone-700" />
                 </button>
               </div>
 

@@ -1,8 +1,21 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Type, Camera, Video, X, QrCode, Layout, Plus, LayoutTemplate, Sparkles, ImagePlus, Wand2, Image as ImageIcon, Users, Trash2, Lightbulb, Baby, Heart, Star, Cake, Sun, Moon, Gift, Footprints, Smile } from "lucide-react";
+import { ChevronLeft, ChevronRight, Type, Camera, Video, X, QrCode, Layout, Plus, LayoutTemplate, Sparkles, ImagePlus, Wand2, Image as ImageIcon, Users, Trash2, Lightbulb, Baby, Heart, Star, Cake, Sun, Moon, Gift, Footprints, Smile, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
+
+import treeBackground1 from "@assets/generated_images/watercolor_family_tree_background.png";
+import treeBackground2 from "@assets/generated_images/minimalist_elegant_tree_background.png";
+import treeBackground3 from "@assets/generated_images/vintage_sepia_tree_background.png";
+import treeBackground4 from "@assets/generated_images/pastel_whimsical_tree_background.png";
+
+const treeBackgrounds = [
+  { id: "watercolor", name: "Aquarelle", src: treeBackground1 },
+  { id: "minimalist", name: "Élégant", src: treeBackground2 },
+  { id: "vintage", name: "Vintage", src: treeBackground3 },
+  { id: "pastel", name: "Pastel", src: treeBackground4 },
+  { id: "none", name: "Sans fond", src: "" },
+];
 
 type EditorMode = "view" | "text" | "photo" | "video" | "qrcode" | "layout";
 type LayoutStyle = "auto" | "classic" | "modern" | "elegant" | "playful" | "minimal" | "story" | "colorful" | "family" | "familyTree" | "journi" | "mosaic";
@@ -42,6 +55,7 @@ type BookPage = {
   content: ContentItem[];
   familyMembers?: FamilyMember[];
   treeMembers?: TreeMember[];
+  backgroundImage?: string;
 };
 
 const sampleImages = [
@@ -230,6 +244,9 @@ export default function EditBook() {
   const [showTreeEditor, setShowTreeEditor] = useState(false);
   const [editingTreeMemberIndex, setEditingTreeMemberIndex] = useState<number | null>(null);
   const [selectedTreeLevel, setSelectedTreeLevel] = useState<TreeLevel>("parents");
+  const [showBackgroundSelector, setShowBackgroundSelector] = useState(false);
+  const [pendingTemplate, setPendingTemplate] = useState<InspirationTemplate | null>(null);
+  const [selectedBackground, setSelectedBackground] = useState<string>(treeBackgrounds[0].src);
   
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const familyPhotoInputRef = useRef<HTMLInputElement>(null);
@@ -393,6 +410,13 @@ export default function EditBook() {
   };
 
   const addInspirationPage = (template: InspirationTemplate) => {
+    if (template.layoutStyle === "familyTree") {
+      setPendingTemplate(template);
+      setSelectedBackground(treeBackgrounds[0].src);
+      setShowBackgroundSelector(true);
+      return;
+    }
+    
     const newPage: BookPage = {
       id: Date.now(),
       title: template.title,
@@ -402,13 +426,35 @@ export default function EditBook() {
       images: [],
       layoutStyle: template.layoutStyle,
       content: [],
-      familyMembers: template.layoutStyle === "family" ? [] : undefined,
-      treeMembers: template.layoutStyle === "familyTree" ? [] : undefined
+      familyMembers: template.layoutStyle === "family" ? [] : undefined
     };
     setPages([...pages, newPage]);
     setCurrentPageIndex(pages.length);
     setShowInspirationModal(false);
     setSelectedCategory(null);
+  };
+
+  const confirmAddTreePage = () => {
+    if (!pendingTemplate) return;
+    
+    const newPage: BookPage = {
+      id: Date.now(),
+      title: pendingTemplate.title,
+      subtitle: pendingTemplate.subtitle,
+      date: new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, ' / '),
+      description: pendingTemplate.description,
+      images: [],
+      layoutStyle: pendingTemplate.layoutStyle,
+      content: [],
+      treeMembers: [],
+      backgroundImage: selectedBackground || undefined
+    };
+    setPages([...pages, newPage]);
+    setCurrentPageIndex(pages.length);
+    setShowInspirationModal(false);
+    setSelectedCategory(null);
+    setShowBackgroundSelector(false);
+    setPendingTemplate(null);
   };
 
   const getCurrentLayoutName = () => {
@@ -725,20 +771,30 @@ export default function EditBook() {
       
       const hasAnyMembers = members.length > 0;
       
+      const bgImage = page.backgroundImage;
+      
       if (!hasAnyMembers) {
         return (
-          <div className="w-full h-full bg-gradient-to-b from-emerald-50 via-white to-green-50 p-4 flex flex-col items-center justify-center" data-testid="layout-familytree-empty">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center mb-3 shadow-lg">
-              <span className="text-2xl">🌳</span>
-            </div>
-            <h2 className="text-lg font-serif font-bold text-stone-800 mb-1" data-testid="text-page-title">{title}</h2>
-            <h3 className="text-sm font-serif text-stone-500 mb-3" data-testid="text-page-subtitle">{subtitle}</h3>
-            <p className="text-xs text-stone-400 text-center max-w-[200px] mb-4">
-              Construisez votre arbre généalogique en ajoutant les membres de la famille
-            </p>
-            <div className="flex items-center gap-1.5 text-emerald-600">
-              <Plus size={14} />
-              <span className="text-xs font-medium">Cliquez sur "Texte" pour ajouter</span>
+          <div 
+            className="w-full h-full p-4 flex flex-col items-center justify-center relative" 
+            data-testid="layout-familytree-empty"
+            style={bgImage ? { backgroundImage: `url(${bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
+          >
+            {!bgImage && <div className="absolute inset-0 bg-gradient-to-b from-emerald-50 via-white to-green-50" />}
+            {bgImage && <div className="absolute inset-0 bg-white/40" />}
+            <div className="relative z-10 flex flex-col items-center">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center mb-3 shadow-lg">
+                <span className="text-2xl">🌳</span>
+              </div>
+              <h2 className="text-lg font-serif font-bold text-stone-800 mb-1" data-testid="text-page-title">{title}</h2>
+              <h3 className="text-sm font-serif text-stone-500 mb-3" data-testid="text-page-subtitle">{subtitle}</h3>
+              <p className="text-xs text-stone-400 text-center max-w-[200px] mb-4">
+                Construisez votre arbre généalogique en ajoutant les membres de la famille
+              </p>
+              <div className="flex items-center gap-1.5 text-emerald-600">
+                <Plus size={14} />
+                <span className="text-xs font-medium">Cliquez sur "Arbre" pour ajouter</span>
+              </div>
             </div>
           </div>
         );
@@ -774,13 +830,20 @@ export default function EditBook() {
       };
 
       return (
-        <div className="w-full h-full bg-gradient-to-b from-emerald-50 via-white to-green-50 p-3 flex flex-col" data-testid="layout-familytree">
-          <div className="text-center mb-2">
+        <div 
+          className="w-full h-full p-3 flex flex-col relative" 
+          data-testid="layout-familytree"
+          style={bgImage ? { backgroundImage: `url(${bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
+        >
+          {!bgImage && <div className="absolute inset-0 bg-gradient-to-b from-emerald-50 via-white to-green-50" />}
+          {bgImage && <div className="absolute inset-0 bg-white/30" />}
+          
+          <div className="text-center mb-2 relative z-10">
             <h2 className="text-base font-serif font-bold text-stone-800" data-testid="text-page-title">{title}</h2>
             <h3 className="text-xs font-serif text-emerald-600" data-testid="text-page-subtitle">{subtitle}</h3>
           </div>
           
-          <div className="flex-1 flex flex-col justify-center relative">
+          <div className="flex-1 flex flex-col justify-center relative z-10">
             <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }}>
               {grandparents.length > 0 && parents.length > 0 && (
                 <line 
@@ -1391,6 +1454,110 @@ export default function EditBook() {
                   <Sparkles size={12} className="text-amber-500" />
                   Les pages sont entièrement personnalisables après ajout
                 </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Background Selector Modal for Family Tree */}
+      <AnimatePresence>
+        {showBackgroundSelector && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
+            onClick={() => {
+              setShowBackgroundSelector(false);
+              setPendingTemplate(null);
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl w-full max-w-md overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-4 border-b border-stone-100 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center">
+                    <span className="text-xl">🌳</span>
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-stone-800" data-testid="text-background-modal-title">Choisir un arrière-plan</h3>
+                    <p className="text-xs text-stone-500">Personnalisez votre arbre généalogique</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => {
+                    setShowBackgroundSelector(false);
+                    setPendingTemplate(null);
+                  }}
+                  className="p-2 hover:bg-stone-100 rounded-full"
+                  data-testid="button-close-background-modal"
+                >
+                  <X size={20} className="text-stone-500" />
+                </button>
+              </div>
+
+              <div className="p-4">
+                <div className="grid grid-cols-2 gap-3">
+                  {treeBackgrounds.map((bg) => (
+                    <button
+                      key={bg.id}
+                      onClick={() => setSelectedBackground(bg.src)}
+                      className={`relative aspect-[3/4] rounded-xl overflow-hidden border-3 transition-all ${
+                        selectedBackground === bg.src 
+                          ? 'border-emerald-500 ring-2 ring-emerald-200' 
+                          : 'border-stone-200 hover:border-stone-300'
+                      }`}
+                      data-testid={`button-bg-${bg.id}`}
+                    >
+                      {bg.src ? (
+                        <img 
+                          src={bg.src} 
+                          alt={bg.name} 
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-b from-emerald-50 via-white to-green-50 flex items-center justify-center">
+                          <span className="text-3xl">🌳</span>
+                        </div>
+                      )}
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2">
+                        <p className="text-white text-xs font-medium text-center">{bg.name}</p>
+                      </div>
+                      {selectedBackground === bg.src && (
+                        <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center">
+                          <Check size={14} className="text-white" />
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="p-4 border-t border-stone-100 flex gap-3">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    setShowBackgroundSelector(false);
+                    setPendingTemplate(null);
+                  }}
+                  data-testid="button-cancel-background"
+                >
+                  Annuler
+                </Button>
+                <Button
+                  className="flex-1 bg-gradient-to-r from-emerald-500 to-green-500 text-white hover:from-emerald-600 hover:to-green-600"
+                  onClick={confirmAddTreePage}
+                  data-testid="button-confirm-background"
+                >
+                  Ajouter la page
+                </Button>
               </div>
             </motion.div>
           </motion.div>

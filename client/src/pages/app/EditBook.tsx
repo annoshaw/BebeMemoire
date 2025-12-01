@@ -1,8 +1,8 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Type, Camera, Video, X, QrCode, Layout, Plus, LayoutTemplate, Sparkles, ImagePlus, Wand2, Image as ImageIcon, Users, Trash2, Lightbulb, Baby, Heart, Star, Cake, Sun, Moon, Gift, Footprints, Smile, Check } from "lucide-react";
+import { ChevronLeft, ChevronRight, Type, Camera, Video, X, QrCode, Layout, Plus, LayoutTemplate, Sparkles, ImagePlus, Wand2, Image as ImageIcon, Users, Trash2, Lightbulb, Baby, Heart, Star, Cake, Sun, Moon, Gift, Footprints, Smile, Check, Save, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link } from "wouter";
+import { Link, useParams } from "wouter";
 
 import treeBackground1 from "@assets/generated_images/watercolor_family_tree_background.png";
 import treeBackground2 from "@assets/generated_images/minimalist_elegant_tree_background.png";
@@ -228,6 +228,9 @@ const extractDominantColor = (imageUrl: string): Promise<{ primary: string; seco
 };
 
 export default function EditBook() {
+  const params = useParams<{ id: string }>();
+  const bookId = params.id;
+  
   const [editorMode, setEditorMode] = useState<EditorMode>("view");
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [selectedText, setSelectedText] = useState("");
@@ -252,6 +255,10 @@ export default function EditBook() {
   const [backgroundIndex, setBackgroundIndex] = useState(0);
   const [isGeneratingAIBackground, setIsGeneratingAIBackground] = useState(false);
   const [selectedAIStyle, setSelectedAIStyle] = useState<string>("whimsical");
+  const [isLoadingPages, setIsLoadingPages] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const familyPhotoInputRef = useRef<HTMLInputElement>(null);
@@ -261,6 +268,7 @@ export default function EditBook() {
   const videoCameraRef = useRef<HTMLInputElement>(null);
   const videoGalleryRef = useRef<HTMLInputElement>(null);
   const constraintsRef = useRef<HTMLDivElement>(null);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const babyName = typeof window !== "undefined" ? localStorage.getItem("babyName") || "Léo" : "Léo";
   const [selectedVideoUrl, setSelectedVideoUrl] = useState("");
@@ -368,6 +376,107 @@ export default function EditBook() {
   ]);
 
   const currentPage = pages[currentPageIndex];
+
+  // Load pages from backend on mount
+  useEffect(() => {
+    const loadPages = async () => {
+      if (!bookId) {
+        setIsLoadingPages(false);
+        return;
+      }
+      
+      try {
+        const response = await fetch(`/api/books/${bookId}/pages`, {
+          credentials: 'include'
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.pages && data.pages.length > 0) {
+            const loadedPages = data.pages.map((p: any, idx: number) => ({
+              id: p.id || Date.now() + idx,
+              title: p.title || "",
+              subtitle: p.subtitle || "",
+              date: p.date || "",
+              description: p.description || "",
+              images: Array.isArray(p.images) ? p.images : [],
+              layoutStyle: p.layoutStyle || "auto",
+              content: Array.isArray(p.content) ? p.content : [],
+              treeMembers: p.treeMembers,
+              familyMembers: p.familyMembers,
+              backgroundImage: p.backgroundImage,
+            }));
+            setPages(loadedPages);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading pages:", error);
+      } finally {
+        setIsLoadingPages(false);
+      }
+    };
+    
+    loadPages();
+  }, [bookId]);
+
+  // Auto-save pages when they change
+  const savePages = useCallback(async (pagesToSave: BookPage[]) => {
+    if (!bookId || isLoadingPages) return;
+    
+    setIsSaving(true);
+    try {
+      const pagesData = pagesToSave.map((p, index) => ({
+        pageIndex: index,
+        title: p.title,
+        subtitle: p.subtitle,
+        date: p.date,
+        description: p.description || "",
+        layoutStyle: p.layoutStyle,
+        images: p.images,
+        content: p.content,
+        treeMembers: p.treeMembers,
+        familyMembers: p.familyMembers,
+        backgroundImage: p.backgroundImage,
+      }));
+      
+      const response = await fetch(`/api/books/${bookId}/pages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ pages: pagesData })
+      });
+      
+      if (response.ok) {
+        setLastSaved(new Date());
+        setHasUnsavedChanges(false);
+      }
+    } catch (error) {
+      console.error("Error saving pages:", error);
+    } finally {
+      setIsSaving(false);
+    }
+  }, [bookId, isLoadingPages]);
+
+  // Debounced auto-save effect
+  useEffect(() => {
+    if (isLoadingPages || !bookId) return;
+    
+    setHasUnsavedChanges(true);
+    
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    
+    saveTimeoutRef.current = setTimeout(() => {
+      savePages(pages);
+    }, 2000);
+    
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [pages, savePages, isLoadingPages, bookId]);
 
   useEffect(() => {
     if (currentPage.layoutStyle === "colorful" && currentPage.images.length > 0) {

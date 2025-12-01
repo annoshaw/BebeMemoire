@@ -536,5 +536,57 @@ Use soft, warm colors that feel loving and nostalgic.`;
     }
   });
 
+  // BOOK PAGES ROUTES
+
+  // Get all pages for a book
+  app.get("/api/books/:bookId/pages", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const book = await storage.getBook(req.params.bookId);
+      
+      if (!book) {
+        return res.status(404).json({ message: "Livre non trouvé" });
+      }
+      
+      if (book.userId !== userId) {
+        return res.status(403).json({ message: "Accès refusé" });
+      }
+      
+      const pages = await storage.getBookPages(req.params.bookId);
+      res.json({ pages });
+    } catch (error) {
+      console.error("Get book pages error:", error);
+      res.status(500).json({ message: "Erreur lors de la récupération des pages" });
+    }
+  });
+
+  // Save all pages for a book
+  app.post("/api/books/:bookId/pages", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const book = await storage.getBook(req.params.bookId);
+      
+      if (!book) {
+        return res.status(404).json({ message: "Livre non trouvé" });
+      }
+      
+      if (book.userId !== userId) {
+        return res.status(403).json({ message: "Accès refusé" });
+      }
+      
+      const { pages } = req.body;
+      
+      if (!Array.isArray(pages)) {
+        return res.status(400).json({ message: "Format de pages invalide" });
+      }
+      
+      const savedPages = await storage.saveBookPages(req.params.bookId, pages);
+      res.json({ pages: savedPages, message: "Pages sauvegardées avec succès" });
+    } catch (error) {
+      console.error("Save book pages error:", error);
+      res.status(500).json({ message: "Erreur lors de la sauvegarde des pages" });
+    }
+  });
+
   return httpServer;
 }

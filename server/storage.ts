@@ -1,6 +1,6 @@
 import { db } from "./db";
-import { users, books, memories, userPlans, qrCodes, passwordResetTokens, type User, type InsertUser, type UpsertUser, type Book, type InsertBook, type Memory, type InsertMemory, type UserPlan, type InsertUserPlan, type QRCode, type InsertQRCode, type PasswordResetToken, type InsertPasswordResetToken } from "@shared/schema";
-import { eq, desc, and, gt } from "drizzle-orm";
+import { users, books, memories, userPlans, qrCodes, passwordResetTokens, bookPages, type User, type InsertUser, type UpsertUser, type Book, type InsertBook, type Memory, type InsertMemory, type UserPlan, type InsertUserPlan, type QRCode, type InsertQRCode, type PasswordResetToken, type InsertPasswordResetToken, type BookPage, type InsertBookPage } from "@shared/schema";
+import { eq, desc, and, gt, asc } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (Replit Auth)
@@ -39,6 +39,11 @@ export interface IStorage {
   getValidPasswordResetToken(token: string): Promise<PasswordResetToken | undefined>;
   markPasswordResetTokenAsUsed(token: string): Promise<void>;
   updateUserPassword(userId: string, hashedPassword: string): Promise<void>;
+  
+  // Book Page operations
+  getBookPages(bookId: string): Promise<BookPage[]>;
+  saveBookPages(bookId: string, pages: InsertBookPage[]): Promise<BookPage[]>;
+  deleteBookPages(bookId: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -202,6 +207,35 @@ export class DatabaseStorage implements IStorage {
     await db.update(users)
       .set({ password: hashedPassword, updatedAt: new Date() })
       .where(eq(users.id, userId));
+  }
+
+  // Book Page operations
+  async getBookPages(bookId: string): Promise<BookPage[]> {
+    return db.select().from(bookPages).where(eq(bookPages.bookId, bookId)).orderBy(asc(bookPages.pageIndex));
+  }
+
+  async saveBookPages(bookId: string, pages: InsertBookPage[]): Promise<BookPage[]> {
+    // Delete existing pages for this book first
+    await db.delete(bookPages).where(eq(bookPages.bookId, bookId));
+    
+    if (pages.length === 0) {
+      return [];
+    }
+    
+    // Insert new pages with correct book ID and page index
+    const pagesWithBookId = pages.map((page, index) => ({
+      ...page,
+      bookId,
+      pageIndex: index,
+    }));
+    
+    const result = await db.insert(bookPages).values(pagesWithBookId).returning();
+    return result;
+  }
+
+  async deleteBookPages(bookId: string): Promise<boolean> {
+    const result = await db.delete(bookPages).where(eq(bookPages.bookId, bookId)).returning();
+    return result.length > 0;
   }
 }
 

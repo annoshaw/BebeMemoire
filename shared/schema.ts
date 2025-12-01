@@ -138,3 +138,31 @@ export const insertPasswordResetTokenSchema = createInsertSchema(passwordResetTo
 
 export type InsertPasswordResetToken = z.infer<typeof insertPasswordResetTokenSchema>;
 export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
+
+// Book pages table for storing album pages with their content
+export const bookPages = pgTable("book_pages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  bookId: varchar("book_id").notNull().references(() => books.id, { onDelete: "cascade" }),
+  pageIndex: integer("page_index").notNull(),
+  title: text("title").notNull().default(""),
+  subtitle: text("subtitle").default(""),
+  date: text("date").default(""),
+  description: text("description").default(""),
+  layoutStyle: text("layout_style").default("single"),
+  images: jsonb("images").default([]),
+  content: jsonb("content").default([]),
+  treeMembers: jsonb("tree_members"),
+  familyMembers: jsonb("family_members"),
+  backgroundImage: text("background_image"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertBookPageSchema = createInsertSchema(bookPages).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertBookPage = z.infer<typeof insertBookPageSchema>;
+export type BookPage = typeof bookPages.$inferSelect;

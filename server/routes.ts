@@ -5,6 +5,14 @@ import bcrypt from "bcryptjs";
 import { insertUserSchema, insertBookSchema, insertMemorySchema, type User } from "@shared/schema";
 import { fromError } from "zod-validation-error";
 import { setupAuth, isAuthenticated } from "./replitAuth";
+import OpenAI from "openai";
+
+// the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
+// This is using Replit's AI Integrations service, which provides OpenAI-compatible API access without requiring your own OpenAI API key.
+const openai = new OpenAI({
+  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY
+});
 
 // Extend Express Request to include user
 declare global {
@@ -471,6 +479,60 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Delete memory error:", error);
       res.status(500).json({ message: "Erreur lors de la suppression du souvenir" });
+    }
+  });
+
+  // AI ROUTES
+
+  // Generate family tree background with AI
+  app.post("/api/ai/generate-tree-background", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { memberCount, childName, style } = req.body;
+      
+      const styleDescriptions: Record<string, string> = {
+        whimsical: "whimsical watercolor style with soft pastel colors, dreamy atmosphere, cute tree houses, lanterns, and hearts",
+        classic: "classic elegant style with ornate golden frames, vintage botanical illustrations, and warm sepia tones",
+        modern: "modern minimalist style with clean geometric shapes, soft gradients, and contemporary pastel colors",
+        nature: "natural organic style with lush green foliage, delicate flowers, butterflies, and soft sunlight filtering through leaves",
+        fairy: "magical fairy tale style with enchanted forest, sparkles, mushrooms, and soft glowing lights"
+      };
+      
+      const selectedStyle = styleDescriptions[style] || styleDescriptions.whimsical;
+      
+      const prompt = `Create a beautiful family tree background illustration in ${selectedStyle}. 
+The design should have a large decorative tree in the center with space for ${memberCount || 4} family member photos arranged on branches. 
+The tree should have elegant branches spreading outward with decorative leaves and flowers.
+Include subtle decorative elements like birds, butterflies, or hearts.
+The background should be soft and dreamy, perfect for a baby memory book.
+${childName ? `This is for a child named ${childName}.` : ''}
+The image should be vertical/portrait orientation, suitable as a page background.
+Leave clear circular spaces on the branches where family photos can be placed.
+Use soft, warm colors that feel loving and nostalgic.`;
+
+      const response = await openai.images.generate({
+        model: "gpt-image-1",
+        prompt,
+        size: "1024x1024",
+      });
+
+      if (!response.data || !response.data[0]?.b64_json) {
+        throw new Error("Aucune image générée");
+      }
+
+      const base64 = response.data[0].b64_json;
+      const dataUrl = `data:image/png;base64,${base64}`;
+      
+      res.json({ 
+        success: true, 
+        imageUrl: dataUrl,
+        message: "Arrière-plan généré avec succès" 
+      });
+    } catch (error: any) {
+      console.error("AI generate tree background error:", error);
+      res.status(500).json({ 
+        message: "Erreur lors de la génération de l'arrière-plan",
+        error: error.message 
+      });
     }
   });
 

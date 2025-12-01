@@ -250,6 +250,8 @@ export default function EditBook() {
   const [pendingTemplate, setPendingTemplate] = useState<InspirationTemplate | null>(null);
   const [selectedBackground, setSelectedBackground] = useState<string>(treeBackgrounds[0].src);
   const [backgroundIndex, setBackgroundIndex] = useState(0);
+  const [isGeneratingAIBackground, setIsGeneratingAIBackground] = useState(false);
+  const [selectedAIStyle, setSelectedAIStyle] = useState<string>("whimsical");
   
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const familyPhotoInputRef = useRef<HTMLInputElement>(null);
@@ -2412,6 +2414,84 @@ export default function EditBook() {
                     {(currentPage.treeMembers || []).filter(m => m.level === "child").length} enfants
                   </span>
                 </div>
+                
+                <div className="mb-4 p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-100">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-lg">✨</span>
+                    <span className="text-sm font-medium text-purple-800">Fond généré par IA</span>
+                  </div>
+                  <div className="grid grid-cols-5 gap-1.5 mb-3">
+                    {[
+                      { id: "whimsical", label: "Fantaisie", emoji: "🏡" },
+                      { id: "classic", label: "Classique", emoji: "🖼️" },
+                      { id: "modern", label: "Moderne", emoji: "🎨" },
+                      { id: "nature", label: "Nature", emoji: "🌿" },
+                      { id: "fairy", label: "Féerique", emoji: "🧚" },
+                    ].map(style => (
+                      <button
+                        key={style.id}
+                        onClick={() => setSelectedAIStyle(style.id)}
+                        className={`flex flex-col items-center p-1.5 rounded-lg text-[9px] transition-all ${
+                          selectedAIStyle === style.id
+                            ? "bg-purple-600 text-white shadow-md scale-105"
+                            : "bg-white text-stone-600 hover:bg-purple-50"
+                        }`}
+                        data-testid={`button-ai-style-${style.id}`}
+                      >
+                        <span className="text-base mb-0.5">{style.emoji}</span>
+                        <span className="leading-tight">{style.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    onClick={async () => {
+                      setIsGeneratingAIBackground(true);
+                      try {
+                        const memberCount = (currentPage.treeMembers || []).length;
+                        const response = await fetch("/api/ai/generate-tree-background", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            memberCount,
+                            childName: babyName,
+                            style: selectedAIStyle
+                          })
+                        });
+                        const data = await response.json();
+                        if (data.success && data.imageUrl) {
+                          setPages(prevPages => {
+                            const newPages = [...prevPages];
+                            newPages[currentPageIndex] = {
+                              ...newPages[currentPageIndex],
+                              backgroundImage: data.imageUrl
+                            };
+                            return newPages;
+                          });
+                        }
+                      } catch (error) {
+                        console.error("Error generating AI background:", error);
+                      } finally {
+                        setIsGeneratingAIBackground(false);
+                      }
+                    }}
+                    disabled={isGeneratingAIBackground}
+                    className="w-full py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg text-sm font-medium hover:from-purple-700 hover:to-pink-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    data-testid="button-generate-ai-background"
+                  >
+                    {isGeneratingAIBackground ? (
+                      <>
+                        <span className="animate-spin">🔄</span>
+                        <span>Génération en cours...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>🎨</span>
+                        <span>Générer un fond unique</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
                 <Button onClick={() => setShowTreeEditor(false)} className="w-full bg-emerald-600 hover:bg-emerald-700" data-testid="button-save-tree">
                   Enregistrer
                 </Button>

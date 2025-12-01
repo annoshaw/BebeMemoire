@@ -9,6 +9,7 @@ import Prototype from "@/pages/app/Prototype";
 import CreateAlbum from "@/pages/app/CreateAlbum";
 import EditBook from "@/pages/app/EditBook";
 import EditProfile from "@/pages/app/EditProfile";
+import NotificationSettings from "@/pages/app/NotificationSettings";
 import Register from "@/pages/Register";
 import Login from "@/pages/Login";
 import ForgotPassword from "@/pages/ForgotPassword";
@@ -25,6 +26,7 @@ function Router() {
       <Route path="/app/edit" component={EditBook} />
       <Route path="/app/book/:id/edit" component={EditBook} />
       <Route path="/app/profile" component={EditProfile} />
+      <Route path="/app/notifications" component={NotificationSettings} />
       <Route path="/register" component={Register} />
       <Route path="/login" component={Login} />
       <Route path="/forgot-password" component={ForgotPassword} />

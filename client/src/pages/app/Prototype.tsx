@@ -676,13 +676,19 @@ export default function Prototype() {
                 </button>
               </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem className="cursor-pointer">
+              <DropdownMenuItem 
+                className="cursor-pointer"
+                onClick={() => setLocation("/app/profile")}
+              >
                 <User size={16} className="mr-2" />
                 <span>Mon Profil</span>
               </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer">
-                <Settings size={16} className="mr-2" />
-                <span>Paramètres</span>
+              <DropdownMenuItem 
+                className="cursor-pointer"
+                onClick={() => setLocation("/app/notifications")}
+              >
+                <Bell size={16} className="mr-2" />
+                <span>Notifications</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem 

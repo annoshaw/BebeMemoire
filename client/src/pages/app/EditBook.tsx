@@ -5,13 +5,20 @@ import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 
 type EditorMode = "view" | "text" | "photo" | "video" | "qrcode" | "layout";
-type LayoutStyle = "auto" | "classic" | "modern" | "elegant" | "playful" | "minimal" | "story" | "colorful";
+type LayoutStyle = "auto" | "classic" | "modern" | "elegant" | "playful" | "minimal" | "story" | "colorful" | "family";
 
 type ContentItem = {
   type: "text" | "photo" | "video" | "qrcode";
   value?: string;
   videoUrl?: string;
   imageUrl?: string;
+};
+
+type FamilyMember = {
+  id: number;
+  photo: string;
+  name: string;
+  description: string;
 };
 
 type BookPage = {
@@ -23,6 +30,7 @@ type BookPage = {
   images: string[];
   layoutStyle: LayoutStyle;
   content: ContentItem[];
+  familyMembers?: FamilyMember[];
 };
 
 const sampleImages = [
@@ -43,6 +51,7 @@ const layoutStyles = [
   { id: "minimal", name: "Minimal", icon: "◻️", desc: "Épuré et simple", color: "from-stone-500 to-slate-500" },
   { id: "story", name: "Histoire", icon: "📖", desc: "Narration visuelle", color: "from-indigo-500 to-blue-500" },
   { id: "colorful", name: "Coloré", icon: "🌈", desc: "Couleurs extraites de la photo", color: "from-pink-500 to-yellow-500" },
+  { id: "family", name: "Famille", icon: "👨‍👩‍👧‍👦", desc: "Portraits de famille (1-4 personnes)", color: "from-rose-400 to-orange-400" },
 ];
 
 const extractDominantColor = (imageUrl: string): Promise<{ primary: string; secondary: string; text: string }> => {

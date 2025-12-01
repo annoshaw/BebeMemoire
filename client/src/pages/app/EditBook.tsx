@@ -54,6 +54,8 @@ export default function EditBook() {
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
+  const videoCameraRef = useRef<HTMLInputElement>(null);
+  const videoGalleryRef = useRef<HTMLInputElement>(null);
   
   const babyName = typeof window !== "undefined" ? localStorage.getItem("babyName") || "Léo" : "Léo";
   const [selectedVideoUrl, setSelectedVideoUrl] = useState("");
@@ -898,13 +900,7 @@ export default function EditBook() {
 
               <div className="grid grid-cols-2 gap-3 mb-4">
                 <button
-                  onClick={() => {
-                    const input = document.createElement('input');
-                    input.type = 'file';
-                    input.accept = 'video/*';
-                    input.capture = 'environment';
-                    input.click();
-                  }}
+                  onClick={() => videoCameraRef.current?.click()}
                   className="flex flex-col items-center gap-3 p-6 border-2 border-dashed border-stone-200 rounded-xl hover:border-red-400 hover:bg-red-50 transition-colors"
                   data-testid="button-record-video"
                 >
@@ -918,12 +914,7 @@ export default function EditBook() {
                 </button>
 
                 <button
-                  onClick={() => {
-                    const input = document.createElement('input');
-                    input.type = 'file';
-                    input.accept = 'video/*';
-                    input.click();
-                  }}
+                  onClick={() => videoGalleryRef.current?.click()}
                   className="flex flex-col items-center gap-3 p-6 border-2 border-dashed border-stone-200 rounded-xl hover:border-purple-500 hover:bg-purple-50 transition-colors"
                   data-testid="button-video-gallery"
                 >
@@ -936,6 +927,23 @@ export default function EditBook() {
                   </div>
                 </button>
               </div>
+
+              <input
+                ref={videoCameraRef}
+                type="file"
+                accept="video/*"
+                capture="environment"
+                className="hidden"
+                data-testid="input-video-camera"
+              />
+
+              <input
+                ref={videoGalleryRef}
+                type="file"
+                accept="video/*"
+                className="hidden"
+                data-testid="input-video-gallery"
+              />
 
               <p className="text-xs text-stone-500 text-center mb-4" data-testid="text-video-info">
                 La vidéo sera convertie en QR code pour l'impression du livre

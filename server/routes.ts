@@ -598,7 +598,7 @@ export async function registerRoutes(
     }
   });
 
-  // Generate milestone notifications for a book
+  // Generate milestone notifications for a book (status-aware)
   app.post("/api/books/:bookId/generate-notifications", requireAuth, async (req: Request, res: Response) => {
     try {
       const userId = (req as any).userId;
@@ -613,20 +613,38 @@ export async function registerRoutes(
       }
 
       if (!book.birthDate) {
-        return res.status(400).json({ message: "Date de naissance requise pour générer les rappels" });
+        return res.status(400).json({ message: "Date requise pour générer les rappels" });
       }
 
       // Delete existing notifications for this book
       await storage.deleteNotificationsByBookId(req.params.bookId);
 
-      // Generate milestone notifications
-      const milestones = generateMilestoneNotifications(book.birthDate, book.childName || "Bébé", req.params.bookId, userId);
+      const childName = book.childName || "Bébé";
+      const babyStatus = book.babyStatus || "born";
+      let notifications: any[] = [];
+
+      if (babyStatus === "born") {
+        // Born baby: age-based milestones
+        notifications = generateBornMilestones(book.birthDate, childName, req.params.bookId, userId);
+      } else if (babyStatus === "expecting") {
+        // Expecting: pregnancy countdown until due date
+        notifications = generatePregnancyNotifications(book.birthDate, childName, req.params.bookId, userId);
+      } else if (babyStatus === "adoption") {
+        // Adoption: weekly reminders on chosen weekday
+        const adoptionNotifications = generateAdoptionNotifications(book.birthDate, childName, req.params.bookId, userId, book.notificationWeekday);
+        if (adoptionNotifications === null) {
+          return res.status(400).json({ 
+            message: "Veuillez d'abord choisir votre jour de rappel hebdomadaire dans les paramètres du livre" 
+          });
+        }
+        notifications = adoptionNotifications;
+      }
       
-      if (milestones.length > 0) {
-        await storage.createManyNotifications(milestones);
+      if (notifications.length > 0) {
+        await storage.createManyNotifications(notifications);
       }
 
-      res.json({ message: `${milestones.length} rappels générés pour ${book.childName}`, count: milestones.length });
+      res.json({ message: `${notifications.length} rappels générés pour ${childName}`, count: notifications.length });
     } catch (error) {
       console.error("Generate notifications error:", error);
       res.status(500).json({ message: "Erreur lors de la génération des rappels" });
@@ -675,8 +693,10 @@ export async function registerRoutes(
   return httpServer;
 }
 
-// Helper function to generate milestone notifications based on baby's birth date
-function generateMilestoneNotifications(birthDate: Date, childName: string, bookId: string, userId: string) {
+// ============ MILESTONE CATALOGS BY BABY STATUS ============
+
+// BORN BABY: Age-based milestones from birth date
+function generateBornMilestones(birthDate: Date, childName: string, bookId: string, userId: string) {
   const milestones = [
     // First weeks
     { days: 7, title: "1 semaine", message: `${childName} a 1 semaine ! Documentez ces premiers moments précieux.`, icon: "baby" },
@@ -724,6 +744,119 @@ function generateMilestoneNotifications(birthDate: Date, childName: string, book
         actionUrl: `/app/book/${bookId}/edit`,
       });
     }
+  }
+
+  return notifications;
+}
+
+// EXPECTING: Pregnancy countdown until due date
+function generatePregnancyNotifications(dueDate: Date, childName: string, bookId: string, userId: string) {
+  const pregnancyMilestones = [
+    // Weekly countdown in final weeks
+    { weeksLeft: 12, title: "3e trimestre", message: `Plus que 12 semaines ! C'est le dernier trimestre avant l'arrivée de ${childName}.`, icon: "baby" },
+    { weeksLeft: 10, title: "10 semaines", message: `Plus que 10 semaines ! Avez-vous commencé à préparer la chambre ?`, icon: "heart" },
+    { weeksLeft: 8, title: "8 semaines", message: `Plus que 8 semaines avant l'arrivée de ${childName} !`, icon: "star" },
+    { weeksLeft: 6, title: "6 semaines", message: `Plus que 6 semaines ! Les préparatifs avancent bien ?`, icon: "baby" },
+    { weeksLeft: 4, title: "1 mois !", message: `Plus qu'un mois avant l'arrivée de ${childName} ! Avez-vous préparé la valise de maternité ?`, icon: "heart" },
+    { weeksLeft: 3, title: "3 semaines", message: `Plus que 3 semaines ! Le compte à rebours a commencé.`, icon: "star" },
+    { weeksLeft: 2, title: "2 semaines", message: `Plus que 2 semaines avant la rencontre avec ${childName} !`, icon: "baby" },
+    { weeksLeft: 1, title: "1 semaine !", message: `Plus qu'une semaine ! Bientôt le grand jour.`, icon: "heart" },
+    { weeksLeft: 0, title: "Jour J !", message: `C'est le jour prévu pour l'arrivée de ${childName} ! Bon courage !`, icon: "cake" },
+  ];
+
+  const now = new Date();
+  now.setHours(0, 0, 0, 0); // Normalize to start of day
+  const notifications: any[] = [];
+
+  // Check if due date has already passed
+  const dueDateNormalized = new Date(dueDate);
+  dueDateNormalized.setHours(0, 0, 0, 0);
+  
+  if (dueDateNormalized < now) {
+    // Due date is in the past, don't generate countdown notifications
+    return notifications;
+  }
+
+  for (const milestone of pregnancyMilestones) {
+    const triggerDate = new Date(dueDate);
+    triggerDate.setDate(triggerDate.getDate() - (milestone.weeksLeft * 7));
+    triggerDate.setHours(9, 0, 0, 0); // Set to 9 AM for user-friendly timing
+    
+    // Only create notifications for future dates (starting from today)
+    const daysDiff = Math.floor((triggerDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    if (daysDiff >= 0) { // Only future notifications
+      notifications.push({
+        userId,
+        bookId,
+        type: "pregnancy",
+        title: milestone.title,
+        message: milestone.message,
+        icon: milestone.icon,
+        triggerDate,
+        milestoneAge: milestone.weeksLeft * -7, // Negative for countdown
+        actionUrl: `/app/book/${bookId}/edit`,
+      });
+    }
+  }
+
+  return notifications;
+}
+
+// ADOPTION: Weekly reminders on user-chosen weekday
+// Returns null if weekday is not set (caller should handle HTTP 400)
+function generateAdoptionNotifications(arrivalDate: Date, childName: string, bookId: string, userId: string, weekday: number | null): any[] | null {
+  // Guard: weekday must be set for adoptions
+  if (weekday === null || weekday === undefined) {
+    return null; // Signal that weekday is required
+  }
+  
+  const notifications: any[] = [];
+  const now = new Date();
+  const targetWeekday = weekday;
+  
+  // Generate weekly reminders for 1 year from arrival date
+  const endDate = new Date(arrivalDate);
+  endDate.setFullYear(endDate.getFullYear() + 1);
+  
+  // Find the first occurrence of the target weekday after arrival
+  let currentDate = new Date(arrivalDate);
+  const daysUntilTarget = (targetWeekday - currentDate.getDay() + 7) % 7;
+  currentDate.setDate(currentDate.getDate() + daysUntilTarget);
+  
+  // If arrival is on target day, start from that day
+  if (daysUntilTarget === 0) {
+    currentDate = new Date(arrivalDate);
+  }
+
+  const weekdayNames = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
+  const weekdayName = weekdayNames[targetWeekday];
+  
+  let weekNumber = 0;
+  while (currentDate <= endDate) {
+    weekNumber++;
+    
+    // Only create notifications for future dates
+    const daysDiff = Math.floor((currentDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    if (daysDiff >= -7) {
+      const isAnniversary = weekNumber === 52;
+      
+      notifications.push({
+        userId,
+        bookId,
+        type: isAnniversary ? "anniversary" : "weekly_reminder",
+        title: isAnniversary ? "1 an ensemble !" : `Semaine ${weekNumber}`,
+        message: isAnniversary 
+          ? `Joyeux 1er anniversaire d'arrivée de ${childName} ! Une année de souvenirs précieux.`
+          : `C'est ${weekdayName}, votre jour de souvenir ! Qu'avez-vous vécu cette semaine avec ${childName} ?`,
+        icon: isAnniversary ? "cake" : "camera",
+        triggerDate: new Date(currentDate),
+        milestoneAge: weekNumber * 7,
+        actionUrl: `/app/book/${bookId}/edit`,
+      });
+    }
+    
+    // Move to next week
+    currentDate.setDate(currentDate.getDate() + 7);
   }
 
   return notifications;

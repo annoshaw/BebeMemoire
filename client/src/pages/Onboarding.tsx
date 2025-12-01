@@ -234,7 +234,7 @@ export default function Onboarding() {
 
               <div className="space-y-3">
                 <button
-                  onClick={() => setBabyStatus("born")}
+                  onClick={() => { setBabyStatus("born"); setNotificationWeekday(null); }}
                   className={`w-full p-4 rounded-lg border-2 transition-all ${
                     babyStatus === "born"
                       ? "border-primary bg-primary/5"
@@ -247,7 +247,7 @@ export default function Onboarding() {
                 </button>
 
                 <button
-                  onClick={() => setBabyStatus("expecting")}
+                  onClick={() => { setBabyStatus("expecting"); setNotificationWeekday(null); }}
                   className={`w-full p-4 rounded-lg border-2 transition-all ${
                     babyStatus === "expecting"
                       ? "border-primary bg-primary/5"
@@ -260,7 +260,7 @@ export default function Onboarding() {
                 </button>
 
                 <button
-                  onClick={() => setBabyStatus("adoption")}
+                  onClick={() => { setBabyStatus("adoption"); setNotificationWeekday(null); }}
                   className={`w-full p-4 rounded-lg border-2 transition-all ${
                     babyStatus === "adoption"
                       ? "border-primary bg-primary/5"

@@ -452,9 +452,13 @@ export default function EditBook() {
       backgroundImage: selectedBackground || undefined
     };
     
+    console.log("[DEBUG] Creating tree page with:", { backgroundImage: newPage.backgroundImage, treeMembers: newPage.treeMembers });
+    
     setPages(prevPages => {
-      setCurrentPageIndex(prevPages.length);
-      return [...prevPages, newPage];
+      const newPages = [...prevPages, newPage];
+      console.log("[DEBUG] New pages array:", newPages.map(p => ({ id: p.id, layout: p.layoutStyle, bg: p.backgroundImage, members: p.treeMembers?.length })));
+      setCurrentPageIndex(newPages.length - 1);
+      return newPages;
     });
     setShowInspirationModal(false);
     setSelectedCategory(null);
@@ -777,6 +781,8 @@ export default function EditBook() {
       const hasAnyMembers = members.length > 0;
       
       const bgImage = page.backgroundImage;
+      
+      console.log("[DEBUG] Rendering familyTree:", { bgImage, hasAnyMembers, membersCount: members.length, grandparents: grandparents.length, parents: parents.length, children: children.length });
       
       if (!hasAnyMembers) {
         return (
@@ -2296,20 +2302,24 @@ export default function EditBook() {
               {/* Add member button */}
               <button
                 onClick={() => {
+                  console.log("[DEBUG] Adding member, currentPageIndex:", currentPageIndex);
                   setPages(prevPages => {
+                    console.log("[DEBUG] prevPages:", prevPages.map(p => ({ id: p.id, members: p.treeMembers?.length })));
                     const newPages = [...prevPages];
                     const members = [...(newPages[currentPageIndex].treeMembers || [])];
-                    members.push({
+                    const newMember = {
                       id: Date.now(),
                       level: selectedTreeLevel,
                       photo: "",
                       name: "",
                       role: ""
-                    });
+                    };
+                    members.push(newMember);
                     newPages[currentPageIndex] = {
                       ...newPages[currentPageIndex],
                       treeMembers: members
                     };
+                    console.log("[DEBUG] After adding member:", { pageId: newPages[currentPageIndex].id, membersCount: newPages[currentPageIndex].treeMembers?.length });
                     return newPages;
                   });
                 }}

@@ -1,11 +1,11 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, Type, Camera, Video, X, QrCode, Layout, Plus, LayoutTemplate, Sparkles, ImagePlus, Wand2, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 
 type EditorMode = "view" | "text" | "photo" | "video" | "qrcode" | "layout";
-type LayoutStyle = "auto" | "classic" | "modern" | "elegant" | "playful" | "minimal" | "story";
+type LayoutStyle = "auto" | "classic" | "modern" | "elegant" | "playful" | "minimal" | "story" | "colorful";
 
 type ContentItem = {
   type: "text" | "photo" | "video" | "qrcode";
@@ -42,7 +42,53 @@ const layoutStyles = [
   { id: "playful", name: "Ludique", icon: "🎈", desc: "Disposition amusante", color: "from-green-500 to-emerald-500" },
   { id: "minimal", name: "Minimal", icon: "◻️", desc: "Épuré et simple", color: "from-stone-500 to-slate-500" },
   { id: "story", name: "Histoire", icon: "📖", desc: "Narration visuelle", color: "from-indigo-500 to-blue-500" },
+  { id: "colorful", name: "Coloré", icon: "🌈", desc: "Couleurs extraites de la photo", color: "from-pink-500 to-yellow-500" },
 ];
+
+const extractDominantColor = (imageUrl: string): Promise<{ primary: string; secondary: string; text: string }> => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        resolve({ primary: "#f5f5f4", secondary: "#e7e5e4", text: "#1c1917" });
+        return;
+      }
+      
+      canvas.width = 50;
+      canvas.height = 50;
+      ctx.drawImage(img, 0, 0, 50, 50);
+      
+      const imageData = ctx.getImageData(0, 0, 50, 50).data;
+      let r = 0, g = 0, b = 0, count = 0;
+      
+      for (let i = 0; i < imageData.length; i += 4) {
+        r += imageData[i];
+        g += imageData[i + 1];
+        b += imageData[i + 2];
+        count++;
+      }
+      
+      r = Math.round(r / count);
+      g = Math.round(g / count);
+      b = Math.round(b / count);
+      
+      const primary = `rgb(${r}, ${g}, ${b})`;
+      const secondary = `rgb(${Math.min(255, r + 30)}, ${Math.min(255, g + 30)}, ${Math.min(255, b + 30)})`;
+      
+      const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+      const text = luminance > 0.5 ? "#1c1917" : "#fafaf9";
+      
+      resolve({ primary, secondary, text });
+    };
+    img.onerror = () => {
+      resolve({ primary: "#f5f5f4", secondary: "#e7e5e4", text: "#1c1917" });
+    };
+    img.src = imageUrl;
+  });
+};
 
 export default function EditBook() {
   const [editorMode, setEditorMode] = useState<EditorMode>("view");
@@ -51,6 +97,11 @@ export default function EditBook() {
   const [showLayoutPicker, setShowLayoutPicker] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [toolbarPosition, setToolbarPosition] = useState({ x: 0, y: 0 });
+  const [extractedColors, setExtractedColors] = useState<{ primary: string; secondary: string; text: string }>({ 
+    primary: "#f5f5f4", 
+    secondary: "#e7e5e4", 
+    text: "#1c1917" 
+  });
   
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
@@ -158,6 +209,12 @@ export default function EditBook() {
   ]);
 
   const currentPage = pages[currentPageIndex];
+
+  useEffect(() => {
+    if (currentPage.layoutStyle === "colorful" && currentPage.images.length > 0) {
+      extractDominantColor(currentPage.images[0]).then(setExtractedColors);
+    }
+  }, [currentPage.layoutStyle, currentPage.images]);
 
   const updateLayoutStyle = (style: LayoutStyle) => {
     const newPages = [...pages];
@@ -369,6 +426,49 @@ export default function EditBook() {
                 <img src={img} className="w-full h-full object-cover" alt="" data-testid={`img-story-${idx + 3}`} />
               </div>
             ))}
+          </div>
+        </div>
+      );
+    }
+
+    if (layoutStyle === "colorful") {
+      return (
+        <div className="w-full h-full flex flex-col" data-testid="layout-colorful">
+          <div className="flex-1 relative">
+            <img src={images[0]} className="w-full h-full object-cover" alt="" data-testid="img-colorful-0" />
+          </div>
+          <div 
+            className="p-5 transition-colors duration-500"
+            style={{ backgroundColor: extractedColors.primary }}
+          >
+            <p 
+              className="text-xs tracking-widest mb-1 opacity-80"
+              style={{ color: extractedColors.text }}
+              data-testid="text-page-date"
+            >
+              {date}
+            </p>
+            <h2 
+              className="text-2xl font-serif font-bold leading-tight"
+              style={{ color: extractedColors.text }}
+              data-testid="text-page-title"
+            >
+              {title}
+            </h2>
+            <h3 
+              className="text-lg font-serif opacity-90"
+              style={{ color: extractedColors.text }}
+              data-testid="text-page-subtitle"
+            >
+              {subtitle}
+            </h3>
+            <p 
+              className="text-sm mt-2 opacity-80"
+              style={{ color: extractedColors.text }}
+              data-testid="text-page-description"
+            >
+              {description.split('\n')[0]}
+            </p>
           </div>
         </div>
       );

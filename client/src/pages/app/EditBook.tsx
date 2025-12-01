@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Type, Camera, Video, X, QrCode, Layout, Plus, LayoutTemplate, Sparkles, ImagePlus, Wand2, Image as ImageIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, Type, Camera, Video, X, QrCode, Layout, Plus, LayoutTemplate, Sparkles, ImagePlus, Wand2, Image as ImageIcon, Users, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 
@@ -111,8 +111,11 @@ export default function EditBook() {
     secondary: "#e7e5e4", 
     text: "#1c1917" 
   });
+  const [showFamilyEditor, setShowFamilyEditor] = useState(false);
+  const [editingMemberIndex, setEditingMemberIndex] = useState<number | null>(null);
   
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const familyPhotoInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const videoCameraRef = useRef<HTMLInputElement>(null);
@@ -182,8 +185,13 @@ export default function EditBook() {
       date: "20 / 02 / 2025",
       description: "L'amour qui nous unit.\n\nEnsemble, nous créons les plus beaux souvenirs, un jour à la fois.",
       images: sampleImages.slice(0, 4),
-      layoutStyle: "modern",
-      content: []
+      layoutStyle: "family",
+      content: [],
+      familyMembers: [
+        { id: 1, photo: sampleImages[0], name: "Maman", description: "Le cœur de notre foyer" },
+        { id: 2, photo: sampleImages[1], name: "Papa", description: "Notre force et notre pilier" },
+        { id: 3, photo: sampleImages[2], name: "Léo", description: "Notre petit trésor" },
+      ]
     },
     {
       id: 4,
@@ -483,6 +491,93 @@ export default function EditBook() {
       );
     }
 
+    if (layoutStyle === "family") {
+      const members = page.familyMembers || [];
+      const memberCount = members.length;
+      
+      if (memberCount === 0) {
+        return (
+          <div className="w-full h-full bg-gradient-to-br from-rose-50 to-orange-50 p-6 flex flex-col items-center justify-center" data-testid="layout-family-empty">
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-rose-400 to-orange-400 flex items-center justify-center mb-4 shadow-lg">
+              <span className="text-3xl">👨‍👩‍👧‍👦</span>
+            </div>
+            <h2 className="text-xl font-serif font-bold text-stone-800 mb-2" data-testid="text-page-title">{title}</h2>
+            <h3 className="text-lg font-serif text-stone-600 mb-4" data-testid="text-page-subtitle">{subtitle}</h3>
+            <p className="text-sm text-stone-500 text-center max-w-xs mb-6">
+              Ajoutez les membres de votre famille pour créer une page personnalisée
+            </p>
+            <div className="flex items-center gap-2 text-rose-500">
+              <Plus size={16} />
+              <span className="text-sm font-medium">Cliquez sur "Texte" pour ajouter des membres</span>
+            </div>
+          </div>
+        );
+      }
+
+      const getGridLayout = () => {
+        switch (memberCount) {
+          case 1: return "grid-cols-1";
+          case 2: return "grid-cols-2";
+          case 3: return "grid-cols-3";
+          case 4: return "grid-cols-2 grid-rows-2";
+          default: return "grid-cols-2";
+        }
+      };
+
+      const getCardSize = () => {
+        switch (memberCount) {
+          case 1: return "max-w-xs mx-auto";
+          case 2: return "";
+          case 3: return "";
+          case 4: return "";
+          default: return "";
+        }
+      };
+
+      return (
+        <div className="w-full h-full bg-gradient-to-br from-rose-50 via-white to-orange-50 p-4 flex flex-col" data-testid="layout-family">
+          <div className="text-center mb-3">
+            <p className="text-xs text-rose-500 tracking-widest uppercase" data-testid="text-page-date">{date}</p>
+            <h2 className="text-xl font-serif font-bold text-stone-800" data-testid="text-page-title">{title}</h2>
+            <h3 className="text-sm font-serif text-stone-500" data-testid="text-page-subtitle">{subtitle}</h3>
+          </div>
+          
+          <div className={`grid ${getGridLayout()} gap-3 flex-1 ${memberCount === 1 ? 'place-content-center' : ''}`}>
+            {members.map((member, idx) => (
+              <div 
+                key={member.id} 
+                className={`flex flex-col bg-white rounded-xl shadow-md overflow-hidden ${getCardSize()}`}
+                data-testid={`family-card-${idx}`}
+              >
+                <div className={`relative ${memberCount <= 2 ? 'aspect-[4/5]' : 'aspect-square'} bg-stone-100`}>
+                  {member.photo ? (
+                    <img 
+                      src={member.photo} 
+                      className="w-full h-full object-cover" 
+                      alt={member.name}
+                      data-testid={`img-family-${idx}`}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-rose-100 to-orange-100">
+                      <ImagePlus size={memberCount <= 2 ? 32 : 24} className="text-rose-300" />
+                    </div>
+                  )}
+                </div>
+                <div className={`p-${memberCount <= 2 ? '3' : '2'} text-center bg-gradient-to-b from-white to-rose-50/30`}>
+                  <p className={`font-serif font-bold text-stone-800 ${memberCount <= 2 ? 'text-base' : 'text-sm'}`} data-testid={`text-family-name-${idx}`}>
+                    {member.name || "Nom"}
+                  </p>
+                  <p className={`text-stone-500 ${memberCount <= 2 ? 'text-sm' : 'text-xs'} line-clamp-2`} data-testid={`text-family-desc-${idx}`}>
+                    {member.description || "Description"}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="w-full h-full bg-white p-5 flex flex-col" data-testid="layout-default">
         <div className="flex-1 rounded-xl overflow-hidden">
@@ -584,6 +679,16 @@ export default function EditBook() {
         }}
       >
         <div className="w-1 h-4 bg-stone-300 rounded-full mx-1" />
+        {currentPage.layoutStyle === "family" && (
+          <button
+            onClick={() => setShowFamilyEditor(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors"
+            data-testid="button-edit-family"
+          >
+            <Users size={16} />
+            <span className="text-xs">Famille</span>
+          </button>
+        )}
         <button
           onClick={() => setEditorMode("text")}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-stone-100 text-stone-700 transition-colors"
@@ -1070,6 +1175,173 @@ export default function EditBook() {
               <Button onClick={closeEditor} className="w-full" data-testid="button-finish-video">
                 Terminer
               </Button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Family Editor Modal */}
+      <AnimatePresence>
+        {showFamilyEditor && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
+            onClick={() => setShowFamilyEditor(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2">
+                  <Users size={20} className="text-rose-500" />
+                  <h3 className="text-xl font-bold text-stone-900" data-testid="text-family-modal-title">Membres de la famille</h3>
+                </div>
+                <button 
+                  onClick={() => setShowFamilyEditor(false)} 
+                  className="p-2 hover:bg-stone-100 rounded-full transition-colors"
+                  data-testid="button-close-family-modal"
+                >
+                  <X size={20} className="text-stone-600" />
+                </button>
+              </div>
+
+              <div className="space-y-3 mb-4">
+                {(currentPage.familyMembers || []).map((member, idx) => (
+                  <div 
+                    key={member.id}
+                    className="flex items-center gap-3 p-3 bg-stone-50 rounded-xl"
+                    data-testid={`family-member-row-${idx}`}
+                  >
+                    <div 
+                      className="w-14 h-14 rounded-lg overflow-hidden bg-rose-100 flex-shrink-0 cursor-pointer relative group"
+                      onClick={() => {
+                        setEditingMemberIndex(idx);
+                        familyPhotoInputRef.current?.click();
+                      }}
+                    >
+                      {member.photo ? (
+                        <>
+                          <img src={member.photo} className="w-full h-full object-cover" alt={member.name} />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                            <Camera size={16} className="text-white" />
+                          </div>
+                        </>
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <ImagePlus size={20} className="text-rose-300" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <input
+                        type="text"
+                        value={member.name}
+                        onChange={(e) => {
+                          const newPages = [...pages];
+                          if (newPages[currentPageIndex].familyMembers) {
+                            newPages[currentPageIndex].familyMembers![idx].name = e.target.value;
+                            setPages(newPages);
+                          }
+                        }}
+                        placeholder="Nom"
+                        className="w-full text-sm font-medium text-stone-800 bg-transparent border-none focus:outline-none focus:ring-0 p-0 mb-1"
+                        data-testid={`input-family-name-${idx}`}
+                      />
+                      <input
+                        type="text"
+                        value={member.description}
+                        onChange={(e) => {
+                          const newPages = [...pages];
+                          if (newPages[currentPageIndex].familyMembers) {
+                            newPages[currentPageIndex].familyMembers![idx].description = e.target.value;
+                            setPages(newPages);
+                          }
+                        }}
+                        placeholder="Description"
+                        className="w-full text-xs text-stone-500 bg-transparent border-none focus:outline-none focus:ring-0 p-0"
+                        data-testid={`input-family-desc-${idx}`}
+                      />
+                    </div>
+                    <button
+                      onClick={() => {
+                        const newPages = [...pages];
+                        if (newPages[currentPageIndex].familyMembers) {
+                          newPages[currentPageIndex].familyMembers = newPages[currentPageIndex].familyMembers!.filter((_, i) => i !== idx);
+                          setPages(newPages);
+                        }
+                      }}
+                      className="p-2 text-stone-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                      data-testid={`button-remove-family-${idx}`}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              {(currentPage.familyMembers?.length || 0) < 4 && (
+                <button
+                  onClick={() => {
+                    const newPages = [...pages];
+                    const members = newPages[currentPageIndex].familyMembers || [];
+                    members.push({
+                      id: Date.now(),
+                      photo: "",
+                      name: "",
+                      description: ""
+                    });
+                    newPages[currentPageIndex].familyMembers = members;
+                    setPages(newPages);
+                  }}
+                  className="w-full p-4 border-2 border-dashed border-rose-200 rounded-xl text-rose-500 hover:border-rose-400 hover:bg-rose-50 transition-colors flex items-center justify-center gap-2"
+                  data-testid="button-add-family-member"
+                >
+                  <Plus size={18} />
+                  <span className="text-sm font-medium">Ajouter un membre ({(currentPage.familyMembers?.length || 0)}/4)</span>
+                </button>
+              )}
+
+              <input
+                ref={familyPhotoInputRef}
+                type="file"
+                accept="image/*"
+                onChange={async (e) => {
+                  const files = e.target.files;
+                  if (!files || files.length === 0 || editingMemberIndex === null) return;
+                  
+                  const file = files[0];
+                  const dataUrl = await new Promise<string>((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result as string);
+                    reader.readAsDataURL(file);
+                  });
+                  
+                  const newPages = [...pages];
+                  if (newPages[currentPageIndex].familyMembers) {
+                    newPages[currentPageIndex].familyMembers![editingMemberIndex].photo = dataUrl;
+                    setPages(newPages);
+                  }
+                  setEditingMemberIndex(null);
+                  e.target.value = "";
+                }}
+                className="hidden"
+                data-testid="input-family-photo"
+              />
+
+              <div className="mt-4 pt-4 border-t border-stone-100">
+                <p className="text-xs text-stone-400 text-center mb-3">
+                  Ajoutez de 1 à 4 membres de votre famille
+                </p>
+                <Button onClick={() => setShowFamilyEditor(false)} className="w-full" data-testid="button-save-family">
+                  Enregistrer
+                </Button>
+              </div>
             </motion.div>
           </motion.div>
         )}

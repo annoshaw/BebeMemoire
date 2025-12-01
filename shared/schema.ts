@@ -54,6 +54,7 @@ export const books = pgTable("books", {
   familyName: text("family_name"),
   babyStatus: text("baby_status"), // born, expecting, adoption
   babyGender: text("baby_gender"),
+  notificationWeekday: integer("notification_weekday"), // 0=Sunday, 1=Monday, ..., 6=Saturday (for adoption)
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

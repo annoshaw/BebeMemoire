@@ -42,7 +42,18 @@ export default function Onboarding() {
   const [babyName, setBabyName] = useState("");
   const [notificationFrequency, setNotificationFrequency] = useState<string>("");
   const [pushNotificationsEnabled, setPushNotificationsEnabled] = useState(false);
+  const [notificationWeekday, setNotificationWeekday] = useState<number | null>(null); // 0=Sunday, 6=Saturday
   const [isCreating, setIsCreating] = useState(false);
+  
+  const weekdays = [
+    { value: 0, label: "Dimanche" },
+    { value: 1, label: "Lundi" },
+    { value: 2, label: "Mardi" },
+    { value: 3, label: "Mercredi" },
+    { value: 4, label: "Jeudi" },
+    { value: 5, label: "Vendredi" },
+    { value: 6, label: "Samedi" }
+  ];
 
   const saveNotificationSettings = async (frequency: string, pushEnabled: boolean) => {
     try {
@@ -60,6 +71,7 @@ export default function Onboarding() {
       babyStatus: string;
       babyGender: string;
       birthDate: string;
+      notificationWeekday?: number | null;
     }) => {
       const response = await fetch("/api/books", {
         method: "POST",
@@ -70,6 +82,7 @@ export default function Onboarding() {
           babyStatus: bookData.babyStatus,
           babyGender: bookData.babyGender,
           birthDate: new Date(bookData.birthDate).toISOString(),
+          notificationWeekday: bookData.notificationWeekday,
         }),
       });
       if (!response.ok) {
@@ -155,6 +168,7 @@ export default function Onboarding() {
 
   const handleCreateBook = async () => {
     if (!babyName || !babyStatus || !babyDate || !babyGender) return;
+    if (babyStatus === "adoption" && notificationWeekday === null) return;
     
     setIsCreating(true);
     createBookMutation.mutate({
@@ -162,6 +176,7 @@ export default function Onboarding() {
       babyStatus: babyStatus,
       babyGender: babyGender,
       birthDate: babyDate,
+      notificationWeekday: babyStatus === "adoption" ? notificationWeekday : null,
     });
   };
 
@@ -433,32 +448,61 @@ export default function Onboarding() {
                   Restez connecté
                 </h2>
                 <p className="text-stone-600">
-                  À quelle fréquence souhaitez-vous recevoir des rappels pour capturer des moments?
+                  {babyStatus === "adoption" 
+                    ? "Choisissez le jour où vous souhaitez recevoir vos rappels pour capturer des moments"
+                    : "À quelle fréquence souhaitez-vous recevoir des rappels pour capturer des moments?"}
                 </p>
               </div>
 
-              <div className="space-y-3">
-                {[
-                  { value: "daily", label: "Chaque jour", description: "Un rappel quotidien" },
-                  { value: "weekly", label: "Chaque semaine", description: "Un rappel hebdomadaire" },
-                  { value: "biweekly", label: "Chaque 2 semaines", description: "Deux fois par mois" },
-                  { value: "monthly", label: "Chaque mois", description: "Un rappel mensuel" },
-                ].map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => setNotificationFrequency(option.value)}
-                    className={`w-full p-4 rounded-lg border-2 transition-all text-left ${
-                      notificationFrequency === option.value
-                        ? "border-primary bg-primary/5"
-                        : "border-stone-200 hover:border-primary"
-                    }`}
-                    data-testid={`button-notification-${option.value}`}
-                  >
-                    <p className="font-bold text-stone-900">{option.label}</p>
-                    <p className="text-sm text-stone-600">{option.description}</p>
-                  </button>
-                ))}
-              </div>
+              {babyStatus === "adoption" ? (
+                <div className="space-y-3">
+                  <p className="text-sm font-medium text-stone-700 text-center mb-4">
+                    Quel jour souhaitez-vous recevoir vos rappels hebdomadaires?
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {weekdays.map((day) => (
+                      <button
+                        key={day.value}
+                        onClick={() => {
+                          setNotificationWeekday(day.value);
+                          setNotificationFrequency("weekly");
+                        }}
+                        className={`p-4 rounded-lg border-2 transition-all text-center ${
+                          notificationWeekday === day.value
+                            ? "border-primary bg-primary/5"
+                            : "border-stone-200 hover:border-primary"
+                        }`}
+                        data-testid={`button-weekday-${day.value}`}
+                      >
+                        <p className="font-bold text-stone-900">{day.label}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {[
+                    { value: "daily", label: "Chaque jour", description: "Un rappel quotidien" },
+                    { value: "weekly", label: "Chaque semaine", description: "Un rappel hebdomadaire" },
+                    { value: "biweekly", label: "Chaque 2 semaines", description: "Deux fois par mois" },
+                    { value: "monthly", label: "Chaque mois", description: "Un rappel mensuel" },
+                  ].map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => setNotificationFrequency(option.value)}
+                      className={`w-full p-4 rounded-lg border-2 transition-all text-left ${
+                        notificationFrequency === option.value
+                          ? "border-primary bg-primary/5"
+                          : "border-stone-200 hover:border-primary"
+                      }`}
+                      data-testid={`button-notification-${option.value}`}
+                    >
+                      <p className="font-bold text-stone-900">{option.label}</p>
+                      <p className="text-sm text-stone-600">{option.description}</p>
+                    </button>
+                  ))}
+                </div>
+              )}
 
               <div className="bg-stone-50 rounded-lg p-4 border border-stone-200">
                 <div className="flex items-center justify-between">
@@ -487,7 +531,7 @@ export default function Onboarding() {
                 </Button>
                 <Button
                   onClick={handleNext}
-                  disabled={!canContinue()}
+                  disabled={babyStatus === "adoption" ? notificationWeekday === null : !notificationFrequency}
                   className="flex-1 bg-primary hover:bg-primary/90 text-white h-12 rounded-lg disabled:opacity-50"
                 >
                   Continuer

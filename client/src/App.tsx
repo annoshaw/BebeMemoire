@@ -23,6 +23,7 @@ function Router() {
       <Route path="/app" component={Prototype} />
       <Route path="/app/create" component={CreateAlbum} />
       <Route path="/app/edit" component={EditBook} />
+      <Route path="/app/book/:id/edit" component={EditBook} />
       <Route path="/app/profile" component={EditProfile} />
       <Route path="/register" component={Register} />
       <Route path="/login" component={Login} />

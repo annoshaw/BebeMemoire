@@ -2235,11 +2235,16 @@ export default function EditBook() {
                             type="text"
                             value={member.name}
                             onChange={(e) => {
-                              const newPages = [...pages];
-                              if (newPages[currentPageIndex].treeMembers) {
-                                newPages[currentPageIndex].treeMembers![globalIdx].name = e.target.value;
-                                setPages(newPages);
-                              }
+                              const newName = e.target.value;
+                              setPages(prevPages => {
+                                const newPages = [...prevPages];
+                                if (newPages[currentPageIndex].treeMembers) {
+                                  const newMembers = [...newPages[currentPageIndex].treeMembers!];
+                                  newMembers[globalIdx] = { ...newMembers[globalIdx], name: newName };
+                                  newPages[currentPageIndex] = { ...newPages[currentPageIndex], treeMembers: newMembers };
+                                }
+                                return newPages;
+                              });
                             }}
                             placeholder="Nom"
                             className="w-full text-sm font-medium text-stone-800 bg-transparent border-none focus:outline-none focus:ring-0 p-0 mb-1"
@@ -2249,11 +2254,16 @@ export default function EditBook() {
                             type="text"
                             value={member.role}
                             onChange={(e) => {
-                              const newPages = [...pages];
-                              if (newPages[currentPageIndex].treeMembers) {
-                                newPages[currentPageIndex].treeMembers![globalIdx].role = e.target.value;
-                                setPages(newPages);
-                              }
+                              const newRole = e.target.value;
+                              setPages(prevPages => {
+                                const newPages = [...prevPages];
+                                if (newPages[currentPageIndex].treeMembers) {
+                                  const newMembers = [...newPages[currentPageIndex].treeMembers!];
+                                  newMembers[globalIdx] = { ...newMembers[globalIdx], role: newRole };
+                                  newPages[currentPageIndex] = { ...newPages[currentPageIndex], treeMembers: newMembers };
+                                }
+                                return newPages;
+                              });
                             }}
                             placeholder={selectedTreeLevel === "grandparents" ? "Ex: Papi, Mamie" : selectedTreeLevel === "parents" ? "Ex: Papa, Maman" : "Ex: Bébé"}
                             className="w-full text-xs text-stone-500 bg-transparent border-none focus:outline-none focus:ring-0 p-0"
@@ -2262,11 +2272,16 @@ export default function EditBook() {
                         </div>
                         <button
                           onClick={() => {
-                            const newPages = [...pages];
-                            if (newPages[currentPageIndex].treeMembers) {
-                              newPages[currentPageIndex].treeMembers = newPages[currentPageIndex].treeMembers!.filter((_, i) => i !== globalIdx);
-                              setPages(newPages);
-                            }
+                            setPages(prevPages => {
+                              const newPages = [...prevPages];
+                              if (newPages[currentPageIndex].treeMembers) {
+                                newPages[currentPageIndex] = {
+                                  ...newPages[currentPageIndex],
+                                  treeMembers: newPages[currentPageIndex].treeMembers!.filter((_, i) => i !== globalIdx)
+                                };
+                              }
+                              return newPages;
+                            });
                           }}
                           className="p-2 text-stone-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                           data-testid={`button-remove-tree-${idx}`}
@@ -2281,17 +2296,22 @@ export default function EditBook() {
               {/* Add member button */}
               <button
                 onClick={() => {
-                  const newPages = [...pages];
-                  const members = newPages[currentPageIndex].treeMembers || [];
-                  members.push({
-                    id: Date.now(),
-                    level: selectedTreeLevel,
-                    photo: "",
-                    name: "",
-                    role: ""
+                  setPages(prevPages => {
+                    const newPages = [...prevPages];
+                    const members = [...(newPages[currentPageIndex].treeMembers || [])];
+                    members.push({
+                      id: Date.now(),
+                      level: selectedTreeLevel,
+                      photo: "",
+                      name: "",
+                      role: ""
+                    });
+                    newPages[currentPageIndex] = {
+                      ...newPages[currentPageIndex],
+                      treeMembers: members
+                    };
+                    return newPages;
                   });
-                  newPages[currentPageIndex].treeMembers = members;
-                  setPages(newPages);
                 }}
                 className="w-full p-4 border-2 border-dashed border-emerald-200 rounded-xl text-emerald-600 hover:border-emerald-400 hover:bg-emerald-50 transition-colors flex items-center justify-center gap-2"
                 data-testid="button-add-tree-member"
@@ -2317,11 +2337,16 @@ export default function EditBook() {
                     reader.readAsDataURL(file);
                   });
                   
-                  const newPages = [...pages];
-                  if (newPages[currentPageIndex].treeMembers) {
-                    newPages[currentPageIndex].treeMembers![editingTreeMemberIndex].photo = dataUrl;
-                    setPages(newPages);
-                  }
+                  const memberIdx = editingTreeMemberIndex;
+                  setPages(prevPages => {
+                    const newPages = [...prevPages];
+                    if (newPages[currentPageIndex].treeMembers) {
+                      const newMembers = [...newPages[currentPageIndex].treeMembers!];
+                      newMembers[memberIdx] = { ...newMembers[memberIdx], photo: dataUrl };
+                      newPages[currentPageIndex] = { ...newPages[currentPageIndex], treeMembers: newMembers };
+                    }
+                    return newPages;
+                  });
                   setEditingTreeMemberIndex(null);
                   e.target.value = "";
                 }}

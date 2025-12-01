@@ -462,47 +462,47 @@ export default function EditBook() {
       </AnimatePresence>
 
       {/* Action Bar */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-white rounded-full p-2 shadow-lg">
+      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-white rounded-full p-1.5 shadow-lg">
         <button
           onClick={() => setEditorMode("text")}
-          className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-stone-100 text-stone-700 transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-stone-100 text-stone-700 transition-colors"
           data-testid="button-add-text"
         >
-          <Type size={18} />
-          <span className="text-sm">Texte</span>
+          <Type size={16} />
+          <span className="text-xs">Texte</span>
         </button>
         <button
           onClick={() => setEditorMode("photo")}
-          className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-stone-100 text-stone-700 transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-stone-100 text-stone-700 transition-colors"
           data-testid="button-add-photo"
         >
-          <Camera size={18} />
-          <span className="text-sm">Photo</span>
+          <Camera size={16} />
+          <span className="text-xs">Photo</span>
         </button>
         <button
           onClick={() => setEditorMode("video")}
-          className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-stone-100 text-stone-700 transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-stone-100 text-stone-700 transition-colors"
           data-testid="button-add-video"
         >
-          <Video size={18} />
-          <span className="text-sm">Vidéo</span>
+          <Video size={16} />
+          <span className="text-xs">Vidéo</span>
         </button>
         <button
           onClick={() => setEditorMode("qrcode")}
-          className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-stone-100 text-stone-700 transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-stone-100 text-stone-700 transition-colors"
           data-testid="button-add-qrcode"
         >
-          <QrCode size={18} />
-          <span className="text-sm">QR</span>
+          <QrCode size={16} />
+          <span className="text-xs">QR</span>
         </button>
-        <div className="w-px h-6 bg-stone-200 mx-1" />
+        <div className="w-px h-5 bg-stone-200" />
         <button
           onClick={addNewPage}
-          className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary hover:bg-primary/90 text-white transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary hover:bg-primary/90 text-white transition-colors"
           data-testid="button-add-new-page"
         >
-          <Plus size={18} />
-          <span className="text-sm">Nouvelle page</span>
+          <Plus size={16} />
+          <span className="text-xs">Page</span>
         </button>
       </div>
 

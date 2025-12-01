@@ -696,10 +696,10 @@ export default function Prototype() {
         {/* Content */}
         <div className="flex-1 overflow-y-auto no-scrollbar bg-stone-50 relative">
           {/* Hero Cover of the Book */}
-          <Link href="/app/edit">
+          <Link href={activeBook ? `/app/book/${activeBook.id}/edit` : "/app/edit"}>
             <button className="w-full h-48 bg-stone-200 relative hover:opacity-80 transition-opacity cursor-pointer" data-testid="button-open-book">
               <img 
-                src="https://images.unsplash.com/photo-1544126566-475d8528f69f?q=80&w=800&auto=format&fit=crop" 
+                src={activeBook?.coverImage || "https://images.unsplash.com/photo-1544126566-475d8528f69f?q=80&w=800&auto=format&fit=crop"} 
                 className="w-full h-full object-cover opacity-90" 
                 alt="Cover"
               />
@@ -1848,7 +1848,7 @@ export default function Prototype() {
                           </div>
                         </div>
                         
-                        <Link href="/app/edit">
+                        <Link href={`/app/book/${activeBook.id}/edit`}>
                           <Button size="sm" className="w-full mt-3 gap-2" data-testid="button-edit-active-book">
                             <Edit2 size={14} />
                             Continuer l'édition
@@ -2118,7 +2118,7 @@ export default function Prototype() {
                               </p>
                             </div>
                             <div className="flex flex-col gap-2">
-                              <Link href="/app/edit" onClick={(e) => { 
+                              <Link href={`/app/book/${book.id}/edit`} onClick={(e) => { 
                                 e.stopPropagation(); 
                                 setActiveBookMutation.mutate(book.id); 
                               }}>

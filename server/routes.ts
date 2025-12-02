@@ -301,6 +301,34 @@ export async function registerRoutes(
     res.json({ user: req.user });
   });
 
+  // BOOK TEMPLATE ROUTES
+
+  // Get all available book templates (requires auth)
+  app.get("/api/book-templates", requireAuth, async (_req: Request, res: Response) => {
+    try {
+      const templates = await storage.getBookTemplates();
+      res.json({ templates });
+    } catch (error) {
+      console.error("Get templates error:", error);
+      res.status(500).json({ message: "Erreur lors de la récupération des templates" });
+    }
+  });
+
+  // Get template sections for a specific template (requires auth)
+  app.get("/api/book-templates/:slug/sections", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const template = await storage.getBookTemplateBySlug(req.params.slug);
+      if (!template) {
+        return res.status(404).json({ message: "Template non trouvé" });
+      }
+      const sections = await storage.getTemplateSections(template.id);
+      res.json({ template, sections });
+    } catch (error) {
+      console.error("Get template sections error:", error);
+      res.status(500).json({ message: "Erreur lors de la récupération des sections" });
+    }
+  });
+
   // BOOK ROUTES
 
   // Get all books for current user
@@ -315,12 +343,14 @@ export async function registerRoutes(
     }
   });
 
-  // Create a new book
+  // Create a new book (supports both custom and template-based)
   app.post("/api/books", requireAuth, async (req: Request, res: Response) => {
     try {
       const userId = (req as any).userId;
+      const { templateSlug, ...bookData } = req.body;
+      
       const validation = insertBookSchema.safeParse({
-        ...req.body,
+        ...bookData,
         userId: userId,
       });
 
@@ -330,8 +360,28 @@ export async function registerRoutes(
         });
       }
 
-      const book = await storage.createBook(validation.data);
-      res.status(201).json({ book });
+      // If templateSlug is provided and not 'custom', create book with template
+      if (templateSlug && templateSlug !== 'custom') {
+        try {
+          const result = await storage.createBookWithTemplate(
+            userId, 
+            validation.data, 
+            templateSlug,
+            validation.data.birthDate
+          );
+          res.status(201).json({ book: result.book, pages: result.pages });
+        } catch (templateError: any) {
+          console.error("Template error:", templateError);
+          // Return error instead of silent fallback
+          return res.status(400).json({ 
+            message: "Erreur lors de l'application du template. Veuillez réessayer." 
+          });
+        }
+      } else {
+        // Create regular custom book (empty pages)
+        const book = await storage.createBook(validation.data);
+        res.status(201).json({ book, pages: [] });
+      }
     } catch (error) {
       console.error("Create book error:", error);
       res.status(500).json({ message: "Erreur lors de la création du livre" });

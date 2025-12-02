@@ -5,7 +5,7 @@ import '../providers/auth_provider.dart';
 import '../providers/books_provider.dart';
 import '../providers/locale_provider.dart';
 import '../models/book.dart';
-import 'onboarding_screen.dart';
+import 'create_book_screen.dart';
 import 'book_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -25,14 +25,14 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _openCreateBook() async {
-    final result = await Navigator.of(context).push<Book>(
+    await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => const OnboardingScreen(),
+        builder: (_) => const CreateBookScreen(),
         fullscreenDialog: true,
       ),
     );
     
-    if (result != null && mounted) {
+    if (mounted) {
       context.read<BooksProvider>().loadBooks();
     }
   }

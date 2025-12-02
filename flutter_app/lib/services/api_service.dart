@@ -5,6 +5,7 @@ import 'package:http/browser_client.dart';
 import '../models/user.dart';
 import '../models/book.dart';
 import '../models/memory.dart';
+import '../models/book_template.dart';
 
 class ApiException implements Exception {
   final String message;
@@ -469,6 +470,106 @@ class ApiService {
     } catch (e) {
       if (e is ApiException) rethrow;
       throw ApiException('Failed to get age info');
+    }
+  }
+
+  Future<List<BookTemplate>> getBookTemplates() async {
+    try {
+      final response = await _client.get(
+        Uri.parse('$baseUrl/book-templates'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final List<dynamic> templates = data['templates'] ?? [];
+        return templates.map((t) => BookTemplate.fromJson(t)).toList();
+      } else {
+        throw ApiException(
+          'Failed to load templates',
+          statusCode: response.statusCode,
+        );
+      }
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException('Failed to load templates');
+    }
+  }
+
+  Future<List<TemplateSection>> getTemplateSections(String templateSlug) async {
+    try {
+      final response = await _client.get(
+        Uri.parse('$baseUrl/book-templates/$templateSlug/sections'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final List<dynamic> sections = data['sections'] ?? [];
+        return sections.map((s) => TemplateSection.fromJson(s)).toList();
+      } else {
+        throw ApiException(
+          'Failed to load template sections',
+          statusCode: response.statusCode,
+        );
+      }
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException('Failed to load template sections');
+    }
+  }
+
+  Future<Book> createBookWithTemplate(Map<String, dynamic> bookData, String templateSlug) async {
+    try {
+      final response = await _client.post(
+        Uri.parse('$baseUrl/books'),
+        headers: _headers,
+        body: json.encode({
+          ...bookData,
+          'templateSlug': templateSlug,
+        }),
+      );
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return Book.fromJson(data['book']);
+      } else {
+        final error = json.decode(response.body);
+        throw ApiException(
+          error['message'] ?? 'Failed to create book with template',
+          statusCode: response.statusCode,
+        );
+      }
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException('Failed to create book with template');
+    }
+  }
+
+  Future<Book> createCustomBook(Map<String, dynamic> bookData) async {
+    try {
+      final response = await _client.post(
+        Uri.parse('$baseUrl/books'),
+        headers: _headers,
+        body: json.encode({
+          ...bookData,
+          'templateSlug': 'custom',
+        }),
+      );
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return Book.fromJson(data['book']);
+      } else {
+        final error = json.decode(response.body);
+        throw ApiException(
+          error['message'] ?? 'Failed to create custom book',
+          statusCode: response.statusCode,
+        );
+      }
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException('Failed to create custom book');
     }
   }
 }

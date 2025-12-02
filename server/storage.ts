@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { users, books, memories, userPlans, qrCodes, passwordResetTokens, bookPages, notifications, notificationSettings, type User, type InsertUser, type UpsertUser, type Book, type InsertBook, type Memory, type InsertMemory, type UserPlan, type InsertUserPlan, type QRCode, type InsertQRCode, type PasswordResetToken, type InsertPasswordResetToken, type BookPage, type InsertBookPage, type Notification, type InsertNotification, type NotificationSettings, type InsertNotificationSettings } from "@shared/schema";
+import { users, books, memories, userPlans, qrCodes, passwordResetTokens, bookPages, notifications, notificationSettings, bookTemplates, templateSections, type User, type InsertUser, type UpsertUser, type Book, type InsertBook, type Memory, type InsertMemory, type UserPlan, type InsertUserPlan, type QRCode, type InsertQRCode, type PasswordResetToken, type InsertPasswordResetToken, type BookPage, type InsertBookPage, type Notification, type InsertNotification, type NotificationSettings, type InsertNotificationSettings, type BookTemplate, type InsertBookTemplate, type TemplateSection, type InsertTemplateSection } from "@shared/schema";
 import { eq, desc, and, gt, asc, lte, or, isNull } from "drizzle-orm";
 
 export interface IStorage {
@@ -61,6 +61,14 @@ export interface IStorage {
   getNotificationSettings(userId: string): Promise<NotificationSettings | undefined>;
   createNotificationSettings(settings: InsertNotificationSettings): Promise<NotificationSettings>;
   updateNotificationSettings(userId: string, settings: Partial<InsertNotificationSettings>): Promise<NotificationSettings | undefined>;
+  
+  // Book Template operations
+  getBookTemplates(): Promise<BookTemplate[]>;
+  getBookTemplateBySlug(slug: string): Promise<BookTemplate | undefined>;
+  getTemplateSections(templateId: string): Promise<TemplateSection[]>;
+  createBookTemplate(template: InsertBookTemplate): Promise<BookTemplate>;
+  createTemplateSection(section: InsertTemplateSection): Promise<TemplateSection>;
+  createBookWithTemplate(userId: string, bookData: InsertBook, templateSlug: string, birthDate?: Date): Promise<{ book: Book; pages: BookPage[] }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -355,6 +363,100 @@ export class DatabaseStorage implements IStorage {
       .where(eq(notificationSettings.userId, userId))
       .returning();
     return result[0];
+  }
+
+  // Book Template operations
+  async getBookTemplates(): Promise<BookTemplate[]> {
+    return db.select()
+      .from(bookTemplates)
+      .where(eq(bookTemplates.isActive, true))
+      .orderBy(asc(bookTemplates.sortOrder));
+  }
+
+  async getBookTemplateBySlug(slug: string): Promise<BookTemplate | undefined> {
+    const result = await db.select()
+      .from(bookTemplates)
+      .where(eq(bookTemplates.slug, slug))
+      .limit(1);
+    return result[0];
+  }
+
+  async getTemplateSections(templateId: string): Promise<TemplateSection[]> {
+    return db.select()
+      .from(templateSections)
+      .where(eq(templateSections.templateId, templateId))
+      .orderBy(asc(templateSections.orderIndex));
+  }
+
+  async createBookTemplate(template: InsertBookTemplate): Promise<BookTemplate> {
+    const result = await db.insert(bookTemplates).values(template).returning();
+    return result[0];
+  }
+
+  async createTemplateSection(section: InsertTemplateSection): Promise<TemplateSection> {
+    const result = await db.insert(templateSections).values(section).returning();
+    return result[0];
+  }
+
+  async createBookWithTemplate(
+    userId: string, 
+    bookData: InsertBook, 
+    templateSlug: string, 
+    birthDate?: Date
+  ): Promise<{ book: Book; pages: BookPage[] }> {
+    // Get template first (outside transaction for validation)
+    const template = await this.getBookTemplateBySlug(templateSlug);
+    if (!template) {
+      throw new Error(`Template not found: ${templateSlug}`);
+    }
+
+    // Get template sections
+    const sections = await this.getTemplateSections(template.id);
+
+    // Use a transaction to ensure atomic book + pages creation
+    const referenceDate = birthDate || bookData.birthDate || new Date();
+    
+    // Create book with template reference
+    const [book] = await db.insert(books).values({
+      ...bookData,
+      userId,
+      bookType: 'prebuilt',
+      templateSlug,
+    }).returning();
+
+    // Convert template sections to book pages with deterministic ordering
+    const pagesData: InsertBookPage[] = sections
+      .sort((a, b) => a.orderIndex - b.orderIndex)
+      .map((section, index) => {
+        let pageDate = '';
+        if (section.dateOffsetDays !== null) {
+          const date = new Date(referenceDate);
+          date.setDate(date.getDate() + section.dateOffsetDays);
+          pageDate = date.toISOString().split('T')[0];
+        }
+
+        return {
+          bookId: book.id,
+          pageIndex: index,
+          title: section.titleFr,
+          subtitle: section.subtitleFr || '',
+          date: pageDate,
+          description: section.descriptionFr || '',
+          layoutStyle: section.layoutStyle || 'single',
+          images: section.placeholderImages || [],
+          content: section.defaultContent || {},
+          backgroundImage: section.backgroundImage,
+        };
+      });
+
+    // Insert all pages in a single batch
+    let savedPages: BookPage[] = [];
+    if (pagesData.length > 0) {
+      savedPages = await db.insert(bookPages).values(pagesData).returning();
+      savedPages.sort((a, b) => a.pageIndex - b.pageIndex);
+    }
+
+    return { book, pages: savedPages };
   }
 }
 

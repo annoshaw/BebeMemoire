@@ -55,6 +55,8 @@ export const books = pgTable("books", {
   babyStatus: text("baby_status"), // born, expecting, adoption
   babyGender: text("baby_gender"),
   notificationWeekday: integer("notification_weekday"), // 0=Sunday, 1=Monday, ..., 6=Saturday (for adoption)
+  bookType: text("book_type").default("custom"), // prebuilt, custom
+  templateSlug: text("template_slug"), // Reference to template used if prebuilt
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -215,3 +217,57 @@ export const insertNotificationSettingsSchema = createInsertSchema(notificationS
 
 export type InsertNotificationSettings = z.infer<typeof insertNotificationSettingsSchema>;
 export type NotificationSettings = typeof notificationSettings.$inferSelect;
+
+// Book templates table - defines available book templates (prebuilt vs custom)
+export const bookTemplates = pgTable("book_templates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  slug: varchar("slug").notNull().unique(), // 'prebuilt_pregnancy', 'custom'
+  nameFr: text("name_fr").notNull(),
+  nameEn: text("name_en").notNull(),
+  descriptionFr: text("description_fr"),
+  descriptionEn: text("description_en"),
+  coverImage: text("cover_image"),
+  iconName: text("icon_name").default("book"), // For display in selection UI
+  isActive: boolean("is_active").default(true),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertBookTemplateSchema = createInsertSchema(bookTemplates).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertBookTemplate = z.infer<typeof insertBookTemplateSchema>;
+export type BookTemplate = typeof bookTemplates.$inferSelect;
+
+// Template sections - defines the predefined pages/sections for each template
+export const templateSections = pgTable("template_sections", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  templateId: varchar("template_id").notNull().references(() => bookTemplates.id, { onDelete: "cascade" }),
+  orderIndex: integer("order_index").notNull(),
+  titleFr: text("title_fr").notNull(),
+  titleEn: text("title_en").notNull(),
+  subtitleFr: text("subtitle_fr"),
+  subtitleEn: text("subtitle_en"),
+  descriptionFr: text("description_fr"),
+  descriptionEn: text("description_en"),
+  layoutStyle: text("layout_style").default("single"), // single, collage, timeline, family_tree
+  sectionType: text("section_type").notNull(), // pregnancy_month, family_intro, announcement, nursery, monthly_milestone
+  dateOffsetDays: integer("date_offset_days"), // Days from birth/due date
+  monthNumber: integer("month_number"), // For pregnancy or milestone months (1-12)
+  placeholderImages: jsonb("placeholder_images").default([]),
+  defaultContent: jsonb("default_content").default({}),
+  backgroundImage: text("background_image"),
+  iconName: text("icon_name"),
+  isRequired: boolean("is_required").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertTemplateSectionSchema = createInsertSchema(templateSections).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertTemplateSection = z.infer<typeof insertTemplateSectionSchema>;
+export type TemplateSection = typeof templateSections.$inferSelect;

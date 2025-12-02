@@ -124,6 +124,17 @@ class _OnboardingWizardScreenState extends State<OnboardingWizardScreen> {
 
   Future<void> _completeOnboarding() async {
     if (_isLoading) return;
+    
+    if (_selectedBookType == null || 
+        _selectedDate == null || 
+        _childNameController.text.trim().isEmpty) {
+      setState(() {
+        _error = context.read<LocaleProvider>().isFrench 
+            ? 'Veuillez remplir tous les champs requis'
+            : 'Please fill in all required fields';
+      });
+      return;
+    }
 
     setState(() {
       _isLoading = true;
@@ -132,7 +143,7 @@ class _OnboardingWizardScreenState extends State<OnboardingWizardScreen> {
 
     try {
       final apiService = ApiService();
-      await apiService.completeOnboarding(
+      final result = await apiService.completeOnboarding(
         bookType: _selectedBookType!,
         childName: _childNameController.text.trim(),
         date: _selectedDate!,
@@ -140,7 +151,16 @@ class _OnboardingWizardScreenState extends State<OnboardingWizardScreen> {
         babyGender: _selectedBabyGender,
       );
 
-      widget.onComplete();
+      if (result['onboardingCompleted'] == true) {
+        widget.onComplete();
+      } else {
+        setState(() {
+          _error = context.read<LocaleProvider>().isFrench 
+              ? 'Erreur lors de la création du livre'
+              : 'Error creating book';
+          _isLoading = false;
+        });
+      }
     } catch (e) {
       setState(() {
         _error = e.toString();

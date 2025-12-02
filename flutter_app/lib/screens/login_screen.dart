@@ -50,6 +50,21 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _submit() async {
     final authProvider = context.read<AuthProvider>();
+    final locale = context.read<LocaleProvider>();
+    
+    if (!_isLogin) {
+      if (_fullNameController.text.trim().length < 2) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(locale.isFrench 
+                ? 'Le nom complet est requis (minimum 2 caractères)'
+                : 'Full name is required (minimum 2 characters)'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+        return;
+      }
+    }
     
     bool success;
     if (_isLogin) {
@@ -61,7 +76,7 @@ class _LoginScreenState extends State<LoginScreen> {
       success = await authProvider.register(
         email: _emailController.text.trim(),
         password: _passwordController.text,
-        fullName: _fullNameController.text.trim().isEmpty ? null : _fullNameController.text.trim(),
+        fullName: _fullNameController.text.trim(),
         gender: _selectedGender,
         country: _selectedCountry,
         phone: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),

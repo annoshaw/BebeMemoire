@@ -56,6 +56,7 @@ export default function Onboarding() {
     // Check if notifications are supported
     if (!("Notification" in window)) {
       setPushPermissionStatus("unsupported");
+      setPushNotificationsEnabled(false);
       toast.error("Votre navigateur ne supporte pas les notifications push");
       return;
     }

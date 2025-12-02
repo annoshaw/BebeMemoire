@@ -38,13 +38,26 @@ export default function NotificationSettings() {
     reminderDays: 1
   });
 
-  // Check current notification permission status on mount
+  // Check current notification permission status on mount and when page gets focus
   useEffect(() => {
-    if (!("Notification" in window)) {
-      setPushPermissionStatus("unsupported");
-    } else {
-      setPushPermissionStatus(Notification.permission as "default" | "granted" | "denied");
-    }
+    const checkPermission = () => {
+      if (!("Notification" in window)) {
+        setPushPermissionStatus("unsupported");
+      } else {
+        const currentPermission = Notification.permission as "default" | "granted" | "denied";
+        setPushPermissionStatus(currentPermission);
+        // If permission was granted but our setting says off, or vice versa
+        if (currentPermission === "granted" && !settings.pushNotifications) {
+          // User previously enabled but setting shows off - keep it consistent
+        }
+      }
+    };
+    
+    checkPermission();
+    
+    // Re-check when page gets focus (user might have changed browser settings)
+    window.addEventListener("focus", checkPermission);
+    return () => window.removeEventListener("focus", checkPermission);
   }, []);
 
   const requestPushPermission = async (enabled: boolean) => {
@@ -55,7 +68,18 @@ export default function NotificationSettings() {
 
     if (!("Notification" in window)) {
       setPushPermissionStatus("unsupported");
+      setSettings(prev => ({ ...prev, pushNotifications: false }));
       toast.error("Votre navigateur ne supporte pas les notifications push");
+      return;
+    }
+
+    // Re-check current permission (user might have changed settings)
+    const currentPermission = Notification.permission;
+    if (currentPermission === "granted") {
+      // Already granted, just enable
+      setPushPermissionStatus("granted");
+      setSettings(prev => ({ ...prev, pushNotifications: true }));
+      toast.success("Notifications push activées !");
       return;
     }
 
@@ -81,6 +105,24 @@ export default function NotificationSettings() {
       console.error("Error requesting notification permission:", error);
       toast.error("Erreur lors de la demande de permission");
       setSettings(prev => ({ ...prev, pushNotifications: false }));
+    }
+  };
+
+  const retryPushPermission = () => {
+    // Re-check current permission
+    if ("Notification" in window) {
+      const currentPermission = Notification.permission;
+      setPushPermissionStatus(currentPermission as "granted" | "denied" | "default");
+      
+      if (currentPermission === "granted") {
+        setSettings(prev => ({ ...prev, pushNotifications: true }));
+        toast.success("Notifications push activées !");
+      } else if (currentPermission === "default") {
+        // Permission was reset, try requesting again
+        requestPushPermission(true);
+      } else {
+        toast.info("Permission toujours refusée. Vérifiez les paramètres de votre navigateur.");
+      }
     }
   };
 
@@ -301,9 +343,18 @@ export default function NotificationSettings() {
                   />
                 </div>
                 {pushPermissionStatus === "denied" && (
-                  <div className="mt-3 flex items-start gap-2 text-xs text-amber-700 bg-amber-50 p-2 rounded-lg">
-                    <AlertCircle size={14} className="mt-0.5 flex-shrink-0" />
-                    <span>Pour activer les notifications, allez dans les paramètres de votre navigateur et autorisez les notifications pour ce site.</span>
+                  <div className="mt-3 space-y-2">
+                    <div className="flex items-start gap-2 text-xs text-amber-700 bg-amber-50 p-2 rounded-lg">
+                      <AlertCircle size={14} className="mt-0.5 flex-shrink-0" />
+                      <span>Pour activer les notifications, allez dans les paramètres de votre navigateur et autorisez les notifications pour ce site.</span>
+                    </div>
+                    <button 
+                      onClick={retryPushPermission}
+                      className="text-xs text-primary hover:underline font-medium"
+                      data-testid="button-retry-push"
+                    >
+                      J'ai modifié les paramètres, réessayer
+                    </button>
                   </div>
                 )}
               </div>

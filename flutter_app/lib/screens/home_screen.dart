@@ -5,6 +5,8 @@ import '../providers/auth_provider.dart';
 import '../providers/books_provider.dart';
 import '../providers/locale_provider.dart';
 import '../models/book.dart';
+import 'onboarding_screen.dart';
+import 'book_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -20,6 +22,27 @@ class _HomeScreenState extends State<HomeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<BooksProvider>().loadBooks();
     });
+  }
+
+  void _openCreateBook() async {
+    final result = await Navigator.of(context).push<Book>(
+      MaterialPageRoute(
+        builder: (_) => const OnboardingScreen(),
+        fullscreenDialog: true,
+      ),
+    );
+    
+    if (result != null && mounted) {
+      context.read<BooksProvider>().loadBooks();
+    }
+  }
+
+  void _openBookDetail(Book book) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => BookDetailScreen(book: book),
+      ),
+    );
   }
 
   @override
@@ -109,17 +132,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 : _buildBooksList(booksProvider.books, locale),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          // TODO: Navigate to create book
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(locale.translate(
-                'Création de livre à venir',
-                'Book creation coming soon',
-              )),
-            ),
-          );
-        },
+        onPressed: _openCreateBook,
         icon: const Icon(Icons.add),
         label: Text(locale.translate('Nouveau livre', 'New book')),
       ),
@@ -178,7 +191,11 @@ class _HomeScreenState extends State<HomeScreen> {
       itemCount: books.length,
       itemBuilder: (context, index) {
         final book = books[index];
-        return _BookCard(book: book, locale: locale);
+        return _BookCard(
+          book: book, 
+          locale: locale,
+          onTap: () => _openBookDetail(book),
+        );
       },
     );
   }
@@ -187,10 +204,12 @@ class _HomeScreenState extends State<HomeScreen> {
 class _BookCard extends StatelessWidget {
   final Book book;
   final LocaleProvider locale;
+  final VoidCallback onTap;
 
   const _BookCard({
     required this.book,
     required this.locale,
+    required this.onTap,
   });
 
   @override
@@ -198,9 +217,7 @@ class _BookCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       child: InkWell(
-        onTap: () {
-          // TODO: Navigate to book details
-        },
+        onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Padding(
           padding: const EdgeInsets.all(16),

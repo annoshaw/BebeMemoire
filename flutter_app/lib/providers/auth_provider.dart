@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import '../models/user.dart';
 import '../services/api_service.dart';
 
@@ -15,6 +15,7 @@ class AuthProvider with ChangeNotifier {
   User? _user;
   String? _error;
   bool _isLoading = false;
+  bool _hasCheckedAuth = false;
 
   AuthProvider({ApiService? apiService})
       : _apiService = apiService ?? ApiService();
@@ -24,8 +25,11 @@ class AuthProvider with ChangeNotifier {
   String? get error => _error;
   bool get isLoading => _isLoading;
   bool get isAuthenticated => _status == AuthStatus.authenticated;
+  bool get hasCheckedAuth => _hasCheckedAuth;
 
   Future<void> checkAuth() async {
+    if (_hasCheckedAuth) return;
+    
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -36,6 +40,30 @@ class AuthProvider with ChangeNotifier {
         _user = user;
         _status = AuthStatus.authenticated;
       } else {
+        _status = AuthStatus.unauthenticated;
+      }
+    } catch (e) {
+      _status = AuthStatus.unauthenticated;
+      _error = e.toString();
+    }
+
+    _hasCheckedAuth = true;
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> refreshAuth() async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final user = await _apiService.getCurrentUser();
+      if (user != null) {
+        _user = user;
+        _status = AuthStatus.authenticated;
+      } else {
+        _user = null;
         _status = AuthStatus.unauthenticated;
       }
     } catch (e) {

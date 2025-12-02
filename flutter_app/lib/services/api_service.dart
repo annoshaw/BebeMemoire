@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
+import 'package:http/browser_client.dart';
 import '../models/user.dart';
 import '../models/book.dart';
 import '../models/memory.dart';
@@ -14,11 +16,57 @@ class ApiException implements Exception {
   String toString() => message;
 }
 
+class NotificationSettings {
+  final bool notificationsEnabled;
+  final bool emailNotifications;
+  final bool pushNotifications;
+  final int reminderDays;
+  final int? notificationWeekday;
+
+  NotificationSettings({
+    this.notificationsEnabled = true,
+    this.emailNotifications = true,
+    this.pushNotifications = false,
+    this.reminderDays = 1,
+    this.notificationWeekday,
+  });
+
+  factory NotificationSettings.fromJson(Map<String, dynamic> json) {
+    return NotificationSettings(
+      notificationsEnabled: json['notificationsEnabled'] as bool? ?? true,
+      emailNotifications: json['emailNotifications'] as bool? ?? true,
+      pushNotifications: json['pushNotifications'] as bool? ?? false,
+      reminderDays: json['reminderDays'] as int? ?? 1,
+      notificationWeekday: json['notificationWeekday'] as int?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'notificationsEnabled': notificationsEnabled,
+      'emailNotifications': emailNotifications,
+      'pushNotifications': pushNotifications,
+      'reminderDays': reminderDays,
+      'notificationWeekday': notificationWeekday,
+    };
+  }
+}
+
 class ApiService {
   static const String baseUrl = '/api';
-  final http.Client _client;
+  late final http.Client _client;
 
-  ApiService({http.Client? client}) : _client = client ?? http.Client();
+  ApiService({http.Client? client}) {
+    if (client != null) {
+      _client = client;
+    } else if (kIsWeb) {
+      final browserClient = BrowserClient();
+      browserClient.withCredentials = true;
+      _client = browserClient;
+    } else {
+      _client = http.Client();
+    }
+  }
 
   Map<String, String> get _headers => {
         'Content-Type': 'application/json',
@@ -40,7 +88,7 @@ class ApiService {
       }
       return null;
     } catch (e) {
-      throw ApiException('Erreur de connexion: $e');
+      return null;
     }
   }
 
@@ -61,13 +109,13 @@ class ApiService {
       } else {
         final error = json.decode(response.body);
         throw ApiException(
-          error['message'] ?? 'Erreur de connexion',
+          error['message'] ?? 'Login error',
           statusCode: response.statusCode,
         );
       }
     } catch (e) {
       if (e is ApiException) rethrow;
-      throw ApiException('Erreur de connexion: $e');
+      throw ApiException('Connection error');
     }
   }
 
@@ -93,13 +141,13 @@ class ApiService {
       } else {
         final error = json.decode(response.body);
         throw ApiException(
-          error['message'] ?? 'Erreur lors de l\'inscription',
+          error['message'] ?? 'Registration error',
           statusCode: response.statusCode,
         );
       }
     } catch (e) {
       if (e is ApiException) rethrow;
-      throw ApiException('Erreur lors de l\'inscription: $e');
+      throw ApiException('Registration error');
     }
   }
 
@@ -110,7 +158,7 @@ class ApiService {
         headers: _headers,
       );
     } catch (e) {
-      throw ApiException('Erreur de déconnexion: $e');
+      // Ignore logout errors
     }
   }
 
@@ -126,13 +174,13 @@ class ApiService {
         return data.map((json) => Book.fromJson(json)).toList();
       } else {
         throw ApiException(
-          'Erreur lors du chargement des livres',
+          'Failed to load books',
           statusCode: response.statusCode,
         );
       }
     } catch (e) {
       if (e is ApiException) rethrow;
-      throw ApiException('Erreur lors du chargement des livres: $e');
+      throw ApiException('Failed to load books');
     }
   }
 
@@ -147,13 +195,13 @@ class ApiService {
         return Book.fromJson(json.decode(response.body));
       } else {
         throw ApiException(
-          'Livre non trouvé',
+          'Book not found',
           statusCode: response.statusCode,
         );
       }
     } catch (e) {
       if (e is ApiException) rethrow;
-      throw ApiException('Erreur lors du chargement du livre: $e');
+      throw ApiException('Failed to load book');
     }
   }
 
@@ -170,13 +218,13 @@ class ApiService {
       } else {
         final error = json.decode(response.body);
         throw ApiException(
-          error['message'] ?? 'Erreur lors de la création du livre',
+          error['message'] ?? 'Failed to create book',
           statusCode: response.statusCode,
         );
       }
     } catch (e) {
       if (e is ApiException) rethrow;
-      throw ApiException('Erreur lors de la création du livre: $e');
+      throw ApiException('Failed to create book');
     }
   }
 
@@ -193,13 +241,13 @@ class ApiService {
       } else {
         final error = json.decode(response.body);
         throw ApiException(
-          error['message'] ?? 'Erreur lors de la mise à jour du livre',
+          error['message'] ?? 'Failed to update book',
           statusCode: response.statusCode,
         );
       }
     } catch (e) {
       if (e is ApiException) rethrow;
-      throw ApiException('Erreur lors de la mise à jour du livre: $e');
+      throw ApiException('Failed to update book');
     }
   }
 
@@ -212,13 +260,13 @@ class ApiService {
 
       if (response.statusCode != 200 && response.statusCode != 204) {
         throw ApiException(
-          'Erreur lors de la suppression du livre',
+          'Failed to delete book',
           statusCode: response.statusCode,
         );
       }
     } catch (e) {
       if (e is ApiException) rethrow;
-      throw ApiException('Erreur lors de la suppression du livre: $e');
+      throw ApiException('Failed to delete book');
     }
   }
 
@@ -234,13 +282,13 @@ class ApiService {
         return data.map((json) => Memory.fromJson(json)).toList();
       } else {
         throw ApiException(
-          'Erreur lors du chargement des souvenirs',
+          'Failed to load memories',
           statusCode: response.statusCode,
         );
       }
     } catch (e) {
       if (e is ApiException) rethrow;
-      throw ApiException('Erreur lors du chargement des souvenirs: $e');
+      throw ApiException('Failed to load memories');
     }
   }
 
@@ -257,13 +305,13 @@ class ApiService {
       } else {
         final error = json.decode(response.body);
         throw ApiException(
-          error['message'] ?? 'Erreur lors de la création du souvenir',
+          error['message'] ?? 'Failed to create memory',
           statusCode: response.statusCode,
         );
       }
     } catch (e) {
       if (e is ApiException) rethrow;
-      throw ApiException('Erreur lors de la création du souvenir: $e');
+      throw ApiException('Failed to create memory');
     }
   }
 
@@ -280,13 +328,13 @@ class ApiService {
       } else {
         final error = json.decode(response.body);
         throw ApiException(
-          error['message'] ?? 'Erreur lors de la mise à jour du souvenir',
+          error['message'] ?? 'Failed to update memory',
           statusCode: response.statusCode,
         );
       }
     } catch (e) {
       if (e is ApiException) rethrow;
-      throw ApiException('Erreur lors de la mise à jour du souvenir: $e');
+      throw ApiException('Failed to update memory');
     }
   }
 
@@ -299,13 +347,106 @@ class ApiService {
 
       if (response.statusCode != 200 && response.statusCode != 204) {
         throw ApiException(
-          'Erreur lors de la suppression du souvenir',
+          'Failed to delete memory',
           statusCode: response.statusCode,
         );
       }
     } catch (e) {
       if (e is ApiException) rethrow;
-      throw ApiException('Erreur lors de la suppression du souvenir: $e');
+      throw ApiException('Failed to delete memory');
+    }
+  }
+
+  Future<NotificationSettings> getNotificationSettings(int bookId) async {
+    try {
+      final response = await _client.get(
+        Uri.parse('$baseUrl/books/$bookId/notification-settings'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return NotificationSettings.fromJson(data['settings'] ?? data);
+      } else {
+        throw ApiException(
+          'Failed to load notification settings',
+          statusCode: response.statusCode,
+        );
+      }
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException('Failed to load notification settings');
+    }
+  }
+
+  Future<NotificationSettings> updateNotificationSettings(
+    int bookId,
+    NotificationSettings settings,
+  ) async {
+    try {
+      final response = await _client.patch(
+        Uri.parse('$baseUrl/books/$bookId/notification-settings'),
+        headers: _headers,
+        body: json.encode(settings.toJson()),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return NotificationSettings.fromJson(data['settings'] ?? data);
+      } else {
+        final error = json.decode(response.body);
+        throw ApiException(
+          error['message'] ?? 'Failed to update notification settings',
+          statusCode: response.statusCode,
+        );
+      }
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException('Failed to update notification settings');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getUpcomingMilestones(int bookId) async {
+    try {
+      final response = await _client.get(
+        Uri.parse('$baseUrl/books/$bookId/milestones'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        return data.cast<Map<String, dynamic>>();
+      } else {
+        throw ApiException(
+          'Failed to load milestones',
+          statusCode: response.statusCode,
+        );
+      }
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException('Failed to load milestones');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> generateNotifications(int bookId) async {
+    try {
+      final response = await _client.post(
+        Uri.parse('$baseUrl/books/$bookId/generate-notifications'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return (data['notifications'] as List? ?? []).cast<Map<String, dynamic>>();
+      } else {
+        throw ApiException(
+          'Failed to generate notifications',
+          statusCode: response.statusCode,
+        );
+      }
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException('Failed to generate notifications');
     }
   }
 }

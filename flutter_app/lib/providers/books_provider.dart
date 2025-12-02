@@ -33,7 +33,7 @@ class BooksProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> loadBook(int id) async {
+  Future<void> loadBook(dynamic id) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -68,7 +68,7 @@ class BooksProvider with ChangeNotifier {
     }
   }
 
-  Future<bool> updateBook(int id, Map<String, dynamic> bookData) async {
+  Future<bool> updateBook(dynamic id, Map<String, dynamic> bookData) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -93,7 +93,7 @@ class BooksProvider with ChangeNotifier {
     }
   }
 
-  Future<bool> deleteBook(int id) async {
+  Future<bool> deleteBook(dynamic id) async {
     _isLoading = true;
     _error = null;
     notifyListeners();

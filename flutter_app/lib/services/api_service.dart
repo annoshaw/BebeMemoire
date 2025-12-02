@@ -185,7 +185,7 @@ class ApiService {
     }
   }
 
-  Future<Book> getBook(int id) async {
+  Future<Book> getBook(dynamic id) async {
     try {
       final response = await _client.get(
         Uri.parse('$baseUrl/books/$id'),
@@ -229,7 +229,7 @@ class ApiService {
     }
   }
 
-  Future<Book> updateBook(int id, Map<String, dynamic> bookData) async {
+  Future<Book> updateBook(dynamic id, Map<String, dynamic> bookData) async {
     try {
       final response = await _client.patch(
         Uri.parse('$baseUrl/books/$id'),
@@ -252,7 +252,7 @@ class ApiService {
     }
   }
 
-  Future<void> deleteBook(int id) async {
+  Future<void> deleteBook(dynamic id) async {
     try {
       final response = await _client.delete(
         Uri.parse('$baseUrl/books/$id'),
@@ -271,7 +271,7 @@ class ApiService {
     }
   }
 
-  Future<List<Memory>> getMemories(int bookId) async {
+  Future<List<Memory>> getMemories(dynamic bookId) async {
     try {
       final response = await _client.get(
         Uri.parse('$baseUrl/books/$bookId/memories'),
@@ -293,7 +293,7 @@ class ApiService {
     }
   }
 
-  Future<Memory> createMemory(int bookId, Map<String, dynamic> memoryData) async {
+  Future<Memory> createMemory(dynamic bookId, Map<String, dynamic> memoryData) async {
     try {
       final response = await _client.post(
         Uri.parse('$baseUrl/books/$bookId/memories'),
@@ -316,7 +316,7 @@ class ApiService {
     }
   }
 
-  Future<Memory> updateMemory(int memoryId, Map<String, dynamic> memoryData) async {
+  Future<Memory> updateMemory(dynamic memoryId, Map<String, dynamic> memoryData) async {
     try {
       final response = await _client.patch(
         Uri.parse('$baseUrl/memories/$memoryId'),
@@ -339,7 +339,7 @@ class ApiService {
     }
   }
 
-  Future<void> deleteMemory(int memoryId) async {
+  Future<void> deleteMemory(dynamic memoryId) async {
     try {
       final response = await _client.delete(
         Uri.parse('$baseUrl/memories/$memoryId'),
@@ -358,7 +358,7 @@ class ApiService {
     }
   }
 
-  Future<NotificationSettings> getNotificationSettings(int bookId) async {
+  Future<NotificationSettings> getNotificationSettings(dynamic bookId) async {
     try {
       final response = await _client.get(
         Uri.parse('$baseUrl/books/$bookId/notification-settings'),
@@ -381,7 +381,7 @@ class ApiService {
   }
 
   Future<NotificationSettings> updateNotificationSettings(
-    int bookId,
+    dynamic bookId,
     NotificationSettings settings,
   ) async {
     try {
@@ -407,7 +407,7 @@ class ApiService {
     }
   }
 
-  Future<List<Map<String, dynamic>>> getUpcomingMilestones(int bookId) async {
+  Future<List<Map<String, dynamic>>> getUpcomingMilestones(dynamic bookId) async {
     try {
       final response = await _client.get(
         Uri.parse('$baseUrl/books/$bookId/milestones'),
@@ -429,7 +429,7 @@ class ApiService {
     }
   }
 
-  Future<List<Map<String, dynamic>>> generateNotifications(int bookId) async {
+  Future<List<Map<String, dynamic>>> generateNotifications(dynamic bookId) async {
     try {
       final response = await _client.post(
         Uri.parse('$baseUrl/books/$bookId/generate-notifications'),

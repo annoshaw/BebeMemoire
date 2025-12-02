@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../theme/app_theme.dart';
 import '../providers/auth_provider.dart';
 
@@ -52,10 +51,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 size: 60,
                 color: AppColors.primary,
               ),
-            )
-                .animate()
-                .fadeIn(duration: 600.ms)
-                .scale(delay: 200.ms, duration: 400.ms),
+            ),
             const SizedBox(height: 32),
             Text(
               'Memoria',
@@ -63,24 +59,19 @@ class _SplashScreenState extends State<SplashScreen> {
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                   ),
-            )
-                .animate()
-                .fadeIn(delay: 400.ms, duration: 600.ms)
-                .slideY(begin: 0.3, end: 0),
+            ),
             const SizedBox(height: 8),
             Text(
               'Vos souvenirs, pour toujours',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: Colors.white.withOpacity(0.9),
                   ),
-            )
-                .animate()
-                .fadeIn(delay: 600.ms, duration: 600.ms),
+            ),
             const SizedBox(height: 48),
             const CircularProgressIndicator(
               color: Colors.white,
               strokeWidth: 2,
-            ).animate().fadeIn(delay: 800.ms, duration: 400.ms),
+            ),
           ],
         ),
       ),

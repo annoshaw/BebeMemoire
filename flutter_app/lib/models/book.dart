@@ -5,8 +5,8 @@ enum BabyStatus {
 }
 
 class Book {
-  final int id;
-  final int userId;
+  final String id;
+  final String userId;
   final String childName;
   final String? coverImage;
   final DateTime? birthDate;
@@ -48,9 +48,9 @@ class Book {
     }
 
     return Book(
-      id: json['id'] as int,
-      userId: json['userId'] as int,
-      childName: json['childName'] as String,
+      id: json['id'].toString(),
+      userId: json['userId'].toString(),
+      childName: json['childName'] as String? ?? '',
       coverImage: json['coverImage'] as String?,
       birthDate: json['birthDate'] != null
           ? DateTime.parse(json['birthDate'] as String)
@@ -102,8 +102,8 @@ class Book {
   }
 
   Book copyWith({
-    int? id,
-    int? userId,
+    String? id,
+    String? userId,
     String? childName,
     String? coverImage,
     DateTime? birthDate,

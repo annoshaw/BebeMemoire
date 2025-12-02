@@ -1,6 +1,6 @@
 class Memory {
-  final int id;
-  final int bookId;
+  final String id;
+  final String bookId;
   final String? title;
   final String? content;
   final DateTime? memoryDate;
@@ -27,8 +27,8 @@ class Memory {
 
   factory Memory.fromJson(Map<String, dynamic> json) {
     return Memory(
-      id: json['id'] as int,
-      bookId: json['bookId'] as int,
+      id: json['id'].toString(),
+      bookId: json['bookId'].toString(),
       title: json['title'] as String?,
       content: json['content'] as String?,
       memoryDate: json['memoryDate'] != null
@@ -64,8 +64,8 @@ class Memory {
   }
 
   Memory copyWith({
-    int? id,
-    int? bookId,
+    String? id,
+    String? bookId,
     String? title,
     String? content,
     DateTime? memoryDate,

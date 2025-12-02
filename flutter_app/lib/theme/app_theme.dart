@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class AppColors {
   static const Color primary = Color(0xFF6B8E6B);
@@ -35,6 +34,7 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
+      fontFamily: 'Roboto',
       colorScheme: ColorScheme.light(
         primary: AppColors.primary,
         secondary: AppColors.secondary,
@@ -47,12 +47,12 @@ class AppTheme {
       ),
       scaffoldBackgroundColor: AppColors.background,
       textTheme: _buildTextTheme(),
-      appBarTheme: AppBarTheme(
+      appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.surface,
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: GoogleFonts.fraunces(
+        titleTextStyle: TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.w600,
           color: AppColors.textPrimary,
@@ -74,7 +74,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          textStyle: GoogleFonts.dmSans(
+          textStyle: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
@@ -88,7 +88,7 @@ class AppTheme {
             borderRadius: BorderRadius.circular(12),
           ),
           side: const BorderSide(color: AppColors.primary),
-          textStyle: GoogleFonts.dmSans(
+          textStyle: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
@@ -114,10 +114,10 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: AppColors.error),
         ),
-        labelStyle: GoogleFonts.dmSans(
+        labelStyle: const TextStyle(
           color: AppColors.textSecondary,
         ),
-        hintStyle: GoogleFonts.dmSans(
+        hintStyle: const TextStyle(
           color: AppColors.textMuted,
         ),
       ),
@@ -136,75 +136,75 @@ class AppTheme {
   }
 
   static TextTheme _buildTextTheme() {
-    return TextTheme(
-      displayLarge: GoogleFonts.fraunces(
+    return const TextTheme(
+      displayLarge: TextStyle(
         fontSize: 32,
         fontWeight: FontWeight.bold,
         color: AppColors.textPrimary,
       ),
-      displayMedium: GoogleFonts.fraunces(
+      displayMedium: TextStyle(
         fontSize: 28,
         fontWeight: FontWeight.bold,
         color: AppColors.textPrimary,
       ),
-      displaySmall: GoogleFonts.fraunces(
+      displaySmall: TextStyle(
         fontSize: 24,
         fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
       ),
-      headlineLarge: GoogleFonts.fraunces(
+      headlineLarge: TextStyle(
         fontSize: 22,
         fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
       ),
-      headlineMedium: GoogleFonts.fraunces(
+      headlineMedium: TextStyle(
         fontSize: 20,
         fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
       ),
-      headlineSmall: GoogleFonts.fraunces(
+      headlineSmall: TextStyle(
         fontSize: 18,
         fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
       ),
-      titleLarge: GoogleFonts.dmSans(
+      titleLarge: TextStyle(
         fontSize: 18,
         fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
       ),
-      titleMedium: GoogleFonts.dmSans(
+      titleMedium: TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
       ),
-      titleSmall: GoogleFonts.dmSans(
+      titleSmall: TextStyle(
         fontSize: 14,
         fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
       ),
-      bodyLarge: GoogleFonts.dmSans(
+      bodyLarge: TextStyle(
         fontSize: 16,
         color: AppColors.textPrimary,
       ),
-      bodyMedium: GoogleFonts.dmSans(
+      bodyMedium: TextStyle(
         fontSize: 14,
         color: AppColors.textPrimary,
       ),
-      bodySmall: GoogleFonts.dmSans(
+      bodySmall: TextStyle(
         fontSize: 12,
         color: AppColors.textSecondary,
       ),
-      labelLarge: GoogleFonts.dmSans(
+      labelLarge: TextStyle(
         fontSize: 14,
         fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
       ),
-      labelMedium: GoogleFonts.dmSans(
+      labelMedium: TextStyle(
         fontSize: 12,
         fontWeight: FontWeight.w500,
         color: AppColors.textSecondary,
       ),
-      labelSmall: GoogleFonts.dmSans(
+      labelSmall: TextStyle(
         fontSize: 10,
         fontWeight: FontWeight.w500,
         color: AppColors.textMuted,

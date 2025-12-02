@@ -8,6 +8,8 @@ export interface IStorage {
   upsertUser(user: UpsertUser): Promise<User>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUser(id: string, data: Partial<InsertUser>): Promise<User | undefined>;
+  completeOnboarding(userId: string): Promise<User | undefined>;
   
   // Book operations
   getBook(id: string): Promise<Book | undefined>;
@@ -100,6 +102,24 @@ export class DatabaseStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const result = await db.insert(users).values(insertUser).returning();
+    return result[0];
+  }
+
+  async updateUser(id: string, data: Partial<InsertUser>): Promise<User | undefined> {
+    const result = await db
+      .update(users)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async completeOnboarding(userId: string): Promise<User | undefined> {
+    const result = await db
+      .update(users)
+      .set({ onboardingCompleted: true, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
     return result[0];
   }
 

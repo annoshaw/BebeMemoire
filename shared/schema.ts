@@ -28,6 +28,7 @@ export const users = pgTable("users", {
   phone: text("phone"),
   country: text("country"),
   authProvider: text("auth_provider").default("email"),
+  onboardingCompleted: boolean("onboarding_completed").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -205,6 +206,7 @@ export const notificationSettings = pgTable("notification_settings", {
   weeklyDigest: boolean("weekly_digest").default(false),
   birthdayReminders: boolean("birthday_reminders").default(true),
   customReminderDays: integer("custom_reminder_days").default(7), // Days before milestone to remind
+  notificationFrequency: text("notification_frequency").default("weekly"), // daily, weekly, monthly, none
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

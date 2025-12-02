@@ -301,6 +301,143 @@ export async function registerRoutes(
     res.json({ user: req.user });
   });
 
+  // ONBOARDING ROUTES
+
+  // Get onboarding state
+  app.get("/api/onboarding/state", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "Utilisateur non trouvé" });
+      }
+      
+      const books = await storage.getBooksByUserId(userId);
+      const notificationSettings = await storage.getNotificationSettings(userId);
+      
+      res.json({
+        onboardingCompleted: user.onboardingCompleted || false,
+        hasBooks: books.length > 0,
+        firstBook: books.length > 0 ? books[0] : null,
+        notificationSettings: notificationSettings || null,
+      });
+    } catch (error) {
+      console.error("Get onboarding state error:", error);
+      res.status(500).json({ message: "Erreur lors de la récupération de l'état d'onboarding" });
+    }
+  });
+
+  // Complete onboarding - creates first book and notification settings
+  app.post("/api/onboarding", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const { 
+        bookType, // 'born', 'expecting', 'adoption'
+        childName,
+        date, // birth date, due date, or adoption date
+        notificationFrequency, // 'daily', 'weekly', 'monthly', 'none'
+        babyGender, // optional
+      } = req.body;
+      
+      // Validate required fields
+      if (!bookType || !['born', 'expecting', 'adoption'].includes(bookType)) {
+        return res.status(400).json({ message: "Type de livre invalide" });
+      }
+      
+      if (!childName || typeof childName !== 'string' || childName.trim().length < 1) {
+        return res.status(400).json({ message: "Le nom de l'enfant est requis" });
+      }
+      
+      if (!date) {
+        return res.status(400).json({ message: "La date est requise" });
+      }
+      
+      if (!notificationFrequency || !['daily', 'weekly', 'monthly', 'none'].includes(notificationFrequency)) {
+        return res.status(400).json({ message: "Fréquence de notification invalide" });
+      }
+      
+      // Parse date
+      const parsedDate = new Date(date);
+      if (isNaN(parsedDate.getTime())) {
+        return res.status(400).json({ message: "Date invalide" });
+      }
+      
+      // Create the first book
+      const bookData = {
+        userId,
+        childName: childName.trim(),
+        babyStatus: bookType,
+        birthDate: parsedDate,
+        babyGender: babyGender || null,
+        bookType: 'custom' as const,
+        isActive: true,
+      };
+      
+      const book = await storage.createBook(bookData);
+      
+      // Create or update notification settings
+      let settings = await storage.getNotificationSettings(userId);
+      if (settings) {
+        settings = await storage.updateNotificationSettings(userId, {
+          notificationFrequency,
+          pushNotifications: notificationFrequency !== 'none',
+          milestoneReminders: notificationFrequency !== 'none',
+        });
+      } else {
+        settings = await storage.createNotificationSettings({
+          userId,
+          notificationFrequency,
+          pushNotifications: notificationFrequency !== 'none',
+          milestoneReminders: notificationFrequency !== 'none',
+          emailNotifications: notificationFrequency !== 'none',
+        });
+      }
+      
+      // Mark onboarding as completed
+      await storage.completeOnboarding(userId);
+      
+      res.status(201).json({
+        message: "Onboarding complété avec succès",
+        book,
+        notificationSettings: settings,
+        onboardingCompleted: true,
+      });
+    } catch (error) {
+      console.error("Complete onboarding error:", error);
+      res.status(500).json({ message: "Erreur lors de la complétion de l'onboarding" });
+    }
+  });
+
+  // Update user profile (gender, country, phone)
+  app.patch("/api/auth/user", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const { gender, country, phone, fullName } = req.body;
+      
+      const updateData: any = {};
+      if (gender !== undefined) updateData.gender = gender;
+      if (country !== undefined) updateData.country = country;
+      if (phone !== undefined) updateData.phone = phone;
+      if (fullName !== undefined) updateData.fullName = fullName;
+      
+      if (Object.keys(updateData).length === 0) {
+        return res.status(400).json({ message: "Aucune donnée à mettre à jour" });
+      }
+      
+      const user = await storage.updateUser(userId, updateData);
+      
+      if (!user) {
+        return res.status(404).json({ message: "Utilisateur non trouvé" });
+      }
+      
+      res.json(user);
+    } catch (error) {
+      console.error("Update user error:", error);
+      res.status(500).json({ message: "Erreur lors de la mise à jour du profil" });
+    }
+  });
+
   // BOOK TEMPLATE ROUTES
 
   // Get all available book templates (requires auth)

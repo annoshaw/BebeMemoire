@@ -1,0 +1,46 @@
+Super idée 🌟 ! Adapter ta roadmap Flutter pour Replit est tout à fait possible, mais il faut tenir compte des spécificités de cette plateforme : Replit est surtout pensé pour le développement web et backend, mais il peut aussi servir pour Flutter si tu utilises son environnement Linux et quelques ajustements. Voici une version adaptée :
+
+🛠️ Roadmap Flutter pour Mémo sur Replit
+1. Préparation de l’environnement
+• 	Crée un nouveau projet Replit en choisissant "Nix" comme environnement (permet d’installer Flutter).
+• 	Installe Flutter via le fichier  :
+
+• 	Configure le SDK Flutter avec  pour vérifier les dépendances.
+• 	⚠️ Limitation : sur Replit, tu ne pourras pas compiler directement pour iOS/Android. Tu travailleras surtout sur Flutter Web pour tester ton front-end.
+
+2. Design & Prototypage
+• 	Utilise Figma ou un autre outil externe pour tes maquettes.
+• 	Dans Replit, crée un dossier  pour stocker tes images, icônes et logos.
+• 	Mets en place ta charte graphique directement dans  de Flutter.
+
+3. Développement Front-End (Web-first)
+• 	Structure ton projet avec les dossiers :
+• 	 → code principal
+• 	 → images
+• 	 → classes de données
+• 	 → gestion d’état
+• 	Commence par les écrans clés :
+• 	Accueil : navigation simple.
+• 	Timeline grossesse :  ou .
+• 	Album photo :  avec upload (pour le web).
+• 	QR code : package .
+
+4. Fonctionnalités adaptées à Replit
+• 	Stockage local : utilise  ou  (fonctionne en web).
+• 	Cloud sync : connecte Firebase ou Supabase via leurs SDK web.
+• 	QR code : fonctionne directement en Flutter Web.
+• 	Animations : Flutter Web supporte , , etc.
+
+5. Tests & Déploiement
+• 	Teste ton app directement dans le navigateur intégré de Replit.
+• 	Déploie une version web avec  puis héberge sur Replit ou via GitHub Pages / Vercel / Netlify.
+• 	Pour Android/iOS : exporte ton code depuis Replit et compile localement (Android Studio ou Xcode).
+
+6. Évolutions futures
+• 	Ajouter une progressive web app (PWA) pour que les parents puissent installer Mémo sur leur téléphone depuis le navigateur.
+• 	Intégrer des exports PDF (via  package).
+• 	Prévoir une migration vers un environnement local ou CI/CD (GitHub Actions) pour générer les builds mobiles.
+
+✅ En résumé : sur Replit, tu peux développer Mémo en Flutter Web comme MVP, tester ton interface et tes fonctionnalités principales, puis exporter ton code pour générer les versions mobiles. C’est une excellente façon de démarrer rapidement sans configurer un lourd environnement local.
+
+👉 Veux-tu que je t’organise cette roadmap sous forme de timeline visuelle (diagramme Gantt simplifié) pour voir clairement l’ordre des étapes sur Replit?

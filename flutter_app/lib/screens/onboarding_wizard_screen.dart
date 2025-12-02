@@ -125,11 +125,13 @@ class _OnboardingWizardScreenState extends State<OnboardingWizardScreen> {
   Future<void> _completeOnboarding() async {
     if (_isLoading) return;
     
+    final locale = context.read<LocaleProvider>();
+    
     if (_selectedBookType == null || 
         _selectedDate == null || 
         _childNameController.text.trim().isEmpty) {
       setState(() {
-        _error = context.read<LocaleProvider>().isFrench 
+        _error = locale.isFrench 
             ? 'Veuillez remplir tous les champs requis'
             : 'Please fill in all required fields';
       });
@@ -155,7 +157,7 @@ class _OnboardingWizardScreenState extends State<OnboardingWizardScreen> {
         widget.onComplete();
       } else {
         setState(() {
-          _error = context.read<LocaleProvider>().isFrench 
+          _error = locale.isFrench 
               ? 'Erreur lors de la création du livre'
               : 'Error creating book';
           _isLoading = false;

@@ -1,5 +1,5 @@
 class User {
-  final int id;
+  final String id;
   final String? email;
   final String? fullName;
   final String? firstName;
@@ -10,6 +10,7 @@ class User {
   final String? phone;
   final String? country;
   final String authProvider;
+  final bool onboardingCompleted;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -25,13 +26,14 @@ class User {
     this.phone,
     this.country,
     this.authProvider = 'email',
+    this.onboardingCompleted = false,
     this.createdAt,
     this.updatedAt,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      id: json['id'] as int,
+      id: json['id'].toString(),
       email: json['email'] as String?,
       fullName: json['fullName'] as String?,
       firstName: json['firstName'] as String?,
@@ -42,6 +44,7 @@ class User {
       phone: json['phone'] as String?,
       country: json['country'] as String?,
       authProvider: json['authProvider'] as String? ?? 'email',
+      onboardingCompleted: json['onboardingCompleted'] as bool? ?? false,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String)
           : null,
@@ -64,6 +67,7 @@ class User {
       'phone': phone,
       'country': country,
       'authProvider': authProvider,
+      'onboardingCompleted': onboardingCompleted,
       'createdAt': createdAt?.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
     };

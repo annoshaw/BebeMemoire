@@ -83,8 +83,13 @@ class ApiService {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        if (data['user'] != null) {
-          return User.fromJson(data['user']);
+        if (data is Map<String, dynamic>) {
+          if (data['user'] != null) {
+            return User.fromJson(data['user'] as Map<String, dynamic>);
+          }
+          if (data['id'] != null) {
+            return User.fromJson(data);
+          }
         }
       }
       return null;

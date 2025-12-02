@@ -10,6 +10,9 @@ class AppColors {
   static const Color secondaryLight = Color(0xFFE5A585);
   static const Color secondaryDark = Color(0xFFA65F3C);
   
+  static const Color accent = Color(0xFF8B7355);
+  static const Color accentLight = Color(0xFFB39E82);
+  
   static const Color background = Color(0xFFFAF8F5);
   static const Color surface = Color(0xFFFFFFFF);
   static const Color card = Color(0xFFFFFFFF);

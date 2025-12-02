@@ -98,6 +98,9 @@ class AuthProvider with ChangeNotifier {
     required String email,
     required String password,
     String? fullName,
+    String? gender,
+    String? country,
+    String? phone,
   }) async {
     _isLoading = true;
     _error = null;
@@ -108,6 +111,9 @@ class AuthProvider with ChangeNotifier {
         email: email,
         password: password,
         fullName: fullName,
+        gender: gender,
+        country: country,
+        phone: phone,
       );
       _status = AuthStatus.authenticated;
       _isLoading = false;

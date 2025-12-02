@@ -124,16 +124,24 @@ class ApiService {
     required String email,
     required String password,
     String? fullName,
+    String? gender,
+    String? country,
+    String? phone,
   }) async {
     try {
+      final body = <String, dynamic>{
+        'email': email,
+        'password': password,
+      };
+      if (fullName != null) body['fullName'] = fullName;
+      if (gender != null) body['gender'] = gender;
+      if (country != null) body['country'] = country;
+      if (phone != null) body['phone'] = phone;
+      
       final response = await _client.post(
         Uri.parse('$baseUrl/auth/register'),
         headers: _headers,
-        body: json.encode({
-          'email': email,
-          'password': password,
-          'fullName': fullName,
-        }),
+        body: json.encode(body),
       );
 
       if (response.statusCode == 201 || response.statusCode == 200) {
@@ -160,6 +168,96 @@ class ApiService {
       );
     } catch (e) {
       // Ignore logout errors
+    }
+  }
+
+  Future<Map<String, dynamic>> getOnboardingState() async {
+    try {
+      final response = await _client.get(
+        Uri.parse('$baseUrl/onboarding/state'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body) as Map<String, dynamic>;
+      } else {
+        throw ApiException(
+          'Failed to get onboarding state',
+          statusCode: response.statusCode,
+        );
+      }
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException('Failed to get onboarding state');
+    }
+  }
+
+  Future<Map<String, dynamic>> completeOnboarding({
+    required String bookType, // 'born', 'expecting', 'adoption'
+    required String childName,
+    required DateTime date,
+    required String notificationFrequency, // 'daily', 'weekly', 'monthly', 'none'
+    String? babyGender,
+  }) async {
+    try {
+      final response = await _client.post(
+        Uri.parse('$baseUrl/onboarding'),
+        headers: _headers,
+        body: json.encode({
+          'bookType': bookType,
+          'childName': childName,
+          'date': date.toIso8601String(),
+          'notificationFrequency': notificationFrequency,
+          if (babyGender != null) 'babyGender': babyGender,
+        }),
+      );
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        return json.decode(response.body) as Map<String, dynamic>;
+      } else {
+        final error = json.decode(response.body);
+        throw ApiException(
+          error['message'] ?? 'Failed to complete onboarding',
+          statusCode: response.statusCode,
+        );
+      }
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException('Failed to complete onboarding');
+    }
+  }
+
+  Future<User> updateUserProfile({
+    String? gender,
+    String? country,
+    String? phone,
+    String? fullName,
+  }) async {
+    try {
+      final body = <String, dynamic>{};
+      if (gender != null) body['gender'] = gender;
+      if (country != null) body['country'] = country;
+      if (phone != null) body['phone'] = phone;
+      if (fullName != null) body['fullName'] = fullName;
+
+      final response = await _client.patch(
+        Uri.parse('$baseUrl/auth/user'),
+        headers: _headers,
+        body: json.encode(body),
+      );
+
+      if (response.statusCode == 200) {
+        return User.fromJson(json.decode(response.body));
+      } else {
+        final error = json.decode(response.body);
+        throw ApiException(
+          error['message'] ?? 'Failed to update profile',
+          statusCode: response.statusCode,
+        );
+      }
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException('Failed to update profile');
     }
   }
 

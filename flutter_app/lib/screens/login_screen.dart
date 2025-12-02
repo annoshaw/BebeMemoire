@@ -12,10 +12,41 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  String _email = '';
-  String _password = '';
-  String _fullName = '';
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _fullNameController = TextEditingController();
+  final _phoneController = TextEditingController();
+  
+  String? _selectedGender;
+  String? _selectedCountry;
   bool _isLogin = true;
+
+  final List<Map<String, String>> _genderOptions = [
+    {'value': 'female', 'labelFr': 'Femme', 'labelEn': 'Female'},
+    {'value': 'male', 'labelFr': 'Homme', 'labelEn': 'Male'},
+    {'value': 'other', 'labelFr': 'Autre', 'labelEn': 'Other'},
+    {'value': 'prefer_not_to_say', 'labelFr': 'Préfère ne pas dire', 'labelEn': 'Prefer not to say'},
+  ];
+
+  final List<Map<String, String>> _countryOptions = [
+    {'value': 'CA', 'labelFr': 'Canada', 'labelEn': 'Canada'},
+    {'value': 'FR', 'labelFr': 'France', 'labelEn': 'France'},
+    {'value': 'BE', 'labelFr': 'Belgique', 'labelEn': 'Belgium'},
+    {'value': 'CH', 'labelFr': 'Suisse', 'labelEn': 'Switzerland'},
+    {'value': 'US', 'labelFr': 'États-Unis', 'labelEn': 'United States'},
+    {'value': 'UK', 'labelFr': 'Royaume-Uni', 'labelEn': 'United Kingdom'},
+    {'value': 'DE', 'labelFr': 'Allemagne', 'labelEn': 'Germany'},
+    {'value': 'other', 'labelFr': 'Autre', 'labelEn': 'Other'},
+  ];
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    _fullNameController.dispose();
+    _phoneController.dispose();
+    super.dispose();
+  }
 
   Future<void> _submit() async {
     final authProvider = context.read<AuthProvider>();
@@ -23,14 +54,17 @@ class _LoginScreenState extends State<LoginScreen> {
     bool success;
     if (_isLogin) {
       success = await authProvider.login(
-        _email.trim(),
-        _password,
+        _emailController.text.trim(),
+        _passwordController.text,
       );
     } else {
       success = await authProvider.register(
-        email: _email.trim(),
-        password: _password,
-        fullName: _fullName.trim().isEmpty ? null : _fullName.trim(),
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+        fullName: _fullNameController.text.trim().isEmpty ? null : _fullNameController.text.trim(),
+        gender: _selectedGender,
+        country: _selectedCountry,
+        phone: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
       );
     }
 
@@ -56,7 +90,7 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 40),
+              const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
@@ -70,7 +104,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 10),
               Center(
                 child: Container(
                   width: 80,
@@ -103,30 +137,59 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 48),
+              const SizedBox(height: 32),
               
               if (!_isLogin) ...[
-                _buildSimpleTextField(
+                _buildInputField(
+                  controller: _fullNameController,
                   label: locale.translate('Nom complet', 'Full name'),
                   icon: Icons.person_outline,
-                  onChanged: (v) => setState(() => _fullName = v),
                 ),
                 const SizedBox(height: 16),
               ],
               
-              _buildSimpleTextField(
+              _buildInputField(
+                controller: _emailController,
                 label: locale.translate('Email', 'Email'),
                 icon: Icons.email_outlined,
-                onChanged: (v) => setState(() => _email = v),
+                keyboardType: TextInputType.emailAddress,
               ),
               const SizedBox(height: 16),
               
-              _buildSimpleTextField(
+              _buildInputField(
+                controller: _passwordController,
                 label: locale.translate('Mot de passe', 'Password'),
                 icon: Icons.lock_outline,
                 isPassword: true,
-                onChanged: (v) => setState(() => _password = v),
               ),
+              
+              if (!_isLogin) ...[
+                const SizedBox(height: 16),
+                _buildInputField(
+                  controller: _phoneController,
+                  label: locale.translate('Téléphone (optionnel)', 'Phone (optional)'),
+                  icon: Icons.phone_outlined,
+                  keyboardType: TextInputType.phone,
+                ),
+                const SizedBox(height: 16),
+                _buildDropdown(
+                  value: _selectedGender,
+                  hint: locale.translate('Genre (optionnel)', 'Gender (optional)'),
+                  icon: Icons.person_outline,
+                  items: _genderOptions,
+                  isFrench: locale.isFrench,
+                  onChanged: (value) => setState(() => _selectedGender = value),
+                ),
+                const SizedBox(height: 16),
+                _buildDropdown(
+                  value: _selectedCountry,
+                  hint: locale.translate('Pays', 'Country'),
+                  icon: Icons.public,
+                  items: _countryOptions,
+                  isFrench: locale.isFrench,
+                  onChanged: (value) => setState(() => _selectedCountry = value),
+                ),
+              ],
               
               const SizedBox(height: 24),
               ElevatedButton(
@@ -162,6 +225,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     onPressed: () {
                       setState(() {
                         _isLogin = !_isLogin;
+                        _emailController.clear();
+                        _passwordController.clear();
+                        _fullNameController.clear();
+                        _phoneController.clear();
+                        _selectedGender = null;
+                        _selectedCountry = null;
                       });
                     },
                     child: Text(
@@ -179,11 +248,12 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildSimpleTextField({
+  Widget _buildInputField({
+    required TextEditingController controller,
     required String label,
     required IconData icon,
     bool isPassword = false,
-    required ValueChanged<String> onChanged,
+    TextInputType? keyboardType,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -198,17 +268,94 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Icon(icon, color: AppColors.textSecondary),
           ),
           Expanded(
-            child: EditableText(
-              controller: TextEditingController(),
-              focusNode: FocusNode(),
-              style: const TextStyle(
-                fontSize: 16,
-                color: AppColors.textPrimary,
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: EditableText(
+                controller: controller,
+                focusNode: FocusNode(),
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: AppColors.textPrimary,
+                  fontFamily: 'DM Sans',
+                ),
+                cursorColor: AppColors.primary,
+                backgroundCursorColor: AppColors.border,
+                obscureText: isPassword,
+                keyboardType: keyboardType,
+                onChanged: (_) => setState(() {}),
               ),
-              cursorColor: AppColors.primary,
-              backgroundCursorColor: AppColors.border,
-              onChanged: onChanged,
-              obscureText: isPassword,
+            ),
+          ),
+          if (controller.text.isEmpty)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      color: AppColors.textSecondary.withOpacity(0.7),
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDropdown({
+    required String? value,
+    required String hint,
+    required IconData icon,
+    required List<Map<String, String>> items,
+    required bool isFrench,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Icon(icon, color: AppColors.textSecondary),
+          ),
+          Expanded(
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: value,
+                hint: Text(
+                  hint,
+                  style: TextStyle(
+                    color: AppColors.textSecondary.withOpacity(0.7),
+                    fontSize: 16,
+                  ),
+                ),
+                isExpanded: true,
+                icon: const Icon(Icons.keyboard_arrow_down),
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: AppColors.textPrimary,
+                ),
+                dropdownColor: AppColors.surface,
+                items: items.map((item) {
+                  return DropdownMenuItem<String>(
+                    value: item['value'],
+                    child: Text(
+                      isFrench ? item['labelFr']! : item['labelEn']!,
+                      style: const TextStyle(color: AppColors.textPrimary),
+                    ),
+                  );
+                }).toList(),
+                onChanged: onChanged,
+              ),
             ),
           ),
         ],

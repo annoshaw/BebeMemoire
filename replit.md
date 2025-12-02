@@ -32,6 +32,31 @@ Preferred communication style: Simple, everyday language.
 - `/client/src/pages/` - Route-level page components
 - Path aliases configured: `@/` → client/src, `@shared/` → shared, `@assets/` → attached_assets
 
+### Flutter Web Frontend (Parallel Development)
+
+**Location**: `/flutter_app/` - Alternative mobile-first Flutter web frontend accessible at `/flutter/`
+
+**Framework & Build**
+- **Flutter 3.22+** with Dart for cross-platform development
+- **Flutter Web** compiled output served from `/flutter/` route
+- Uses `provider` package for state management
+
+**Key Components**
+- `/flutter_app/lib/screens/` - Screen components (LoginScreen, HomeScreen, OnboardingWizardScreen)
+- `/flutter_app/lib/providers/` - State providers (AuthProvider, BooksProvider, OnboardingProvider, LocaleProvider)
+- `/flutter_app/lib/services/` - API service for backend communication
+- `/flutter_app/lib/theme/` - Custom theme with AppColors
+
+**Onboarding Flow**
+- Multi-step wizard for new users after registration
+- Step 1: Book type selection (born/expecting/adoption)
+- Step 2: Child name and optional gender
+- Step 3: Relevant date (birth/due/adoption date)
+- Step 4: Notification frequency preference
+- Creates first book and notification settings on completion
+
+**Build Command**: `cd flutter_app && flutter build web --base-href="/flutter/"`
+
 ### Backend Architecture
 
 **Server Framework**
@@ -64,9 +89,11 @@ Preferred communication style: Simple, everyday language.
 **Database Schema Design**
 - **sessions** - Passport session storage with expiry index
 - **users** - User profiles supporting both email and OAuth (Replit) authentication
-  - Fields: id, email, password (hashed), fullName, firstName, lastName, profileImageUrl, address, gender, phone, country, authProvider, timestamps
+  - Fields: id, email, password (hashed), fullName, firstName, lastName, profileImageUrl, address, gender, phone, country, authProvider, onboardingCompleted, timestamps
 - **books** - Baby book/album records linked to users
-  - Fields: id, userId (foreign key), childName, coverImage, birthDate, timestamps
+  - Fields: id, userId (foreign key), childName, coverImage, birthDate, babyStatus (born/expecting/adoption), timestamps
+- **notificationSettings** - User notification preferences
+  - Fields: userId, emailNotifications, pushNotifications, milestoneReminders, notificationFrequency (daily/weekly/monthly/none), timestamps
 - **memories** - Individual memory entries within books
   - Fields: id, bookId (foreign key), content, media references, timestamps
 - **userPlans** - Subscription tier management (Free, Premium, Platine)

@@ -5,6 +5,9 @@ import bcrypt from "bcryptjs";
 import { insertUserSchema, insertBookSchema, insertMemorySchema, type User } from "@shared/schema";
 import { fromError } from "zod-validation-error";
 import { setupAuth, isAuthenticated } from "./replitAuth";
+import express from "express";
+import path from "path";
+import fs from "fs";
 
 // Extend Express Request to include user
 declare global {
@@ -43,6 +46,17 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  // Serve Flutter web app from /flutter/ path (works in both dev and production)
+  const flutterPath = path.resolve(process.cwd(), "flutter_app", "build", "web");
+  if (fs.existsSync(flutterPath)) {
+    app.use("/flutter", express.static(flutterPath));
+    
+    // Handle Flutter SPA routing - all /flutter/* routes serve the Flutter index.html
+    app.get("/flutter/*", (_req, res) => {
+      res.sendFile(path.resolve(flutterPath, "index.html"));
+    });
+  }
+  
   // Setup Replit Auth (handles session, passport, login/logout/callback routes)
   await setupAuth(app);
 

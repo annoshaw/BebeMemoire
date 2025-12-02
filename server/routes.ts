@@ -396,6 +396,85 @@ export async function registerRoutes(
     }
   });
 
+  // Get current age/pregnancy status for a book (dynamic calculation)
+  app.get("/api/books/:id/age", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const book = await storage.getBook(req.params.id);
+      
+      if (!book) {
+        return res.status(404).json({ message: "Livre non trouvé" });
+      }
+      if (book.userId !== userId) {
+        return res.status(403).json({ message: "Accès refusé" });
+      }
+      
+      if (!book.birthDate) {
+        return res.status(400).json({ message: "Date non définie pour ce livre" });
+      }
+      
+      const childName = book.childName || "Bébé";
+      let babyStatus = book.babyStatus || "born";
+      const now = new Date();
+      const dateValue = new Date(book.birthDate);
+      const isDateInFuture = dateValue > now;
+      const isDateInPast = dateValue <= now;
+      
+      // Smart status detection based on date reality
+      // If marked "born" but date is in future, treat as expecting
+      // If marked "expecting" but due date has passed, treat as born
+      let effectiveStatus = babyStatus;
+      if (babyStatus === "born" && isDateInFuture) {
+        effectiveStatus = "expecting";
+      } else if (babyStatus === "expecting" && isDateInPast) {
+        effectiveStatus = "born";
+      }
+      
+      if (effectiveStatus === "expecting") {
+        // Pregnancy progress - birthDate is the due date
+        const progress = calculatePregnancyProgress(book.birthDate);
+        res.json({
+          age: {
+            type: "pregnancy",
+            message: formatPregnancyMessage(childName, book.birthDate),
+            weeksPregnant: progress.weeksPregnant,
+            monthsPregnant: progress.monthsPregnant,
+            weeksUntilDue: progress.weeksUntilDue,
+            daysUntilDue: progress.daysUntilDue,
+            trimester: progress.trimester,
+            isPastDue: progress.isPastDue,
+            childName,
+            dueDate: book.birthDate,
+            originalStatus: babyStatus,
+            effectiveStatus
+          }
+        });
+      } else {
+        // Born baby or adoption - calculate age
+        const age = calculateExactAge(book.birthDate);
+        res.json({
+          age: {
+            type: babyStatus === "adoption" ? "adoption" : "born",
+            message: formatAgeMessage(childName, book.birthDate),
+            years: age.years,
+            months: age.months,
+            days: age.days,
+            totalDays: age.totalDays,
+            totalWeeks: age.totalWeeks,
+            totalMonths: age.totalMonths,
+            childName,
+            birthDate: book.birthDate,
+            originalStatus: babyStatus,
+            effectiveStatus
+          }
+        });
+      }
+    } catch (error) {
+      console.error("Get age error:", error);
+      res.status(500).json({ message: "Erreur lors du calcul de l'âge" });
+    }
+  });
+
   // MEMORY ROUTES
 
   // Get all memories for a book
@@ -705,6 +784,128 @@ export async function registerRoutes(
   });
 
   return httpServer;
+}
+
+// ============ HELPER FUNCTIONS FOR AGE CALCULATION ============
+
+// Calculate exact age in months, weeks, and days from birth date
+function calculateExactAge(birthDate: Date, fromDate: Date = new Date()) {
+  const birth = new Date(birthDate);
+  const now = new Date(fromDate);
+  
+  let years = now.getFullYear() - birth.getFullYear();
+  let months = now.getMonth() - birth.getMonth();
+  let days = now.getDate() - birth.getDate();
+  
+  if (days < 0) {
+    months--;
+    const prevMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+    days += prevMonth.getDate();
+  }
+  
+  if (months < 0) {
+    years--;
+    months += 12;
+  }
+  
+  const totalDays = Math.floor((now.getTime() - birth.getTime()) / (1000 * 60 * 60 * 24));
+  const totalWeeks = Math.floor(totalDays / 7);
+  const totalMonths = years * 12 + months;
+  
+  return {
+    years,
+    months,
+    days,
+    totalDays,
+    totalWeeks,
+    totalMonths,
+    isPregnancy: totalDays < 0
+  };
+}
+
+// Calculate pregnancy progress (weeks since conception or until due date)
+function calculatePregnancyProgress(dueDate: Date, fromDate: Date = new Date()) {
+  const due = new Date(dueDate);
+  const now = new Date(fromDate);
+  
+  const daysUntilDue = Math.floor((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  const weeksUntilDue = Math.floor(daysUntilDue / 7);
+  
+  // Pregnancy is typically 40 weeks (280 days)
+  const conceptionDate = new Date(due);
+  conceptionDate.setDate(conceptionDate.getDate() - 280);
+  
+  const daysSinceConception = Math.floor((now.getTime() - conceptionDate.getTime()) / (1000 * 60 * 60 * 24));
+  const weeksSinceConception = Math.floor(daysSinceConception / 7);
+  const monthsPregnant = Math.floor(weeksSinceConception / 4);
+  
+  return {
+    weeksPregnant: weeksSinceConception,
+    monthsPregnant,
+    weeksUntilDue,
+    daysUntilDue,
+    trimester: weeksSinceConception < 13 ? 1 : weeksSinceConception < 27 ? 2 : 3,
+    isPastDue: daysUntilDue < 0
+  };
+}
+
+// Format age for display in notifications
+function formatAgeMessage(childName: string, birthDate: Date): string {
+  const age = calculateExactAge(birthDate);
+  
+  if (age.totalDays < 0) {
+    return `${childName} n'est pas encore né(e)`;
+  }
+  
+  if (age.totalDays === 0) {
+    return `${childName} est né(e) aujourd'hui !`;
+  }
+  
+  if (age.totalDays < 7) {
+    return `${childName} a ${age.totalDays} jour${age.totalDays > 1 ? 's' : ''}`;
+  }
+  
+  if (age.totalDays < 30) {
+    const weeks = age.totalWeeks;
+    const remainingDays = age.totalDays % 7;
+    if (remainingDays === 0) {
+      return `${childName} a ${weeks} semaine${weeks > 1 ? 's' : ''}`;
+    }
+    return `${childName} a ${weeks} semaine${weeks > 1 ? 's' : ''} et ${remainingDays} jour${remainingDays > 1 ? 's' : ''}`;
+  }
+  
+  if (age.years === 0) {
+    if (age.days === 0) {
+      return `${childName} a ${age.months} mois`;
+    }
+    return `${childName} a ${age.months} mois et ${age.days} jour${age.days > 1 ? 's' : ''}`;
+  }
+  
+  if (age.months === 0) {
+    return `${childName} a ${age.years} an${age.years > 1 ? 's' : ''}`;
+  }
+  
+  return `${childName} a ${age.years} an${age.years > 1 ? 's' : ''} et ${age.months} mois`;
+}
+
+// Format pregnancy progress for display
+function formatPregnancyMessage(childName: string, dueDate: Date): string {
+  const progress = calculatePregnancyProgress(dueDate);
+  
+  if (progress.isPastDue) {
+    const daysOver = Math.abs(progress.daysUntilDue);
+    return `Terme dépassé de ${daysOver} jour${daysOver > 1 ? 's' : ''} - ${childName} arrive bientôt !`;
+  }
+  
+  if (progress.daysUntilDue === 0) {
+    return `C'est le jour prévu pour l'arrivée de ${childName} !`;
+  }
+  
+  if (progress.weeksUntilDue === 0) {
+    return `Plus que ${progress.daysUntilDue} jour${progress.daysUntilDue > 1 ? 's' : ''} avant l'arrivée de ${childName} !`;
+  }
+  
+  return `Vous êtes enceinte de ${progress.weeksPregnant} semaines (${progress.monthsPregnant} mois). Plus que ${progress.weeksUntilDue} semaine${progress.weeksUntilDue > 1 ? 's' : ''} !`;
 }
 
 // ============ MILESTONE CATALOGS BY BABY STATUS ============

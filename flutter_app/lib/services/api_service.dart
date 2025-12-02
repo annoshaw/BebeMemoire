@@ -449,4 +449,98 @@ class ApiService {
       throw ApiException('Failed to generate notifications');
     }
   }
+
+  Future<AgeInfo> getBookAge(String bookId) async {
+    try {
+      final response = await _client.get(
+        Uri.parse('$baseUrl/books/$bookId/age'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return AgeInfo.fromJson(data['age'] ?? data);
+      } else {
+        throw ApiException(
+          'Failed to get age info',
+          statusCode: response.statusCode,
+        );
+      }
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException('Failed to get age info');
+    }
+  }
+}
+
+class AgeInfo {
+  final String type;
+  final String message;
+  final String childName;
+  
+  final int? years;
+  final int? months;
+  final int? days;
+  final int? totalDays;
+  final int? totalWeeks;
+  final int? totalMonths;
+  final DateTime? birthDate;
+  
+  final int? weeksPregnant;
+  final int? monthsPregnant;
+  final int? weeksUntilDue;
+  final int? daysUntilDue;
+  final int? trimester;
+  final bool? isPastDue;
+  final DateTime? dueDate;
+
+  AgeInfo({
+    required this.type,
+    required this.message,
+    required this.childName,
+    this.years,
+    this.months,
+    this.days,
+    this.totalDays,
+    this.totalWeeks,
+    this.totalMonths,
+    this.birthDate,
+    this.weeksPregnant,
+    this.monthsPregnant,
+    this.weeksUntilDue,
+    this.daysUntilDue,
+    this.trimester,
+    this.isPastDue,
+    this.dueDate,
+  });
+
+  factory AgeInfo.fromJson(Map<String, dynamic> json) {
+    return AgeInfo(
+      type: json['type'] as String,
+      message: json['message'] as String,
+      childName: json['childName'] as String,
+      years: json['years'] as int?,
+      months: json['months'] as int?,
+      days: json['days'] as int?,
+      totalDays: json['totalDays'] as int?,
+      totalWeeks: json['totalWeeks'] as int?,
+      totalMonths: json['totalMonths'] as int?,
+      birthDate: json['birthDate'] != null
+          ? DateTime.parse(json['birthDate'] as String)
+          : null,
+      weeksPregnant: json['weeksPregnant'] as int?,
+      monthsPregnant: json['monthsPregnant'] as int?,
+      weeksUntilDue: json['weeksUntilDue'] as int?,
+      daysUntilDue: json['daysUntilDue'] as int?,
+      trimester: json['trimester'] as int?,
+      isPastDue: json['isPastDue'] as bool?,
+      dueDate: json['dueDate'] != null
+          ? DateTime.parse(json['dueDate'] as String)
+          : null,
+    );
+  }
+
+  bool get isPregnancy => type == 'pregnancy';
+  bool get isBorn => type == 'born';
+  bool get isAdoption => type == 'adoption';
 }

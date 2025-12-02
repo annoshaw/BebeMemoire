@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ChevronLeft, Bell, Save, Check, Calendar, Baby, Cake, Camera, Star } from "lucide-react";
+import { ChevronLeft, Bell, Save, Check, Calendar, Baby, Cake, Camera, Star, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Link, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { toast } from "sonner";
 
 interface NotificationSettings {
   id: number;
@@ -24,6 +25,7 @@ interface NotificationSettings {
 export default function NotificationSettings() {
   const [, setLocation] = useLocation();
   const [showSuccess, setShowSuccess] = useState(false);
+  const [pushPermissionStatus, setPushPermissionStatus] = useState<"default" | "granted" | "denied" | "unsupported">("default");
   const queryClient = useQueryClient();
   
   const [settings, setSettings] = useState({
@@ -35,6 +37,52 @@ export default function NotificationSettings() {
     pushNotifications: false,
     reminderDays: 1
   });
+
+  // Check current notification permission status on mount
+  useEffect(() => {
+    if (!("Notification" in window)) {
+      setPushPermissionStatus("unsupported");
+    } else {
+      setPushPermissionStatus(Notification.permission as "default" | "granted" | "denied");
+    }
+  }, []);
+
+  const requestPushPermission = async (enabled: boolean) => {
+    if (!enabled) {
+      setSettings(prev => ({ ...prev, pushNotifications: false }));
+      return;
+    }
+
+    if (!("Notification" in window)) {
+      setPushPermissionStatus("unsupported");
+      toast.error("Votre navigateur ne supporte pas les notifications push");
+      return;
+    }
+
+    try {
+      const permission = await Notification.requestPermission();
+      setPushPermissionStatus(permission as "granted" | "denied" | "default");
+      
+      if (permission === "granted") {
+        setSettings(prev => ({ ...prev, pushNotifications: true }));
+        toast.success("Notifications push activées !");
+        
+        new Notification("Memoria", {
+          body: "Les notifications push sont maintenant activées !",
+          icon: "/favicon.ico"
+        });
+      } else if (permission === "denied") {
+        setSettings(prev => ({ ...prev, pushNotifications: false }));
+        toast.error("Permission refusée. Vous pouvez l'activer dans les paramètres de votre navigateur.");
+      } else {
+        setSettings(prev => ({ ...prev, pushNotifications: false }));
+      }
+    } catch (error) {
+      console.error("Error requesting notification permission:", error);
+      toast.error("Erreur lors de la demande de permission");
+      setSettings(prev => ({ ...prev, pushNotifications: false }));
+    }
+  };
 
   const { data: settingsData, isLoading } = useQuery<{ settings: NotificationSettings }>({
     queryKey: ["/api/notification-settings"],
@@ -117,21 +165,7 @@ export default function NotificationSettings() {
     }
   ];
 
-  const deliveryMethods = [
-    {
-      key: "emailNotifications",
-      icon: Bell,
-      title: "Notifications par email",
-      description: "Recevez les rappels dans votre boîte mail"
-    },
-    {
-      key: "pushNotifications",
-      icon: Camera,
-      title: "Notifications push",
-      description: "Notifications instantanées sur votre appareil"
-    }
-  ];
-
+  
   if (isLoading) {
     return (
       <div className="min-h-screen bg-stone-50 flex items-center justify-center">
@@ -219,29 +253,60 @@ export default function NotificationSettings() {
               Mode de livraison
             </h2>
             <div className="bg-stone-50 rounded-xl divide-y divide-stone-100">
-              {deliveryMethods.map((item) => (
-                <div 
-                  key={item.key}
-                  className="flex items-center justify-between p-4"
-                >
+              {/* Email notifications */}
+              <div className="flex items-center justify-between p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm">
+                    <Bell size={18} className="text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-stone-800 text-sm">Notifications par email</p>
+                    <p className="text-xs text-stone-500">Recevez les rappels dans votre boîte mail</p>
+                  </div>
+                </div>
+                <Switch
+                  checked={settings.emailNotifications}
+                  onCheckedChange={(checked) => 
+                    setSettings({ ...settings, emailNotifications: checked })
+                  }
+                  data-testid="switch-emailNotifications"
+                />
+              </div>
+              
+              {/* Push notifications with permission request */}
+              <div className="p-4">
+                <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm">
-                      <item.icon size={18} className="text-primary" />
+                      <Camera size={18} className={settings.pushNotifications ? "text-primary" : "text-stone-400"} />
                     </div>
                     <div>
-                      <p className="font-medium text-stone-800 text-sm">{item.title}</p>
-                      <p className="text-xs text-stone-500">{item.description}</p>
+                      <p className="font-medium text-stone-800 text-sm">Notifications push</p>
+                      <p className="text-xs text-stone-500">
+                        {pushPermissionStatus === "denied" 
+                          ? "Permission refusée - activez dans les paramètres"
+                          : pushPermissionStatus === "unsupported"
+                          ? "Non supporté sur cet appareil"
+                          : pushPermissionStatus === "granted"
+                          ? "Notifications activées sur cet appareil"
+                          : "Notifications instantanées sur votre appareil"}
+                      </p>
                     </div>
                   </div>
                   <Switch
-                    checked={settings[item.key as keyof typeof settings] as boolean}
-                    onCheckedChange={(checked) => 
-                      setSettings({ ...settings, [item.key]: checked })
-                    }
-                    data-testid={`switch-${item.key}`}
+                    checked={settings.pushNotifications}
+                    onCheckedChange={requestPushPermission}
+                    disabled={pushPermissionStatus === "denied" || pushPermissionStatus === "unsupported"}
+                    data-testid="switch-pushNotifications"
                   />
                 </div>
-              ))}
+                {pushPermissionStatus === "denied" && (
+                  <div className="mt-3 flex items-start gap-2 text-xs text-amber-700 bg-amber-50 p-2 rounded-lg">
+                    <AlertCircle size={14} className="mt-0.5 flex-shrink-0" />
+                    <span>Pour activer les notifications, allez dans les paramètres de votre navigateur et autorisez les notifications pour ce site.</span>
+                  </div>
+                )}
+              </div>
             </div>
           </motion.div>
 

@@ -117,7 +117,7 @@ export function TextBlock({
             <Palette className="w-3.5 h-3.5" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-64 p-3" align="end">
+        <PopoverContent className="w-64 p-3 bg-white shadow-lg border border-stone-200" align="end">
           <div className="space-y-3">
             <p className="text-xs font-medium text-stone-600">
               {language === "fr" ? "Couleur de fond" : "Background color"}

@@ -20,17 +20,51 @@ import {
 } from "lucide-react";
 import ColorThief from "colorthief";
 
-// Predefined pastel colors for text box backgrounds
-const PASTEL_COLORS = [
-  { color: "#FFFFFF", name: "Blanc" },
-  { color: "#F8BBD0", name: "Rose" },
-  { color: "#C8E6C9", name: "Vert" },
-  { color: "#BBDEFB", name: "Bleu" },
-  { color: "#FFF9C4", name: "Jaune" },
-  { color: "#FFE0B2", name: "Pêche" },
-  { color: "#E1BEE7", name: "Lavande" },
-  { color: "#B2DFDB", name: "Menthe" },
-];
+// Color categories for text box backgrounds
+const COLOR_CATEGORIES = {
+  neutral: {
+    labelFr: "Neutres",
+    labelEn: "Neutral",
+    colors: [
+      { color: "#FFFFFF", name: "Blanc" },
+      { color: "#F5F5DC", name: "Beige" },
+      { color: "#D2B48C", name: "Tan" },
+      { color: "#C4A484", name: "Caramel" },
+      { color: "#A0826D", name: "Brun" },
+      { color: "#8B7355", name: "Café" },
+      { color: "#E8DCCA", name: "Crème" },
+      { color: "#D4C4B0", name: "Sable" },
+    ]
+  },
+  pastel: {
+    labelFr: "Pastels",
+    labelEn: "Pastel",
+    colors: [
+      { color: "#F8BBD0", name: "Rose" },
+      { color: "#C8E6C9", name: "Vert" },
+      { color: "#BBDEFB", name: "Bleu" },
+      { color: "#FFF9C4", name: "Jaune" },
+      { color: "#FFE0B2", name: "Pêche" },
+      { color: "#E1BEE7", name: "Lavande" },
+      { color: "#B2DFDB", name: "Menthe" },
+      { color: "#F0E6FA", name: "Lilas" },
+    ]
+  },
+  vibrant: {
+    labelFr: "Vibrantes",
+    labelEn: "Vibrant",
+    colors: [
+      { color: "#FF6B6B", name: "Rouge" },
+      { color: "#4ECDC4", name: "Turquoise" },
+      { color: "#FFE66D", name: "Soleil" },
+      { color: "#95E1D3", name: "Émeraude" },
+      { color: "#F38181", name: "Corail" },
+      { color: "#AA96DA", name: "Violet" },
+      { color: "#6EB5FF", name: "Ciel" },
+      { color: "#FDCB6E", name: "Or" },
+    ]
+  }
+};
 
 // Helper to determine text color based on background brightness
 function getContrastColor(hexColor: string): string {
@@ -103,8 +137,11 @@ export function TextBlock({
     onStyleChange(index, { bgColor: color, textColor: getContrastColor(color) });
   };
 
+  const [colorCategory, setColorCategory] = useState<"neutral" | "pastel" | "vibrant">("pastel");
+
   const renderColorPicker = (index: number) => {
     const style = textStyles[index] || { bgColor: "#FFFFFF", textColor: "#374151" };
+    const currentCategory = COLOR_CATEGORIES[colorCategory];
     
     return (
       <Popover>
@@ -117,14 +154,32 @@ export function TextBlock({
             <Palette className="w-3.5 h-3.5" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-64 p-3 bg-white shadow-lg border border-stone-200" align="end">
+        <PopoverContent className="w-72 p-3 bg-white shadow-lg border border-stone-200" align="end">
           <div className="space-y-3">
             <p className="text-xs font-medium text-stone-600">
               {language === "fr" ? "Couleur de fond" : "Background color"}
             </p>
             
+            {/* Category tabs */}
+            <div className="flex gap-1 p-1 bg-stone-100 rounded-lg">
+              {(Object.keys(COLOR_CATEGORIES) as Array<keyof typeof COLOR_CATEGORIES>).map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setColorCategory(cat)}
+                  className={`flex-1 text-xs py-1.5 px-2 rounded-md transition-all ${
+                    colorCategory === cat
+                      ? "bg-white shadow-sm font-medium text-stone-800"
+                      : "text-stone-500 hover:text-stone-700"
+                  }`}
+                >
+                  {language === "fr" ? COLOR_CATEGORIES[cat].labelFr : COLOR_CATEGORIES[cat].labelEn}
+                </button>
+              ))}
+            </div>
+            
+            {/* Color grid */}
             <div className="grid grid-cols-4 gap-2">
-              {PASTEL_COLORS.map((preset) => (
+              {currentCategory.colors.map((preset) => (
                 <button
                   key={preset.color}
                   onClick={() => setPresetColor(index, preset.color)}
@@ -137,12 +192,13 @@ export function TextBlock({
                   title={preset.name}
                 >
                   {style.bgColor === preset.color && (
-                    <Check className="w-4 h-4 mx-auto text-sage-600" />
+                    <Check className="w-4 h-4 mx-auto" style={{ color: getContrastColor(preset.color) }} />
                   )}
                 </button>
               ))}
             </div>
 
+            {/* Extract from photos */}
             {photos.length > 0 && (
               <div className="pt-2 border-t">
                 <p className="text-xs text-stone-500 mb-2 flex items-center gap-1">

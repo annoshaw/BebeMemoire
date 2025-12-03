@@ -272,14 +272,14 @@ export function BookViewer({ bookId, language, onGoToInspiration }: BookViewerPr
                                     {language === "fr" ? page.subtitleFr : page.subtitleEn}
                                   </p>
                                 )}
-                                <div className="flex items-center gap-2 mt-2">
+                                <div className="flex items-center gap-2 mt-2 flex-wrap">
                                   <Badge variant="secondary" className="text-xs">
                                     {page.pageType.replace(/_/g, " ")}
                                   </Badge>
                                   {completed && (
-                                    <span className="text-xs text-green-600">
-                                      {language === "fr" ? "Cliquez pour modifier" : "Click to edit"}
-                                    </span>
+                                    <Badge variant="outline" className="text-xs text-green-600 border-green-300 bg-green-50">
+                                      {language === "fr" ? "Modifier" : "Edit"}
+                                    </Badge>
                                   )}
                                 </div>
                               </div>

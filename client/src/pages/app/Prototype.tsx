@@ -706,7 +706,11 @@ export default function Prototype() {
         {/* Content */}
         <div className="flex-1 overflow-y-auto no-scrollbar bg-stone-50 relative">
           {/* Hero Cover of the Book */}
-          <Link href={activeBook ? `/app/book/${activeBook.id}/edit` : "/app/edit"}>
+          <Link href={activeBook 
+              ? ('templateSlug' in activeBook && activeBook.templateSlug && activeBook.templateSlug !== 'custom' 
+                  ? `/app/book/${activeBook.id}/prebuilt` 
+                  : `/app/book/${activeBook.id}/edit`)
+              : "/app/edit"}>
             <button className="w-full h-48 bg-stone-200 relative hover:opacity-80 transition-opacity cursor-pointer" data-testid="button-open-book">
               <img 
                 src={activeBook?.coverImage || "https://images.unsplash.com/photo-1544126566-475d8528f69f?q=80&w=800&auto=format&fit=crop"} 
@@ -1858,7 +1862,9 @@ export default function Prototype() {
                           </div>
                         </div>
                         
-                        <Link href={`/app/book/${activeBook.id}/edit`}>
+                        <Link href={'templateSlug' in activeBook && activeBook.templateSlug && activeBook.templateSlug !== 'custom' 
+                          ? `/app/book/${activeBook.id}/prebuilt` 
+                          : `/app/book/${activeBook.id}/edit`}>
                           <Button size="sm" className="w-full mt-3 gap-2" data-testid="button-edit-active-book">
                             <Edit2 size={14} />
                             Continuer l'édition
@@ -2128,10 +2134,15 @@ export default function Prototype() {
                               </p>
                             </div>
                             <div className="flex flex-col gap-2">
-                              <Link href={`/app/book/${book.id}/edit`} onClick={(e) => { 
-                                e.stopPropagation(); 
-                                setActiveBookMutation.mutate(book.id); 
-                              }}>
+                              <Link 
+                                href={'templateSlug' in book && book.templateSlug && book.templateSlug !== 'custom' 
+                                  ? `/app/book/${book.id}/prebuilt` 
+                                  : `/app/book/${book.id}/edit`} 
+                                onClick={(e) => { 
+                                  e.stopPropagation(); 
+                                  setActiveBookMutation.mutate(book.id); 
+                                }}
+                              >
                                 <Button size="sm" variant="outline" className="text-xs h-8 px-3" data-testid={`button-edit-book-${book.id}`}>
                                   <Edit2 size={12} className="mr-1" />
                                   Éditer

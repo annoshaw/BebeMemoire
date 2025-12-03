@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
 import '../providers/locale_provider.dart';
 import '../services/api_service.dart';
+import '../models/book_template.dart';
 
 class OnboardingWizardScreen extends StatefulWidget {
   final VoidCallback onComplete;
@@ -20,9 +21,12 @@ class _OnboardingWizardScreenState extends State<OnboardingWizardScreen> {
   final _pageController = PageController();
   int _currentPage = 0;
   bool _isLoading = false;
+  bool _isLoadingTemplates = true;
   String? _error;
 
   String? _selectedBookType;
+  String? _selectedTemplateSlug;
+  List<BookTemplate> _templates = [];
   final _childNameController = TextEditingController();
   DateTime? _selectedDate;
   String? _selectedBabyGender;
@@ -70,10 +74,29 @@ class _OnboardingWizardScreenState extends State<OnboardingWizardScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _loadTemplates();
+  }
+
+  @override
   void dispose() {
     _pageController.dispose();
     _childNameController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadTemplates() async {
+    try {
+      final apiService = ApiService();
+      final templates = await apiService.getBookTemplates();
+      setState(() {
+        _templates = templates;
+        _isLoadingTemplates = false;
+      });
+    } catch (e) {
+      setState(() => _isLoadingTemplates = false);
+    }
   }
 
   IconData _getIconForBookType(String iconName) {
@@ -90,7 +113,7 @@ class _OnboardingWizardScreenState extends State<OnboardingWizardScreen> {
   }
 
   void _nextPage() {
-    if (_currentPage < 3) {
+    if (_currentPage < 4) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
@@ -110,12 +133,14 @@ class _OnboardingWizardScreenState extends State<OnboardingWizardScreen> {
   bool _canProceed() {
     switch (_currentPage) {
       case 0:
-        return _selectedBookType != null;
+        return _selectedTemplateSlug != null;
       case 1:
-        return _childNameController.text.trim().isNotEmpty;
+        return _selectedBookType != null;
       case 2:
-        return _selectedDate != null;
+        return _childNameController.text.trim().isNotEmpty;
       case 3:
+        return _selectedDate != null;
+      case 4:
         return true;
       default:
         return false;
@@ -230,6 +255,7 @@ class _OnboardingWizardScreenState extends State<OnboardingWizardScreen> {
                 physics: const NeverScrollableScrollPhysics(),
                 onPageChanged: (index) => setState(() => _currentPage = index),
                 children: [
+                  _buildTemplateSelectionPage(isFrench),
                   _buildBookTypePage(isFrench),
                   _buildChildNamePage(isFrench),
                   _buildDatePage(isFrench),
@@ -278,7 +304,7 @@ class _OnboardingWizardScreenState extends State<OnboardingWizardScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 48),
       child: Row(
-        children: List.generate(4, (index) {
+        children: List.generate(5, (index) {
           final isActive = index <= _currentPage;
           return Expanded(
             child: Container(
@@ -295,7 +321,11 @@ class _OnboardingWizardScreenState extends State<OnboardingWizardScreen> {
     );
   }
 
-  Widget _buildBookTypePage(bool isFrench) {
+  Widget _buildTemplateSelectionPage(bool isFrench) {
+    if (_isLoadingTemplates) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -305,6 +335,183 @@ class _OnboardingWizardScreenState extends State<OnboardingWizardScreen> {
             isFrench
                 ? 'Quel type de livre souhaitez-vous créer ?'
                 : 'What type of book would you like to create?',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            isFrench
+                ? 'Choisissez entre un modèle pré-construit ou créez le vôtre'
+                : 'Choose between a pre-built template or create your own',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+          ),
+          const SizedBox(height: 24),
+          ...(_templates.map((template) => _buildTemplateCard(template, isFrench))),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTemplateCard(BookTemplate template, bool isFrench) {
+    final isSelected = _selectedTemplateSlug == template.slug;
+    final isPrebuilt = template.isPrebuilt;
+    
+    return GestureDetector(
+      onTap: () => setState(() => _selectedTemplateSlug = template.slug),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primaryLight.withOpacity(0.15) : AppColors.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? AppColors.primary : AppColors.border,
+            width: isSelected ? 2 : 1,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppColors.primary.withOpacity(0.15),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: isPrebuilt
+                      ? [AppColors.primary, AppColors.primaryLight]
+                      : [AppColors.secondary, AppColors.secondaryLight],
+                ),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(
+                isPrebuilt ? Icons.auto_awesome : Icons.edit_note,
+                color: Colors.white,
+                size: 26,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          template.getName(isFrench),
+                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                        ),
+                      ),
+                      if (isPrebuilt)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            isFrench ? 'Recommandé' : 'Recommended',
+                            style: const TextStyle(
+                              color: AppColors.primary,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    template.getDescription(isFrench) ?? '',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.textSecondary,
+                          height: 1.4,
+                        ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (isPrebuilt) ...[
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      children: [
+                        _buildFeatureChip(Icons.favorite, isFrench ? 'Grossesse' : 'Pregnancy'),
+                        _buildFeatureChip(Icons.people, isFrench ? 'Famille' : 'Family'),
+                        _buildFeatureChip(Icons.cake, isFrench ? 'Jalons' : 'Milestones'),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isSelected ? AppColors.primary : Colors.transparent,
+                border: Border.all(
+                  color: isSelected ? AppColors.primary : AppColors.border,
+                  width: 2,
+                ),
+              ),
+              child: isSelected
+                  ? const Icon(Icons.check, color: Colors.white, size: 16)
+                  : null,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFeatureChip(IconData icon, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: AppColors.textSecondary),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBookTypePage(bool isFrench) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            isFrench
+                ? 'Quelle est votre situation ?'
+                : 'What is your situation?',
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 24),
@@ -650,7 +857,7 @@ class _OnboardingWizardScreenState extends State<OnboardingWizardScreen> {
   }
 
   Widget _buildNavigationButtons(bool isFrench) {
-    final isLastPage = _currentPage == 3;
+    final isLastPage = _currentPage == 4;
 
     return Container(
       padding: const EdgeInsets.all(24),

@@ -4,13 +4,19 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { 
   ArrowLeft, 
   ArrowRight, 
   ChevronLeft,
   Save,
   Check,
-  Loader2
+  Loader2,
+  Eye,
+  X,
+  Image as ImageIcon,
+  Video,
+  FileText
 } from "lucide-react";
 import { 
   TextBlock, 
@@ -61,6 +67,7 @@ export function PageEditor({
     (userPage?.customData as Record<string, string>) || {}
   );
   const [isDirty, setIsDirty] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
     setTextContent((userPage?.textContent as string[]) || []);
@@ -424,6 +431,15 @@ export function PageEditor({
       <div className="flex items-center justify-end gap-3 sticky bottom-4">
         <Button
           variant="outline"
+          onClick={() => setShowPreview(true)}
+          data-testid="preview-page"
+        >
+          <Eye className="w-4 h-4 mr-2" />
+          {language === "fr" ? "Aperçu" : "Preview"}
+        </Button>
+
+        <Button
+          variant="outline"
           onClick={() => saveMutation.mutate()}
           disabled={isSaving || !isDirty}
           data-testid="save-page"
@@ -452,6 +468,153 @@ export function PageEditor({
           </Button>
         )}
       </div>
+
+      {/* Page Preview Modal - 8x11 Book Format */}
+      <Dialog open={showPreview} onOpenChange={setShowPreview}>
+        <DialogContent className="max-w-4xl max-h-[95vh] overflow-hidden p-0">
+          <DialogHeader className="p-4 border-b bg-stone-50">
+            <div className="flex items-center justify-between">
+              <div>
+                <DialogTitle className="text-lg font-fraunces">
+                  {language === "fr" ? "Aperçu de la page" : "Page Preview"}
+                </DialogTitle>
+                <DialogDescription className="text-sm">
+                  {language === "fr" 
+                    ? "Voici comment la page apparaîtra dans votre livre imprimé (format 8×11 pouces)"
+                    : "This is how the page will appear in your printed book (8×11 inches format)"}
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+          
+          <div className="p-6 bg-stone-100 overflow-auto max-h-[calc(95vh-120px)]">
+            {/* Book page simulation - 8x11 aspect ratio (8:11 = 0.727) */}
+            <div 
+              className="mx-auto bg-white shadow-2xl border border-stone-300 relative flex flex-col"
+              style={{ 
+                width: "min(100%, 440px)", 
+                aspectRatio: "8 / 11",
+                padding: "clamp(16px, 4%, 32px)"
+              }}
+            >
+              {/* Page Header */}
+              <div className="text-center mb-4 pb-3 border-b border-stone-200">
+                <h2 className="text-xl font-serif font-bold text-stone-800">
+                  {language === "fr" ? templatePage?.titleFr : templatePage?.titleEn}
+                </h2>
+                {templatePage?.subtitleFr && (
+                  <p className="text-sm text-stone-500 mt-1">
+                    {language === "fr" ? templatePage?.subtitleFr : templatePage?.subtitleEn}
+                  </p>
+                )}
+              </div>
+
+              {/* Photos Section */}
+              {photos.length > 0 && (
+                <div className={`mb-4 ${photos.length === 1 ? '' : 'grid grid-cols-2 gap-2'}`}>
+                  {photos.slice(0, 4).map((photo, idx) => (
+                    <div 
+                      key={idx} 
+                      className={`relative bg-stone-100 rounded overflow-hidden ${
+                        photos.length === 1 ? 'aspect-[4/3] max-h-48' : 'aspect-square'
+                      }`}
+                    >
+                      <img 
+                        src={photo} 
+                        alt={`Photo ${idx + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ))}
+                  {photos.length > 4 && (
+                    <div className="flex items-center justify-center text-xs text-stone-500 col-span-2">
+                      +{photos.length - 4} {language === "fr" ? "autres photos" : "more photos"}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Empty photo placeholder */}
+              {photos.length === 0 && (templatePage?.maxPhotos || 0) > 0 && (
+                <div className="mb-4 aspect-[4/3] max-h-32 bg-stone-100 rounded border-2 border-dashed border-stone-300 flex items-center justify-center">
+                  <div className="text-center text-stone-400">
+                    <ImageIcon className="w-8 h-8 mx-auto mb-1" />
+                    <span className="text-xs">
+                      {language === "fr" ? "Ajoutez des photos" : "Add photos"}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Text Content */}
+              {textContent.length > 0 && textContent.some(t => t && t.trim()) && (
+                <div className="space-y-3 text-sm text-stone-700">
+                  {textContent.map((text, idx) => (
+                    text && text.trim() ? (
+                      <div key={idx}>
+                        {prompts[idx] && (
+                          <p className="text-xs font-medium text-stone-500 mb-0.5">{prompts[idx]}</p>
+                        )}
+                        <p className="text-stone-800 leading-relaxed" style={{ fontSize: "11px" }}>{text}</p>
+                      </div>
+                    ) : null
+                  ))}
+                </div>
+              )}
+
+              {/* Empty text placeholder */}
+              {(!textContent.length || !textContent.some(t => t && t.trim())) && prompts.length > 0 && (
+                <div className="p-3 bg-stone-50 rounded border border-dashed border-stone-300">
+                  <div className="text-center text-stone-400">
+                    <FileText className="w-6 h-6 mx-auto mb-1" />
+                    <span className="text-xs">
+                      {language === "fr" ? "Ajoutez votre texte" : "Add your text"}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Custom Data (Birth Info) */}
+              {Object.keys(customData).length > 0 && Object.values(customData).some(v => v) && (
+                <div className="mt-4 grid grid-cols-2 gap-2 text-center">
+                  {Object.entries(customData).map(([key, value]) => (
+                    value ? (
+                      <div key={key} className="bg-stone-50 rounded p-2">
+                        <p className="text-xs text-stone-500">{key}</p>
+                        <p className="font-medium text-stone-800 text-sm">{value}</p>
+                      </div>
+                    ) : null
+                  ))}
+                </div>
+              )}
+
+              {/* Video indicator */}
+              {videoUrl && (
+                <div className="mt-4 flex items-center justify-center gap-2 p-3 bg-purple-50 rounded border border-purple-200">
+                  <Video className="w-4 h-4 text-purple-600" />
+                  <span className="text-xs text-purple-700">
+                    {language === "fr" ? "Vidéo avec code QR" : "Video with QR code"}
+                  </span>
+                </div>
+              )}
+
+              {/* Spacer to push page number to bottom */}
+              <div className="flex-1" />
+
+              {/* Page number */}
+              <div className="text-center mt-4 pt-2 border-t border-stone-100">
+                <span className="text-xs text-stone-400">{pageNumber}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-4 border-t bg-white flex justify-end">
+            <Button onClick={() => setShowPreview(false)} data-testid="close-preview">
+              {language === "fr" ? "Fermer" : "Close"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

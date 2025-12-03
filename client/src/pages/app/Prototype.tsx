@@ -2011,7 +2011,9 @@ export default function Prototype() {
               <div className="px-4 mb-4">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="text-xs font-bold text-stone-700 uppercase tracking-wide">Aperçu du livre</h4>
-                  <span className="text-[10px] text-stone-400">Page {currentPage + 1}/{bookPages.length}</span>
+                  <span className="text-[10px] text-stone-400">
+                    Page {currentPage + 1}/{isPrebuiltBook && prebuiltPagesData?.templatePages ? prebuiltPagesData.templatePages.length : bookPages.length}
+                  </span>
                 </div>
 
                 <div className="relative mb-3">
@@ -2023,7 +2025,71 @@ export default function Prototype() {
                       exit={{ opacity: 0, x: -50 }}
                       className="bg-white rounded-2xl shadow-lg border border-stone-200 overflow-hidden h-full min-h-[300px]"
                     >
-                      {bookPages[currentPage]?.type === "cover" ? (
+                      {isPrebuiltBook && prebuiltPagesData?.templatePages ? (
+                        (() => {
+                          const templatePage = prebuiltPagesData.templatePages[currentPage];
+                          const userPage = prebuiltPagesData.pages.find(p => p.pageNumber === templatePage?.pageNumber);
+                          const photos = (userPage?.photos as string[] | null) || [];
+                          const textContent = (userPage?.textContent as string[] | null) || [];
+                          const isCompleted = userPage?.isCompleted || false;
+                          const hasContent = photos.length > 0 || textContent.length > 0;
+                          
+                          if (!templatePage) return null;
+                          
+                          return (
+                            <div className="h-full flex flex-col min-h-[300px]">
+                              {photos.length > 0 ? (
+                                <div className="flex-1 relative">
+                                  <img 
+                                    src={photos[0]} 
+                                    className="w-full h-full object-cover" 
+                                    alt={templatePage.titleFr}
+                                  />
+                                  {isCompleted && (
+                                    <div className="absolute top-3 right-3 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
+                                      <CheckCircle size={20} className="text-white" />
+                                    </div>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="flex-1 p-6 bg-gradient-to-br from-primary/5 to-white flex flex-col items-center justify-center">
+                                  {templatePage.pageType === "birth_info" ? (
+                                    <Baby size={48} className="text-secondary mb-4" />
+                                  ) : templatePage.pageType === "collage" ? (
+                                    <ImageIcon size={48} className="text-primary mb-4" />
+                                  ) : templatePage.pageType === "message" ? (
+                                    <Bell size={48} className="text-amber-500 mb-4" />
+                                  ) : templatePage.pageType.includes("milestone") || templatePage.pageType.includes("month") ? (
+                                    <Calendar size={48} className="text-primary mb-4" />
+                                  ) : (
+                                    <ImageIcon size={48} className="text-stone-300 mb-4" />
+                                  )}
+                                  {isCompleted && (
+                                    <div className="absolute top-3 right-3 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
+                                      <CheckCircle size={20} className="text-white" />
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                              <div className="p-4 bg-white border-t border-stone-100">
+                                <h3 className="font-bold text-stone-800 text-lg">{templatePage.titleFr}</h3>
+                                {templatePage.subtitleFr && (
+                                  <p className="text-sm text-stone-500">{templatePage.subtitleFr}</p>
+                                )}
+                                {!hasContent && !isCompleted && (
+                                  <p className="text-xs text-amber-600 mt-2 flex items-center gap-1">
+                                    <AlertTriangle size={12} />
+                                    À compléter
+                                  </p>
+                                )}
+                                {hasContent && !isCompleted && (
+                                  <p className="text-xs text-blue-600 mt-2">En cours...</p>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })()
+                      ) : bookPages[currentPage]?.type === "cover" ? (
                         <div className="h-full relative min-h-[300px]">
                           <img 
                             src={bookPages[currentPage].image} 
@@ -2096,7 +2162,7 @@ export default function Prototype() {
                   </button>
                   <button 
                     onClick={nextPage}
-                    disabled={currentPage === bookPages.length - 1}
+                    disabled={currentPage === (isPrebuiltBook && prebuiltPagesData?.templatePages ? prebuiltPagesData.templatePages.length - 1 : bookPages.length - 1)}
                     className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/90 backdrop-blur rounded-full shadow-lg flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white transition-colors"
                     data-testid="button-next-page"
                   >
@@ -2105,13 +2171,16 @@ export default function Prototype() {
                 </div>
 
                 <div className="flex items-center justify-center gap-1">
-                  {bookPages.map((_, idx) => (
+                  {(isPrebuiltBook && prebuiltPagesData?.templatePages ? prebuiltPagesData.templatePages : bookPages).slice(0, 10).map((_, idx) => (
                     <button
                       key={idx}
                       onClick={() => setCurrentPage(idx)}
                       className={`w-2 h-2 rounded-full transition-colors ${currentPage === idx ? 'bg-primary' : 'bg-stone-300'}`}
                     />
                   ))}
+                  {(isPrebuiltBook && prebuiltPagesData?.templatePages ? prebuiltPagesData.templatePages.length : bookPages.length) > 10 && (
+                    <span className="text-[10px] text-stone-400 ml-1">...</span>
+                  )}
                 </div>
               </div>
 

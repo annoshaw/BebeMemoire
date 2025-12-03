@@ -1,9 +1,10 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { 
   Image, 
   Video, 
@@ -12,31 +13,190 @@ import {
   Camera, 
   Upload,
   Play,
-  Trash2
+  Trash2,
+  Palette,
+  Wand2,
+  Check
 } from "lucide-react";
+import ColorThief from "colorthief";
+
+// Predefined pastel colors for text box backgrounds
+const PASTEL_COLORS = [
+  { color: "#FFFFFF", name: "Blanc" },
+  { color: "#F8BBD0", name: "Rose" },
+  { color: "#C8E6C9", name: "Vert" },
+  { color: "#BBDEFB", name: "Bleu" },
+  { color: "#FFF9C4", name: "Jaune" },
+  { color: "#FFE0B2", name: "Pêche" },
+  { color: "#E1BEE7", name: "Lavande" },
+  { color: "#B2DFDB", name: "Menthe" },
+];
+
+// Helper to determine text color based on background brightness
+function getContrastColor(hexColor: string): string {
+  const hex = hexColor.replace("#", "");
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+  return brightness > 125 ? "#374151" : "#FFFFFF";
+}
+
+// Helper to convert RGB array to hex
+function rgbToHex(r: number, g: number, b: number): string {
+  return "#" + [r, g, b].map(x => x.toString(16).padStart(2, "0")).join("");
+}
 
 interface TextBlockProps {
   prompts: string[];
   values: string[];
   onChange: (index: number, value: string) => void;
   language: "fr" | "en";
+  textStyles?: Record<number, { bgColor: string; textColor: string }>;
+  onStyleChange?: (index: number, style: { bgColor: string; textColor: string }) => void;
+  photos?: string[]; // For extracting colors from photos
 }
 
-export function TextBlock({ prompts, values, onChange, language }: TextBlockProps) {
+export function TextBlock({ 
+  prompts, 
+  values, 
+  onChange, 
+  language,
+  textStyles = {},
+  onStyleChange,
+  photos = []
+}: TextBlockProps) {
+  const [extractingColor, setExtractingColor] = useState<number | null>(null);
+
+  const extractColorFromPhoto = async (photoSrc: string, index: number) => {
+    if (!onStyleChange) return;
+    
+    setExtractingColor(index);
+    
+    try {
+      const img = new window.Image();
+      img.crossOrigin = "Anonymous";
+      img.src = photoSrc;
+      
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+      });
+
+      const colorThief = new ColorThief();
+      const result = colorThief.getColor(img);
+      const bgColor = rgbToHex(result[0], result[1], result[2]);
+      const textColor = getContrastColor(bgColor);
+      
+      onStyleChange(index, { bgColor, textColor });
+    } catch (error) {
+      console.error("Error extracting color:", error);
+    } finally {
+      setExtractingColor(null);
+    }
+  };
+
+  const setPresetColor = (index: number, color: string) => {
+    if (!onStyleChange) return;
+    onStyleChange(index, { bgColor: color, textColor: getContrastColor(color) });
+  };
+
   return (
     <div className="space-y-4">
-      {prompts.map((prompt, index) => (
-        <div key={index} className="space-y-2">
-          <Label className="text-sm text-sage-700 font-medium">{prompt}</Label>
-          <Textarea
-            data-testid={`text-block-${index}`}
-            value={values[index] || ""}
-            onChange={(e) => onChange(index, e.target.value)}
-            placeholder={language === "fr" ? "Écrivez ici..." : "Write here..."}
-            className="min-h-[100px] resize-y border-sage-200 focus:border-sage-400"
-          />
-        </div>
-      ))}
+      {prompts.map((prompt, index) => {
+        const style = textStyles[index] || { bgColor: "#FFFFFF", textColor: "#374151" };
+        
+        return (
+          <div key={index} className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm text-sage-700 font-medium">{prompt}</Label>
+              
+              {onStyleChange && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-7 gap-1.5">
+                      <div 
+                        className="w-4 h-4 rounded-full border border-stone-300"
+                        style={{ backgroundColor: style.bgColor }}
+                      />
+                      <Palette className="w-3.5 h-3.5" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-64 p-3" align="end">
+                    <div className="space-y-3">
+                      <p className="text-xs font-medium text-stone-600">
+                        {language === "fr" ? "Couleur de fond" : "Background color"}
+                      </p>
+                      
+                      {/* Preset colors */}
+                      <div className="grid grid-cols-4 gap-2">
+                        {PASTEL_COLORS.map((preset) => (
+                          <button
+                            key={preset.color}
+                            onClick={() => setPresetColor(index, preset.color)}
+                            className={`w-full aspect-square rounded-lg border-2 transition-all ${
+                              style.bgColor === preset.color 
+                                ? "border-sage-500 ring-2 ring-sage-200" 
+                                : "border-stone-200 hover:border-stone-400"
+                            }`}
+                            style={{ backgroundColor: preset.color }}
+                            title={preset.name}
+                          >
+                            {style.bgColor === preset.color && (
+                              <Check className="w-4 h-4 mx-auto text-sage-600" />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Extract from photos */}
+                      {photos.length > 0 && (
+                        <div className="pt-2 border-t">
+                          <p className="text-xs text-stone-500 mb-2 flex items-center gap-1">
+                            <Wand2 className="w-3 h-3" />
+                            {language === "fr" 
+                              ? "Extraire d'une photo" 
+                              : "Extract from a photo"}
+                          </p>
+                          <div className="grid grid-cols-4 gap-1">
+                            {photos.slice(0, 4).map((photo, photoIdx) => (
+                              <button
+                                key={photoIdx}
+                                onClick={() => extractColorFromPhoto(photo, index)}
+                                disabled={extractingColor === index}
+                                className="aspect-square rounded overflow-hidden border border-stone-200 hover:border-sage-400 transition-colors disabled:opacity-50"
+                              >
+                                <img 
+                                  src={photo} 
+                                  alt=""
+                                  className="w-full h-full object-cover"
+                                />
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              )}
+            </div>
+            
+            <Textarea
+              data-testid={`text-block-${index}`}
+              value={values[index] || ""}
+              onChange={(e) => onChange(index, e.target.value)}
+              placeholder={language === "fr" ? "Écrivez ici..." : "Write here..."}
+              className="min-h-[100px] resize-y border-sage-200 focus:border-sage-400 transition-colors"
+              style={{ 
+                backgroundColor: style.bgColor, 
+                color: style.textColor,
+                borderColor: style.bgColor === "#FFFFFF" ? undefined : style.bgColor
+              }}
+            />
+          </div>
+        );
+      })}
     </div>
   );
 }

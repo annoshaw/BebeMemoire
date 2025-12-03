@@ -82,16 +82,28 @@ export function PageEditor({
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef<{ x: number; y: number; photoX: number; photoY: number } | null>(null);
 
+  // Text styles state: { textIndex: { bgColor, textColor } }
+  type TextStyle = { bgColor: string; textColor: string };
+  const [textStyles, setTextStyles] = useState<Record<number, TextStyle>>(
+    (userPage?.customData as any)?.textStyles || {}
+  );
+
   useEffect(() => {
     setTextContent((userPage?.textContent as string[]) || []);
     setPhotos((userPage?.photos as string[]) || []);
     setVideoUrl(userPage?.videoUrl || null);
     const data = (userPage?.customData as Record<string, any>) || {};
-    const { photoLayouts: layouts, ...rest } = data;
+    const { photoLayouts: layouts, textStyles: styles, ...rest } = data;
     setCustomData(rest);
     setPhotoLayouts(layouts || {});
+    setTextStyles(styles || {});
     setIsDirty(false);
   }, [userPage, pageNumber]);
+
+  const handleTextStyleChange = (index: number, style: TextStyle) => {
+    setTextStyles(prev => ({ ...prev, [index]: style }));
+    setIsDirty(true);
+  };
 
   const getPhotoLayout = (index: number): PhotoLayout => {
     return photoLayouts[index] || { scale: 100, x: 0, y: 0 };
@@ -148,10 +160,11 @@ export function PageEditor({
     mutationFn: async () => {
       if (!userPage?.id) throw new Error("No user page found");
       
-      // Merge photoLayouts into customData for saving
+      // Merge photoLayouts and textStyles into customData for saving
       const dataToSave = {
         ...customData,
-        ...(Object.keys(photoLayouts).length > 0 ? { photoLayouts } : {})
+        ...(Object.keys(photoLayouts).length > 0 ? { photoLayouts } : {}),
+        ...(Object.keys(textStyles).length > 0 ? { textStyles } : {})
       };
       
       const res = await fetch(`/api/books/${bookId}/pages/${userPage.id}`, {
@@ -295,6 +308,9 @@ export function PageEditor({
                 values={textContent}
                 onChange={handleTextChange}
                 language={language}
+                textStyles={textStyles}
+                onStyleChange={handleTextStyleChange}
+                photos={photos}
               />
             )}
             <CollageBlock
@@ -353,6 +369,9 @@ export function PageEditor({
               values={textContent}
               onChange={handleTextChange}
               language={language}
+              textStyles={textStyles}
+              onStyleChange={handleTextStyleChange}
+              photos={photos}
             />
             <CollageBlock
               photos={photos}
@@ -380,6 +399,9 @@ export function PageEditor({
               values={textContent}
               onChange={handleTextChange}
               language={language}
+              textStyles={textStyles}
+              onStyleChange={handleTextStyleChange}
+              photos={photos}
             />
           </div>
         );
@@ -397,6 +419,9 @@ export function PageEditor({
                 values={textContent}
                 onChange={handleTextChange}
                 language={language}
+                textStyles={textStyles}
+                onStyleChange={handleTextStyleChange}
+                photos={photos}
               />
             )}
             {maxPhotos > 0 && (
@@ -638,14 +663,27 @@ export function PageEditor({
                 </div>
               )}
 
-              {/* Text Content - Only show user's text, not the prompts */}
+              {/* Text Content - Only show user's text with custom background colors */}
               {textContent.length > 0 && textContent.some(t => t && t.trim()) && (
-                <div className="space-y-4 text-stone-700">
-                  {textContent.map((text, idx) => (
-                    text && text.trim() ? (
-                      <p key={idx} className="text-stone-800 leading-relaxed" style={{ fontSize: "12px" }}>{text}</p>
-                    ) : null
-                  ))}
+                <div className="space-y-3 text-stone-700">
+                  {textContent.map((text, idx) => {
+                    if (!text || !text.trim()) return null;
+                    const style = textStyles[idx] || { bgColor: "#FFFFFF", textColor: "#374151" };
+                    const hasCustomBg = style.bgColor !== "#FFFFFF";
+                    return (
+                      <p 
+                        key={idx} 
+                        className={`leading-relaxed ${hasCustomBg ? 'p-3 rounded-lg' : ''}`} 
+                        style={{ 
+                          fontSize: "12px",
+                          backgroundColor: hasCustomBg ? style.bgColor : 'transparent',
+                          color: style.textColor
+                        }}
+                      >
+                        {text}
+                      </p>
+                    );
+                  })}
                 </div>
               )}
 

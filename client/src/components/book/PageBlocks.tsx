@@ -68,10 +68,10 @@ export function TextBlock({
 }: TextBlockProps) {
   const [extractingColor, setExtractingColor] = useState<number | null>(null);
 
-  const extractColorFromPhoto = async (photoSrc: string, index: number) => {
+  const extractColorFromPhoto = async (photoSrc: string) => {
     if (!onStyleChange) return;
     
-    setExtractingColor(index);
+    setExtractingColor(0);
     
     try {
       const img = new window.Image();
@@ -88,7 +88,7 @@ export function TextBlock({
       const bgColor = rgbToHex(result[0], result[1], result[2]);
       const textColor = getContrastColor(bgColor);
       
-      onStyleChange(index, { bgColor, textColor });
+      onStyleChange(0, { bgColor, textColor });
     } catch (error) {
       console.error("Error extracting color:", error);
     } finally {
@@ -96,107 +96,108 @@ export function TextBlock({
     }
   };
 
-  const setPresetColor = (index: number, color: string) => {
+  const setPresetColor = (color: string) => {
     if (!onStyleChange) return;
-    onStyleChange(index, { bgColor: color, textColor: getContrastColor(color) });
+    onStyleChange(0, { bgColor: color, textColor: getContrastColor(color) });
   };
 
-  return (
-    <div className="space-y-4">
-      {prompts.map((prompt, index) => {
-        const style = textStyles[index] || { bgColor: "#FFFFFF", textColor: "#374151" };
-        
-        return (
-          <div key={index} className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label className="text-sm text-sage-700 font-medium">{prompt}</Label>
-              
-              {onStyleChange && (
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-7 gap-1.5">
-                      <div 
-                        className="w-4 h-4 rounded-full border border-stone-300"
-                        style={{ backgroundColor: style.bgColor }}
-                      />
-                      <Palette className="w-3.5 h-3.5" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-64 p-3" align="end">
-                    <div className="space-y-3">
-                      <p className="text-xs font-medium text-stone-600">
-                        {language === "fr" ? "Couleur de fond" : "Background color"}
-                      </p>
-                      
-                      {/* Preset colors */}
-                      <div className="grid grid-cols-4 gap-2">
-                        {PASTEL_COLORS.map((preset) => (
-                          <button
-                            key={preset.color}
-                            onClick={() => setPresetColor(index, preset.color)}
-                            className={`w-full aspect-square rounded-lg border-2 transition-all ${
-                              style.bgColor === preset.color 
-                                ? "border-sage-500 ring-2 ring-sage-200" 
-                                : "border-stone-200 hover:border-stone-400"
-                            }`}
-                            style={{ backgroundColor: preset.color }}
-                            title={preset.name}
-                          >
-                            {style.bgColor === preset.color && (
-                              <Check className="w-4 h-4 mx-auto text-sage-600" />
-                            )}
-                          </button>
-                        ))}
-                      </div>
+  // Combine all prompts into a single phrase
+  const combinedPrompt = prompts.length > 1 
+    ? prompts.join(" • ")
+    : prompts[0] || "";
 
-                      {/* Extract from photos */}
-                      {photos.length > 0 && (
-                        <div className="pt-2 border-t">
-                          <p className="text-xs text-stone-500 mb-2 flex items-center gap-1">
-                            <Wand2 className="w-3 h-3" />
-                            {language === "fr" 
-                              ? "Extraire d'une photo" 
-                              : "Extract from a photo"}
-                          </p>
-                          <div className="grid grid-cols-4 gap-1">
-                            {photos.slice(0, 4).map((photo, photoIdx) => (
-                              <button
-                                key={photoIdx}
-                                onClick={() => extractColorFromPhoto(photo, index)}
-                                disabled={extractingColor === index}
-                                className="aspect-square rounded overflow-hidden border border-stone-200 hover:border-sage-400 transition-colors disabled:opacity-50"
-                              >
-                                <img 
-                                  src={photo} 
-                                  alt=""
-                                  className="w-full h-full object-cover"
-                                />
-                              </button>
-                            ))}
-                          </div>
-                        </div>
+  const style = textStyles[0] || { bgColor: "#FFFFFF", textColor: "#374151" };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <Label className="text-sm text-sage-700 font-medium leading-relaxed">
+          {combinedPrompt}
+        </Label>
+        
+        {onStyleChange && (
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-7 gap-1.5 shrink-0">
+                <div 
+                  className="w-4 h-4 rounded-full border border-stone-300"
+                  style={{ backgroundColor: style.bgColor }}
+                />
+                <Palette className="w-3.5 h-3.5" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64 p-3" align="end">
+              <div className="space-y-3">
+                <p className="text-xs font-medium text-stone-600">
+                  {language === "fr" ? "Couleur de fond" : "Background color"}
+                </p>
+                
+                {/* Preset colors */}
+                <div className="grid grid-cols-4 gap-2">
+                  {PASTEL_COLORS.map((preset) => (
+                    <button
+                      key={preset.color}
+                      onClick={() => setPresetColor(preset.color)}
+                      className={`w-full aspect-square rounded-lg border-2 transition-all ${
+                        style.bgColor === preset.color 
+                          ? "border-sage-500 ring-2 ring-sage-200" 
+                          : "border-stone-200 hover:border-stone-400"
+                      }`}
+                      style={{ backgroundColor: preset.color }}
+                      title={preset.name}
+                    >
+                      {style.bgColor === preset.color && (
+                        <Check className="w-4 h-4 mx-auto text-sage-600" />
                       )}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Extract from photos */}
+                {photos.length > 0 && (
+                  <div className="pt-2 border-t">
+                    <p className="text-xs text-stone-500 mb-2 flex items-center gap-1">
+                      <Wand2 className="w-3 h-3" />
+                      {language === "fr" 
+                        ? "Extraire d'une photo" 
+                        : "Extract from a photo"}
+                    </p>
+                    <div className="grid grid-cols-4 gap-1">
+                      {photos.slice(0, 4).map((photo, photoIdx) => (
+                        <button
+                          key={photoIdx}
+                          onClick={() => extractColorFromPhoto(photo)}
+                          disabled={extractingColor !== null}
+                          className="aspect-square rounded overflow-hidden border border-stone-200 hover:border-sage-400 transition-colors disabled:opacity-50"
+                        >
+                          <img 
+                            src={photo} 
+                            alt=""
+                            className="w-full h-full object-cover"
+                          />
+                        </button>
+                      ))}
                     </div>
-                  </PopoverContent>
-                </Popover>
-              )}
-            </div>
-            
-            <Textarea
-              data-testid={`text-block-${index}`}
-              value={values[index] || ""}
-              onChange={(e) => onChange(index, e.target.value)}
-              placeholder={language === "fr" ? "Écrivez ici..." : "Write here..."}
-              className="min-h-[100px] resize-y border-sage-200 focus:border-sage-400 transition-colors"
-              style={{ 
-                backgroundColor: style.bgColor, 
-                color: style.textColor,
-                borderColor: style.bgColor === "#FFFFFF" ? undefined : style.bgColor
-              }}
-            />
-          </div>
-        );
-      })}
+                  </div>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
+        )}
+      </div>
+      
+      <Textarea
+        data-testid="text-block-0"
+        value={values[0] || ""}
+        onChange={(e) => onChange(0, e.target.value)}
+        placeholder={language === "fr" ? "Écrivez ici..." : "Write here..."}
+        className="min-h-[120px] resize-y border-sage-200 focus:border-sage-400 transition-colors"
+        style={{ 
+          backgroundColor: style.bgColor, 
+          color: style.textColor,
+          borderColor: style.bgColor === "#FFFFFF" ? undefined : style.bgColor
+        }}
+      />
     </div>
   );
 }

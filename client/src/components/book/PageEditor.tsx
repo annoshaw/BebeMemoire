@@ -546,29 +546,24 @@ export function PageEditor({
                 </div>
               )}
 
-              {/* Text Content */}
+              {/* Text Content - Only show user's text, not the prompts */}
               {textContent.length > 0 && textContent.some(t => t && t.trim()) && (
-                <div className="space-y-3 text-sm text-stone-700">
+                <div className="space-y-4 text-stone-700">
                   {textContent.map((text, idx) => (
                     text && text.trim() ? (
-                      <div key={idx}>
-                        {prompts[idx] && (
-                          <p className="text-xs font-medium text-stone-500 mb-0.5">{prompts[idx]}</p>
-                        )}
-                        <p className="text-stone-800 leading-relaxed" style={{ fontSize: "11px" }}>{text}</p>
-                      </div>
+                      <p key={idx} className="text-stone-800 leading-relaxed" style={{ fontSize: "12px" }}>{text}</p>
                     ) : null
                   ))}
                 </div>
               )}
 
-              {/* Empty text placeholder */}
+              {/* Empty text placeholder - only shown when no content yet */}
               {(!textContent.length || !textContent.some(t => t && t.trim())) && prompts.length > 0 && (
                 <div className="p-3 bg-stone-50 rounded border border-dashed border-stone-300">
                   <div className="text-center text-stone-400">
                     <FileText className="w-6 h-6 mx-auto mb-1" />
                     <span className="text-xs">
-                      {language === "fr" ? "Ajoutez votre texte" : "Add your text"}
+                      {language === "fr" ? "Contenu en attente" : "Content pending"}
                     </span>
                   </div>
                 </div>

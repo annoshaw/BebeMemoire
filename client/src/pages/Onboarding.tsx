@@ -1,14 +1,25 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, Baby, Bell, BellRing, Loader2, AlertCircle } from "lucide-react";
+import { ChevronLeft, Baby, Bell, BellRing, Loader2, AlertCircle, Sparkles, Edit3, Heart, Users, Cake } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { Switch } from "@/components/ui/switch";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { toast } from "sonner";
 
-type OnboardingStep = "baby-status" | "date" | "gender" | "name" | "notifications" | "complete";
+type OnboardingStep = "template" | "baby-status" | "date" | "gender" | "name" | "notifications" | "complete";
+
+interface BookTemplate {
+  id: string;
+  slug: string;
+  nameFr: string;
+  nameEn: string;
+  descriptionFr: string | null;
+  descriptionEn: string | null;
+  iconName: string | null;
+  isActive: boolean;
+}
 
 function mapFrequencyToSettings(frequency: string, pushEnabled: boolean) {
   const baseSettings = {
@@ -36,7 +47,8 @@ function mapFrequencyToSettings(frequency: string, pushEnabled: boolean) {
 export default function Onboarding() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
-  const [step, setStep] = useState<OnboardingStep>("baby-status");
+  const [step, setStep] = useState<OnboardingStep>("template");
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [babyStatus, setBabyStatus] = useState<"born" | "expecting" | "adoption" | null>(null);
   const [babyDate, setBabyDate] = useState("");
   const [babyGender, setBabyGender] = useState<string>("");
@@ -44,8 +56,19 @@ export default function Onboarding() {
   const [notificationFrequency, setNotificationFrequency] = useState<string>("");
   const [pushNotificationsEnabled, setPushNotificationsEnabled] = useState(false);
   const [pushPermissionStatus, setPushPermissionStatus] = useState<"default" | "granted" | "denied" | "unsupported">("default");
-  const [notificationWeekday, setNotificationWeekday] = useState<number | null>(null); // 0=Sunday, 6=Saturday
+  const [notificationWeekday, setNotificationWeekday] = useState<number | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+
+  const { data: templatesData, isLoading: isLoadingTemplates } = useQuery({
+    queryKey: ["/api/book-templates"],
+    queryFn: async () => {
+      const response = await fetch("/api/book-templates", { credentials: "include" });
+      if (!response.ok) throw new Error("Failed to fetch templates");
+      return response.json();
+    },
+  });
+
+  const templates: BookTemplate[] = templatesData?.templates || [];
 
   const requestPushPermission = async (enabled: boolean) => {
     if (!enabled) {
@@ -53,7 +76,6 @@ export default function Onboarding() {
       return;
     }
 
-    // Check if notifications are supported
     if (!("Notification" in window)) {
       setPushPermissionStatus("unsupported");
       setPushNotificationsEnabled(false);
@@ -69,7 +91,6 @@ export default function Onboarding() {
         setPushNotificationsEnabled(true);
         toast.success("Notifications push activées !");
         
-        // Show a test notification
         new Notification("Memoria", {
           body: "Les notifications push sont maintenant activées !",
           icon: "/favicon.ico"
@@ -114,6 +135,8 @@ export default function Onboarding() {
       babyGender: string;
       birthDate: string;
       notificationWeekday?: number | null;
+      templateSlug?: string | null;
+      bookType: string;
     }) => {
       const response = await fetch("/api/books", {
         method: "POST",
@@ -125,6 +148,8 @@ export default function Onboarding() {
           babyGender: bookData.babyGender,
           birthDate: new Date(bookData.birthDate).toISOString(),
           notificationWeekday: bookData.notificationWeekday,
+          templateSlug: bookData.templateSlug,
+          bookType: bookData.bookType,
         }),
       });
       if (!response.ok) {
@@ -142,6 +167,7 @@ export default function Onboarding() {
       localStorage.setItem("babyGender", babyGender);
       localStorage.setItem("notificationFrequency", notificationFrequency);
       localStorage.setItem("pushNotificationsEnabled", String(pushNotificationsEnabled));
+      localStorage.setItem("selectedTemplate", selectedTemplate || "custom");
       
       await saveNotificationSettings(notificationFrequency, pushNotificationsEnabled);
       
@@ -161,6 +187,7 @@ export default function Onboarding() {
           babyStatus: babyStatus,
           babyGender: babyGender,
           birthDate: babyDate,
+          templateSlug: selectedTemplate,
           createdAt: new Date().toISOString(),
           synced: false,
         };
@@ -181,12 +208,16 @@ export default function Onboarding() {
       localStorage.setItem("babyGender", babyGender);
       localStorage.setItem("notificationFrequency", notificationFrequency);
       localStorage.setItem("pushNotificationsEnabled", String(pushNotificationsEnabled));
+      localStorage.setItem("selectedTemplate", selectedTemplate || "custom");
       setLocation("/app");
     },
   });
 
+  const allSteps: OnboardingStep[] = ["template", "baby-status", "date", "gender", "name", "notifications", "complete"];
+
   const handleNext = () => {
-    if (step === "baby-status" && babyStatus) setStep("date");
+    if (step === "template" && selectedTemplate) setStep("baby-status");
+    else if (step === "baby-status" && babyStatus) setStep("date");
     else if (step === "date" && babyDate) setStep("gender");
     else if (step === "gender" && babyGender) setStep("name");
     else if (step === "name" && babyName) setStep("notifications");
@@ -194,12 +225,12 @@ export default function Onboarding() {
   };
 
   const handleBack = () => {
-    const steps: OnboardingStep[] = ["baby-status", "date", "gender", "name", "notifications", "complete"];
-    const currentIdx = steps.indexOf(step);
-    if (currentIdx > 0) setStep(steps[currentIdx - 1]);
+    const currentIdx = allSteps.indexOf(step);
+    if (currentIdx > 0) setStep(allSteps[currentIdx - 1]);
   };
 
   const canContinue = () => {
+    if (step === "template") return selectedTemplate !== null;
     if (step === "baby-status") return babyStatus !== null;
     if (step === "date") return babyDate !== "";
     if (step === "gender") return babyGender !== "";
@@ -213,14 +244,20 @@ export default function Onboarding() {
     if (babyStatus === "adoption" && notificationWeekday === null) return;
     
     setIsCreating(true);
+    const isPrebuilt = selectedTemplate && selectedTemplate !== "custom";
+    
     createBookMutation.mutate({
       childName: babyName,
       babyStatus: babyStatus,
       babyGender: babyGender,
       birthDate: babyDate,
       notificationWeekday: babyStatus === "adoption" ? notificationWeekday : null,
+      templateSlug: isPrebuilt ? selectedTemplate : null,
+      bookType: isPrebuilt ? "prebuilt" : "custom",
     });
   };
+
+  const isPrebuiltTemplate = (slug: string) => slug !== "custom";
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-stone-50 via-stone-50 to-secondary/5 flex flex-col">
@@ -228,7 +265,7 @@ export default function Onboarding() {
       <div className="flex items-center justify-between p-4 lg:p-6 border-b border-stone-100">
         <button
           onClick={handleBack}
-          disabled={step === "baby-status"}
+          disabled={step === "template"}
           className="p-2 hover:bg-stone-100 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <ChevronLeft className="text-stone-700" />
@@ -240,11 +277,11 @@ export default function Onboarding() {
       {/* Progress Bar */}
       <div className="px-4 lg:px-6 py-4">
         <div className="flex gap-2">
-          {["baby-status", "date", "gender", "name", "notifications", "complete"].map((s, idx) => (
+          {allSteps.map((s, idx) => (
             <div
               key={s}
               className={`h-1 flex-1 rounded-full transition-all ${
-                ["baby-status", "date", "gender", "name", "notifications", "complete"].indexOf(step) >= idx
+                allSteps.indexOf(step) >= idx
                   ? "bg-primary"
                   : "bg-stone-200"
               }`}
@@ -254,8 +291,120 @@ export default function Onboarding() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 px-4 lg:px-6 pb-8 flex items-center justify-center">
+      <div className="flex-1 px-4 lg:px-6 pb-8 flex items-center justify-center overflow-y-auto">
         <AnimatePresence mode="wait">
+          {/* Step 0: Template Selection */}
+          {step === "template" && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="max-w-lg mx-auto w-full space-y-6"
+            >
+              <div className="text-center">
+                <div className="flex justify-center mb-4">
+                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+                    <Sparkles size={32} className="text-primary" />
+                  </div>
+                </div>
+                <h2 className="text-3xl font-serif font-bold text-stone-900 mb-2">
+                  Quel type de livre?
+                </h2>
+                <p className="text-stone-600">
+                  Choisissez entre un modèle pré-construit ou créez le vôtre
+                </p>
+              </div>
+
+              {isLoadingTemplates ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {templates.map((template) => {
+                    const isSelected = selectedTemplate === template.slug;
+                    const isPrebuilt = isPrebuiltTemplate(template.slug);
+                    
+                    return (
+                      <button
+                        key={template.id}
+                        onClick={() => setSelectedTemplate(template.slug)}
+                        className={`w-full p-5 rounded-xl border-2 transition-all text-left ${
+                          isSelected
+                            ? "border-primary bg-primary/5 shadow-md"
+                            : "border-stone-200 hover:border-primary/50 hover:bg-stone-50"
+                        }`}
+                        data-testid={`button-template-${template.slug}`}
+                      >
+                        <div className="flex items-start gap-4">
+                          <div className={`w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                            isPrebuilt 
+                              ? "bg-gradient-to-br from-primary to-primary/70" 
+                              : "bg-gradient-to-br from-secondary to-secondary/70"
+                          }`}>
+                            {isPrebuilt ? (
+                              <Sparkles className="w-7 h-7 text-white" />
+                            ) : (
+                              <Edit3 className="w-7 h-7 text-white" />
+                            )}
+                          </div>
+                          
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <p className="font-bold text-stone-900">{template.nameFr}</p>
+                              {isPrebuilt && (
+                                <span className="px-2 py-0.5 text-xs font-medium bg-primary/10 text-primary rounded-full">
+                                  Recommandé
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm text-stone-600 mb-3">
+                              {template.descriptionFr}
+                            </p>
+                            
+                            {isPrebuilt && (
+                              <div className="flex flex-wrap gap-2">
+                                <span className="inline-flex items-center gap-1 px-2 py-1 bg-stone-100 rounded-md text-xs text-stone-600">
+                                  <Heart size={12} /> Grossesse
+                                </span>
+                                <span className="inline-flex items-center gap-1 px-2 py-1 bg-stone-100 rounded-md text-xs text-stone-600">
+                                  <Users size={12} /> Famille
+                                </span>
+                                <span className="inline-flex items-center gap-1 px-2 py-1 bg-stone-100 rounded-md text-xs text-stone-600">
+                                  <Cake size={12} /> Jalons
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                            isSelected 
+                              ? "border-primary bg-primary" 
+                              : "border-stone-300"
+                          }`}>
+                            {isSelected && (
+                              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              <Button
+                onClick={handleNext}
+                disabled={!canContinue()}
+                className="w-full bg-primary hover:bg-primary/90 text-white h-12 rounded-lg disabled:opacity-50"
+              >
+                Continuer
+              </Button>
+            </motion.div>
+          )}
+
           {/* Step 1: Baby Status */}
           {step === "baby-status" && (
             <motion.div
@@ -466,7 +615,7 @@ export default function Onboarding() {
                   disabled={!canContinue()}
                   className="flex-1 bg-primary hover:bg-primary/90 text-white h-12 rounded-lg disabled:opacity-50"
                 >
-                  Terminer
+                  Continuer
                 </Button>
               </div>
             </motion.div>
@@ -614,6 +763,10 @@ export default function Onboarding() {
               </div>
 
               <div className="bg-primary/5 rounded-lg p-4 space-y-2 text-left">
+                <p className="text-sm">
+                  <span className="font-bold">Type de livre:</span>{" "}
+                  {selectedTemplate && selectedTemplate !== "custom" ? "Parcours Grossesse & Bébé" : "Personnalisé"}
+                </p>
                 <p className="text-sm">
                   <span className="font-bold">Date:</span> {babyDate}
                 </p>

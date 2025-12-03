@@ -13,7 +13,9 @@ import {
   Circle,
   BookOpen,
   List,
-  Grid
+  Grid,
+  Sparkles,
+  Pencil
 } from "lucide-react";
 import { PageEditor } from "./PageEditor";
 import type { TemplatePart, TemplatePage, UserBookPage, Book, BookTemplate } from "@shared/schema";
@@ -21,6 +23,7 @@ import type { TemplatePart, TemplatePage, UserBookPage, Book, BookTemplate } fro
 interface BookViewerProps {
   bookId: string;
   language: "fr" | "en";
+  onGoToInspiration?: () => void;
 }
 
 interface BookPagesResponse {
@@ -31,7 +34,7 @@ interface BookPagesResponse {
   book: Book;
 }
 
-export function BookViewer({ bookId, language }: BookViewerProps) {
+export function BookViewer({ bookId, language, onGoToInspiration }: BookViewerProps) {
   const [selectedPartIndex, setSelectedPartIndex] = useState(0);
   const [selectedPageNumber, setSelectedPageNumber] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<"parts" | "page">("parts");
@@ -148,7 +151,21 @@ export function BookViewer({ bookId, language }: BookViewerProps) {
               : `${completedCount} / ${totalPages} pages completed`}
           </p>
         </div>
-        <Progress value={progressPercent} className="w-32 h-2" />
+        <div className="flex items-center gap-4">
+          {onGoToInspiration && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onGoToInspiration}
+              className="bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200 hover:from-amber-100 hover:to-orange-100 text-amber-700"
+              data-testid="button-inspiration-viewer"
+            >
+              <Sparkles className="w-4 h-4 mr-1" />
+              {language === "fr" ? "Inspiration" : "Inspiration"}
+            </Button>
+          )}
+          <Progress value={progressPercent} className="w-32 h-2" />
+        </div>
       </div>
 
       <Separator />
@@ -228,9 +245,9 @@ export function BookViewer({ bookId, language }: BookViewerProps) {
                               setSelectedPageNumber(page.pageNumber);
                               setViewMode("page");
                             }}
-                            className={`p-4 rounded-lg border text-left transition-all hover:shadow-md ${
+                            className={`p-4 rounded-lg border text-left transition-all hover:shadow-md group ${
                               completed 
-                                ? "bg-green-50 border-green-200" 
+                                ? "bg-green-50 border-green-200 hover:bg-green-100" 
                                 : "bg-white border-sage-200 hover:border-sage-300"
                             }`}
                             data-testid={`page-button-${page.pageNumber}`}
@@ -242,17 +259,29 @@ export function BookViewer({ bookId, language }: BookViewerProps) {
                                 {completed ? <Check className="w-4 h-4" /> : <span>{page.pageNumber}</span>}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <h4 className="font-medium text-sage-900 truncate">
-                                  {language === "fr" ? page.titleFr : page.titleEn}
-                                </h4>
+                                <div className="flex items-center gap-2">
+                                  <h4 className="font-medium text-sage-900 truncate">
+                                    {language === "fr" ? page.titleFr : page.titleEn}
+                                  </h4>
+                                  {completed && (
+                                    <Pencil className="w-3 h-3 text-sage-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                  )}
+                                </div>
                                 {page.subtitleFr && (
                                   <p className="text-sm text-sage-500 truncate">
                                     {language === "fr" ? page.subtitleFr : page.subtitleEn}
                                   </p>
                                 )}
-                                <Badge variant="secondary" className="mt-2 text-xs">
-                                  {page.pageType.replace(/_/g, " ")}
-                                </Badge>
+                                <div className="flex items-center gap-2 mt-2">
+                                  <Badge variant="secondary" className="text-xs">
+                                    {page.pageType.replace(/_/g, " ")}
+                                  </Badge>
+                                  {completed && (
+                                    <span className="text-xs text-green-600">
+                                      {language === "fr" ? "Cliquez pour modifier" : "Click to edit"}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           </button>

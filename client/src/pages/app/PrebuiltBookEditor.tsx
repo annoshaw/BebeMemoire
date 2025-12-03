@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { useParams, Link } from "wouter";
+import { useParams, Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Settings } from "lucide-react";
+import { ArrowLeft, Settings, Sparkles } from "lucide-react";
 import { BookViewer } from "@/components/book";
 import type { Book } from "@shared/schema";
 
@@ -10,6 +10,7 @@ export default function PrebuiltBookEditor() {
   const params = useParams<{ id: string }>();
   const bookId = params.id;
   const [language, setLanguage] = useState<"fr" | "en">("fr");
+  const [, setLocation] = useLocation();
 
   const { data: bookData, isLoading, error } = useQuery<{ book: Book }>({
     queryKey: ["/api/books", bookId],
@@ -83,6 +84,16 @@ export default function PrebuiltBookEditor() {
               <Button
                 variant="outline"
                 size="sm"
+                onClick={() => setLocation("/app?tab=inspiration")}
+                className="bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200 hover:from-amber-100 hover:to-orange-100 text-amber-700"
+                data-testid="button-inspiration"
+              >
+                <Sparkles className="w-4 h-4 mr-1" />
+                {language === "fr" ? "Inspiration" : "Inspiration"}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => setLanguage(language === "fr" ? "en" : "fr")}
                 data-testid="toggle-language"
               >
@@ -99,7 +110,11 @@ export default function PrebuiltBookEditor() {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <BookViewer bookId={bookId!} language={language} />
+        <BookViewer 
+          bookId={bookId!} 
+          language={language} 
+          onGoToInspiration={() => setLocation("/app?tab=inspiration")}
+        />
       </main>
     </div>
   );

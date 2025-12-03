@@ -1,0 +1,84 @@
+import React, { useState } from "react";
+import ColorThief from "colorthief";
+
+const TextBox = () => {
+  const [bgColor, setBgColor] = useState("#FFFFFF"); // couleur par défaut
+  const [textColor, setTextColor] = useState("#000000");
+
+  const predefinedColors = [
+    "#F8BBD0", // rose pastel
+    "#C8E6C9", // vert doux
+    "#BBDEFB", // bleu clair
+    "#FFF9C4", // jaune pâle
+    "#FFE0B2", // beige
+    "#FFFFFF", // blanc
+  ];
+
+  // Fonction pour extraire la couleur dominante d'une image
+  const handleImageUpload = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const img = new Image();
+    img.src = URL.createObjectURL(file);
+    img.crossOrigin = "Anonymous";
+
+    img.onload = () => {
+      const colorThief = new ColorThief();
+      const result = colorThief.getColor(img); // retourne [R, G, B]
+      const rgbColor = `rgb(${result[0]}, ${result[1]}, ${result[2]})`;
+      setBgColor(rgbColor);
+
+      // Ajuster la couleur du texte pour le contraste
+      const brightness = (result[0] * 299 + result[1] * 587 + result[2] * 114) / 1000;
+      setTextColor(brightness > 125 ? "#000000" : "#FFFFFF");
+    };
+  };
+
+  return (
+    <div style={{ padding: "20px" }}>
+      {/* Upload image */}
+      <input type="file" accept="image/*" onChange={handleImageUpload} />
+
+      {/* Encadré texte */}
+      <div
+        style={{
+          backgroundColor: bgColor,
+          color: textColor,
+          padding: "20px",
+          marginTop: "20px",
+          borderRadius: "8px",
+        }}
+      >
+        <p>
+          Ceci est un encadré texte. La couleur de fond est générée automatiquement
+          selon la photo ou choisie manuellement.
+        </p>
+      </div>
+
+      {/* Boutons de choix manuel */}
+      <div style={{ marginTop: "20px" }}>
+        {predefinedColors.map((color, index) => (
+          <button
+            key={index}
+            onClick={() => {
+              setBgColor(color);
+              setTextColor(color === "#FFFFFF" ? "#000000" : "#000000");
+            }}
+            style={{
+              backgroundColor: color,
+              border: "1px solid #ccc",
+              marginRight: "10px",
+              padding: "10px",
+              cursor: "pointer",
+            }}
+          >
+            {color}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default TextBox;

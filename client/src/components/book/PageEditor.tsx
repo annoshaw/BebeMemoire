@@ -402,6 +402,7 @@ export function PageEditor({
               textStyles={textStyles}
               onStyleChange={handleTextStyleChange}
               photos={photos}
+              separateFields={true}
             />
           </div>
         );

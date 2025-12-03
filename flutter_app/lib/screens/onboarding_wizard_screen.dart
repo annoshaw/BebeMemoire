@@ -207,34 +207,44 @@ class _OnboardingWizardScreenState extends State<OnboardingWizardScreen> {
       firstDate = now;
       lastDate = now.add(const Duration(days: 300));
     } else {
-      initialDate = now;
+      initialDate = _selectedDate ?? now;
       firstDate = DateTime(2000);
       lastDate = now;
     }
 
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: initialDate,
-      firstDate: firstDate,
-      lastDate: lastDate,
-      locale: isFrench ? const Locale('fr') : const Locale('en'),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppColors.primary,
-              onPrimary: Colors.white,
-              surface: AppColors.surface,
-              onSurface: AppColors.textPrimary,
+    try {
+      final picked = await showDatePicker(
+        context: context,
+        initialDate: initialDate,
+        firstDate: firstDate,
+        lastDate: lastDate,
+        helpText: isFrench ? 'Sélectionner une date' : 'Select a date',
+        cancelText: isFrench ? 'Annuler' : 'Cancel',
+        confirmText: isFrench ? 'OK' : 'OK',
+        builder: (context, child) {
+          return Theme(
+            data: ThemeData.light().copyWith(
+              colorScheme: const ColorScheme.light(
+                primary: AppColors.primary,
+                onPrimary: Colors.white,
+                surface: Colors.white,
+                onSurface: AppColors.textPrimary,
+              ),
+              dialogBackgroundColor: Colors.white,
             ),
-          ),
-          child: child!,
-        );
-      },
-    );
+            child: child!,
+          );
+        },
+      );
 
-    if (picked != null) {
-      setState(() => _selectedDate = picked);
+      if (picked != null && mounted) {
+        setState(() => _selectedDate = picked);
+      }
+    } catch (e) {
+      // Fallback: set date to today or a default
+      if (mounted) {
+        setState(() => _selectedDate = initialDate);
+      }
     }
   }
 

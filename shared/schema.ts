@@ -243,7 +243,58 @@ export const insertBookTemplateSchema = createInsertSchema(bookTemplates).omit({
 export type InsertBookTemplate = z.infer<typeof insertBookTemplateSchema>;
 export type BookTemplate = typeof bookTemplates.$inferSelect;
 
-// Template sections - defines the predefined pages/sections for each template
+// Template parts - defines the main sections/chapters of a book template
+export const templateParts = pgTable("template_parts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  templateId: varchar("template_id").notNull().references(() => bookTemplates.id, { onDelete: "cascade" }),
+  partNumber: integer("part_number").notNull(),
+  titleFr: text("title_fr").notNull(),
+  titleEn: text("title_en").notNull(),
+  descriptionFr: text("description_fr"),
+  descriptionEn: text("description_en"),
+  iconName: text("icon_name"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertTemplatePartSchema = createInsertSchema(templateParts).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertTemplatePart = z.infer<typeof insertTemplatePartSchema>;
+export type TemplatePart = typeof templateParts.$inferSelect;
+
+// Template pages - defines the predefined pages for each template
+export const templatePages = pgTable("template_pages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  templateId: varchar("template_id").notNull().references(() => bookTemplates.id, { onDelete: "cascade" }),
+  partId: varchar("part_id").references(() => templateParts.id, { onDelete: "cascade" }),
+  pageNumber: integer("page_number").notNull(),
+  titleFr: text("title_fr").notNull(),
+  titleEn: text("title_en").notNull(),
+  subtitleFr: text("subtitle_fr"),
+  subtitleEn: text("subtitle_en"),
+  promptsFr: jsonb("prompts_fr").default([]), // Array of guiding questions in French
+  promptsEn: jsonb("prompts_en").default([]), // Array of guiding questions in English
+  pageType: text("page_type").notNull(), // text_photo, text_video, collage, birth_info, message, timeline
+  layoutStyle: text("layout_style").default("single"), // single, dual, collage_grid, full_photo
+  maxPhotos: integer("max_photos").default(1), // For collage pages: 1-15
+  hasVideo: boolean("has_video").default(false),
+  hasTextBlocks: integer("has_text_blocks").default(1), // Number of text areas
+  iconName: text("icon_name"),
+  backgroundImage: text("background_image"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertTemplatePageSchema = createInsertSchema(templatePages).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertTemplatePage = z.infer<typeof insertTemplatePageSchema>;
+export type TemplatePage = typeof templatePages.$inferSelect;
+
+// Template sections - defines the predefined pages/sections for each template (legacy - kept for compatibility)
 export const templateSections = pgTable("template_sections", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   templateId: varchar("template_id").notNull().references(() => bookTemplates.id, { onDelete: "cascade" }),
@@ -254,10 +305,10 @@ export const templateSections = pgTable("template_sections", {
   subtitleEn: text("subtitle_en"),
   descriptionFr: text("description_fr"),
   descriptionEn: text("description_en"),
-  layoutStyle: text("layout_style").default("single"), // single, collage, timeline, family_tree
-  sectionType: text("section_type").notNull(), // pregnancy_month, family_intro, announcement, nursery, monthly_milestone
-  dateOffsetDays: integer("date_offset_days"), // Days from birth/due date
-  monthNumber: integer("month_number"), // For pregnancy or milestone months (1-12)
+  layoutStyle: text("layout_style").default("single"),
+  sectionType: text("section_type").notNull(),
+  dateOffsetDays: integer("date_offset_days"),
+  monthNumber: integer("month_number"),
   placeholderImages: jsonb("placeholder_images").default([]),
   defaultContent: jsonb("default_content").default({}),
   backgroundImage: text("background_image"),
@@ -273,3 +324,29 @@ export const insertTemplateSectionSchema = createInsertSchema(templateSections).
 
 export type InsertTemplateSection = z.infer<typeof insertTemplateSectionSchema>;
 export type TemplateSection = typeof templateSections.$inferSelect;
+
+// User book pages - stores the actual content filled by users for each page
+export const userBookPages = pgTable("user_book_pages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  bookId: varchar("book_id").notNull().references(() => books.id, { onDelete: "cascade" }),
+  templatePageId: varchar("template_page_id").references(() => templatePages.id),
+  pageNumber: integer("page_number").notNull(),
+  titleOverride: text("title_override"), // User can customize the title
+  textContent: jsonb("text_content").default([]), // Array of text blocks with content
+  photos: jsonb("photos").default([]), // Array of photo URLs
+  videoUrl: text("video_url"),
+  customData: jsonb("custom_data").default({}), // For special pages like birth_info
+  isCompleted: boolean("is_completed").default(false),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertUserBookPageSchema = createInsertSchema(userBookPages).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertUserBookPage = z.infer<typeof insertUserBookPageSchema>;
+export type UserBookPage = typeof userBookPages.$inferSelect;

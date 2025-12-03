@@ -171,7 +171,12 @@ export default function Onboarding() {
       
       await saveNotificationSettings(notificationFrequency, pushNotificationsEnabled);
       
-      setLocation("/app");
+      const isPrebuilt = selectedTemplate && selectedTemplate !== "custom";
+      if (isPrebuilt) {
+        setLocation(`/app/book/${data.book.id}/prebuilt`);
+      } else {
+        setLocation("/app");
+      }
     },
     onError: async (error: any) => {
       console.error("Error creating book via API:", error);

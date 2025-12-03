@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { users, books, memories, userPlans, qrCodes, passwordResetTokens, bookPages, notifications, notificationSettings, bookTemplates, templateSections, type User, type InsertUser, type UpsertUser, type Book, type InsertBook, type Memory, type InsertMemory, type UserPlan, type InsertUserPlan, type QRCode, type InsertQRCode, type PasswordResetToken, type InsertPasswordResetToken, type BookPage, type InsertBookPage, type Notification, type InsertNotification, type NotificationSettings, type InsertNotificationSettings, type BookTemplate, type InsertBookTemplate, type TemplateSection, type InsertTemplateSection } from "@shared/schema";
+import { users, books, memories, userPlans, qrCodes, passwordResetTokens, bookPages, notifications, notificationSettings, bookTemplates, templateSections, templateParts, templatePages, userBookPages, type User, type InsertUser, type UpsertUser, type Book, type InsertBook, type Memory, type InsertMemory, type UserPlan, type InsertUserPlan, type QRCode, type InsertQRCode, type PasswordResetToken, type InsertPasswordResetToken, type BookPage, type InsertBookPage, type Notification, type InsertNotification, type NotificationSettings, type InsertNotificationSettings, type BookTemplate, type InsertBookTemplate, type TemplateSection, type InsertTemplateSection, type TemplatePart, type InsertTemplatePart, type TemplatePage, type InsertTemplatePage, type UserBookPage, type InsertUserBookPage } from "@shared/schema";
 import { eq, desc, and, gt, asc, lte, or, isNull } from "drizzle-orm";
 
 export interface IStorage {
@@ -71,6 +71,19 @@ export interface IStorage {
   createBookTemplate(template: InsertBookTemplate): Promise<BookTemplate>;
   createTemplateSection(section: InsertTemplateSection): Promise<TemplateSection>;
   createBookWithTemplate(userId: string, bookData: InsertBook, templateSlug: string, birthDate?: Date): Promise<{ book: Book; pages: BookPage[] }>;
+  
+  // Template Parts & Pages operations
+  getTemplateParts(templateId: string): Promise<TemplatePart[]>;
+  getTemplatePages(templateId: string): Promise<TemplatePage[]>;
+  getTemplatePagesByPart(partId: string): Promise<TemplatePage[]>;
+  
+  // User Book Pages operations
+  getUserBookPages(bookId: string): Promise<UserBookPage[]>;
+  getUserBookPage(bookId: string, pageNumber: number): Promise<UserBookPage | undefined>;
+  createUserBookPage(page: InsertUserBookPage): Promise<UserBookPage>;
+  updateUserBookPage(id: string, data: Partial<InsertUserBookPage>): Promise<UserBookPage | undefined>;
+  createUserBookPagesFromTemplate(bookId: string, templateId: string): Promise<UserBookPage[]>;
+  markPageAsCompleted(id: string): Promise<UserBookPage | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -477,6 +490,97 @@ export class DatabaseStorage implements IStorage {
     }
 
     return { book, pages: savedPages };
+  }
+
+  // Template Parts & Pages operations
+  async getTemplateParts(templateId: string): Promise<TemplatePart[]> {
+    return db.select()
+      .from(templateParts)
+      .where(eq(templateParts.templateId, templateId))
+      .orderBy(asc(templateParts.partNumber));
+  }
+
+  async getTemplatePages(templateId: string): Promise<TemplatePage[]> {
+    return db.select()
+      .from(templatePages)
+      .where(eq(templatePages.templateId, templateId))
+      .orderBy(asc(templatePages.pageNumber));
+  }
+
+  async getTemplatePagesByPart(partId: string): Promise<TemplatePage[]> {
+    return db.select()
+      .from(templatePages)
+      .where(eq(templatePages.partId, partId))
+      .orderBy(asc(templatePages.pageNumber));
+  }
+
+  // User Book Pages operations
+  async getUserBookPages(bookId: string): Promise<UserBookPage[]> {
+    return db.select()
+      .from(userBookPages)
+      .where(eq(userBookPages.bookId, bookId))
+      .orderBy(asc(userBookPages.pageNumber));
+  }
+
+  async getUserBookPage(bookId: string, pageNumber: number): Promise<UserBookPage | undefined> {
+    const result = await db.select()
+      .from(userBookPages)
+      .where(
+        and(
+          eq(userBookPages.bookId, bookId),
+          eq(userBookPages.pageNumber, pageNumber)
+        )
+      )
+      .limit(1);
+    return result[0];
+  }
+
+  async createUserBookPage(page: InsertUserBookPage): Promise<UserBookPage> {
+    const result = await db.insert(userBookPages).values(page).returning();
+    return result[0];
+  }
+
+  async updateUserBookPage(id: string, data: Partial<InsertUserBookPage>): Promise<UserBookPage | undefined> {
+    const result = await db.update(userBookPages)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(userBookPages.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async createUserBookPagesFromTemplate(bookId: string, templateId: string): Promise<UserBookPage[]> {
+    // Get all template pages
+    const pages = await this.getTemplatePages(templateId);
+    
+    if (pages.length === 0) {
+      return [];
+    }
+
+    // Create user book pages for each template page
+    const userPages: InsertUserBookPage[] = pages.map(page => ({
+      bookId,
+      templatePageId: page.id,
+      pageNumber: page.pageNumber,
+      textContent: [],
+      photos: [],
+      customData: {},
+      isCompleted: false,
+    }));
+
+    const result = await db.insert(userBookPages).values(userPages).returning();
+    return result.sort((a, b) => a.pageNumber - b.pageNumber);
+  }
+
+  async markPageAsCompleted(id: string): Promise<UserBookPage | undefined> {
+    const result = await db.update(userBookPages)
+      .set({ 
+        isCompleted: true, 
+        completedAt: new Date(),
+        updatedAt: new Date() 
+      })
+      .where(eq(userBookPages.id, id))
+      .returning();
+    return result[0];
   }
 }
 

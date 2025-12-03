@@ -1,0 +1,76 @@
+Super ajout Ann-Sophie 🌟 ! Tu enrichis ton livre de grossesse en le transformant en **album de la première année de vie du bébé**. Voici la mise à jour de la **roadmap Replit** avec les nouvelles pages (31 à 50) intégrées dans une nouvelle partie logique :
+
+---
+
+# 🗺️ Roadmap Replit – Livre de grossesse et première année
+
+## 1. **Architecture générale (mise à jour)**
+- Les **8 premières parties** restent inchangées (pages 1 à 30).
+- Ajout d’une **Partie 7 : Les premiers mois et la première année** (pages 31 à 50).
+- Les composants réutilisables (TextBlock, PhotoBlock, VideoBlock, CollageBlock, TimelineBlock, EventBlock, ChoiceBlock) couvrent aussi ces nouvelles pages.
+- Besoin d’un **CollageBlock amélioré** (1 à 15 photos) pour anniversaires, voyages, Noël, etc.
+
+---
+
+## 2. **Nouvelle Partie 7 : Les premiers mois et la première année**
+| Page | Titre | Type de contenu |
+|------|-------|----------------|
+| 31 | Le premier boire | Texte + photo/vidéo |
+| 32 | Le retour à la maison | Texte + collage photo adaptable |
+| 33 | Les premières rencontres | Texte + 2 blocs photo/vidéo |
+| 34 | Premier moisnniversaire | Texte + photo/vidéo |
+| 35 | Deuxième moisnniversaire | Texte + photo/vidéo |
+| 36 | Le premier sourire | Texte + photo/vidéo |
+| 37 | Troisième moisnniversaire | Texte + photo/vidéo |
+| 38 | Quatrième moisnniversaire | Texte + photo/vidéo |
+| 39 | Cinquième moisnniversaire | Texte + photo/vidéo |
+| 40 | Sixième moisnniversaire | Texte + photo/vidéo |
+| 41a | Première expérience à la plage | Texte + photo/vidéo |
+| 41b | Septième moisnniversaire | Texte + photo/vidéo |
+| 42 | Huitième moisnniversaire | Texte + photo/vidéo |
+| 43 | Premier voyage | Texte + collage photo adaptable |
+| 44 | Neuvième moisnniversaire | Texte + photo/vidéo |
+| 45 | Dixième moisnniversaire | Texte + photo/vidéo |
+| 46 | Premier Noël | Texte + collage photo adaptable + vidéo |
+| 47 | Première sortie dans la neige | Texte + photo/vidéo |
+| 48 | Onzième moisnniversaire | Texte + photo/vidéo |
+| 49 | Premier anniversaire | Texte + collage photo adaptable + vidéo |
+| 50 | Ton 1 an | Texte + photo/vidéo + message des parents |
+
+---
+
+## 3. **Composants spécifiques pour Partie 7**
+- **AnniversaireBlock** : modèle répétitif pour chaque moisnniversaire (texte + photo/vidéo).
+- **EventBlock enrichi** : pour événements spéciaux (Noël, neige, voyage).
+- **CollageBlock amélioré** : gestion automatique du nombre de photos (1 à 15).
+- **MessageBlock** : champ texte libre pour messages des parents (page 50).
+
+---
+
+## 4. **Fonctionnalités clés (ajoutées)**
+- 📅 **Timeline bébé** : navigation mensuelle intuitive (mois 1 à 12).
+- 🎉 **Événements spéciaux** : Noël, neige, voyage → templates dédiés.
+- 🖼️ **Collages dynamiques** : déjà prévu, mais renforcé pour anniversaires et fêtes.
+- 💌 **Message parental** : espace émotionnel pour écrire un mot au bébé (page 50).
+- 📖 **Export final** : possibilité de générer un livre complet grossesse + première année.
+
+---
+
+## 5. **Étapes de développement (ajoutées)**
+1. Créer **AnniversaireBlock** réutilisable (pages 34, 35, 37, 38, 39, 40, 41b, 42, 44, 45, 48).
+2. Développer **EventBlock enrichi** (plage, voyage, Noël, neige).
+3. Adapter **CollageBlock** pour anniversaires et événements (1 à 15 photos).
+4. Ajouter **MessageBlock** pour page 50.
+5. Tester la **navigation chronologique** (grossesse → naissance → moisnniversaires → 1 an).
+6. Vérifier la **cohérence visuelle** entre parties (même style, même logique d’édition).
+
+---
+
+## 6. **Vision finale**
+👉 Le livre devient un **album évolutif** : grossesse (pages 1-30) + première année (pages 31-50).  
+Les parents peuvent documenter chaque étape, chaque moisnniversaire, et les grands événements (voyage, Noël, neige, anniversaire).  
+Résultat : un **patrimoine émotionnel complet**, interactif et exportable.
+
+---
+
+💡 Je peux te préparer un **diagramme hiérarchique complet (Parties 1 à 7, pages 1 à 50)** pour visualiser la structure globale et l’intégrer directement dans Figma ou Flutter. Veux-tu que je le fasse pour toi ?

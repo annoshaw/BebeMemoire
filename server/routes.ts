@@ -466,6 +466,190 @@ export async function registerRoutes(
     }
   });
 
+  // Get template parts and pages for a specific template
+  app.get("/api/book-templates/:slug/structure", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const template = await storage.getBookTemplateBySlug(req.params.slug);
+      if (!template) {
+        return res.status(404).json({ message: "Template non trouvé" });
+      }
+      const parts = await storage.getTemplateParts(template.id);
+      const pages = await storage.getTemplatePages(template.id);
+      res.json({ template, parts, pages });
+    } catch (error) {
+      console.error("Get template structure error:", error);
+      res.status(500).json({ message: "Erreur lors de la récupération de la structure" });
+    }
+  });
+
+  // USER BOOK PAGES ROUTES
+
+  // Get all pages for a book (with template info)
+  app.get("/api/books/:bookId/pages", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const book = await storage.getBook(req.params.bookId);
+      
+      if (!book) {
+        return res.status(404).json({ message: "Livre non trouvé" });
+      }
+      if (book.userId !== userId) {
+        return res.status(403).json({ message: "Accès refusé" });
+      }
+
+      const userPages = await storage.getUserBookPages(req.params.bookId);
+      
+      // If prebuilt book, get template info
+      let template = null;
+      let templateParts = null;
+      let templatePages = null;
+      
+      if (book.templateSlug) {
+        template = await storage.getBookTemplateBySlug(book.templateSlug);
+        if (template) {
+          templateParts = await storage.getTemplateParts(template.id);
+          templatePages = await storage.getTemplatePages(template.id);
+        }
+      }
+
+      res.json({ 
+        pages: userPages,
+        template,
+        templateParts,
+        templatePages,
+        book
+      });
+    } catch (error) {
+      console.error("Get book pages error:", error);
+      res.status(500).json({ message: "Erreur lors de la récupération des pages" });
+    }
+  });
+
+  // Get a specific page
+  app.get("/api/books/:bookId/pages/:pageNumber", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const book = await storage.getBook(req.params.bookId);
+      
+      if (!book) {
+        return res.status(404).json({ message: "Livre non trouvé" });
+      }
+      if (book.userId !== userId) {
+        return res.status(403).json({ message: "Accès refusé" });
+      }
+
+      const pageNumber = parseInt(req.params.pageNumber);
+      const page = await storage.getUserBookPage(req.params.bookId, pageNumber);
+      
+      if (!page) {
+        return res.status(404).json({ message: "Page non trouvée" });
+      }
+
+      res.json({ page });
+    } catch (error) {
+      console.error("Get page error:", error);
+      res.status(500).json({ message: "Erreur lors de la récupération de la page" });
+    }
+  });
+
+  // Update a page content
+  app.patch("/api/books/:bookId/pages/:pageId", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const book = await storage.getBook(req.params.bookId);
+      
+      if (!book) {
+        return res.status(404).json({ message: "Livre non trouvé" });
+      }
+      if (book.userId !== userId) {
+        return res.status(403).json({ message: "Accès refusé" });
+      }
+
+      const { textContent, photos, videoUrl, customData, titleOverride } = req.body;
+      
+      const updateData: any = {};
+      if (textContent !== undefined) updateData.textContent = textContent;
+      if (photos !== undefined) updateData.photos = photos;
+      if (videoUrl !== undefined) updateData.videoUrl = videoUrl;
+      if (customData !== undefined) updateData.customData = customData;
+      if (titleOverride !== undefined) updateData.titleOverride = titleOverride;
+
+      const page = await storage.updateUserBookPage(req.params.pageId, updateData);
+      
+      if (!page) {
+        return res.status(404).json({ message: "Page non trouvée" });
+      }
+
+      res.json({ page });
+    } catch (error) {
+      console.error("Update page error:", error);
+      res.status(500).json({ message: "Erreur lors de la mise à jour de la page" });
+    }
+  });
+
+  // Mark a page as completed
+  app.post("/api/books/:bookId/pages/:pageId/complete", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const book = await storage.getBook(req.params.bookId);
+      
+      if (!book) {
+        return res.status(404).json({ message: "Livre non trouvé" });
+      }
+      if (book.userId !== userId) {
+        return res.status(403).json({ message: "Accès refusé" });
+      }
+
+      const page = await storage.markPageAsCompleted(req.params.pageId);
+      
+      if (!page) {
+        return res.status(404).json({ message: "Page non trouvée" });
+      }
+
+      res.json({ page });
+    } catch (error) {
+      console.error("Complete page error:", error);
+      res.status(500).json({ message: "Erreur lors de la complétion de la page" });
+    }
+  });
+
+  // Initialize book pages from template (used after book creation)
+  app.post("/api/books/:bookId/initialize-pages", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const book = await storage.getBook(req.params.bookId);
+      
+      if (!book) {
+        return res.status(404).json({ message: "Livre non trouvé" });
+      }
+      if (book.userId !== userId) {
+        return res.status(403).json({ message: "Accès refusé" });
+      }
+
+      if (!book.templateSlug) {
+        return res.status(400).json({ message: "Ce livre n'utilise pas de template" });
+      }
+
+      const template = await storage.getBookTemplateBySlug(book.templateSlug);
+      if (!template) {
+        return res.status(404).json({ message: "Template non trouvé" });
+      }
+
+      // Check if pages already exist
+      const existingPages = await storage.getUserBookPages(req.params.bookId);
+      if (existingPages.length > 0) {
+        return res.status(400).json({ message: "Les pages existent déjà pour ce livre" });
+      }
+
+      const pages = await storage.createUserBookPagesFromTemplate(req.params.bookId, template.id);
+      
+      res.status(201).json({ pages, message: "Pages initialisées avec succès" });
+    } catch (error) {
+      console.error("Initialize pages error:", error);
+      res.status(500).json({ message: "Erreur lors de l'initialisation des pages" });
+    }
+  });
+
   // BOOK ROUTES
 
   // Get all books for current user

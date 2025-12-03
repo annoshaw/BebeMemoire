@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight, Plus, Minus, Image as ImageIcon, Mic, Video,
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Book } from "@shared/schema";
+import type { Book, TemplatePage, UserBookPage, TemplatePart, BookTemplate } from "@shared/schema";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,6 +13,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import NotificationBell from "@/components/NotificationBell";
+import { PageThumbnail, PageThumbnailSkeleton } from "@/components/book";
 
 export default function Prototype() {
   const [activeTab, setActiveTab] = useState("creations");
@@ -181,6 +182,26 @@ export default function Prototype() {
   const userBooks = allBooks;
   const activeBook = userBooks.find(b => b.id === activeBookId) || userBooks[0];
   
+  const isPrebuiltBook = !!(activeBook && 'templateSlug' in activeBook && activeBook.templateSlug && activeBook.templateSlug !== 'custom');
+  
+  const { data: prebuiltPagesData, isLoading: prebuiltPagesLoading } = useQuery<{
+    pages: UserBookPage[];
+    template: BookTemplate | null;
+    templateParts: TemplatePart[] | null;
+    templatePages: TemplatePage[] | null;
+    book: Book;
+  }>({
+    queryKey: ["/api/books", activeBook?.id, "pages"],
+    queryFn: async () => {
+      const res = await fetch(`/api/books/${activeBook?.id}/pages`, {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to load book pages");
+      return res.json();
+    },
+    enabled: !!activeBook?.id && isPrebuiltBook,
+  });
+
   const setActiveBookMutation = useMutation({
     mutationFn: async (bookId: string) => {
       localStorage.setItem("activeBookId", bookId);
@@ -1853,11 +1874,18 @@ export default function Prototype() {
                           <div className="flex items-center gap-3 text-xs text-stone-600">
                             <span className="flex items-center gap-1">
                               <BookOpen size={12} />
-                              {bookPages.length} pages
+                              {isPrebuiltBook && prebuiltPagesData?.templatePages 
+                                ? prebuiltPagesData.templatePages.length 
+                                : bookPages.length} pages
                             </span>
                             <span className="flex items-center gap-1">
                               <ImageIcon size={12} />
-                              {bookPages.filter(p => p.type === 'photo').length} photos
+                              {isPrebuiltBook && prebuiltPagesData?.pages 
+                                ? prebuiltPagesData.pages.filter(p => {
+                                    const photos = (p.photos as string[] | null) || [];
+                                    return photos.length > 0;
+                                  }).length 
+                                : bookPages.filter(p => p.type === 'photo').length} photos
                             </span>
                           </div>
                         </div>
@@ -1877,24 +1905,55 @@ export default function Prototype() {
                     <div className="mt-4 pt-3 border-t border-stone-200/50">
                       <p className="text-[10px] text-stone-500 uppercase tracking-wide mb-2">Aperçu des pages</p>
                       <div className="flex gap-2 overflow-x-auto pb-1">
-                        {bookPages.slice(0, 5).map((page, idx) => (
-                          <div 
-                            key={page.id} 
-                            className="w-12 h-16 rounded-lg overflow-hidden shadow-sm border border-stone-200 flex-shrink-0 bg-white"
-                          >
-                            {page.image ? (
-                              <img src={page.image} className="w-full h-full object-cover" alt={page.title} />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-stone-100">
-                                <span className="text-[8px] text-stone-400 text-center px-1">{page.title}</span>
+                        {isPrebuiltBook && prebuiltPagesData?.templatePages ? (
+                          <>
+                            {prebuiltPagesData.templatePages.slice(0, 5).map((templatePage) => {
+                              const userPage = prebuiltPagesData.pages.find(p => p.pageNumber === templatePage.pageNumber);
+                              return (
+                                <PageThumbnail
+                                  key={templatePage.id}
+                                  templatePage={templatePage}
+                                  userPage={userPage}
+                                  language="fr"
+                                  size="sm"
+                                  onClick={() => setLocation(`/app/book/${activeBook.id}/prebuilt`)}
+                                />
+                              );
+                            })}
+                            {prebuiltPagesData.templatePages.length > 5 && (
+                              <div className="w-12 h-16 rounded-lg bg-stone-100 flex items-center justify-center flex-shrink-0 border border-stone-200">
+                                <span className="text-xs text-stone-500">+{prebuiltPagesData.templatePages.length - 5}</span>
                               </div>
                             )}
-                          </div>
-                        ))}
-                        {bookPages.length > 5 && (
-                          <div className="w-12 h-16 rounded-lg bg-stone-100 flex items-center justify-center flex-shrink-0 border border-stone-200">
-                            <span className="text-xs text-stone-500">+{bookPages.length - 5}</span>
-                          </div>
+                          </>
+                        ) : prebuiltPagesLoading && isPrebuiltBook ? (
+                          <>
+                            {[1, 2, 3, 4, 5].map((i) => (
+                              <PageThumbnailSkeleton key={i} size="sm" />
+                            ))}
+                          </>
+                        ) : (
+                          <>
+                            {bookPages.slice(0, 5).map((page, idx) => (
+                              <div 
+                                key={page.id} 
+                                className="w-12 h-16 rounded-lg overflow-hidden shadow-sm border border-stone-200 flex-shrink-0 bg-white"
+                              >
+                                {page.image ? (
+                                  <img src={page.image} className="w-full h-full object-cover" alt={page.title} />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center bg-stone-100">
+                                    <span className="text-[8px] text-stone-400 text-center px-1">{page.title}</span>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                            {bookPages.length > 5 && (
+                              <div className="w-12 h-16 rounded-lg bg-stone-100 flex items-center justify-center flex-shrink-0 border border-stone-200">
+                                <span className="text-xs text-stone-500">+{bookPages.length - 5}</span>
+                              </div>
+                            )}
+                          </>
                         )}
                       </div>
                     </div>

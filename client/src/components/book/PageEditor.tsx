@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Slider } from "@/components/ui/slider";
 import { 
   ArrowLeft, 
   ArrowRight, 
@@ -16,7 +17,10 @@ import {
   X,
   Image as ImageIcon,
   Video,
-  FileText
+  FileText,
+  Move,
+  ZoomIn,
+  RotateCcw
 } from "lucide-react";
 import { 
   TextBlock, 
@@ -68,18 +72,87 @@ export function PageEditor({
   );
   const [isDirty, setIsDirty] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  
+  // Photo layout state: { photoIndex: { scale, x, y } }
+  type PhotoLayout = { scale: number; x: number; y: number };
+  const [photoLayouts, setPhotoLayouts] = useState<Record<number, PhotoLayout>>(
+    (userPage?.customData as any)?.photoLayouts || {}
+  );
+  const [activePhotoIndex, setActivePhotoIndex] = useState<number | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef<{ x: number; y: number; photoX: number; photoY: number } | null>(null);
 
   useEffect(() => {
     setTextContent((userPage?.textContent as string[]) || []);
     setPhotos((userPage?.photos as string[]) || []);
     setVideoUrl(userPage?.videoUrl || null);
-    setCustomData((userPage?.customData as Record<string, string>) || {});
+    const data = (userPage?.customData as Record<string, any>) || {};
+    const { photoLayouts: layouts, ...rest } = data;
+    setCustomData(rest);
+    setPhotoLayouts(layouts || {});
     setIsDirty(false);
   }, [userPage, pageNumber]);
+
+  const getPhotoLayout = (index: number): PhotoLayout => {
+    return photoLayouts[index] || { scale: 100, x: 0, y: 0 };
+  };
+
+  const updatePhotoLayout = (index: number, updates: Partial<PhotoLayout>) => {
+    setPhotoLayouts(prev => ({
+      ...prev,
+      [index]: { ...getPhotoLayout(index), ...updates }
+    }));
+    setIsDirty(true);
+  };
+
+  const resetPhotoLayout = (index: number) => {
+    setPhotoLayouts(prev => {
+      const newLayouts = { ...prev };
+      delete newLayouts[index];
+      return newLayouts;
+    });
+    setIsDirty(true);
+  };
+
+  const handlePhotoMouseDown = (e: React.MouseEvent, index: number) => {
+    e.preventDefault();
+    setActivePhotoIndex(index);
+    setIsDragging(true);
+    const layout = getPhotoLayout(index);
+    dragStartRef.current = {
+      x: e.clientX,
+      y: e.clientY,
+      photoX: layout.x,
+      photoY: layout.y
+    };
+  };
+
+  const handlePhotoMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isDragging || activePhotoIndex === null || !dragStartRef.current) return;
+    
+    const dx = e.clientX - dragStartRef.current.x;
+    const dy = e.clientY - dragStartRef.current.y;
+    
+    updatePhotoLayout(activePhotoIndex, {
+      x: Math.max(-50, Math.min(50, dragStartRef.current.photoX + dx / 2)),
+      y: Math.max(-50, Math.min(50, dragStartRef.current.photoY + dy / 2))
+    });
+  }, [isDragging, activePhotoIndex]);
+
+  const handlePhotoMouseUp = () => {
+    setIsDragging(false);
+    dragStartRef.current = null;
+  };
 
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (!userPage?.id) throw new Error("No user page found");
+      
+      // Merge photoLayouts into customData for saving
+      const dataToSave = {
+        ...customData,
+        ...(Object.keys(photoLayouts).length > 0 ? { photoLayouts } : {})
+      };
       
       const res = await fetch(`/api/books/${bookId}/pages/${userPage.id}`, {
         method: "PATCH",
@@ -89,7 +162,7 @@ export function PageEditor({
           textContent,
           photos,
           videoUrl,
-          customData,
+          customData: dataToSave,
         }),
       });
       
@@ -471,7 +544,7 @@ export function PageEditor({
 
       {/* Page Preview Modal - 8x11 Book Format */}
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
-        <DialogContent className="max-w-4xl max-h-[95vh] overflow-hidden p-0">
+        <DialogContent className="max-w-5xl max-h-[95vh] overflow-hidden p-0">
           <DialogHeader className="p-4 border-b bg-stone-50">
             <div className="flex items-center justify-between">
               <div>
@@ -480,52 +553,71 @@ export function PageEditor({
                 </DialogTitle>
                 <DialogDescription className="text-sm">
                   {language === "fr" 
-                    ? "Voici comment la page apparaîtra dans votre livre imprimé (format 8×11 pouces)"
-                    : "This is how the page will appear in your printed book (8×11 inches format)"}
+                    ? "Cliquez sur une photo pour ajuster sa taille et son positionnement"
+                    : "Click on a photo to adjust its size and position"}
                 </DialogDescription>
               </div>
             </div>
           </DialogHeader>
           
-          <div className="p-6 bg-stone-100 overflow-auto max-h-[calc(95vh-120px)]">
-            {/* Book page simulation - 8x11 aspect ratio (8:11 = 0.727) */}
+          <div className="flex flex-col md:flex-row gap-4 p-4 bg-stone-100 overflow-auto max-h-[calc(95vh-140px)]">
+            {/* Book page simulation - 8x11 aspect ratio */}
             <div 
-              className="mx-auto bg-white shadow-2xl border border-stone-300 relative flex flex-col"
+              className="mx-auto bg-white shadow-2xl border border-stone-300 relative flex flex-col flex-shrink-0"
               style={{ 
-                width: "min(100%, 440px)", 
+                width: "min(100%, 380px)", 
                 aspectRatio: "8 / 11",
-                padding: "clamp(16px, 4%, 32px)"
+                padding: "clamp(12px, 3%, 24px)"
               }}
+              onMouseMove={handlePhotoMouseMove}
+              onMouseUp={handlePhotoMouseUp}
+              onMouseLeave={handlePhotoMouseUp}
             >
               {/* Page Header */}
-              <div className="text-center mb-4 pb-3 border-b border-stone-200">
-                <h2 className="text-xl font-serif font-bold text-stone-800">
+              <div className="text-center mb-3 pb-2 border-b border-stone-200">
+                <h2 className="text-lg font-serif font-bold text-stone-800">
                   {language === "fr" ? templatePage?.titleFr : templatePage?.titleEn}
                 </h2>
                 {templatePage?.subtitleFr && (
-                  <p className="text-sm text-stone-500 mt-1">
+                  <p className="text-xs text-stone-500 mt-1">
                     {language === "fr" ? templatePage?.subtitleFr : templatePage?.subtitleEn}
                   </p>
                 )}
               </div>
 
-              {/* Photos Section */}
+              {/* Photos Section - Interactive */}
               {photos.length > 0 && (
-                <div className={`mb-4 ${photos.length === 1 ? '' : 'grid grid-cols-2 gap-2'}`}>
-                  {photos.slice(0, 4).map((photo, idx) => (
-                    <div 
-                      key={idx} 
-                      className={`relative bg-stone-100 rounded overflow-hidden ${
-                        photos.length === 1 ? 'aspect-[4/3] max-h-48' : 'aspect-square'
-                      }`}
-                    >
-                      <img 
-                        src={photo} 
-                        alt={`Photo ${idx + 1}`}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  ))}
+                <div className={`mb-3 ${photos.length === 1 ? '' : 'grid grid-cols-2 gap-2'}`}>
+                  {photos.slice(0, 4).map((photo, idx) => {
+                    const layout = getPhotoLayout(idx);
+                    const isActive = activePhotoIndex === idx;
+                    return (
+                      <div 
+                        key={idx} 
+                        className={`relative bg-stone-100 rounded overflow-hidden cursor-move ${
+                          photos.length === 1 ? 'aspect-[4/3] max-h-40' : 'aspect-square'
+                        } ${isActive ? 'ring-2 ring-sage-500 ring-offset-1' : ''}`}
+                        onClick={() => setActivePhotoIndex(idx)}
+                        onMouseDown={(e) => handlePhotoMouseDown(e, idx)}
+                      >
+                        <img 
+                          src={photo} 
+                          alt={`Photo ${idx + 1}`}
+                          className="w-full h-full object-cover select-none"
+                          draggable={false}
+                          style={{
+                            transform: `scale(${layout.scale / 100}) translate(${layout.x}%, ${layout.y}%)`,
+                            transformOrigin: 'center center'
+                          }}
+                        />
+                        {isActive && (
+                          <div className="absolute top-1 right-1 bg-sage-500 text-white rounded-full p-1">
+                            <Move className="w-3 h-3" />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                   {photos.length > 4 && (
                     <div className="flex items-center justify-center text-xs text-stone-500 col-span-2">
                       +{photos.length - 4} {language === "fr" ? "autres photos" : "more photos"}
@@ -536,9 +628,9 @@ export function PageEditor({
 
               {/* Empty photo placeholder */}
               {photos.length === 0 && (templatePage?.maxPhotos || 0) > 0 && (
-                <div className="mb-4 aspect-[4/3] max-h-32 bg-stone-100 rounded border-2 border-dashed border-stone-300 flex items-center justify-center">
+                <div className="mb-3 aspect-[4/3] max-h-28 bg-stone-100 rounded border-2 border-dashed border-stone-300 flex items-center justify-center">
                   <div className="text-center text-stone-400">
-                    <ImageIcon className="w-8 h-8 mx-auto mb-1" />
+                    <ImageIcon className="w-6 h-6 mx-auto mb-1" />
                     <span className="text-xs">
                       {language === "fr" ? "Ajoutez des photos" : "Add photos"}
                     </span>
@@ -601,12 +693,130 @@ export function PageEditor({
                 <span className="text-xs text-stone-400">{pageNumber}</span>
               </div>
             </div>
+
+            {/* Photo Controls Panel */}
+            {photos.length > 0 && (
+              <div className="w-full md:w-64 bg-white rounded-lg border border-stone-200 p-4 flex-shrink-0">
+                <h3 className="font-medium text-stone-800 mb-3 flex items-center gap-2">
+                  <ZoomIn className="w-4 h-4" />
+                  {language === "fr" ? "Ajuster les photos" : "Adjust Photos"}
+                </h3>
+                
+                {activePhotoIndex !== null && photos[activePhotoIndex] ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 p-2 bg-stone-50 rounded">
+                      <img 
+                        src={photos[activePhotoIndex]} 
+                        alt="Selected" 
+                        className="w-12 h-12 object-cover rounded"
+                      />
+                      <span className="text-sm text-stone-600">
+                        Photo {activePhotoIndex + 1}
+                      </span>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm text-stone-600">
+                          {language === "fr" ? "Zoom" : "Zoom"}
+                        </label>
+                        <span className="text-xs text-stone-500">
+                          {getPhotoLayout(activePhotoIndex).scale}%
+                        </span>
+                      </div>
+                      <Slider
+                        value={[getPhotoLayout(activePhotoIndex).scale]}
+                        onValueChange={([value]) => updatePhotoLayout(activePhotoIndex, { scale: value })}
+                        min={50}
+                        max={200}
+                        step={5}
+                        className="w-full"
+                      />
+                    </div>
+
+                    <div className="text-xs text-stone-500 bg-stone-50 p-2 rounded">
+                      <Move className="w-3 h-3 inline mr-1" />
+                      {language === "fr" 
+                        ? "Glissez la photo pour ajuster sa position"
+                        : "Drag the photo to adjust its position"}
+                    </div>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => resetPhotoLayout(activePhotoIndex)}
+                      className="w-full"
+                    >
+                      <RotateCcw className="w-3 h-3 mr-2" />
+                      {language === "fr" ? "Réinitialiser" : "Reset"}
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-sm text-stone-500 text-center py-4">
+                    {language === "fr" 
+                      ? "Cliquez sur une photo pour l'ajuster"
+                      : "Click on a photo to adjust it"}
+                  </p>
+                )}
+
+                {/* Photo thumbnails for quick selection */}
+                {photos.length > 1 && (
+                  <div className="mt-4 pt-4 border-t border-stone-200">
+                    <p className="text-xs text-stone-500 mb-2">
+                      {language === "fr" ? "Sélectionner une photo:" : "Select a photo:"}
+                    </p>
+                    <div className="grid grid-cols-4 gap-1">
+                      {photos.slice(0, 4).map((photo, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => setActivePhotoIndex(idx)}
+                          className={`aspect-square rounded overflow-hidden border-2 ${
+                            activePhotoIndex === idx 
+                              ? 'border-sage-500' 
+                              : 'border-transparent hover:border-stone-300'
+                          }`}
+                        >
+                          <img 
+                            src={photo} 
+                            alt={`Photo ${idx + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
-          <div className="p-4 border-t bg-white flex justify-end">
-            <Button onClick={() => setShowPreview(false)} data-testid="close-preview">
-              {language === "fr" ? "Fermer" : "Close"}
-            </Button>
+          <div className="p-4 border-t bg-white flex justify-between items-center">
+            <p className="text-xs text-stone-500">
+              {isDirty && (
+                <span className="text-amber-600">
+                  {language === "fr" ? "Modifications non sauvegardées" : "Unsaved changes"}
+                </span>
+              )}
+            </p>
+            <div className="flex gap-2">
+              {isDirty && (
+                <Button 
+                  onClick={() => saveMutation.mutate()} 
+                  disabled={saveMutation.isPending}
+                  className="bg-sage-600 hover:bg-sage-700"
+                >
+                  {saveMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Save className="w-4 h-4 mr-2" />
+                  )}
+                  {language === "fr" ? "Sauvegarder" : "Save"}
+                </Button>
+              )}
+              <Button variant="outline" onClick={() => setShowPreview(false)} data-testid="close-preview">
+                {language === "fr" ? "Fermer" : "Close"}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

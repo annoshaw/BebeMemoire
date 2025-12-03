@@ -82,8 +82,8 @@ export function PageEditor({
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef<{ x: number; y: number; photoX: number; photoY: number } | null>(null);
 
-  // Text styles state: { textIndex: { bgColor, textColor } }
-  type TextStyle = { bgColor: string; textColor: string };
+  // Text styles state: { textIndex: { bgColor, textColor, fontFamily } }
+  type TextStyle = { bgColor: string; textColor: string; fontFamily?: string };
   const [textStyles, setTextStyles] = useState<Record<number, TextStyle>>(
     (userPage?.customData as any)?.textStyles || {}
   );
@@ -664,12 +664,12 @@ export function PageEditor({
                 </div>
               )}
 
-              {/* Text Content - Only show user's text with custom background colors */}
+              {/* Text Content - Only show user's text with custom background colors and fonts */}
               {textContent.length > 0 && textContent.some(t => t && t.trim()) && (
                 <div className="space-y-3 text-stone-700">
                   {textContent.map((text, idx) => {
                     if (!text || !text.trim()) return null;
-                    const style = textStyles[idx] || { bgColor: "#FFFFFF", textColor: "#374151" };
+                    const style = textStyles[idx] || { bgColor: "#FFFFFF", textColor: "#374151", fontFamily: "'Poppins', sans-serif" };
                     const hasCustomBg = style.bgColor !== "#FFFFFF";
                     return (
                       <p 
@@ -678,7 +678,8 @@ export function PageEditor({
                         style={{ 
                           fontSize: "12px",
                           backgroundColor: hasCustomBg ? style.bgColor : 'transparent',
-                          color: style.textColor
+                          color: style.textColor,
+                          fontFamily: style.fontFamily || "'Poppins', sans-serif"
                         }}
                       >
                         {text}

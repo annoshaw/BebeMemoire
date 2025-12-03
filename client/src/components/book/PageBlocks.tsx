@@ -16,9 +16,46 @@ import {
   Trash2,
   Palette,
   Wand2,
-  Check
+  Check,
+  Type
 } from "lucide-react";
 import ColorThief from "colorthief";
+
+// Font categories for text customization
+const FONT_CATEGORIES = {
+  tendance: {
+    labelFr: "Tendance",
+    labelEn: "Trendy",
+    fonts: [
+      { name: "Poppins", family: "'Poppins', sans-serif" },
+      { name: "Raleway", family: "'Raleway', sans-serif" },
+    ]
+  },
+  classique: {
+    labelFr: "Classique",
+    labelEn: "Classic",
+    fonts: [
+      { name: "Times New Roman", family: "'Times New Roman', serif" },
+      { name: "Georgia", family: "'Georgia', serif" },
+    ]
+  },
+  feminin: {
+    labelFr: "Féminin",
+    labelEn: "Feminine",
+    fonts: [
+      { name: "Dancing Script", family: "'Dancing Script', cursive" },
+      { name: "Great Vibes", family: "'Great Vibes', cursive" },
+    ]
+  },
+  masculin: {
+    labelFr: "Masculin",
+    labelEn: "Masculine",
+    fonts: [
+      { name: "Roboto", family: "'Roboto', sans-serif" },
+      { name: "Oswald", family: "'Oswald', sans-serif" },
+    ]
+  }
+};
 
 // Color categories for text box backgrounds
 const COLOR_CATEGORIES = {
@@ -81,13 +118,19 @@ function rgbToHex(r: number, g: number, b: number): string {
   return "#" + [r, g, b].map(x => x.toString(16).padStart(2, "0")).join("");
 }
 
+interface TextStyle {
+  bgColor: string;
+  textColor: string;
+  fontFamily?: string;
+}
+
 interface TextBlockProps {
   prompts: string[];
   values: string[];
   onChange: (index: number, value: string) => void;
   language: "fr" | "en";
-  textStyles?: Record<number, { bgColor: string; textColor: string }>;
-  onStyleChange?: (index: number, style: { bgColor: string; textColor: string }) => void;
+  textStyles?: Record<number, TextStyle>;
+  onStyleChange?: (index: number, style: TextStyle) => void;
   photos?: string[];
   separateFields?: boolean; // Keep separate text areas for each prompt (e.g., page 20)
 }
@@ -103,6 +146,10 @@ export function TextBlock({
   separateFields = false
 }: TextBlockProps) {
   const [extractingColor, setExtractingColor] = useState<number | null>(null);
+
+  const getStyle = (index: number): TextStyle => {
+    return textStyles[index] || { bgColor: "#FFFFFF", textColor: "#374151", fontFamily: "'Poppins', sans-serif" };
+  };
 
   const extractColorFromPhoto = async (photoSrc: string, index: number) => {
     if (!onStyleChange) return;
@@ -123,8 +170,9 @@ export function TextBlock({
       const result = colorThief.getColor(img);
       const bgColor = rgbToHex(result[0], result[1], result[2]);
       const textColor = getContrastColor(bgColor);
+      const currentStyle = getStyle(index);
       
-      onStyleChange(index, { bgColor, textColor });
+      onStyleChange(index, { ...currentStyle, bgColor, textColor });
     } catch (error) {
       console.error("Error extracting color:", error);
     } finally {
@@ -134,100 +182,170 @@ export function TextBlock({
 
   const setPresetColor = (index: number, color: string) => {
     if (!onStyleChange) return;
-    onStyleChange(index, { bgColor: color, textColor: getContrastColor(color) });
+    const currentStyle = getStyle(index);
+    onStyleChange(index, { ...currentStyle, bgColor: color, textColor: getContrastColor(color) });
+  };
+
+  const setFont = (index: number, fontFamily: string) => {
+    if (!onStyleChange) return;
+    const currentStyle = getStyle(index);
+    onStyleChange(index, { ...currentStyle, fontFamily });
   };
 
   const [colorCategory, setColorCategory] = useState<"neutral" | "pastel" | "vibrant">("pastel");
+  const [fontCategory, setFontCategory] = useState<"tendance" | "classique" | "feminin" | "masculin">("tendance");
 
-  const renderColorPicker = (index: number) => {
-    const style = textStyles[index] || { bgColor: "#FFFFFF", textColor: "#374151" };
-    const currentCategory = COLOR_CATEGORIES[colorCategory];
+  const renderStylePickers = (index: number) => {
+    const style = getStyle(index);
+    const currentColorCategory = COLOR_CATEGORIES[colorCategory];
+    const currentFontCategory = FONT_CATEGORIES[fontCategory];
     
     return (
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button variant="ghost" size="sm" className="h-7 gap-1.5 shrink-0">
-            <div 
-              className="w-4 h-4 rounded-full border border-stone-300"
-              style={{ backgroundColor: style.bgColor }}
-            />
-            <Palette className="w-3.5 h-3.5" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-72 p-3 bg-white shadow-lg border border-stone-200" align="end">
-          <div className="space-y-3">
-            <p className="text-xs font-medium text-stone-600">
-              {language === "fr" ? "Couleur de fond" : "Background color"}
-            </p>
-            
-            {/* Category tabs */}
-            <div className="flex gap-1 p-1 bg-stone-100 rounded-lg">
-              {(Object.keys(COLOR_CATEGORIES) as Array<keyof typeof COLOR_CATEGORIES>).map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setColorCategory(cat)}
-                  className={`flex-1 text-xs py-1.5 px-2 rounded-md transition-all ${
-                    colorCategory === cat
-                      ? "bg-white shadow-sm font-medium text-stone-800"
-                      : "text-stone-500 hover:text-stone-700"
-                  }`}
-                >
-                  {language === "fr" ? COLOR_CATEGORIES[cat].labelFr : COLOR_CATEGORIES[cat].labelEn}
-                </button>
-              ))}
-            </div>
-            
-            {/* Color grid */}
-            <div className="grid grid-cols-4 gap-2">
-              {currentCategory.colors.map((preset) => (
-                <button
-                  key={preset.color}
-                  onClick={() => setPresetColor(index, preset.color)}
-                  className={`w-full aspect-square rounded-lg border-2 transition-all ${
-                    style.bgColor === preset.color 
-                      ? "border-sage-500 ring-2 ring-sage-200" 
-                      : "border-stone-200 hover:border-stone-400"
-                  }`}
-                  style={{ backgroundColor: preset.color }}
-                  title={preset.name}
-                >
-                  {style.bgColor === preset.color && (
-                    <Check className="w-4 h-4 mx-auto" style={{ color: getContrastColor(preset.color) }} />
-                  )}
-                </button>
-              ))}
-            </div>
-
-            {/* Extract from photos */}
-            {photos.length > 0 && (
-              <div className="pt-2 border-t">
-                <p className="text-xs text-stone-500 mb-2 flex items-center gap-1">
-                  <Wand2 className="w-3 h-3" />
-                  {language === "fr" 
-                    ? "Extraire d'une photo" 
-                    : "Extract from a photo"}
+      <div className="flex gap-1">
+        {/* Font Picker */}
+        {onStyleChange && (
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-7 gap-1 shrink-0">
+                <Type className="w-3.5 h-3.5" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64 p-3 bg-white shadow-lg border border-stone-200" align="end">
+              <div className="space-y-3">
+                <p className="text-xs font-medium text-stone-600">
+                  {language === "fr" ? "Police de caractères" : "Font"}
                 </p>
-                <div className="grid grid-cols-4 gap-1">
-                  {photos.slice(0, 4).map((photo, photoIdx) => (
+                
+                {/* Font category tabs */}
+                <div className="grid grid-cols-2 gap-1 p-1 bg-stone-100 rounded-lg">
+                  {(Object.keys(FONT_CATEGORIES) as Array<keyof typeof FONT_CATEGORIES>).map((cat) => (
                     <button
-                      key={photoIdx}
-                      onClick={() => extractColorFromPhoto(photo, index)}
-                      disabled={extractingColor !== null}
-                      className="aspect-square rounded overflow-hidden border border-stone-200 hover:border-sage-400 transition-colors disabled:opacity-50"
+                      key={cat}
+                      onClick={() => setFontCategory(cat)}
+                      className={`text-xs py-1.5 px-2 rounded-md transition-all ${
+                        fontCategory === cat
+                          ? "bg-white shadow-sm font-medium text-stone-800"
+                          : "text-stone-500 hover:text-stone-700"
+                      }`}
                     >
-                      <img 
-                        src={photo} 
-                        alt=""
-                        className="w-full h-full object-cover"
-                      />
+                      {language === "fr" ? FONT_CATEGORIES[cat].labelFr : FONT_CATEGORIES[cat].labelEn}
+                    </button>
+                  ))}
+                </div>
+                
+                {/* Font options */}
+                <div className="space-y-1">
+                  {currentFontCategory.fonts.map((font) => (
+                    <button
+                      key={font.name}
+                      onClick={() => setFont(index, font.family)}
+                      className={`w-full text-left px-3 py-2 rounded-lg border transition-all ${
+                        style.fontFamily === font.family
+                          ? "border-sage-500 bg-sage-50"
+                          : "border-stone-200 hover:border-stone-400 hover:bg-stone-50"
+                      }`}
+                      style={{ fontFamily: font.family }}
+                    >
+                      <span className="text-sm">{font.name}</span>
+                      <span className="block text-xs text-stone-400 mt-0.5" style={{ fontFamily: font.family }}>
+                        Aa Bb Cc 123
+                      </span>
                     </button>
                   ))}
                 </div>
               </div>
-            )}
-          </div>
-        </PopoverContent>
-      </Popover>
+            </PopoverContent>
+          </Popover>
+        )}
+
+        {/* Color Picker */}
+        {onStyleChange && (
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-7 gap-1 shrink-0">
+                <div 
+                  className="w-4 h-4 rounded-full border border-stone-300"
+                  style={{ backgroundColor: style.bgColor }}
+                />
+                <Palette className="w-3.5 h-3.5" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-72 p-3 bg-white shadow-lg border border-stone-200" align="end">
+              <div className="space-y-3">
+                <p className="text-xs font-medium text-stone-600">
+                  {language === "fr" ? "Couleur de fond" : "Background color"}
+                </p>
+                
+                {/* Category tabs */}
+                <div className="flex gap-1 p-1 bg-stone-100 rounded-lg">
+                  {(Object.keys(COLOR_CATEGORIES) as Array<keyof typeof COLOR_CATEGORIES>).map((cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => setColorCategory(cat)}
+                      className={`flex-1 text-xs py-1.5 px-2 rounded-md transition-all ${
+                        colorCategory === cat
+                          ? "bg-white shadow-sm font-medium text-stone-800"
+                          : "text-stone-500 hover:text-stone-700"
+                      }`}
+                    >
+                      {language === "fr" ? COLOR_CATEGORIES[cat].labelFr : COLOR_CATEGORIES[cat].labelEn}
+                    </button>
+                  ))}
+                </div>
+                
+                {/* Color grid */}
+                <div className="grid grid-cols-4 gap-2">
+                  {currentColorCategory.colors.map((preset) => (
+                    <button
+                      key={preset.color}
+                      onClick={() => setPresetColor(index, preset.color)}
+                      className={`w-full aspect-square rounded-lg border-2 transition-all ${
+                        style.bgColor === preset.color 
+                          ? "border-sage-500 ring-2 ring-sage-200" 
+                          : "border-stone-200 hover:border-stone-400"
+                      }`}
+                      style={{ backgroundColor: preset.color }}
+                      title={preset.name}
+                    >
+                      {style.bgColor === preset.color && (
+                        <Check className="w-4 h-4 mx-auto" style={{ color: getContrastColor(preset.color) }} />
+                      )}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Extract from photos */}
+                {photos.length > 0 && (
+                  <div className="pt-2 border-t">
+                    <p className="text-xs text-stone-500 mb-2 flex items-center gap-1">
+                      <Wand2 className="w-3 h-3" />
+                      {language === "fr" 
+                        ? "Extraire d'une photo" 
+                        : "Extract from a photo"}
+                    </p>
+                    <div className="grid grid-cols-4 gap-1">
+                      {photos.slice(0, 4).map((photo, photoIdx) => (
+                        <button
+                          key={photoIdx}
+                          onClick={() => extractColorFromPhoto(photo, index)}
+                          disabled={extractingColor !== null}
+                          className="aspect-square rounded overflow-hidden border border-stone-200 hover:border-sage-400 transition-colors disabled:opacity-50"
+                        >
+                          <img 
+                            src={photo} 
+                            alt=""
+                            className="w-full h-full object-cover"
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
+        )}
+      </div>
     );
   };
 
@@ -236,12 +354,12 @@ export function TextBlock({
     return (
       <div className="space-y-4">
         {prompts.map((prompt, index) => {
-          const style = textStyles[index] || { bgColor: "#FFFFFF", textColor: "#374151" };
+          const style = getStyle(index);
           return (
             <div key={index} className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label className="text-sm text-sage-700 font-medium">{prompt}</Label>
-                {onStyleChange && renderColorPicker(index)}
+                {renderStylePickers(index)}
               </div>
               <Textarea
                 data-testid={`text-block-${index}`}
@@ -252,6 +370,7 @@ export function TextBlock({
                 style={{ 
                   backgroundColor: style.bgColor, 
                   color: style.textColor,
+                  fontFamily: style.fontFamily,
                   borderColor: style.bgColor === "#FFFFFF" ? undefined : style.bgColor
                 }}
               />
@@ -267,7 +386,7 @@ export function TextBlock({
     ? prompts.join(" • ")
     : prompts[0] || "";
 
-  const style = textStyles[0] || { bgColor: "#FFFFFF", textColor: "#374151" };
+  const style = getStyle(0);
 
   return (
     <div className="space-y-2">
@@ -275,7 +394,7 @@ export function TextBlock({
         <Label className="text-sm text-sage-700 font-medium leading-relaxed">
           {combinedPrompt}
         </Label>
-        {onStyleChange && renderColorPicker(0)}
+        {renderStylePickers(0)}
       </div>
       
       <Textarea
@@ -287,6 +406,7 @@ export function TextBlock({
         style={{ 
           backgroundColor: style.bgColor, 
           color: style.textColor,
+          fontFamily: style.fontFamily,
           borderColor: style.bgColor === "#FFFFFF" ? undefined : style.bgColor
         }}
       />

@@ -854,15 +854,25 @@ export function PageEditor({
           </DialogHeader>
           
           <div className="p-6 bg-stone-100 overflow-auto max-h-[calc(95vh-180px)]">
-            {/* Book page simulation - 8x11 aspect ratio */}
+            {/* Book page simulation - 8x11 aspect ratio with CSS Grid */}
             <div 
-              className="book-page-8x11 mx-auto bg-white shadow-2xl border border-stone-300 relative"
+              className="mx-auto bg-white shadow-2xl border border-stone-300 relative"
+              style={{
+                width: 'min(100%, 440px)',
+                aspectRatio: '8 / 11',
+                padding: 'clamp(16px, 4%, 28px)',
+                display: 'grid',
+                gridTemplateRows: 'auto 1fr auto',
+                gap: '12px',
+                boxSizing: 'border-box',
+                overflow: 'hidden'
+              }}
               onMouseMove={handlePhotoMouseMove}
               onMouseUp={handlePhotoMouseUp}
               onMouseLeave={handlePhotoMouseUp}
             >
-              {/* Page Header */}
-              <div className="book-page-header text-center pb-3 border-b border-stone-200">
+              {/* Page Header - Row 1 (auto) */}
+              <div className="text-center pb-3 border-b border-stone-200">
                 <h2 
                   className="font-bold text-stone-800"
                   style={{ 
@@ -879,7 +889,7 @@ export function PageEditor({
                 )}
               </div>
 
-              {/* Photos Section - Fill remaining space */}
+              {/* Photos Section - Row 2 (1fr = fill remaining space) */}
               {photos.length > 0 && (
                 editMode ? (
                   <motion.div
@@ -891,7 +901,8 @@ export function PageEditor({
                       x: (blockPositions.photos?.x || 0) + info.offset.x, 
                       y: (blockPositions.photos?.y || 0) + info.offset.y 
                     })}
-                    className="book-page-photos cursor-move ring-2 ring-sage-400 ring-offset-2 rounded-lg"
+                    className="cursor-move ring-2 ring-sage-400 ring-offset-2 rounded-lg"
+                    style={{ height: '100%', minHeight: 0, overflow: 'hidden' }}
                   >
                     <CollageBlockNew
                       photos={photos}
@@ -905,8 +916,10 @@ export function PageEditor({
                   </motion.div>
                 ) : (
                   <div 
-                    className="book-page-photos"
                     style={{ 
+                      height: '100%',
+                      minHeight: 0,
+                      overflow: 'hidden',
                       transform: blockPositions.photos 
                         ? `translate(${blockPositions.photos.x}px, ${blockPositions.photos.y}px)` 
                         : undefined 
@@ -925,9 +938,12 @@ export function PageEditor({
                 )
               )}
 
-              {/* Empty photo placeholder */}
+              {/* Empty photo placeholder - Row 2 if no photos */}
               {photos.length === 0 && (templatePage?.maxPhotos || 0) > 0 && (
-                <div className="book-page-photos bg-stone-100 rounded border-2 border-dashed border-stone-300 flex items-center justify-center">
+                <div 
+                  className="bg-stone-100 rounded border-2 border-dashed border-stone-300 flex items-center justify-center"
+                  style={{ height: '100%', minHeight: 0 }}
+                >
                   <div className="text-center text-stone-400">
                     <ImageIcon className="w-8 h-8 mx-auto mb-1" />
                     <span className="text-xs">
@@ -937,9 +953,11 @@ export function PageEditor({
                 </div>
               )}
 
-              {/* Text Content - Fixed at bottom */}
-              {textContent.length > 0 && textContent.some(t => t && t.trim()) && (
-                <div className="book-page-text space-y-2 text-stone-700">
+              {/* Footer section - Row 3 (auto) - Contains text, custom data, video, page number */}
+              <div className="space-y-2">
+                {/* Text Content */}
+                {textContent.length > 0 && textContent.some(t => t && t.trim()) && (
+                  <div className="space-y-1 text-stone-700">
                   {textContent.map((text, idx) => {
                     if (!text || !text.trim()) return null;
                     const style = textStyles[idx] || { bgColor: "#FFFFFF", textColor: "#374151", fontFamily: "'Poppins', sans-serif", fontSize: 14 };
@@ -986,54 +1004,54 @@ export function PageEditor({
                       </p>
                     );
                   })}
-                </div>
-              )}
-
-
-              {/* Custom Data (Birth Info) - Filter out internal fields */}
-              {(() => {
-                const displayData = Object.entries(customData).filter(
-                  ([key, value]) => value && key !== 'collageStyle' && key !== 'blockPositions'
-                );
-                return displayData.length > 0 ? (
-                  <div className="book-page-text grid grid-cols-2 gap-2 text-center">
-                    {displayData.map(([key, value]) => (
-                      <div key={key} className="bg-stone-50 rounded p-1.5">
-                        <p className="text-[10px] text-stone-500">{key}</p>
-                        <p className="font-medium text-stone-800 text-xs">{value}</p>
-                      </div>
-                    ))}
                   </div>
-                ) : null;
-              })()}
+                )}
 
-              {/* Video with QR Code indicator in preview */}
-              {videoUrl && (
-                <div className="book-page-text p-2 bg-purple-50 rounded border border-purple-200">
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="bg-white p-1 rounded shadow-sm">
-                      {videoUrl.startsWith('data:') ? (
-                        <div className="w-6 h-6 bg-purple-100 rounded flex items-center justify-center">
-                          <Video className="w-3 h-3 text-purple-400" />
+                {/* Custom Data (Birth Info) - Filter out internal fields */}
+                {(() => {
+                  const displayData = Object.entries(customData).filter(
+                    ([key, value]) => value && key !== 'collageStyle' && key !== 'blockPositions'
+                  );
+                  return displayData.length > 0 ? (
+                    <div className="grid grid-cols-2 gap-2 text-center">
+                      {displayData.map(([key, value]) => (
+                        <div key={key} className="bg-stone-50 rounded p-1.5">
+                          <p className="text-[10px] text-stone-500">{key}</p>
+                          <p className="font-medium text-stone-800 text-xs">{value}</p>
                         </div>
-                      ) : (
-                        <QRCodeSVG 
-                          value={videoUrl}
-                          size={24}
-                          level="M"
-                        />
-                      )}
+                      ))}
                     </div>
-                    <span className="text-purple-700 font-medium text-[10px]">
-                      {language === "fr" ? "Vidéo" : "Video"}
-                    </span>
-                  </div>
-                </div>
-              )}
+                  ) : null;
+                })()}
 
-              {/* Page number at bottom */}
-              <div className="book-page-footer text-center pt-2 border-t border-stone-100">
-                <span className="text-xs text-stone-400">{pageNumber}</span>
+                {/* Video with QR Code indicator in preview */}
+                {videoUrl && (
+                  <div className="p-2 bg-purple-50 rounded border border-purple-200">
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="bg-white p-1 rounded shadow-sm">
+                        {videoUrl.startsWith('data:') ? (
+                          <div className="w-6 h-6 bg-purple-100 rounded flex items-center justify-center">
+                            <Video className="w-3 h-3 text-purple-400" />
+                          </div>
+                        ) : (
+                          <QRCodeSVG 
+                            value={videoUrl}
+                            size={24}
+                            level="M"
+                          />
+                        )}
+                      </div>
+                      <span className="text-purple-700 font-medium text-[10px]">
+                        {language === "fr" ? "Vidéo" : "Video"}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Page number at bottom */}
+                <div className="text-center pt-2 border-t border-stone-100">
+                  <span className="text-xs text-stone-400">{pageNumber}</span>
+                </div>
               </div>
             </div>
           </div>

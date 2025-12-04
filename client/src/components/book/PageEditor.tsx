@@ -385,6 +385,8 @@ export function PageEditor({
   const pageType = templatePage?.pageType || "text_photo";
   const maxPhotos = templatePage?.maxPhotos || 1;
   const hasVideo = templatePage?.hasVideo || false;
+  const hasTextBlocks = (templatePage?.hasTextBlocks || 0) > 0;
+  const shouldShowTextBlock = hasTextBlocks || prompts.length > 0;
 
   // Extract month number from page title or customData for monthHero style
   const getMonthNumber = (): number | undefined => {
@@ -449,9 +451,9 @@ export function PageEditor({
       case "collage":
         return (
           <div className="space-y-6">
-            {prompts.length > 0 && (
+            {shouldShowTextBlock && (
               <TextBlock
-                prompts={prompts}
+                prompts={prompts.length > 0 ? prompts : [language === "fr" ? "Décrivez ce moment..." : "Describe this moment..."]}
                 values={textContent}
                 onChange={handleTextChange}
                 language={language}
@@ -582,9 +584,9 @@ export function PageEditor({
       default:
         return (
           <div className="space-y-6">
-            {prompts.length > 0 && (
+            {shouldShowTextBlock && (
               <TextBlock
-                prompts={prompts}
+                prompts={prompts.length > 0 ? prompts : [language === "fr" ? "Décrivez ce moment..." : "Describe this moment..."]}
                 values={textContent}
                 onChange={handleTextChange}
                 language={language}
@@ -969,50 +971,32 @@ export function PageEditor({
 
               {/* Footer */}
               <div style={{ flexShrink: 0, maxHeight: '100px', overflow: 'hidden' }}>
-                {/* Text Content - Show user text or prompts as placeholder */}
-                {(() => {
-                  const hasUserText = textContent.length > 0 && textContent.some(t => t && t.trim());
-                  const prompts = language === "fr" ? templatePage?.promptsFr : templatePage?.promptsEn;
-                  
-                  if (hasUserText) {
-                    return (
-                      <div className="space-y-1 text-stone-700">
-                        {textContent.map((text, idx) => {
-                          if (!text || !text.trim()) return null;
-                          const style = textStyles[idx] || { bgColor: "#FFFFFF", textColor: "#374151", fontFamily: "'Poppins', sans-serif", fontSize: 14 };
-                          const hasCustomBg = style.bgColor !== "#FFFFFF";
-                          const previewFontSize = Math.max((style.fontSize || 14) * 0.7, 9);
+                {/* Text Content - Show user text */}
+                {textContent.length > 0 && textContent.some(t => t && t.trim()) && (
+                  <div className="space-y-1 text-stone-700 mb-2">
+                    {textContent.map((text, idx) => {
+                      if (!text || !text.trim()) return null;
+                      const style = textStyles[idx] || { bgColor: "#FFFFFF", textColor: "#374151", fontFamily: "'Poppins', sans-serif", fontSize: 14 };
+                      const hasCustomBg = style.bgColor !== "#FFFFFF";
+                      const previewFontSize = Math.max((style.fontSize || 14) * 0.7, 9);
 
-                          return (
-                            <p 
-                              key={idx}
-                              className={`leading-snug ${hasCustomBg ? 'px-2 py-1 rounded' : ''}`} 
-                              style={{ 
-                                fontSize: `${previewFontSize}px`,
-                                backgroundColor: hasCustomBg ? style.bgColor : 'transparent',
-                                color: style.textColor,
-                                fontFamily: style.fontFamily || "'Poppins', sans-serif"
-                              }}
-                            >
-                              {text}
-                            </p>
-                          );
-                        })}
-                      </div>
-                    );
-                  } else if (prompts && Array.isArray(prompts) && prompts.length > 0) {
-                    return (
-                      <div className="space-y-0.5 text-stone-400 italic">
-                        {prompts.slice(0, 2).map((prompt: string, idx: number) => (
-                          <p key={idx} className="text-[9px] leading-tight truncate">
-                            {prompt}
-                          </p>
-                        ))}
-                      </div>
-                    );
-                  }
-                  return null;
-                })()}
+                      return (
+                        <p 
+                          key={idx}
+                          className={`leading-snug ${hasCustomBg ? 'px-2 py-1 rounded' : ''}`} 
+                          style={{ 
+                            fontSize: `${previewFontSize}px`,
+                            backgroundColor: hasCustomBg ? style.bgColor : 'transparent',
+                            color: style.textColor,
+                            fontFamily: style.fontFamily || "'Poppins', sans-serif"
+                          }}
+                        >
+                          {text}
+                        </p>
+                      );
+                    })}
+                  </div>
+                )}
 
                 {/* Custom Data (Birth Info) - Filter out internal fields */}
                 {(() => {

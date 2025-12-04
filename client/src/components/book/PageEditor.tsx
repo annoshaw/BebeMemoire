@@ -941,7 +941,8 @@ export function PageEditor({
                 display: 'flex',
                 flexDirection: 'column',
                 padding: '16px',
-                boxSizing: 'border-box'
+                boxSizing: 'border-box',
+                position: 'relative'
               }}
               onMouseMove={handlePhotoMouseMove}
               onMouseUp={handlePhotoMouseUp}

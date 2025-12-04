@@ -879,19 +879,27 @@ export function PageEditor({
                 <div className="mt-4 p-3 bg-purple-50 rounded border border-purple-200">
                   <div className="flex items-center justify-center gap-3">
                     <div className="bg-white p-1.5 rounded shadow-sm">
-                      <QRCodeSVG 
-                        value={videoUrl}
-                        size={48}
-                        level="M"
-                      />
+                      {videoUrl.startsWith('data:') ? (
+                        <div className="w-12 h-12 bg-purple-100 rounded flex items-center justify-center">
+                          <Video className="w-6 h-6 text-purple-400" />
+                        </div>
+                      ) : (
+                        <QRCodeSVG 
+                          value={videoUrl}
+                          size={48}
+                          level="M"
+                        />
+                      )}
                     </div>
                     <div className="text-left">
                       <div className="flex items-center gap-1 text-purple-700 font-medium text-xs">
                         <Video className="w-3 h-3" />
-                        {language === "fr" ? "Scannez pour voir la vidéo" : "Scan to watch video"}
+                        {language === "fr" ? "Vidéo ajoutée" : "Video added"}
                       </div>
                       <p className="text-[10px] text-purple-500 mt-0.5">
-                        {language === "fr" ? "Code QR imprimé" : "Printed QR code"}
+                        {videoUrl.startsWith('data:') 
+                          ? (language === "fr" ? "QR généré à l'impression" : "QR generated on print")
+                          : (language === "fr" ? "Code QR imprimé" : "Printed QR code")}
                       </p>
                     </div>
                   </div>

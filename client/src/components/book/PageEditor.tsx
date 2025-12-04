@@ -386,6 +386,11 @@ export function PageEditor({
     reader.readAsDataURL(file);
   };
 
+  const handleVideoAddUrl = (url: string) => {
+    setVideoUrl(url);
+    setIsDirty(true);
+  };
+
   const handleVideoRemove = () => {
     setVideoUrl(null);
     setIsDirty(true);
@@ -465,6 +470,7 @@ export function PageEditor({
               <VideoBlock
                 videoUrl={videoUrl}
                 onAdd={handleVideoAdd}
+                onAddUrl={handleVideoAddUrl}
                 onRemove={handleVideoRemove}
                 language={language}
               />
@@ -504,6 +510,7 @@ export function PageEditor({
               <VideoBlock
                 videoUrl={videoUrl}
                 onAdd={handleVideoAdd}
+                onAddUrl={handleVideoAddUrl}
                 onRemove={handleVideoRemove}
                 language={language}
               />
@@ -537,6 +544,7 @@ export function PageEditor({
               <VideoBlock
                 videoUrl={videoUrl}
                 onAdd={handleVideoAdd}
+                onAddUrl={handleVideoAddUrl}
                 onRemove={handleVideoRemove}
                 language={language}
               />
@@ -576,6 +584,7 @@ export function PageEditor({
               <VideoBlock
                 videoUrl={videoUrl}
                 onAdd={handleVideoAdd}
+                onAddUrl={handleVideoAddUrl}
                 onRemove={handleVideoRemove}
                 language={language}
               />
@@ -639,6 +648,7 @@ export function PageEditor({
               <VideoBlock
                 videoUrl={videoUrl}
                 onAdd={handleVideoAdd}
+                onAddUrl={handleVideoAddUrl}
                 onRemove={handleVideoRemove}
                 language={language}
               />

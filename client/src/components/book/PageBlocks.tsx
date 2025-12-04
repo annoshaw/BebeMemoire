@@ -19,7 +19,8 @@ import {
   Check,
   Type,
   ALargeSmall,
-  QrCode
+  QrCode,
+  Link
 } from "lucide-react";
 import ColorThief from "colorthief";
 import { QRCodeSVG } from "qrcode.react";
@@ -589,13 +590,16 @@ export function PhotoBlock({ photos, maxPhotos, onAdd, onRemove, language }: Pho
 interface VideoBlockProps {
   videoUrl: string | null;
   onAdd: (file: File) => void;
+  onAddUrl?: (url: string) => void;
   onRemove: () => void;
   language: "fr" | "en";
   qrCodeUrl?: string;
 }
 
-export function VideoBlock({ videoUrl, onAdd, onRemove, language, qrCodeUrl }: VideoBlockProps) {
+export function VideoBlock({ videoUrl, onAdd, onAddUrl, onRemove, language, qrCodeUrl }: VideoBlockProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showUrlInput, setShowUrlInput] = useState(false);
+  const [urlInput, setUrlInput] = useState("");
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -603,6 +607,16 @@ export function VideoBlock({ videoUrl, onAdd, onRemove, language, qrCodeUrl }: V
       onAdd(file);
     }
   };
+
+  const handleUrlSubmit = () => {
+    if (urlInput.trim() && onAddUrl) {
+      onAddUrl(urlInput.trim());
+      setUrlInput("");
+      setShowUrlInput(false);
+    }
+  };
+
+  const isExternalUrl = videoUrl && !videoUrl.startsWith('data:');
 
   return (
     <div className="space-y-4">
@@ -614,11 +628,18 @@ export function VideoBlock({ videoUrl, onAdd, onRemove, language, qrCodeUrl }: V
       {videoUrl ? (
         <div className="space-y-4">
           <div className="relative rounded-lg overflow-hidden border border-sage-200">
-            <video 
-              src={videoUrl} 
-              controls 
-              className="w-full aspect-video object-cover"
-            />
+            {isExternalUrl ? (
+              <div className="w-full aspect-video bg-stone-100 flex flex-col items-center justify-center p-4">
+                <Link className="w-8 h-8 text-sage-500 mb-2" />
+                <p className="text-sm text-sage-600 text-center break-all">{videoUrl}</p>
+              </div>
+            ) : (
+              <video 
+                src={videoUrl} 
+                controls 
+                className="w-full aspect-video object-cover"
+              />
+            )}
             <button
               onClick={onRemove}
               className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full"
@@ -631,18 +652,18 @@ export function VideoBlock({ videoUrl, onAdd, onRemove, language, qrCodeUrl }: V
           {/* QR Code for print version */}
           <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
             <div className="flex items-start gap-4">
-              <div className="bg-white p-2 rounded-lg shadow-sm">
-                {(qrCodeUrl || videoUrl).startsWith('data:') ? (
-                  <div className="w-20 h-20 bg-purple-100 rounded flex items-center justify-center">
-                    <Video className="w-8 h-8 text-purple-400" />
-                  </div>
-                ) : (
+              <div className="bg-white p-3 rounded-lg shadow-sm">
+                {isExternalUrl ? (
                   <QRCodeSVG 
                     value={qrCodeUrl || videoUrl} 
-                    size={80}
-                    level="M"
-                    includeMargin={false}
+                    size={100}
+                    level="H"
+                    includeMargin={true}
                   />
+                ) : (
+                  <div className="w-24 h-24 bg-purple-100 rounded flex items-center justify-center">
+                    <Video className="w-10 h-10 text-purple-400" />
+                  </div>
                 )}
               </div>
               <div className="flex-1">
@@ -651,31 +672,82 @@ export function VideoBlock({ videoUrl, onAdd, onRemove, language, qrCodeUrl }: V
                   {language === "fr" ? "Code QR pour le livre imprimé" : "QR Code for printed book"}
                 </div>
                 <p className="text-xs text-purple-600">
-                  {(qrCodeUrl || videoUrl).startsWith('data:')
+                  {isExternalUrl
                     ? (language === "fr" 
-                        ? "Le code QR sera généré lorsque la vidéo sera uploadée."
-                        : "QR code will be generated when the video is uploaded.")
-                    : (language === "fr" 
                         ? "Ce code QR apparaîtra dans votre livre imprimé. Scannez-le pour voir la vidéo."
-                        : "This QR code will appear in your printed book. Scan it to watch the video.")}
+                        : "This QR code will appear in your printed book. Scan it to watch the video.")
+                    : (language === "fr" 
+                        ? "Ajoutez un lien vidéo (YouTube, Vimeo) pour générer un code QR scannable."
+                        : "Add a video link (YouTube, Vimeo) to generate a scannable QR code.")}
                 </p>
               </div>
             </div>
           </div>
         </div>
       ) : (
-        <div
-          className="aspect-video rounded-lg border-2 border-dashed border-sage-300 hover:border-sage-400 hover:bg-sage-50 transition-colors flex flex-col items-center justify-center cursor-pointer"
-          onClick={() => fileInputRef.current?.click()}
-          data-testid="add-video-button"
-        >
-          <Video className="w-12 h-12 text-sage-400 mb-3" />
-          <span className="text-sm text-sage-500">
-            {language === "fr" ? "Ajouter une vidéo" : "Add a video"}
-          </span>
-          <span className="text-xs text-sage-400 mt-1">
-            {language === "fr" ? "Un code QR sera généré automatiquement" : "A QR code will be generated automatically"}
-          </span>
+        <div className="space-y-3">
+          {showUrlInput ? (
+            <div className="p-4 border-2 border-sage-300 rounded-lg space-y-3">
+              <div className="flex items-center gap-2">
+                <Link className="w-4 h-4 text-sage-500" />
+                <span className="text-sm font-medium text-sage-700">
+                  {language === "fr" ? "Lien vidéo (YouTube, Vimeo, etc.)" : "Video link (YouTube, Vimeo, etc.)"}
+                </span>
+              </div>
+              <Input
+                type="url"
+                placeholder="https://www.youtube.com/watch?v=..."
+                value={urlInput}
+                onChange={(e) => setUrlInput(e.target.value)}
+                className="w-full"
+                data-testid="video-url-input"
+              />
+              <div className="flex gap-2">
+                <Button 
+                  size="sm" 
+                  onClick={handleUrlSubmit}
+                  disabled={!urlInput.trim()}
+                  className="bg-sage-600 hover:bg-sage-700"
+                  data-testid="submit-video-url"
+                >
+                  {language === "fr" ? "Ajouter" : "Add"}
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => { setShowUrlInput(false); setUrlInput(""); }}
+                >
+                  {language === "fr" ? "Annuler" : "Cancel"}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              <div
+                className="aspect-video rounded-lg border-2 border-dashed border-sage-300 hover:border-sage-400 hover:bg-sage-50 transition-colors flex flex-col items-center justify-center cursor-pointer"
+                onClick={() => fileInputRef.current?.click()}
+                data-testid="add-video-button"
+              >
+                <Video className="w-8 h-8 text-sage-400 mb-2" />
+                <span className="text-xs text-sage-500 text-center px-2">
+                  {language === "fr" ? "Télécharger vidéo" : "Upload video"}
+                </span>
+              </div>
+              <div
+                className="aspect-video rounded-lg border-2 border-dashed border-purple-300 hover:border-purple-400 hover:bg-purple-50 transition-colors flex flex-col items-center justify-center cursor-pointer"
+                onClick={() => setShowUrlInput(true)}
+                data-testid="add-video-url-button"
+              >
+                <Link className="w-8 h-8 text-purple-400 mb-2" />
+                <span className="text-xs text-purple-500 text-center px-2">
+                  {language === "fr" ? "Lien YouTube/Vimeo" : "YouTube/Vimeo link"}
+                </span>
+                <span className="text-[10px] text-purple-400 mt-1">
+                  {language === "fr" ? "(génère un QR code)" : "(generates QR code)"}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

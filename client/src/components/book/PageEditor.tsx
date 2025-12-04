@@ -854,100 +854,113 @@ export function PageEditor({
           </DialogHeader>
           
           <div className="p-4 bg-stone-100 flex justify-center overflow-auto max-h-[calc(95vh-180px)]">
-            {/* Book page 8x11 - Flexbox layout for proper space distribution */}
-            <div 
-              className="bg-white shadow-2xl border border-stone-300 flex flex-col"
-              style={{
-                width: '400px',
-                height: '550px',
-                padding: '16px'
-              }}
-              onMouseMove={handlePhotoMouseMove}
-              onMouseUp={handlePhotoMouseUp}
-              onMouseLeave={handlePhotoMouseUp}
-            >
-              {/* Header - shrink to content */}
-              <div className="text-center border-b border-stone-200 pb-2 mb-2 flex-shrink-0">
-                <h2 
-                  className="font-bold text-stone-800"
-                  style={{ 
-                    fontFamily: titleStyle.fontFamily, 
-                    fontSize: `${Math.max(titleStyle.fontSize * 0.55, 11)}px`,
-                    lineHeight: 1.2
+            {/* Book page 8x11 - Fixed pixel heights for reliable layout */}
+            {(() => {
+              const pageHeight = 550;
+              const pagePadding = 32;
+              const headerHeight = 36;
+              const footerHeight = 64;
+              const gap = 8;
+              const photosHeight = pageHeight - pagePadding - headerHeight - footerHeight - (gap * 2);
+              
+              return (
+                <div 
+                  className="bg-white shadow-2xl border border-stone-300"
+                  style={{
+                    width: '400px',
+                    height: `${pageHeight}px`,
+                    padding: '16px',
+                    position: 'relative'
                   }}
+                  onMouseMove={handlePhotoMouseMove}
+                  onMouseUp={handlePhotoMouseUp}
+                  onMouseLeave={handlePhotoMouseUp}
                 >
-                  {language === "fr" ? templatePage?.titleFr : templatePage?.titleEn}
-                </h2>
-                {templatePage?.subtitleFr && (
-                  <p className="text-[10px] text-stone-500 mt-0.5">
-                    {language === "fr" ? templatePage?.subtitleFr : templatePage?.subtitleEn}
-                  </p>
-                )}
-              </div>
-
-              {/* Photos - grows to fill all available space */}
-              <div 
-                className="overflow-hidden"
-                style={{ flex: '1 1 0', minHeight: 0 }}
-              >
-                {photos.length > 0 ? (
-                  editMode ? (
-                    <motion.div
-                      drag
-                      dragMomentum={false}
-                      dragElastic={0}
-                      initial={blockPositions.photos || { x: 0, y: 0 }}
-                      onDragEnd={(e, info) => updateBlockPosition('photos', { 
-                        x: (blockPositions.photos?.x || 0) + info.offset.x, 
-                        y: (blockPositions.photos?.y || 0) + info.offset.y 
-                      })}
-                      className="cursor-move ring-2 ring-sage-400 ring-offset-2 rounded-lg"
-                      style={{ height: '100%' }}
-                    >
-                      <CollageBlockNew
-                        photos={photos}
-                        maxPhotos={templatePage?.maxPhotos || 15}
-                        language={language}
-                        editable={false}
-                        style={collageStyle}
-                        month={monthNumber}
-                        fullHeight
-                      />
-                    </motion.div>
-                  ) : (
-                    <div 
+                  {/* Header - fixed height */}
+                  <div 
+                    className="text-center border-b border-stone-200 pb-1"
+                    style={{ height: `${headerHeight}px`, marginBottom: `${gap}px` }}
+                  >
+                    <h2 
+                      className="font-bold text-stone-800"
                       style={{ 
-                        height: '100%',
-                        transform: blockPositions.photos 
-                          ? `translate(${blockPositions.photos.x}px, ${blockPositions.photos.y}px)` 
-                          : undefined 
+                        fontFamily: titleStyle.fontFamily, 
+                        fontSize: `${Math.max(titleStyle.fontSize * 0.55, 11)}px`,
+                        lineHeight: 1.2
                       }}
                     >
-                      <CollageBlockNew
-                        photos={photos}
-                        maxPhotos={templatePage?.maxPhotos || 15}
-                        language={language}
-                        editable={false}
-                        style={collageStyle}
-                        month={monthNumber}
-                        fullHeight
-                      />
-                    </div>
-                  )
-                ) : (templatePage?.maxPhotos || 0) > 0 ? (
-                  <div className="h-full bg-stone-100 rounded border-2 border-dashed border-stone-300 flex items-center justify-center">
-                    <div className="text-center text-stone-400">
-                      <ImageIcon className="w-6 h-6 mx-auto mb-1" />
-                      <span className="text-[10px]">
-                        {language === "fr" ? "Ajoutez des photos" : "Add photos"}
-                      </span>
-                    </div>
+                      {language === "fr" ? templatePage?.titleFr : templatePage?.titleEn}
+                    </h2>
+                    {templatePage?.subtitleFr && (
+                      <p className="text-[10px] text-stone-500 mt-0.5">
+                        {language === "fr" ? templatePage?.subtitleFr : templatePage?.subtitleEn}
+                      </p>
+                    )}
                   </div>
-                ) : null}
-              </div>
 
-              {/* Footer - shrink to content, max 80px */}
-              <div className="flex-shrink-0 mt-2 max-h-[80px] overflow-hidden">
+                  {/* Photos - calculated fixed height */}
+                  <div 
+                    className="overflow-hidden"
+                    style={{ height: `${photosHeight}px`, marginBottom: `${gap}px` }}
+                  >
+                    {photos.length > 0 ? (
+                      editMode ? (
+                        <motion.div
+                          drag
+                          dragMomentum={false}
+                          dragElastic={0}
+                          initial={blockPositions.photos || { x: 0, y: 0 }}
+                          onDragEnd={(e, info) => updateBlockPosition('photos', { 
+                            x: (blockPositions.photos?.x || 0) + info.offset.x, 
+                            y: (blockPositions.photos?.y || 0) + info.offset.y 
+                          })}
+                          className="cursor-move ring-2 ring-sage-400 ring-offset-2 rounded-lg"
+                          style={{ height: '100%' }}
+                        >
+                          <CollageBlockNew
+                            photos={photos}
+                            maxPhotos={templatePage?.maxPhotos || 15}
+                            language={language}
+                            editable={false}
+                            style={collageStyle}
+                            month={monthNumber}
+                            fullHeight
+                          />
+                        </motion.div>
+                      ) : (
+                        <div 
+                          style={{ 
+                            height: '100%',
+                            transform: blockPositions.photos 
+                              ? `translate(${blockPositions.photos.x}px, ${blockPositions.photos.y}px)` 
+                              : undefined 
+                          }}
+                        >
+                          <CollageBlockNew
+                            photos={photos}
+                            maxPhotos={templatePage?.maxPhotos || 15}
+                            language={language}
+                            editable={false}
+                            style={collageStyle}
+                            month={monthNumber}
+                            fullHeight
+                          />
+                        </div>
+                      )
+                    ) : (templatePage?.maxPhotos || 0) > 0 ? (
+                      <div className="h-full bg-stone-100 rounded border-2 border-dashed border-stone-300 flex items-center justify-center">
+                        <div className="text-center text-stone-400">
+                          <ImageIcon className="w-6 h-6 mx-auto mb-1" />
+                          <span className="text-[10px]">
+                            {language === "fr" ? "Ajoutez des photos" : "Add photos"}
+                          </span>
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  {/* Footer - fixed height */}
+                  <div style={{ height: `${footerHeight}px`, overflow: 'hidden' }}>
                 {/* Text Content */}
                 {textContent.length > 0 && textContent.some(t => t && t.trim()) && (
                   <div className="space-y-1 text-stone-700">
@@ -1041,12 +1054,14 @@ export function PageEditor({
                   </div>
                 )}
 
-                {/* Page number at bottom */}
-                <div className="text-center pt-2 border-t border-stone-100">
-                  <span className="text-xs text-stone-400">{pageNumber}</span>
+                    {/* Page number at bottom */}
+                    <div className="text-center pt-2 border-t border-stone-100">
+                      <span className="text-xs text-stone-400">{pageNumber}</span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
+              );
+            })()}
           </div>
 
           {/* Photo Controls - Collapsible Bottom Panel */}

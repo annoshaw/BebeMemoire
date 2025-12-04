@@ -864,17 +864,58 @@ export function PageEditor({
                     : "This is how the page will appear in your printed book (8×11 inches format)"}
                 </DialogDescription>
               </div>
-              <Button
-                variant={editMode ? "default" : "outline"}
-                size="sm"
-                onClick={() => setEditMode(!editMode)}
-                className="flex items-center gap-2"
-              >
-                <Move className="w-4 h-4" />
-                {editMode 
-                  ? (language === "fr" ? "Mode aperçu" : "Preview mode")
-                  : (language === "fr" ? "Repositionner" : "Reposition")}
-              </Button>
+              <div className="flex items-center gap-2">
+                {/* Text Layout Selector */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className="flex items-center gap-2">
+                      <FileText className="w-4 h-4" />
+                      {language === "fr" ? "Position texte" : "Text position"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-56 p-3" align="end">
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-stone-600 mb-2">
+                        {language === "fr" ? "Positionnement du texte" : "Text positioning"}
+                      </p>
+                      <div className="grid grid-cols-3 gap-2">
+                        {TEXT_LAYOUTS.map((layout) => (
+                          <button
+                            key={layout.id}
+                            onClick={() => {
+                              setTextLayout({ ...textLayout, position: layout.id });
+                              setIsDirty(true);
+                            }}
+                            className={`flex flex-col items-center justify-center p-2 rounded-lg border transition-all ${
+                              textLayout.position === layout.id
+                                ? "border-sage-500 bg-sage-50"
+                                : "border-stone-200 hover:border-stone-400 hover:bg-stone-50"
+                            }`}
+                            title={language === "fr" ? layout.labelFr : layout.labelEn}
+                          >
+                            <span className="text-lg">{layout.icon}</span>
+                            <span className="text-[9px] text-stone-500 mt-1">
+                              {language === "fr" ? layout.labelFr.replace("Texte ", "") : layout.labelEn.replace("Text ", "")}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+
+                <Button
+                  variant={editMode ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setEditMode(!editMode)}
+                  className="flex items-center gap-2"
+                >
+                  <Move className="w-4 h-4" />
+                  {editMode 
+                    ? (language === "fr" ? "Mode aperçu" : "Preview mode")
+                    : (language === "fr" ? "Repositionner" : "Reposition")}
+                </Button>
+              </div>
             </div>
           </DialogHeader>
           

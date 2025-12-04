@@ -794,44 +794,16 @@ export function PageEditor({
                 )}
               </div>
 
-              {/* Photos Section - Interactive */}
+              {/* Photos Section - Using Collage Component */}
               {photos.length > 0 && (
-                <div className={`mb-4 ${photos.length === 1 ? '' : 'grid grid-cols-2 gap-2'}`}>
-                  {photos.slice(0, 4).map((photo, idx) => {
-                    const layout = getPhotoLayout(idx);
-                    const isActive = activePhotoIndex === idx;
-                    return (
-                      <div 
-                        key={idx} 
-                        className={`relative bg-stone-100 rounded overflow-hidden cursor-pointer ${
-                          photos.length === 1 ? 'aspect-[4/3] max-h-48' : 'aspect-square'
-                        } ${isActive ? 'ring-2 ring-sage-500 ring-offset-1' : 'hover:ring-1 hover:ring-stone-300'}`}
-                        onClick={() => setActivePhotoIndex(activePhotoIndex === idx ? null : idx)}
-                        onMouseDown={(e) => isActive && handlePhotoMouseDown(e, idx)}
-                      >
-                        <img 
-                          src={photo} 
-                          alt={`Photo ${idx + 1}`}
-                          className="w-full h-full object-cover select-none"
-                          draggable={false}
-                          style={{
-                            transform: `scale(${layout.scale / 100}) translate(${layout.x}%, ${layout.y}%)`,
-                            transformOrigin: 'center center'
-                          }}
-                        />
-                        {isActive && (
-                          <div className="absolute top-1 right-1 bg-sage-500 text-white rounded-full p-1">
-                            <Move className="w-3 h-3" />
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                  {photos.length > 4 && (
-                    <div className="flex items-center justify-center text-xs text-stone-500 col-span-2">
-                      +{photos.length - 4} {language === "fr" ? "autres photos" : "more photos"}
-                    </div>
-                  )}
+                <div className="mb-4">
+                  <CollageBlockNew
+                    photos={photos}
+                    maxPhotos={templatePage?.maxPhotos || 15}
+                    language={language}
+                    editable={false}
+                    style={collageStyle}
+                  />
                 </div>
               )}
 
@@ -885,19 +857,22 @@ export function PageEditor({
                 </div>
               )}
 
-              {/* Custom Data (Birth Info) */}
-              {Object.keys(customData).length > 0 && Object.values(customData).some(v => v) && (
-                <div className="mt-4 grid grid-cols-2 gap-2 text-center">
-                  {Object.entries(customData).map(([key, value]) => (
-                    value ? (
+              {/* Custom Data (Birth Info) - Filter out internal fields like collageStyle */}
+              {(() => {
+                const displayData = Object.entries(customData).filter(
+                  ([key, value]) => value && key !== 'collageStyle'
+                );
+                return displayData.length > 0 ? (
+                  <div className="mt-4 grid grid-cols-2 gap-2 text-center">
+                    {displayData.map(([key, value]) => (
                       <div key={key} className="bg-stone-50 rounded p-2">
                         <p className="text-xs text-stone-500">{key}</p>
                         <p className="font-medium text-stone-800 text-sm">{value}</p>
                       </div>
-                    ) : null
-                  ))}
-                </div>
-              )}
+                    ))}
+                  </div>
+                ) : null;
+              })()}
 
               {/* Video with QR Code indicator in preview */}
               {videoUrl && (

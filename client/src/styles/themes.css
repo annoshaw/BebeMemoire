@@ -1,0 +1,174 @@
+/* Memoria Theme Variables */
+
+:root {
+  /* Primary - Sage Green */
+  --color-sage-50: #f6f7f4;
+  --color-sage-100: #e8ebe3;
+  --color-sage-200: #d3d9c9;
+  --color-sage-300: #b5c0a5;
+  --color-sage-400: #97a682;
+  --color-sage-500: #7d8e66;
+  --color-sage-600: #647350;
+  --color-sage-700: #4f5b40;
+  --color-sage-800: #414a36;
+  --color-sage-900: #383f30;
+
+  /* Secondary - Terracotta */
+  --color-terracotta-50: #fdf6f3;
+  --color-terracotta-100: #fbeae4;
+  --color-terracotta-200: #f7d5c9;
+  --color-terracotta-300: #f1b8a4;
+  --color-terracotta-400: #e89275;
+  --color-terracotta-500: #dc6b4a;
+  --color-terracotta-600: #c9513a;
+  --color-terracotta-700: #a84130;
+  --color-terracotta-800: #8b382c;
+  --color-terracotta-900: #733228;
+
+  /* Neutral - Stone */
+  --color-stone-50: #fafaf9;
+  --color-stone-100: #f5f5f4;
+  --color-stone-200: #e7e5e4;
+  --color-stone-300: #d6d3d1;
+  --color-stone-400: #a8a29e;
+  --color-stone-500: #78716c;
+  --color-stone-600: #57534e;
+  --color-stone-700: #44403c;
+  --color-stone-800: #292524;
+  --color-stone-900: #1c1917;
+
+  /* Background colors for text blocks */
+  --bg-cream: #FFFBF0;
+  --bg-blush: #FFF0F0;
+  --bg-mint: #F0FFF4;
+  --bg-sky: #F0F8FF;
+  --bg-lavender: #F8F0FF;
+  --bg-peach: #FFF5EB;
+  
+  /* Print dimensions */
+  --page-width-8x11: 8.5in;
+  --page-height-8x11: 11in;
+  --page-margin: 0.5in;
+}
+
+/* Theme: Default (Warm Neutral) */
+.theme-default {
+  --primary: var(--color-sage-500);
+  --primary-foreground: white;
+  --secondary: var(--color-terracotta-500);
+  --secondary-foreground: white;
+  --background: var(--color-stone-50);
+  --foreground: var(--color-stone-900);
+  --muted: var(--color-stone-100);
+  --muted-foreground: var(--color-stone-500);
+  --accent: var(--color-sage-100);
+  --accent-foreground: var(--color-sage-900);
+}
+
+/* Theme: Soft Pink */
+.theme-pink {
+  --primary: #ec4899;
+  --primary-foreground: white;
+  --secondary: #f472b6;
+  --secondary-foreground: white;
+  --background: #fdf2f8;
+  --foreground: #831843;
+  --muted: #fce7f3;
+  --muted-foreground: #9d174d;
+  --accent: #fbcfe8;
+  --accent-foreground: #831843;
+}
+
+/* Theme: Ocean Blue */
+.theme-blue {
+  --primary: #3b82f6;
+  --primary-foreground: white;
+  --secondary: #60a5fa;
+  --secondary-foreground: white;
+  --background: #eff6ff;
+  --foreground: #1e3a8a;
+  --muted: #dbeafe;
+  --muted-foreground: #1d4ed8;
+  --accent: #bfdbfe;
+  --accent-foreground: #1e3a8a;
+}
+
+/* Theme: Forest Green */
+.theme-green {
+  --primary: #22c55e;
+  --primary-foreground: white;
+  --secondary: #4ade80;
+  --secondary-foreground: white;
+  --background: #f0fdf4;
+  --foreground: #14532d;
+  --muted: #dcfce7;
+  --muted-foreground: #15803d;
+  --accent: #bbf7d0;
+  --accent-foreground: #14532d;
+}
+
+/* Theme: Sunset */
+.theme-sunset {
+  --primary: #f97316;
+  --primary-foreground: white;
+  --secondary: #fb923c;
+  --secondary-foreground: white;
+  --background: #fff7ed;
+  --foreground: #7c2d12;
+  --muted: #ffedd5;
+  --muted-foreground: #c2410c;
+  --accent: #fed7aa;
+  --accent-foreground: #7c2d12;
+}
+
+/* Print styles */
+@media print {
+  @page {
+    size: 8.5in 11in;
+    margin: 0.5in;
+  }
+  
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  
+  .no-print {
+    display: none !important;
+  }
+  
+  .print-page {
+    page-break-after: always;
+    page-break-inside: avoid;
+  }
+  
+  .print-page:last-child {
+    page-break-after: auto;
+  }
+}
+
+/* 8x11 Preview Container */
+.page-preview-8x11 {
+  width: 100%;
+  max-width: 8.5in;
+  aspect-ratio: 8.5 / 11;
+  margin: 0 auto;
+  background: white;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+/* Animation for page transitions */
+.page-transition {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

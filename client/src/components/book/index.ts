@@ -9,3 +9,5 @@ export {
   CollageBlock, 
   MessageBlock 
 } from "./PageBlocks";
+export { FontSelector, FontSizeSelector, FONT_CATEGORIES } from "./FontSelector";
+export { ThemeSwitcher, ColorPicker, THEMES, COLOR_PRESETS } from "./ThemeSwitcher";

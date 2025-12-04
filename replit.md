@@ -29,8 +29,35 @@ Preferred communication style: Simple, everyday language.
 **Component Organization**
 - `/client/src/components/ui/` - Shadcn UI components (buttons, forms, dialogs, etc.)
 - `/client/src/components/layout/` - Layout components (Navbar, Footer)
+- `/client/src/components/book/` - Book editor components (PageEditor, PageBlocks, FontSelector, ThemeSwitcher, ColorPicker)
 - `/client/src/pages/` - Route-level page components
+- `/client/src/store/` - Zustand state management (useMemoStore)
+- `/client/src/utils/` - Utility functions (paletteExtractor, contrastChecker, pdfExporter)
+- `/client/src/layouts/` - Layout components (PageLayout, AutoGrid)
+- `/client/src/styles/` - CSS modules (fonts.css, themes.css)
 - Path aliases configured: `@/` → client/src, `@shared/` → shared, `@assets/` → attached_assets
+
+**State Management**
+- **Zustand** store (useMemoStore) for book editor state:
+  - Language preference (fr/en)
+  - Current book/page selection
+  - Page data (text, photos, video, styles)
+  - Default title/text styles
+
+**Utility Functions**
+- **paletteExtractor** - Extract dominant colors from photos using ColorThief
+- **contrastChecker** - WCAG contrast ratio calculations for accessible text
+- **pdfExporter** - Export pages/books to PDF using jsPDF and html2canvas
+
+**Font System**
+- 12 fonts in 4 categories: Tendance, Classique, Féminin, Masculin
+- Font classes available: .font-poppins, .font-raleway, .font-georgia, etc.
+- Typography scale: .text-title-xl through .text-caption
+
+**Theme System**
+- 5 color themes: default (sage), pink, blue, green, sunset
+- Theme classes: .theme-default, .theme-pink, etc.
+- Print preview: .page-preview-8x11 for 8.5x11" format
 
 ### Flutter Web Frontend (Parallel Development)
 

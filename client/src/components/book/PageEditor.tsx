@@ -36,6 +36,7 @@ import {
 } from "./PageBlocks";
 import type { TemplatePage, UserBookPage } from "@shared/schema";
 import { toast } from "sonner";
+import { QRCodeSVG } from "qrcode.react";
 
 // Title font and size options
 const TITLE_FONTS = [
@@ -885,13 +886,27 @@ export function PageEditor({
                 </div>
               )}
 
-              {/* Video indicator */}
+              {/* Video with QR Code indicator in preview */}
               {videoUrl && (
-                <div className="mt-4 flex items-center justify-center gap-2 p-3 bg-purple-50 rounded border border-purple-200">
-                  <Video className="w-4 h-4 text-purple-600" />
-                  <span className="text-xs text-purple-700">
-                    {language === "fr" ? "Vidéo avec code QR" : "Video with QR code"}
-                  </span>
+                <div className="mt-4 p-3 bg-purple-50 rounded border border-purple-200">
+                  <div className="flex items-center justify-center gap-3">
+                    <div className="bg-white p-1.5 rounded shadow-sm">
+                      <QRCodeSVG 
+                        value={videoUrl}
+                        size={48}
+                        level="M"
+                      />
+                    </div>
+                    <div className="text-left">
+                      <div className="flex items-center gap-1 text-purple-700 font-medium text-xs">
+                        <Video className="w-3 h-3" />
+                        {language === "fr" ? "Scannez pour voir la vidéo" : "Scan to watch video"}
+                      </div>
+                      <p className="text-[10px] text-purple-500 mt-0.5">
+                        {language === "fr" ? "Code QR imprimé" : "Printed QR code"}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
 

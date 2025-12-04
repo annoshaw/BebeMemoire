@@ -39,6 +39,7 @@ import type { TemplatePage, UserBookPage } from "@shared/schema";
 import { toast } from "sonner";
 import { QRCodeSVG } from "qrcode.react";
 import "./BookPageLayout.css";
+import "./CollageBlock.css";
 
 // Title font and size options
 const TITLE_FONTS = [
@@ -960,7 +961,17 @@ export function PageEditor({
               {/* Dynamic Layout Body - Photos and Text based on textLayout.position */}
               {(() => {
                 const hasText = textContent.length > 0 && textContent.some(t => t && t.trim());
-                const textSizePercent = textLayout.textSize || 25;
+                
+                const calculateAutoTextSize = (): number => {
+                  const totalChars = textContent.reduce((sum, text) => sum + (text?.length || 0), 0);
+                  const lineCount = textContent.filter(t => t && t.trim()).length;
+                  const avgLineLength = lineCount > 0 ? totalChars / lineCount : 0;
+                  const estimatedLines = Math.ceil(totalChars / 40);
+                  const basePercent = Math.min(15 + (estimatedLines * 5), 50);
+                  return Math.max(15, Math.min(basePercent, 50));
+                };
+                
+                const textSizePercent = hasText ? calculateAutoTextSize() : 25;
                 
                 const renderTextBlock = () => (
                   <div className="space-y-1 text-stone-700 p-2 overflow-auto">
@@ -987,37 +998,62 @@ export function PageEditor({
                   </div>
                 );
 
-                const renderPhotosGrid = () => (
-                  photos.length > 0 ? (
-                    <div 
-                      style={{ 
-                        width: '100%',
-                        height: '100%',
-                        display: 'grid',
-                        gridTemplateColumns: photos.length === 1 ? '1fr' 
-                          : photos.length === 2 ? '1fr 1fr' 
-                          : photos.length <= 4 ? 'repeat(2, 1fr)'
-                          : photos.length <= 6 ? 'repeat(3, 1fr)'
-                          : 'repeat(4, 1fr)',
-                        gridAutoRows: '1fr',
-                        gap: '4px'
-                      }}
-                    >
-                      {photos.map((photo, index) => (
-                        <div key={index} style={{ overflow: 'hidden', borderRadius: '4px', minHeight: 0 }}>
-                          <img src={photo} alt={`Photo ${index + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                        </div>
-                      ))}
-                    </div>
-                  ) : (templatePage?.maxPhotos || 0) > 0 ? (
-                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f5f5f4', borderRadius: '8px', border: '2px dashed #d6d3d1' }}>
-                      <div className="text-center text-stone-400">
-                        <ImageIcon className="w-6 h-6 mx-auto mb-1" />
-                        <span className="text-[10px]">{language === "fr" ? "Ajoutez des photos" : "Add photos"}</span>
+                const getGridClass = (count: number): string => {
+                  if (count <= 0) return "grid-1";
+                  if (count === 1) return "grid-1";
+                  if (count === 2) return "grid-2";
+                  if (count === 3) return "grid-3";
+                  if (count === 4) return "grid-4";
+                  if (count === 5) return "grid-5";
+                  if (count === 6) return "grid-6";
+                  if (count === 7) return "grid-7";
+                  if (count === 8) return "grid-8";
+                  if (count === 9) return "grid-9";
+                  if (count === 10) return "grid-10";
+                  if (count === 11) return "grid-11";
+                  if (count === 12) return "grid-12";
+                  if (count === 13) return "grid-13";
+                  if (count === 14) return "grid-14";
+                  return "grid-15";
+                };
+
+                const renderPhotosGrid = () => {
+                  if (photos.length > 0) {
+                    const gridClass = getGridClass(photos.length);
+                    const styleClass = `style-${collageStyle}`;
+                    return (
+                      <div 
+                        className={`collage ${styleClass} ${gridClass}`}
+                        style={{ width: '100%', height: '100%' }}
+                      >
+                        {collageStyle === "monthHero" && monthNumber !== undefined && (
+                          <div className="month-hero-number">
+                            <span className="month-digit">{monthNumber}</span>
+                            <span className="month-label">{language === "fr" ? "mois" : "months"}</span>
+                          </div>
+                        )}
+                        {photos.map((photo, index) => (
+                          <div key={index} className="collage-item">
+                            <img src={photo} alt={`Photo ${index + 1}`} />
+                          </div>
+                        ))}
                       </div>
-                    </div>
-                  ) : null
-                );
+                    );
+                  }
+                  
+                  if ((templatePage?.maxPhotos || 0) > 0) {
+                    return (
+                      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f5f5f4', borderRadius: '8px', border: '2px dashed #d6d3d1' }}>
+                        <div className="text-center text-stone-400">
+                          <ImageIcon className="w-6 h-6 mx-auto mb-1" />
+                          <span className="text-[10px]">{language === "fr" ? "Ajoutez des photos" : "Add photos"}</span>
+                        </div>
+                      </div>
+                    );
+                  }
+                  
+                  return null;
+                };
 
                 const layoutPosition = textLayout.position;
 

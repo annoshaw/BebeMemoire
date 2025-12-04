@@ -38,6 +38,7 @@ import { CollageBlockNew, type CollageStyle } from "./CollageBlockNew";
 import type { TemplatePage, UserBookPage } from "@shared/schema";
 import { toast } from "sonner";
 import { QRCodeSVG } from "qrcode.react";
+import Draggable from "react-draggable";
 import "./BookPageLayout.css";
 import "./CollageBlock.css";
 
@@ -1149,7 +1150,7 @@ export function PageEditor({
                 {/* Custom Data (Birth Info) - Filter out internal fields */}
                 {(() => {
                   const displayData = Object.entries(customData).filter(
-                    ([key, value]) => value && key !== 'collageStyle' && key !== 'blockPositions' && key !== 'textLayout'
+                    ([key, value]) => value && key !== 'collageStyle' && key !== 'blockPositions' && key !== 'textLayout' && key !== 'qrPosition'
                   );
                   return displayData.length > 0 ? (
                     <div className="grid grid-cols-2 gap-1 text-center mb-1">
@@ -1163,36 +1164,61 @@ export function PageEditor({
                   ) : null;
                 })()}
 
-                {/* Video with QR Code - Large and scannable */}
-                {videoUrl && (
-                  <div className="p-3 bg-purple-50 rounded-lg border border-purple-200 mb-2">
-                    <div className="flex flex-col items-center justify-center gap-2">
-                      <div className="bg-white p-2 rounded-lg shadow-md">
-                        {videoUrl.startsWith('data:') ? (
-                          <div className="w-20 h-20 bg-purple-100 rounded flex items-center justify-center">
-                            <Video className="w-8 h-8 text-purple-400" />
-                          </div>
-                        ) : (
-                          <QRCodeSVG 
-                            value={videoUrl} 
-                            size={80} 
-                            level="H"
-                            includeMargin={true}
-                          />
-                        )}
-                      </div>
-                      <span className="text-purple-700 font-medium text-[10px]">
-                        {language === "fr" ? "Scannez pour voir la vidéo" : "Scan to watch video"}
-                      </span>
-                    </div>
-                  </div>
-                )}
-
                 {/* Page number at bottom */}
                 <div className="text-center pt-1 border-t border-stone-100">
                   <span className="text-[10px] text-stone-400">{pageNumber}</span>
                 </div>
               </div>
+
+              {/* Draggable QR Code - Positioned absolutely within the 8x11 page */}
+              {videoUrl && !videoUrl.startsWith('data:') && (
+                <Draggable
+                  bounds="parent"
+                  defaultPosition={blockPositions.video || { x: 280, y: 400 }}
+                  onStop={(e, data) => {
+                    updateBlockPosition('video', { x: data.x, y: data.y });
+                  }}
+                >
+                  <div 
+                    style={{ 
+                      position: 'absolute',
+                      cursor: 'move',
+                      zIndex: 10
+                    }}
+                  >
+                    <div className="bg-white p-2 rounded-lg shadow-lg border-2 border-purple-300 hover:border-purple-500 transition-colors">
+                      <QRCodeSVG 
+                        value={videoUrl} 
+                        size={80} 
+                        level="H"
+                        includeMargin={true}
+                      />
+                      <p className="text-center text-[8px] text-purple-600 mt-1 font-medium">
+                        {language === "fr" ? "Scannez" : "Scan"}
+                      </p>
+                    </div>
+                  </div>
+                </Draggable>
+              )}
+
+              {/* Message for local video (no QR) */}
+              {videoUrl && videoUrl.startsWith('data:') && (
+                <div 
+                  style={{ 
+                    position: 'absolute',
+                    bottom: '40px',
+                    right: '10px',
+                    zIndex: 10
+                  }}
+                >
+                  <div className="bg-purple-100 p-2 rounded-lg border border-purple-200">
+                    <Video className="w-6 h-6 text-purple-400 mx-auto" />
+                    <p className="text-[7px] text-purple-500 text-center mt-1">
+                      {language === "fr" ? "Ajoutez un lien" : "Add a link"}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

@@ -1221,6 +1221,13 @@ export function PageEditor({
                 </div>
               </div>
 
+              {/* Debug: Show video status */}
+              {process.env.NODE_ENV === 'development' && (
+                <div className="absolute bottom-2 left-2 text-[8px] bg-yellow-100 p-1 rounded z-20">
+                  Video: {videoUrl ? 'Yes' : 'No'} | MediaId: {videoMediaId ? 'Yes' : 'No'}
+                </div>
+              )}
+              
               {/* Draggable QR Code - Positioned intelligently based on text layout */}
               {videoUrl && (videoUrl.startsWith('https://') || videoUrl.startsWith('http://')) && (
                 <Draggable

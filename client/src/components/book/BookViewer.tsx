@@ -216,7 +216,7 @@ export function BookViewer({ bookId, language, onGoToInspiration }: BookViewerPr
             </ScrollArea>
           </div>
 
-          <div className="md:col-span-2">
+          <div className="md:col-span-2 min-h-[200px]">
             {templateParts[selectedPartIndex] && (
               <Card className="border-sage-200">
                 <CardHeader className="pb-4">

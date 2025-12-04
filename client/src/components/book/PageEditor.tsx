@@ -20,8 +20,12 @@ import {
   FileText,
   Move,
   ZoomIn,
-  RotateCcw
+  RotateCcw,
+  Type,
+  ALargeSmall,
+  Palette
 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { 
   TextBlock, 
   PhotoBlock, 
@@ -32,6 +36,25 @@ import {
 } from "./PageBlocks";
 import type { TemplatePage, UserBookPage } from "@shared/schema";
 import { toast } from "sonner";
+
+// Title font and size options
+const TITLE_FONTS = [
+  { name: "Fraunces", family: "'Fraunces', serif", category: "Classique" },
+  { name: "Poppins", family: "'Poppins', sans-serif", category: "Tendance" },
+  { name: "Dancing Script", family: "'Dancing Script', cursive", category: "Féminin" },
+  { name: "Great Vibes", family: "'Great Vibes', cursive", category: "Féminin" },
+  { name: "Oswald", family: "'Oswald', sans-serif", category: "Masculin" },
+  { name: "Georgia", family: "'Georgia', serif", category: "Classique" },
+  { name: "Raleway", family: "'Raleway', sans-serif", category: "Tendance" },
+];
+
+const TITLE_SIZES = [
+  { value: 16, label: "Petit" },
+  { value: 20, label: "Normal" },
+  { value: 24, label: "Moyen" },
+  { value: 28, label: "Grand" },
+  { value: 32, label: "Très grand" },
+];
 
 interface PageEditorProps {
   bookId: string;
@@ -82,10 +105,16 @@ export function PageEditor({
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef<{ x: number; y: number; photoX: number; photoY: number } | null>(null);
 
-  // Text styles state: { textIndex: { bgColor, textColor, fontFamily } }
-  type TextStyle = { bgColor: string; textColor: string; fontFamily?: string };
+  // Text styles state: { textIndex: { bgColor, textColor, fontFamily, fontSize } }
+  type TextStyle = { bgColor: string; textColor: string; fontFamily?: string; fontSize?: number };
   const [textStyles, setTextStyles] = useState<Record<number, TextStyle>>(
     (userPage?.customData as any)?.textStyles || {}
+  );
+
+  // Title style state
+  type TitleStyle = { fontFamily: string; fontSize: number };
+  const [titleStyle, setTitleStyle] = useState<TitleStyle>(
+    (userPage?.customData as any)?.titleStyle || { fontFamily: "'Fraunces', serif", fontSize: 20 }
   );
 
   useEffect(() => {
@@ -93,15 +122,21 @@ export function PageEditor({
     setPhotos((userPage?.photos as string[]) || []);
     setVideoUrl(userPage?.videoUrl || null);
     const data = (userPage?.customData as Record<string, any>) || {};
-    const { photoLayouts: layouts, textStyles: styles, ...rest } = data;
+    const { photoLayouts: layouts, textStyles: styles, titleStyle: tStyle, ...rest } = data;
     setCustomData(rest);
     setPhotoLayouts(layouts || {});
     setTextStyles(styles || {});
+    setTitleStyle(tStyle || { fontFamily: "'Fraunces', serif", fontSize: 20 });
     setIsDirty(false);
   }, [userPage, pageNumber]);
 
   const handleTextStyleChange = (index: number, style: TextStyle) => {
     setTextStyles(prev => ({ ...prev, [index]: style }));
+    setIsDirty(true);
+  };
+
+  const handleTitleStyleChange = (updates: Partial<TitleStyle>) => {
+    setTitleStyle(prev => ({ ...prev, ...updates }));
     setIsDirty(true);
   };
 
@@ -160,11 +195,12 @@ export function PageEditor({
     mutationFn: async () => {
       if (!userPage?.id) throw new Error("No user page found");
       
-      // Merge photoLayouts and textStyles into customData for saving
+      // Merge photoLayouts, textStyles, and titleStyle into customData for saving
       const dataToSave = {
         ...customData,
         ...(Object.keys(photoLayouts).length > 0 ? { photoLayouts } : {}),
-        ...(Object.keys(textStyles).length > 0 ? { textStyles } : {})
+        ...(Object.keys(textStyles).length > 0 ? { textStyles } : {}),
+        titleStyle
       };
       
       const res = await fetch(`/api/books/${bookId}/pages/${userPage.id}`, {
@@ -504,11 +540,81 @@ export function PageEditor({
                   </Badge>
                 )}
               </div>
-              <CardTitle className="text-xl font-fraunces">
-                {language === "fr" 
-                  ? templatePage?.titleFr 
-                  : templatePage?.titleEn}
-              </CardTitle>
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-xl" style={{ fontFamily: titleStyle.fontFamily, fontSize: `${titleStyle.fontSize}px` }}>
+                  {language === "fr" 
+                    ? templatePage?.titleFr 
+                    : templatePage?.titleEn}
+                </CardTitle>
+                
+                {/* Title Style Pickers */}
+                <div className="flex gap-1">
+                  {/* Title Font Picker */}
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-7">
+                        <Type className="w-3.5 h-3.5" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-64 p-3 bg-white shadow-lg border border-stone-200" align="start">
+                      <div className="space-y-2">
+                        <p className="text-xs font-medium text-stone-600">
+                          {language === "fr" ? "Police du titre" : "Title font"}
+                        </p>
+                        <div className="space-y-1 max-h-48 overflow-y-auto">
+                          {TITLE_FONTS.map((font) => (
+                            <button
+                              key={font.name}
+                              onClick={() => handleTitleStyleChange({ fontFamily: font.family })}
+                              className={`w-full text-left px-3 py-2 rounded-lg border transition-all ${
+                                titleStyle.fontFamily === font.family
+                                  ? "border-sage-500 bg-sage-50"
+                                  : "border-stone-200 hover:border-stone-400 hover:bg-stone-50"
+                              }`}
+                              style={{ fontFamily: font.family }}
+                            >
+                              <span className="text-sm">{font.name}</span>
+                              <span className="text-xs text-stone-400 ml-2">({font.category})</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+
+                  {/* Title Size Picker */}
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-7">
+                        <ALargeSmall className="w-3.5 h-3.5" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-48 p-3 bg-white shadow-lg border border-stone-200" align="start">
+                      <div className="space-y-2">
+                        <p className="text-xs font-medium text-stone-600">
+                          {language === "fr" ? "Taille du titre" : "Title size"}
+                        </p>
+                        <div className="space-y-1">
+                          {TITLE_SIZES.map((size) => (
+                            <button
+                              key={size.value}
+                              onClick={() => handleTitleStyleChange({ fontSize: size.value })}
+                              className={`w-full text-left px-3 py-2 rounded-lg border transition-all flex items-center justify-between ${
+                                titleStyle.fontSize === size.value
+                                  ? "border-sage-500 bg-sage-50"
+                                  : "border-stone-200 hover:border-stone-400 hover:bg-stone-50"
+                              }`}
+                            >
+                              <span style={{ fontSize: `${Math.min(size.value, 18)}px` }}>{size.label}</span>
+                              <span className="text-xs text-stone-400">{size.value}px</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </div>
               {templatePage?.subtitleFr && (
                 <CardDescription>
                   {language === "fr" 
@@ -601,7 +707,13 @@ export function PageEditor({
             >
               {/* Page Header */}
               <div className="text-center mb-4 pb-3 border-b border-stone-200">
-                <h2 className="text-xl font-serif font-bold text-stone-800">
+                <h2 
+                  className="font-bold text-stone-800"
+                  style={{ 
+                    fontFamily: titleStyle.fontFamily, 
+                    fontSize: `${Math.max(titleStyle.fontSize * 0.7, 14)}px` 
+                  }}
+                >
                   {language === "fr" ? templatePage?.titleFr : templatePage?.titleEn}
                 </h2>
                 {templatePage?.subtitleFr && (
@@ -664,19 +776,20 @@ export function PageEditor({
                 </div>
               )}
 
-              {/* Text Content - Only show user's text with custom background colors and fonts */}
+              {/* Text Content - Only show user's text with custom styles */}
               {textContent.length > 0 && textContent.some(t => t && t.trim()) && (
                 <div className="space-y-3 text-stone-700">
                   {textContent.map((text, idx) => {
                     if (!text || !text.trim()) return null;
-                    const style = textStyles[idx] || { bgColor: "#FFFFFF", textColor: "#374151", fontFamily: "'Poppins', sans-serif" };
+                    const style = textStyles[idx] || { bgColor: "#FFFFFF", textColor: "#374151", fontFamily: "'Poppins', sans-serif", fontSize: 14 };
                     const hasCustomBg = style.bgColor !== "#FFFFFF";
+                    const previewFontSize = Math.max((style.fontSize || 14) * 0.75, 10);
                     return (
                       <p 
                         key={idx} 
                         className={`leading-relaxed ${hasCustomBg ? 'p-3 rounded-lg' : ''}`} 
                         style={{ 
-                          fontSize: "12px",
+                          fontSize: `${previewFontSize}px`,
                           backgroundColor: hasCustomBg ? style.bgColor : 'transparent',
                           color: style.textColor,
                           fontFamily: style.fontFamily || "'Poppins', sans-serif"

@@ -17,7 +17,8 @@ import {
   Palette,
   Wand2,
   Check,
-  Type
+  Type,
+  ALargeSmall
 } from "lucide-react";
 import ColorThief from "colorthief";
 
@@ -122,7 +123,17 @@ interface TextStyle {
   bgColor: string;
   textColor: string;
   fontFamily?: string;
+  fontSize?: number; // in px
 }
+
+// Font size options
+const FONT_SIZES = [
+  { value: 12, label: "Petit" },
+  { value: 14, label: "Normal" },
+  { value: 16, label: "Moyen" },
+  { value: 18, label: "Grand" },
+  { value: 20, label: "Très grand" },
+];
 
 interface TextBlockProps {
   prompts: string[];
@@ -148,7 +159,13 @@ export function TextBlock({
   const [extractingColor, setExtractingColor] = useState<number | null>(null);
 
   const getStyle = (index: number): TextStyle => {
-    return textStyles[index] || { bgColor: "#FFFFFF", textColor: "#374151", fontFamily: "'Poppins', sans-serif" };
+    return textStyles[index] || { bgColor: "#FFFFFF", textColor: "#374151", fontFamily: "'Poppins', sans-serif", fontSize: 14 };
+  };
+
+  const setFontSize = (index: number, fontSize: number) => {
+    if (!onStyleChange) return;
+    const currentStyle = getStyle(index);
+    onStyleChange(index, { ...currentStyle, fontSize });
   };
 
   const extractColorFromPhoto = async (photoSrc: string, index: number) => {
@@ -250,6 +267,40 @@ export function TextBlock({
                       <span className="block text-xs text-stone-400 mt-0.5" style={{ fontFamily: font.family }}>
                         Aa Bb Cc 123
                       </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+        )}
+
+        {/* Font Size Picker */}
+        {onStyleChange && (
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-7 gap-1 shrink-0">
+                <ALargeSmall className="w-3.5 h-3.5" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-48 p-3 bg-white shadow-lg border border-stone-200" align="end">
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-stone-600">
+                  {language === "fr" ? "Taille du texte" : "Text size"}
+                </p>
+                <div className="space-y-1">
+                  {FONT_SIZES.map((size) => (
+                    <button
+                      key={size.value}
+                      onClick={() => setFontSize(index, size.value)}
+                      className={`w-full text-left px-3 py-2 rounded-lg border transition-all flex items-center justify-between ${
+                        (style.fontSize || 14) === size.value
+                          ? "border-sage-500 bg-sage-50"
+                          : "border-stone-200 hover:border-stone-400 hover:bg-stone-50"
+                      }`}
+                    >
+                      <span style={{ fontSize: `${size.value}px` }}>{size.label}</span>
+                      <span className="text-xs text-stone-400">{size.value}px</span>
                     </button>
                   ))}
                 </div>
@@ -371,6 +422,7 @@ export function TextBlock({
                   backgroundColor: style.bgColor, 
                   color: style.textColor,
                   fontFamily: style.fontFamily,
+                  fontSize: `${style.fontSize || 14}px`,
                   borderColor: style.bgColor === "#FFFFFF" ? undefined : style.bgColor
                 }}
               />
@@ -407,6 +459,7 @@ export function TextBlock({
           backgroundColor: style.bgColor, 
           color: style.textColor,
           fontFamily: style.fontFamily,
+          fontSize: `${style.fontSize || 14}px`,
           borderColor: style.bgColor === "#FFFFFF" ? undefined : style.bgColor
         }}
       />

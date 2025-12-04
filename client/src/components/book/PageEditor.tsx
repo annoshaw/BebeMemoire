@@ -140,6 +140,39 @@ export function PageEditor({
     setIsDirty(true);
   };
 
+  // Apply style to all pages
+  const [applyingStyle, setApplyingStyle] = useState(false);
+
+  const applyStyleToAllPages = async (styleType: 'title' | 'description') => {
+    setApplyingStyle(true);
+    try {
+      const res = await fetch(`/api/books/${bookId}/apply-style`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          styleType,
+          titleStyle: styleType === 'title' ? titleStyle : undefined,
+          textStyle: styleType === 'description' ? textStyles[0] : undefined,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Failed to apply style");
+
+      await queryClient.invalidateQueries({ queryKey: [`/api/books/${bookId}/pages`] });
+      
+      toast.success(
+        styleType === 'title'
+          ? (language === "fr" ? "Style de titre appliqué à toutes les pages" : "Title style applied to all pages")
+          : (language === "fr" ? "Style de description appliqué à toutes les pages" : "Description style applied to all pages")
+      );
+    } catch (error) {
+      toast.error(language === "fr" ? "Erreur lors de l'application du style" : "Error applying style");
+    } finally {
+      setApplyingStyle(false);
+    }
+  };
+
   const getPhotoLayout = (index: number): PhotoLayout => {
     return photoLayouts[index] || { scale: 100, x: 0, y: 0 };
   };
@@ -347,6 +380,8 @@ export function PageEditor({
                 textStyles={textStyles}
                 onStyleChange={handleTextStyleChange}
                 photos={photos}
+                onApplyStyleToAll={() => applyStyleToAllPages('description')}
+                applyingStyle={applyingStyle}
               />
             )}
             <CollageBlock
@@ -408,6 +443,8 @@ export function PageEditor({
               textStyles={textStyles}
               onStyleChange={handleTextStyleChange}
               photos={photos}
+              onApplyStyleToAll={() => applyStyleToAllPages('description')}
+              applyingStyle={applyingStyle}
             />
             <CollageBlock
               photos={photos}
@@ -439,6 +476,8 @@ export function PageEditor({
               onStyleChange={handleTextStyleChange}
               photos={photos}
               separateFields={true}
+              onApplyStyleToAll={() => applyStyleToAllPages('description')}
+              applyingStyle={applyingStyle}
             />
           </div>
         );
@@ -459,6 +498,8 @@ export function PageEditor({
                 textStyles={textStyles}
                 onStyleChange={handleTextStyleChange}
                 photos={photos}
+                onApplyStyleToAll={() => applyStyleToAllPages('description')}
+                applyingStyle={applyingStyle}
               />
             )}
             {maxPhotos > 0 && (
@@ -613,6 +654,17 @@ export function PageEditor({
                       </div>
                     </PopoverContent>
                   </Popover>
+
+                  {/* Apply to all titles */}
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="h-7 text-xs"
+                    onClick={() => applyStyleToAllPages('title')}
+                    disabled={applyingStyle}
+                  >
+                    {language === "fr" ? "Appliquer à tous" : "Apply to all"}
+                  </Button>
                 </div>
               </div>
               {templatePage?.subtitleFr && (

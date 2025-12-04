@@ -144,6 +144,8 @@ interface TextBlockProps {
   onStyleChange?: (index: number, style: TextStyle) => void;
   photos?: string[];
   separateFields?: boolean; // Keep separate text areas for each prompt (e.g., page 20)
+  onApplyStyleToAll?: () => void; // Apply style to all pages
+  applyingStyle?: boolean;
 }
 
 export function TextBlock({ 
@@ -154,7 +156,9 @@ export function TextBlock({
   textStyles = {},
   onStyleChange,
   photos = [],
-  separateFields = false
+  separateFields = false,
+  onApplyStyleToAll,
+  applyingStyle = false
 }: TextBlockProps) {
   const [extractingColor, setExtractingColor] = useState<number | null>(null);
 
@@ -395,6 +399,19 @@ export function TextBlock({
               </div>
             </PopoverContent>
           </Popover>
+        )}
+        
+        {/* Apply to all button */}
+        {onApplyStyleToAll && index === 0 && (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="h-7 text-xs"
+            onClick={onApplyStyleToAll}
+            disabled={applyingStyle}
+          >
+            {language === "fr" ? "Appliquer à tous" : "Apply to all"}
+          </Button>
         )}
       </div>
     );

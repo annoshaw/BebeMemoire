@@ -650,6 +650,64 @@ export async function registerRoutes(
     }
   });
 
+  // Apply style to all pages in a book
+  app.post("/api/books/:bookId/apply-style", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const book = await storage.getBook(req.params.bookId);
+      
+      if (!book) {
+        return res.status(404).json({ message: "Livre non trouvé" });
+      }
+      if (book.userId !== userId) {
+        return res.status(403).json({ message: "Accès refusé" });
+      }
+
+      const { styleType, titleStyle, textStyle } = req.body;
+      
+      if (!styleType || (styleType !== 'title' && styleType !== 'description')) {
+        return res.status(400).json({ message: "Type de style invalide" });
+      }
+
+      // Get all pages for this book
+      const pages = await storage.getUserBookPages(req.params.bookId);
+      
+      // Update each page with the style
+      for (const page of pages) {
+        const currentCustomData = (page.customData as Record<string, any>) || {};
+        
+        let updatedCustomData;
+        if (styleType === 'title') {
+          updatedCustomData = {
+            ...currentCustomData,
+            titleStyle: titleStyle
+          };
+        } else {
+          // Apply description style to all text indices
+          const currentTextStyles = currentCustomData.textStyles || {};
+          const updatedTextStyles: Record<number, any> = {};
+          
+          // Apply the style to indices 0, 1, 2 to cover all possible text fields
+          for (let i = 0; i < 5; i++) {
+            updatedTextStyles[i] = textStyle;
+          }
+          
+          updatedCustomData = {
+            ...currentCustomData,
+            textStyles: updatedTextStyles
+          };
+        }
+        
+        await storage.updateUserBookPage(page.id, { customData: updatedCustomData });
+      }
+
+      res.json({ message: "Style appliqué avec succès", pagesUpdated: pages.length });
+    } catch (error) {
+      console.error("Apply style error:", error);
+      res.status(500).json({ message: "Erreur lors de l'application du style" });
+    }
+  });
+
   // BOOK ROUTES
 
   // Get all books for current user

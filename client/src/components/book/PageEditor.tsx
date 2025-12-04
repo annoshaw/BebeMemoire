@@ -1223,8 +1223,10 @@ export function PageEditor({
 
               {/* Debug: Show video status */}
               {process.env.NODE_ENV === 'development' && (
-                <div className="absolute bottom-2 left-2 text-[8px] bg-yellow-100 p-1 rounded z-20">
-                  Video: {videoUrl ? 'Yes' : 'No'} | MediaId: {videoMediaId ? 'Yes' : 'No'}
+                <div className="absolute bottom-2 left-2 text-[8px] bg-yellow-100 p-1 rounded z-20 max-w-[150px] break-all">
+                  URL: {videoUrl ? (videoUrl.startsWith('http') ? 'Valid' : 'Invalid') : 'None'}
+                  <br/>
+                  {videoUrl && videoUrl.substring(0, 30)}...
                 </div>
               )}
               

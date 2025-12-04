@@ -33,7 +33,7 @@ import {
   BirthInfoBlock, 
   MessageBlock 
 } from "./PageBlocks";
-import { CollageBlockNew } from "./CollageBlockNew";
+import { CollageBlockNew, type CollageStyle } from "./CollageBlockNew";
 import type { TemplatePage, UserBookPage } from "@shared/schema";
 import { toast } from "sonner";
 import { QRCodeSVG } from "qrcode.react";
@@ -98,6 +98,9 @@ export function PageEditor({
   );
   const [customData, setCustomData] = useState<Record<string, string>>(
     (userPage?.customData as Record<string, string>) || {}
+  );
+  const [collageStyle, setCollageStyle] = useState<CollageStyle>(
+    ((userPage?.customData as Record<string, string>)?.collageStyle as CollageStyle) || "grid"
   );
   const [isDirty, setIsDirty] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
@@ -336,6 +339,12 @@ export function PageEditor({
     setIsDirty(true);
   };
 
+  const handleCollageStyleChange = (style: CollageStyle) => {
+    setCollageStyle(style);
+    setCustomData({ ...customData, collageStyle: style });
+    setIsDirty(true);
+  };
+
   const prompts = language === "fr" 
     ? (templatePage?.promptsFr as string[]) || []
     : (templatePage?.promptsEn as string[]) || [];
@@ -396,6 +405,8 @@ export function PageEditor({
               onAdd={handlePhotoAdd}
               onRemove={handlePhotoRemove}
               language={language}
+              style={collageStyle}
+              onStyleChange={handleCollageStyleChange}
             />
             {hasVideo && (
               <VideoBlock
@@ -458,6 +469,8 @@ export function PageEditor({
               onAdd={handlePhotoAdd}
               onRemove={handlePhotoRemove}
               language={language}
+              style={collageStyle}
+              onStyleChange={handleCollageStyleChange}
             />
             {hasVideo && (
               <VideoBlock

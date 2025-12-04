@@ -1,11 +1,13 @@
 .collage {
   display: grid;
-  gap: 10px;
+  gap: 8px;
+  width: 100%;
 }
 
 .collage-item {
   overflow: hidden;
   border-radius: 8px;
+  position: relative;
 }
 
 .collage-item img {
@@ -14,60 +16,539 @@
   object-fit: cover;
 }
 
-/* Layouts selon le nombre de photos */
-.grid-1 {
+/* ===================== */
+/* STYLE: GRID (default) */
+/* ===================== */
+.style-grid.grid-1 {
   grid-template-columns: 1fr;
 }
-
-.grid-1 .collage-item {
+.style-grid.grid-1 .collage-item {
   aspect-ratio: 4 / 3;
 }
 
-.grid-2 {
+.style-grid.grid-2 {
   grid-template-columns: 1fr 1fr;
 }
-
-.grid-2 .collage-item {
+.style-grid.grid-2 .collage-item {
   aspect-ratio: 1 / 1;
 }
 
-.grid-3 {
+.style-grid.grid-3 {
   grid-template-columns: 1fr 1fr 1fr;
 }
-
-.grid-3 .collage-item {
+.style-grid.grid-3 .collage-item {
   aspect-ratio: 1 / 1;
 }
 
-.grid-4 {
+.style-grid.grid-4 {
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr 1fr;
 }
-
-.grid-4 .collage-item {
+.style-grid.grid-4 .collage-item {
   aspect-ratio: 1 / 1;
 }
 
-.grid-6 {
+.style-grid.grid-5 {
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: auto auto;
+}
+.style-grid.grid-5 .collage-item {
+  aspect-ratio: 1 / 1;
+}
+.style-grid.grid-5 .collage-item:nth-child(4),
+.style-grid.grid-5 .collage-item:nth-child(5) {
+  grid-column: span 1;
+}
+
+.style-grid.grid-6 {
   grid-template-columns: repeat(3, 1fr);
 }
-
-.grid-6 .collage-item {
+.style-grid.grid-6 .collage-item {
   aspect-ratio: 1 / 1;
 }
 
-.grid-9 {
+.style-grid.grid-7,
+.style-grid.grid-8,
+.style-grid.grid-9 {
   grid-template-columns: repeat(3, 1fr);
 }
-
-.grid-9 .collage-item {
+.style-grid.grid-7 .collage-item,
+.style-grid.grid-8 .collage-item,
+.style-grid.grid-9 .collage-item {
   aspect-ratio: 1 / 1;
 }
 
-.grid-15 {
+.style-grid.grid-10,
+.style-grid.grid-11,
+.style-grid.grid-12 {
+  grid-template-columns: repeat(4, 1fr);
+}
+.style-grid.grid-10 .collage-item,
+.style-grid.grid-11 .collage-item,
+.style-grid.grid-12 .collage-item {
+  aspect-ratio: 1 / 1;
+}
+
+.style-grid.grid-13,
+.style-grid.grid-14,
+.style-grid.grid-15 {
+  grid-template-columns: repeat(5, 1fr);
+}
+.style-grid.grid-13 .collage-item,
+.style-grid.grid-14 .collage-item,
+.style-grid.grid-15 .collage-item {
+  aspect-ratio: 1 / 1;
+}
+
+/* ===================== */
+/* STYLE: FEATURED       */
+/* Une grande image + petites */
+/* ===================== */
+.style-featured.grid-2 {
+  grid-template-columns: 2fr 1fr;
+}
+.style-featured.grid-2 .collage-item:first-child {
+  aspect-ratio: 3 / 4;
+}
+.style-featured.grid-2 .collage-item:nth-child(2) {
+  aspect-ratio: 3 / 4;
+}
+
+.style-featured.grid-3 {
+  grid-template-columns: 2fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+.style-featured.grid-3 .collage-item:first-child {
+  grid-row: span 2;
+  aspect-ratio: auto;
+  height: 100%;
+}
+.style-featured.grid-3 .collage-item:not(:first-child) {
+  aspect-ratio: 3 / 2;
+}
+
+.style-featured.grid-4 {
+  grid-template-columns: 2fr 1fr;
+  grid-template-rows: repeat(3, 1fr);
+}
+.style-featured.grid-4 .collage-item:first-child {
+  grid-row: span 3;
+  aspect-ratio: auto;
+  height: 100%;
+}
+.style-featured.grid-4 .collage-item:not(:first-child) {
+  aspect-ratio: 2 / 1;
+}
+
+.style-featured.grid-5 {
+  grid-template-columns: 2fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+.style-featured.grid-5 .collage-item:first-child {
+  grid-row: span 2;
+  aspect-ratio: auto;
+  height: 100%;
+}
+.style-featured.grid-5 .collage-item:not(:first-child) {
+  aspect-ratio: 1 / 1;
+}
+
+.style-featured.grid-6,
+.style-featured.grid-7,
+.style-featured.grid-8,
+.style-featured.grid-9 {
+  grid-template-columns: 2fr 1fr 1fr;
+  grid-template-rows: repeat(3, 1fr);
+}
+.style-featured.grid-6 .collage-item:first-child,
+.style-featured.grid-7 .collage-item:first-child,
+.style-featured.grid-8 .collage-item:first-child,
+.style-featured.grid-9 .collage-item:first-child {
+  grid-row: span 3;
+  aspect-ratio: auto;
+  height: 100%;
+}
+.style-featured.grid-6 .collage-item:not(:first-child),
+.style-featured.grid-7 .collage-item:not(:first-child),
+.style-featured.grid-8 .collage-item:not(:first-child),
+.style-featured.grid-9 .collage-item:not(:first-child) {
+  aspect-ratio: 1 / 1;
+}
+
+.style-featured.grid-10,
+.style-featured.grid-11,
+.style-featured.grid-12,
+.style-featured.grid-13,
+.style-featured.grid-14,
+.style-featured.grid-15 {
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  grid-template-rows: repeat(4, 1fr);
+}
+.style-featured.grid-10 .collage-item:first-child,
+.style-featured.grid-11 .collage-item:first-child,
+.style-featured.grid-12 .collage-item:first-child,
+.style-featured.grid-13 .collage-item:first-child,
+.style-featured.grid-14 .collage-item:first-child,
+.style-featured.grid-15 .collage-item:first-child {
+  grid-row: span 4;
+  aspect-ratio: auto;
+  height: 100%;
+}
+.style-featured.grid-10 .collage-item:not(:first-child),
+.style-featured.grid-11 .collage-item:not(:first-child),
+.style-featured.grid-12 .collage-item:not(:first-child),
+.style-featured.grid-13 .collage-item:not(:first-child),
+.style-featured.grid-14 .collage-item:not(:first-child),
+.style-featured.grid-15 .collage-item:not(:first-child) {
+  aspect-ratio: 1 / 1;
+}
+
+/* ===================== */
+/* STYLE: MOSAIC         */
+/* Disposition variée    */
+/* ===================== */
+.style-mosaic.grid-1 {
+  grid-template-columns: 1fr;
+}
+.style-mosaic.grid-1 .collage-item {
+  aspect-ratio: 16 / 9;
+}
+
+.style-mosaic.grid-2 {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+.style-mosaic.grid-2 .collage-item:first-child {
+  grid-column: span 2;
+  aspect-ratio: 16 / 9;
+}
+.style-mosaic.grid-2 .collage-item:nth-child(2) {
+  grid-column: span 2;
+  aspect-ratio: 16 / 9;
+}
+
+.style-mosaic.grid-3 {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 2fr 1fr;
+}
+.style-mosaic.grid-3 .collage-item:first-child {
+  grid-column: span 2;
+  aspect-ratio: 16 / 9;
+}
+.style-mosaic.grid-3 .collage-item:not(:first-child) {
+  aspect-ratio: 1 / 1;
+}
+
+.style-mosaic.grid-4 {
+  grid-template-columns: 2fr 1fr;
+  grid-template-rows: 1fr 1fr 1fr;
+}
+.style-mosaic.grid-4 .collage-item:first-child {
+  grid-row: span 2;
+  aspect-ratio: auto;
+  height: 100%;
+}
+.style-mosaic.grid-4 .collage-item:nth-child(2) {
+  aspect-ratio: 2 / 1;
+}
+.style-mosaic.grid-4 .collage-item:nth-child(3) {
+  aspect-ratio: 2 / 1;
+}
+.style-mosaic.grid-4 .collage-item:nth-child(4) {
+  grid-column: span 2;
+  aspect-ratio: 3 / 1;
+}
+
+.style-mosaic.grid-5 {
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+.style-mosaic.grid-5 .collage-item:first-child {
+  grid-column: span 2;
+  grid-row: span 2;
+  aspect-ratio: auto;
+  height: 100%;
+}
+.style-mosaic.grid-5 .collage-item:not(:first-child) {
+  aspect-ratio: 1 / 1;
+}
+
+.style-mosaic.grid-6 {
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: 2fr 1fr;
+}
+.style-mosaic.grid-6 .collage-item:first-child {
+  grid-column: span 2;
+  aspect-ratio: auto;
+  height: 100%;
+}
+.style-mosaic.grid-6 .collage-item:nth-child(2) {
+  grid-row: span 1;
+  aspect-ratio: auto;
+  height: 100%;
+}
+.style-mosaic.grid-6 .collage-item:nth-child(n+3) {
+  aspect-ratio: 1 / 1;
+}
+
+.style-mosaic.grid-7,
+.style-mosaic.grid-8,
+.style-mosaic.grid-9 {
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+}
+.style-mosaic.grid-7 .collage-item:first-child,
+.style-mosaic.grid-8 .collage-item:first-child,
+.style-mosaic.grid-9 .collage-item:first-child {
+  grid-column: span 2;
+  grid-row: span 2;
+  aspect-ratio: auto;
+  height: 100%;
+}
+.style-mosaic.grid-7 .collage-item:not(:first-child),
+.style-mosaic.grid-8 .collage-item:not(:first-child),
+.style-mosaic.grid-9 .collage-item:not(:first-child) {
+  aspect-ratio: 1 / 1;
+}
+
+.style-mosaic.grid-10,
+.style-mosaic.grid-11,
+.style-mosaic.grid-12 {
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+}
+.style-mosaic.grid-10 .collage-item:first-child,
+.style-mosaic.grid-11 .collage-item:first-child,
+.style-mosaic.grid-12 .collage-item:first-child {
+  grid-column: span 2;
+  grid-row: span 2;
+  aspect-ratio: auto;
+  height: 100%;
+}
+.style-mosaic.grid-10 .collage-item:not(:first-child),
+.style-mosaic.grid-11 .collage-item:not(:first-child),
+.style-mosaic.grid-12 .collage-item:not(:first-child) {
+  aspect-ratio: 1 / 1;
+}
+
+.style-mosaic.grid-13,
+.style-mosaic.grid-14,
+.style-mosaic.grid-15 {
+  grid-template-columns: repeat(5, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+}
+.style-mosaic.grid-13 .collage-item:first-child,
+.style-mosaic.grid-14 .collage-item:first-child,
+.style-mosaic.grid-15 .collage-item:first-child {
+  grid-column: span 2;
+  grid-row: span 2;
+  aspect-ratio: auto;
+  height: 100%;
+}
+.style-mosaic.grid-13 .collage-item:not(:first-child),
+.style-mosaic.grid-14 .collage-item:not(:first-child),
+.style-mosaic.grid-15 .collage-item:not(:first-child) {
+  aspect-ratio: 1 / 1;
+}
+
+/* ===================== */
+/* STYLE: STRIPS         */
+/* Bandes horizontales   */
+/* ===================== */
+.style-strips {
+  grid-template-columns: 1fr;
+  gap: 6px;
+}
+.style-strips .collage-item {
+  aspect-ratio: 16 / 5;
+}
+
+/* ===================== */
+/* STYLE: POLAROID       */
+/* Style Polaroid        */
+/* ===================== */
+.style-polaroid {
+  gap: 16px;
+  padding: 16px;
+  background: #f5f5f5;
+}
+.style-polaroid.grid-1 {
+  grid-template-columns: 1fr;
+  max-width: 300px;
+  margin: 0 auto;
+}
+.style-polaroid.grid-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+.style-polaroid.grid-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+.style-polaroid.grid-4 {
+  grid-template-columns: repeat(2, 1fr);
+}
+.style-polaroid.grid-5,
+.style-polaroid.grid-6 {
+  grid-template-columns: repeat(3, 1fr);
+}
+.style-polaroid.grid-7,
+.style-polaroid.grid-8,
+.style-polaroid.grid-9 {
+  grid-template-columns: repeat(3, 1fr);
+}
+.style-polaroid.grid-10,
+.style-polaroid.grid-11,
+.style-polaroid.grid-12 {
+  grid-template-columns: repeat(4, 1fr);
+}
+.style-polaroid.grid-13,
+.style-polaroid.grid-14,
+.style-polaroid.grid-15 {
   grid-template-columns: repeat(5, 1fr);
 }
 
-.grid-15 .collage-item {
+.style-polaroid .collage-item {
+  background: white;
+  padding: 8px 8px 24px 8px;
+  border-radius: 2px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  transform: rotate(var(--rotation, 0deg));
+}
+.style-polaroid .collage-item:nth-child(odd) {
+  --rotation: -2deg;
+}
+.style-polaroid .collage-item:nth-child(even) {
+  --rotation: 2deg;
+}
+.style-polaroid .collage-item:nth-child(3n) {
+  --rotation: -1deg;
+}
+.style-polaroid .collage-item img {
+  aspect-ratio: 1 / 1;
+  border-radius: 0;
+}
+
+/* ===================== */
+/* STYLE: SCRAPBOOK      */
+/* Style album créatif   */
+/* ===================== */
+.style-scrapbook {
+  gap: 12px;
+  padding: 20px;
+  background: linear-gradient(135deg, #fef9e7 0%, #fdf2e9 100%);
+  border-radius: 12px;
+}
+.style-scrapbook.grid-1 {
+  grid-template-columns: 1fr;
+}
+.style-scrapbook.grid-2 {
+  grid-template-columns: 1fr 1fr;
+}
+.style-scrapbook.grid-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+.style-scrapbook.grid-4 {
+  grid-template-columns: repeat(2, 1fr);
+}
+.style-scrapbook.grid-5,
+.style-scrapbook.grid-6 {
+  grid-template-columns: repeat(3, 1fr);
+}
+.style-scrapbook.grid-7,
+.style-scrapbook.grid-8,
+.style-scrapbook.grid-9 {
+  grid-template-columns: repeat(3, 1fr);
+}
+.style-scrapbook.grid-10,
+.style-scrapbook.grid-11,
+.style-scrapbook.grid-12 {
+  grid-template-columns: repeat(4, 1fr);
+}
+.style-scrapbook.grid-13,
+.style-scrapbook.grid-14,
+.style-scrapbook.grid-15 {
+  grid-template-columns: repeat(5, 1fr);
+}
+
+.style-scrapbook .collage-item {
+  background: white;
+  padding: 6px;
+  border: 3px solid white;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+  transform: rotate(var(--rotation, 0deg));
+}
+.style-scrapbook .collage-item:nth-child(1) { --rotation: -3deg; }
+.style-scrapbook .collage-item:nth-child(2) { --rotation: 2deg; }
+.style-scrapbook .collage-item:nth-child(3) { --rotation: -1deg; }
+.style-scrapbook .collage-item:nth-child(4) { --rotation: 3deg; }
+.style-scrapbook .collage-item:nth-child(5) { --rotation: -2deg; }
+.style-scrapbook .collage-item:nth-child(6) { --rotation: 1deg; }
+.style-scrapbook .collage-item:nth-child(7) { --rotation: -2deg; }
+.style-scrapbook .collage-item:nth-child(8) { --rotation: 2deg; }
+.style-scrapbook .collage-item img {
+  aspect-ratio: 1 / 1;
+}
+
+/* Fallback for grids without style prefix (backward compatibility) */
+.grid-1:not([class*="style-"]) {
+  grid-template-columns: 1fr;
+}
+.grid-1:not([class*="style-"]) .collage-item {
+  aspect-ratio: 4 / 3;
+}
+.grid-2:not([class*="style-"]) {
+  grid-template-columns: 1fr 1fr;
+}
+.grid-2:not([class*="style-"]) .collage-item {
+  aspect-ratio: 1 / 1;
+}
+.grid-3:not([class*="style-"]) {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+.grid-3:not([class*="style-"]) .collage-item {
+  aspect-ratio: 1 / 1;
+}
+.grid-4:not([class*="style-"]) {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+.grid-4:not([class*="style-"]) .collage-item {
+  aspect-ratio: 1 / 1;
+}
+.grid-5:not([class*="style-"]),
+.grid-6:not([class*="style-"]) {
+  grid-template-columns: repeat(3, 1fr);
+}
+.grid-5:not([class*="style-"]) .collage-item,
+.grid-6:not([class*="style-"]) .collage-item {
+  aspect-ratio: 1 / 1;
+}
+.grid-7:not([class*="style-"]),
+.grid-8:not([class*="style-"]),
+.grid-9:not([class*="style-"]) {
+  grid-template-columns: repeat(3, 1fr);
+}
+.grid-7:not([class*="style-"]) .collage-item,
+.grid-8:not([class*="style-"]) .collage-item,
+.grid-9:not([class*="style-"]) .collage-item {
+  aspect-ratio: 1 / 1;
+}
+.grid-10:not([class*="style-"]),
+.grid-11:not([class*="style-"]),
+.grid-12:not([class*="style-"]) {
+  grid-template-columns: repeat(4, 1fr);
+}
+.grid-10:not([class*="style-"]) .collage-item,
+.grid-11:not([class*="style-"]) .collage-item,
+.grid-12:not([class*="style-"]) .collage-item {
+  aspect-ratio: 1 / 1;
+}
+.grid-13:not([class*="style-"]),
+.grid-14:not([class*="style-"]),
+.grid-15:not([class*="style-"]) {
+  grid-template-columns: repeat(5, 1fr);
+}
+.grid-13:not([class*="style-"]) .collage-item,
+.grid-14:not([class*="style-"]) .collage-item,
+.grid-15:not([class*="style-"]) .collage-item {
   aspect-ratio: 1 / 1;
 }

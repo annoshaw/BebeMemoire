@@ -853,30 +853,26 @@ export function PageEditor({
             </div>
           </DialogHeader>
           
-          <div className="p-4 bg-stone-100 flex justify-center overflow-auto max-h-[calc(95vh-180px)]">
-            {/* Book page 8x11 - Absolute positioning for guaranteed layout */}
+          <div className="p-4 bg-stone-100 flex justify-center items-start overflow-auto max-h-[calc(95vh-180px)]">
+            {/* Book page 8x11 - Simple isolated preview */}
             <div 
               className="bg-white shadow-2xl border border-stone-300"
               style={{
                 width: '400px',
                 height: '550px',
-                position: 'relative'
+                display: 'flex',
+                flexDirection: 'column',
+                padding: '16px',
+                boxSizing: 'border-box'
               }}
               onMouseMove={handlePhotoMouseMove}
               onMouseUp={handlePhotoMouseUp}
               onMouseLeave={handlePhotoMouseUp}
             >
-              {/* Header - absolute top */}
+              {/* Header */}
               <div 
-                className="text-center border-b border-stone-200"
-                style={{ 
-                  position: 'absolute',
-                  top: '12px',
-                  left: '16px',
-                  right: '16px',
-                  height: '32px',
-                  paddingBottom: '4px'
-                }}
+                className="text-center border-b border-stone-200 pb-2"
+                style={{ flexShrink: 0 }}
               >
                 <h2 
                   className="font-bold text-stone-800"
@@ -889,20 +885,19 @@ export function PageEditor({
                   {language === "fr" ? templatePage?.titleFr : templatePage?.titleEn}
                 </h2>
                 {templatePage?.subtitleFr && (
-                  <p className="text-[9px] text-stone-500">
+                  <p className="text-[9px] text-stone-500 mt-0.5">
                     {language === "fr" ? templatePage?.subtitleFr : templatePage?.subtitleEn}
                   </p>
                 )}
               </div>
 
-              {/* Photos - absolute positioned to fill between header and footer */}
+              {/* Photos - Simple direct grid rendering */}
               <div 
                 style={{ 
-                  position: 'absolute',
-                  top: '52px',
-                  left: '16px',
-                  right: '16px',
-                  bottom: '80px',
+                  flex: 1,
+                  minHeight: 0,
+                  marginTop: '8px',
+                  marginBottom: '8px',
                   overflow: 'hidden'
                 }}
               >
@@ -912,22 +907,26 @@ export function PageEditor({
                       width: '100%',
                       height: '100%',
                       display: 'grid',
-                      gridTemplateColumns: photos.length === 1 ? '1fr' : photos.length === 2 ? '1fr 1fr' : 'repeat(auto-fit, minmax(100px, 1fr))',
-                      gridAutoRows: '1fr',
-                      gap: '6px',
-                      transform: blockPositions.photos 
-                        ? `translate(${blockPositions.photos.x}px, ${blockPositions.photos.y}px)` 
-                        : undefined
+                      gridTemplateColumns: photos.length === 1 ? '1fr' 
+                        : photos.length === 2 ? '1fr 1fr' 
+                        : photos.length <= 4 ? 'repeat(2, 1fr)'
+                        : photos.length <= 6 ? 'repeat(3, 1fr)'
+                        : 'repeat(4, 1fr)',
+                      gridTemplateRows: photos.length === 1 ? '1fr'
+                        : photos.length === 2 ? '1fr'
+                        : photos.length <= 4 ? 'repeat(2, 1fr)'
+                        : photos.length <= 6 ? 'repeat(2, 1fr)'
+                        : 'repeat(auto-fill, 1fr)',
+                      gap: '4px'
                     }}
                   >
                     {photos.map((photo, index) => (
                       <div 
                         key={index}
                         style={{
-                          width: '100%',
-                          height: '100%',
                           overflow: 'hidden',
-                          borderRadius: '6px'
+                          borderRadius: '4px',
+                          minHeight: 0
                         }}
                       >
                         <img 
@@ -936,14 +935,26 @@ export function PageEditor({
                           style={{
                             width: '100%',
                             height: '100%',
-                            objectFit: 'cover'
+                            objectFit: 'cover',
+                            display: 'block'
                           }}
                         />
                       </div>
                     ))}
                   </div>
                 ) : (templatePage?.maxPhotos || 0) > 0 ? (
-                  <div className="w-full h-full bg-stone-100 rounded border-2 border-dashed border-stone-300 flex items-center justify-center">
+                  <div 
+                    style={{ 
+                      width: '100%', 
+                      height: '100%', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      backgroundColor: '#f5f5f4',
+                      borderRadius: '8px',
+                      border: '2px dashed #d6d3d1'
+                    }}
+                  >
                     <div className="text-center text-stone-400">
                       <ImageIcon className="w-6 h-6 mx-auto mb-1" />
                       <span className="text-[10px]">
@@ -951,20 +962,13 @@ export function PageEditor({
                       </span>
                     </div>
                   </div>
-                ) : null}
+                ) : (
+                  <div style={{ width: '100%', height: '100%' }} />
+                )}
               </div>
 
-              {/* Footer - absolute bottom */}
-              <div 
-                style={{ 
-                  position: 'absolute',
-                  bottom: '12px',
-                  left: '16px',
-                  right: '16px',
-                  height: '60px',
-                  overflow: 'hidden'
-                }}
-              >
+              {/* Footer */}
+              <div style={{ flexShrink: 0, maxHeight: '80px', overflow: 'hidden' }}>
                 {/* Text Content */}
                 {textContent.length > 0 && textContent.some(t => t && t.trim()) && (
                   <div className="space-y-1 text-stone-700">

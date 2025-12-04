@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import Draggable from "react-draggable";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -126,22 +127,50 @@ export function PageEditor({
     (userPage?.customData as any)?.titleStyle || { fontFamily: "'Fraunces', serif", fontSize: 20 }
   );
 
+  // Block positions for free positioning (drag and drop)
+  type BlockPosition = { x: number; y: number };
+  const [blockPositions, setBlockPositions] = useState<{
+    photos?: BlockPosition;
+    texts?: Record<number, BlockPosition>;
+    video?: BlockPosition;
+  }>((userPage?.customData as any)?.blockPositions || {});
+  const [editMode, setEditMode] = useState(false);
+
   useEffect(() => {
     setTextContent((userPage?.textContent as string[]) || []);
     setPhotos((userPage?.photos as string[]) || []);
     setVideoUrl(userPage?.videoUrl || null);
     const data = (userPage?.customData as Record<string, any>) || {};
-    const { photoLayouts: layouts, textStyles: styles, titleStyle: tStyle, ...rest } = data;
+    const { photoLayouts: layouts, textStyles: styles, titleStyle: tStyle, blockPositions: positions, ...rest } = data;
     setCustomData(rest);
     setPhotoLayouts(layouts || {});
     setTextStyles(styles || {});
     setTitleStyle(tStyle || { fontFamily: "'Fraunces', serif", fontSize: 20 });
+    setBlockPositions(positions || {});
     setIsDirty(false);
   }, [userPage, pageNumber]);
 
   const handleTextStyleChange = (index: number, style: TextStyle) => {
     setTextStyles(prev => ({ ...prev, [index]: style }));
     setIsDirty(true);
+  };
+
+  // Block position handlers
+  const updateBlockPosition = (blockType: 'photos' | 'video', position: BlockPosition) => {
+    setBlockPositions(prev => ({ ...prev, [blockType]: position }));
+    setIsDirty(true);
+  };
+
+  const updateTextBlockPosition = (index: number, position: BlockPosition) => {
+    setBlockPositions(prev => ({
+      ...prev,
+      texts: { ...prev.texts, [index]: position }
+    }));
+    setIsDirty(true);
+  };
+
+  const getTextBlockPosition = (index: number): BlockPosition => {
+    return blockPositions.texts?.[index] || { x: 0, y: 0 };
   };
 
   const handleTitleStyleChange = (updates: Partial<TitleStyle>) => {
@@ -237,11 +266,12 @@ export function PageEditor({
     mutationFn: async () => {
       if (!userPage?.id) throw new Error("No user page found");
       
-      // Merge photoLayouts, textStyles, and titleStyle into customData for saving
+      // Merge photoLayouts, textStyles, titleStyle, and blockPositions into customData for saving
       const dataToSave = {
         ...customData,
         ...(Object.keys(photoLayouts).length > 0 ? { photoLayouts } : {}),
         ...(Object.keys(textStyles).length > 0 ? { textStyles } : {}),
+        ...(Object.keys(blockPositions).length > 0 ? { blockPositions } : {}),
         titleStyle
       };
       
@@ -760,6 +790,17 @@ export function PageEditor({
                     : "This is how the page will appear in your printed book (8×11 inches format)"}
                 </DialogDescription>
               </div>
+              <Button
+                variant={editMode ? "default" : "outline"}
+                size="sm"
+                onClick={() => setEditMode(!editMode)}
+                className="flex items-center gap-2"
+              >
+                <Move className="w-4 h-4" />
+                {editMode 
+                  ? (language === "fr" ? "Mode aperçu" : "Preview mode")
+                  : (language === "fr" ? "Repositionner" : "Reposition")}
+              </Button>
             </div>
           </DialogHeader>
           
@@ -796,15 +837,40 @@ export function PageEditor({
 
               {/* Photos Section - Using Collage Component */}
               {photos.length > 0 && (
-                <div className="mb-4">
-                  <CollageBlockNew
-                    photos={photos}
-                    maxPhotos={templatePage?.maxPhotos || 15}
-                    language={language}
-                    editable={false}
-                    style={collageStyle}
-                  />
-                </div>
+                editMode ? (
+                  <Draggable
+                    position={blockPositions.photos || { x: 0, y: 0 }}
+                    onStop={(e, data) => updateBlockPosition('photos', { x: data.x, y: data.y })}
+                    bounds="parent"
+                  >
+                    <div className="mb-4 cursor-move ring-2 ring-sage-400 ring-offset-2 rounded-lg">
+                      <CollageBlockNew
+                        photos={photos}
+                        maxPhotos={templatePage?.maxPhotos || 15}
+                        language={language}
+                        editable={false}
+                        style={collageStyle}
+                      />
+                    </div>
+                  </Draggable>
+                ) : (
+                  <div 
+                    className="mb-4"
+                    style={{ 
+                      transform: blockPositions.photos 
+                        ? `translate(${blockPositions.photos.x}px, ${blockPositions.photos.y}px)` 
+                        : undefined 
+                    }}
+                  >
+                    <CollageBlockNew
+                      photos={photos}
+                      maxPhotos={templatePage?.maxPhotos || 15}
+                      language={language}
+                      editable={false}
+                      style={collageStyle}
+                    />
+                  </div>
+                )
               )}
 
               {/* Empty photo placeholder */}
@@ -827,19 +893,36 @@ export function PageEditor({
                     const style = textStyles[idx] || { bgColor: "#FFFFFF", textColor: "#374151", fontFamily: "'Poppins', sans-serif", fontSize: 14 };
                     const hasCustomBg = style.bgColor !== "#FFFFFF";
                     const previewFontSize = Math.max((style.fontSize || 14) * 0.75, 10);
-                    return (
+                    const textPosition = getTextBlockPosition(idx);
+                    
+                    const textElement = (
                       <p 
-                        key={idx} 
-                        className={`leading-relaxed ${hasCustomBg ? 'p-3 rounded-lg' : ''}`} 
+                        className={`leading-relaxed ${hasCustomBg ? 'p-3 rounded-lg' : ''} ${editMode ? 'cursor-move ring-2 ring-sage-400 ring-offset-1 rounded' : ''}`} 
                         style={{ 
                           fontSize: `${previewFontSize}px`,
                           backgroundColor: hasCustomBg ? style.bgColor : 'transparent',
                           color: style.textColor,
-                          fontFamily: style.fontFamily || "'Poppins', sans-serif"
+                          fontFamily: style.fontFamily || "'Poppins', sans-serif",
+                          ...(!editMode && textPosition.x !== 0 || textPosition.y !== 0 
+                            ? { transform: `translate(${textPosition.x}px, ${textPosition.y}px)` } 
+                            : {})
                         }}
                       >
                         {text}
                       </p>
+                    );
+
+                    return editMode ? (
+                      <Draggable
+                        key={idx}
+                        position={textPosition}
+                        onStop={(e, data) => updateTextBlockPosition(idx, { x: data.x, y: data.y })}
+                        bounds="parent"
+                      >
+                        <div>{textElement}</div>
+                      </Draggable>
+                    ) : (
+                      <div key={idx}>{textElement}</div>
                     );
                   })}
                 </div>

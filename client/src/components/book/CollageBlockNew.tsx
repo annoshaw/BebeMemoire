@@ -4,8 +4,8 @@ import { Label } from "@/components/ui/label";
 import "./CollageBlock.css";
 
 interface CollageBlockNewProps {
-  images: string[];
-  maxImages?: number;
+  photos: string[];
+  maxPhotos?: number;
   onAdd?: (file: File) => void;
   onRemove?: (index: number) => void;
   language?: "fr" | "en";
@@ -23,8 +23,8 @@ const getGridClass = (count: number): string => {
 };
 
 export function CollageBlockNew({
-  images,
-  maxImages = 15,
+  photos,
+  maxPhotos = 15,
   onAdd,
   onRemove,
   language = "fr",
@@ -46,10 +46,10 @@ export function CollageBlockNew({
     }
   };
 
-  const canAddMore = images.length < maxImages;
-  const gridClass = getGridClass(images.length + (canAddMore && editable ? 1 : 0));
+  const canAddMore = photos.length < maxPhotos;
+  const gridClass = getGridClass(photos.length + (canAddMore && editable ? 1 : 0));
 
-  if (!images || images.length === 0) {
+  if (!photos || photos.length === 0) {
     if (!editable) {
       return (
         <p className="text-stone-400 text-sm">
@@ -72,7 +72,7 @@ export function CollageBlockNew({
             {language === "fr" ? "Ajouter des photos" : "Add photos"}
           </span>
           <span className="text-xs text-sage-400 mt-1">
-            {language === "fr" ? `Maximum ${maxImages} photos` : `Maximum ${maxImages} photos`}
+            {language === "fr" ? `Maximum ${maxPhotos} photos` : `Maximum ${maxPhotos} photos`}
           </span>
         </div>
         <input
@@ -92,13 +92,13 @@ export function CollageBlockNew({
       {editable && (
         <div className="flex items-center justify-between">
           <Label className="text-sm text-sage-700">
-            {language === "fr" ? "Photos" : "Photos"} ({images.length}/{maxImages})
+            {language === "fr" ? "Photos" : "Photos"} ({photos.length}/{maxPhotos})
           </Label>
         </div>
       )}
 
       <div className={`collage ${gridClass}`}>
-        {images.map((src, index) => (
+        {photos.map((src, index) => (
           <div key={index} className="collage-item relative group">
             <img src={src} alt={`Photo ${index + 1}`} />
             {editable && onRemove && (

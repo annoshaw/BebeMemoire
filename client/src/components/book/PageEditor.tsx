@@ -31,9 +31,9 @@ import {
   PhotoBlock, 
   VideoBlock, 
   BirthInfoBlock, 
-  CollageBlock, 
   MessageBlock 
 } from "./PageBlocks";
+import { CollageBlockNew } from "./CollageBlockNew";
 import type { TemplatePage, UserBookPage } from "@shared/schema";
 import { toast } from "sonner";
 import { QRCodeSVG } from "qrcode.react";
@@ -390,7 +390,7 @@ export function PageEditor({
                 applyingStyle={applyingStyle}
               />
             )}
-            <CollageBlock
+            <CollageBlockNew
               photos={photos}
               maxPhotos={maxPhotos}
               onAdd={handlePhotoAdd}
@@ -452,7 +452,7 @@ export function PageEditor({
               onApplyStyleToAll={() => applyStyleToAllPages('description')}
               applyingStyle={applyingStyle}
             />
-            <CollageBlock
+            <CollageBlockNew
               photos={photos}
               maxPhotos={maxPhotos}
               onAdd={handlePhotoAdd}

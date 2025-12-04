@@ -30,14 +30,16 @@ const FONT_CATEGORIES = {
     fonts: [
       { name: "Poppins", family: "'Poppins', sans-serif" },
       { name: "Raleway", family: "'Raleway', sans-serif" },
+      { name: "Quicksand", family: "'Quicksand', sans-serif" },
     ]
   },
   classique: {
     labelFr: "Classique",
     labelEn: "Classic",
     fonts: [
-      { name: "Times New Roman", family: "'Times New Roman', serif" },
       { name: "Georgia", family: "'Georgia', serif" },
+      { name: "Times New Roman", family: "'Times New Roman', serif" },
+      { name: "Playfair Display", family: "'Playfair Display', serif" },
     ]
   },
   feminin: {
@@ -46,6 +48,7 @@ const FONT_CATEGORIES = {
     fonts: [
       { name: "Dancing Script", family: "'Dancing Script', cursive" },
       { name: "Great Vibes", family: "'Great Vibes', cursive" },
+      { name: "Parisienne", family: "'Parisienne', cursive" },
     ]
   },
   masculin: {
@@ -54,6 +57,7 @@ const FONT_CATEGORIES = {
     fonts: [
       { name: "Roboto", family: "'Roboto', sans-serif" },
       { name: "Oswald", family: "'Oswald', sans-serif" },
+      { name: "Montserrat", family: "'Montserrat', sans-serif" },
     ]
   }
 };

@@ -41,11 +41,16 @@ import { toast } from "sonner";
 const TITLE_FONTS = [
   { name: "Fraunces", family: "'Fraunces', serif", category: "Classique" },
   { name: "Poppins", family: "'Poppins', sans-serif", category: "Tendance" },
+  { name: "Raleway", family: "'Raleway', sans-serif", category: "Tendance" },
+  { name: "Quicksand", family: "'Quicksand', sans-serif", category: "Tendance" },
+  { name: "Georgia", family: "'Georgia', serif", category: "Classique" },
+  { name: "Playfair Display", family: "'Playfair Display', serif", category: "Classique" },
   { name: "Dancing Script", family: "'Dancing Script', cursive", category: "Féminin" },
   { name: "Great Vibes", family: "'Great Vibes', cursive", category: "Féminin" },
+  { name: "Parisienne", family: "'Parisienne', cursive", category: "Féminin" },
+  { name: "Roboto", family: "'Roboto', sans-serif", category: "Masculin" },
   { name: "Oswald", family: "'Oswald', sans-serif", category: "Masculin" },
-  { name: "Georgia", family: "'Georgia', serif", category: "Classique" },
-  { name: "Raleway", family: "'Raleway', sans-serif", category: "Tendance" },
+  { name: "Montserrat", family: "'Montserrat', sans-serif", category: "Masculin" },
 ];
 
 const TITLE_SIZES = [

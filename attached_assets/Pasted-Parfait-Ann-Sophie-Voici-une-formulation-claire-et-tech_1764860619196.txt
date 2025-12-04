@@ -1,0 +1,39 @@
+Parfait Ann‑Sophie 🌸 ! Voici une formulation claire et technique que tu peux copier-coller dans ton projet Replit React (dans un fichier README.md, dans un commentaire de code, ou dans une note de collaboration) pour expliquer que tu veux ajouter des options de collage inspirées des albums imprimés comme ceux que tu as montrés :
+
+🧩 Fonctionnalité demandée : Options de collage visuel
+Je souhaite ajouter plusieurs types de collage photo dans le projet, inspirés des mises en page d’albums imprimés. Chaque collage doit être une grille ou une composition visuelle adaptée au nombre de photos et à l’ambiance de la page.
+
+🎯 Objectifs
+- Proposer des layouts prédéfinis selon le nombre de photos (1 à 15).
+- Offrir des variantes visuelles :
+- Collage carré
+- Bande horizontale
+- Grille asymétrique
+- Photo centrale + miniatures
+- Numéro du mois en grand + photos autour (comme dans l’exemple “5 Months” / “11 Months”)
+- Permettre à l’utilisateur de choisir le style de collage ou laisser le système le choisir automatiquement.
+
+🧱 Comportement attendu
+- 📦 Chaque collage est un composant React (CollageBlock) avec une variant en prop.
+- 🖼️ Le système propose automatiquement un layout selon le nombre de photos.
+- ✋ L’utilisateur peut aussi choisir manuellement parmi les options :
+- grid
+- strip
+- centered
+- monthHero
+- asymmetric
+- 🎨 Chaque layout respecte les styles globaux : marges, coins arrondis, fond doux.
+
+🧘‍♀️ Exemple technique
+<CollageBlock images={[...]} variant="monthHero" month={5} />
+
+
+
+📁 Fichiers concernés
+- src/components/CollageBlock.jsx → logique du collage
+- src/styles/CollageBlock.css → styles des variantes
+- src/utils/layoutPresets.js → logique de sélection automatique
+- src/components/MonthHero.jsx → composant spécial avec chiffre + illustrations
+
+👉 Cette fonctionnalité permettra aux parents de créer des pages visuellement riches, avec des collages qui évoquent les albums imprimés tout en gardant la flexibilité du numérique.
+Souhaites-tu que je te prépare un exemple de MonthHero.jsx avec un grand chiffre, une illustration (canard, ballon, etc.), et les photos autour ?

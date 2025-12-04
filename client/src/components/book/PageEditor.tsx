@@ -385,6 +385,31 @@ export function PageEditor({
   const maxPhotos = templatePage?.maxPhotos || 1;
   const hasVideo = templatePage?.hasVideo || false;
 
+  // Extract month number from page title or customData for monthHero style
+  const getMonthNumber = (): number | undefined => {
+    // First check customData for explicit month
+    if (customData?.month) {
+      return parseInt(customData.month, 10);
+    }
+    // Try to extract from page title
+    const title = language === "fr" ? templatePage?.titleFr : templatePage?.titleEn;
+    if (title) {
+      // Match patterns like "Mois 5", "5 mois", "Month 5", "5 months", etc.
+      const match = title.match(/(\d+)\s*(mois|month|months)/i) || title.match(/(mois|month|months?)\s*(\d+)/i);
+      if (match) {
+        const num = match[1]?.match(/\d+/) ? parseInt(match[1], 10) : parseInt(match[2], 10);
+        if (!isNaN(num)) return num;
+      }
+    }
+    // For monthly milestone pages, derive from page number if available
+    if ((pageType === "monthly_milestone" || pageType === "pregnancy_month") && pageNumber) {
+      return pageNumber;
+    }
+    return undefined;
+  };
+
+  const monthNumber = getMonthNumber();
+
   const renderPageContent = () => {
     switch (pageType) {
       case "birth_info":
@@ -406,6 +431,7 @@ export function PageEditor({
                 onStyleChange={handleCollageStyleChange}
                 onApplyToAll={() => applyStyleToAllPages('collage')}
                 applyingToAll={applyingStyle}
+                month={monthNumber}
               />
             )}
             {hasVideo && (
@@ -445,6 +471,7 @@ export function PageEditor({
               onStyleChange={handleCollageStyleChange}
               onApplyToAll={() => applyStyleToAllPages('collage')}
               applyingToAll={applyingStyle}
+              month={monthNumber}
             />
             {hasVideo && (
               <VideoBlock
@@ -476,6 +503,7 @@ export function PageEditor({
                 onStyleChange={handleCollageStyleChange}
                 onApplyToAll={() => applyStyleToAllPages('collage')}
                 applyingToAll={applyingStyle}
+                month={monthNumber}
               />
             )}
             {hasVideo && (
@@ -515,6 +543,7 @@ export function PageEditor({
               onStyleChange={handleCollageStyleChange}
               onApplyToAll={() => applyStyleToAllPages('collage')}
               applyingToAll={applyingStyle}
+              month={monthNumber}
             />
             {hasVideo && (
               <VideoBlock
@@ -576,6 +605,7 @@ export function PageEditor({
                 onStyleChange={handleCollageStyleChange}
                 onApplyToAll={() => applyStyleToAllPages('collage')}
                 applyingToAll={applyingStyle}
+                month={monthNumber}
               />
             )}
             {hasVideo && (
@@ -873,6 +903,7 @@ export function PageEditor({
                       language={language}
                       editable={false}
                       style={collageStyle}
+                      month={monthNumber}
                     />
                   </motion.div>
                 ) : (
@@ -890,6 +921,7 @@ export function PageEditor({
                       language={language}
                       editable={false}
                       style={collageStyle}
+                      month={monthNumber}
                     />
                   </div>
                 )

@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Camera, X, Grid3X3, LayoutGrid, Layers, GalleryHorizontal, Image, BookOpen, Loader2, Copy } from "lucide-react";
+import { Camera, X, Grid3X3, LayoutGrid, Layers, GalleryHorizontal, Image, BookOpen, Loader2, Copy, Hash } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import "./CollageBlock.css";
 
-export type CollageStyle = "grid" | "featured" | "mosaic" | "strips" | "polaroid" | "scrapbook";
+export type CollageStyle = "grid" | "featured" | "mosaic" | "strips" | "polaroid" | "scrapbook" | "monthHero";
 
 interface CollageBlockNewProps {
   photos: string[];
@@ -23,6 +23,7 @@ interface CollageBlockNewProps {
   onStyleChange?: (style: CollageStyle) => void;
   onApplyToAll?: () => void;
   applyingToAll?: boolean;
+  month?: number;
 }
 
 const STYLES: { id: CollageStyle; labelFr: string; labelEn: string; icon: React.ReactNode }[] = [
@@ -32,6 +33,7 @@ const STYLES: { id: CollageStyle; labelFr: string; labelEn: string; icon: React.
   { id: "strips", labelFr: "Bandes", labelEn: "Strips", icon: <GalleryHorizontal className="w-4 h-4" /> },
   { id: "polaroid", labelFr: "Polaroid", labelEn: "Polaroid", icon: <Image className="w-4 h-4" /> },
   { id: "scrapbook", labelFr: "Album créatif", labelEn: "Scrapbook", icon: <BookOpen className="w-4 h-4" /> },
+  { id: "monthHero", labelFr: "Mois vedette", labelEn: "Month Hero", icon: <Hash className="w-4 h-4" /> },
 ];
 
 const getGridClass = (count: number): string => {
@@ -64,6 +66,7 @@ export function CollageBlockNew({
   onStyleChange,
   onApplyToAll,
   applyingToAll = false,
+  month,
 }: CollageBlockNewProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [localStyle, setLocalStyle] = useState<CollageStyle>(style);
@@ -227,6 +230,12 @@ export function CollageBlockNew({
       )}
 
       <div className={`collage ${styleClass} ${gridClass}`}>
+        {currentStyle === "monthHero" && month !== undefined && (
+          <div className="month-hero-number">
+            <span className="month-digit">{month}</span>
+            <span className="month-label">{language === "fr" ? "mois" : "months"}</span>
+          </div>
+        )}
         {photos.map((src, index) => (
           <div key={index} className="collage-item relative group">
             <img src={src} alt={`Photo ${index + 1}`} />

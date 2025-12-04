@@ -488,6 +488,106 @@
   aspect-ratio: 1 / 1;
 }
 
+/* ===================== */
+/* STYLE: MONTH HERO     */
+/* Grand numéro du mois  */
+/* ===================== */
+.style-monthHero {
+  gap: 12px;
+  padding: 20px;
+  background: linear-gradient(135deg, #fdf6f0 0%, #fef9f3 100%);
+  border-radius: 16px;
+  position: relative;
+}
+
+.style-monthHero.grid-1 {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr;
+}
+.style-monthHero.grid-2 {
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr;
+}
+.style-monthHero.grid-3 {
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  grid-template-rows: 1fr;
+}
+.style-monthHero.grid-4,
+.style-monthHero.grid-5 {
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+.style-monthHero.grid-6,
+.style-monthHero.grid-7,
+.style-monthHero.grid-8 {
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+.style-monthHero.grid-9,
+.style-monthHero.grid-10,
+.style-monthHero.grid-11,
+.style-monthHero.grid-12 {
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+}
+.style-monthHero.grid-13,
+.style-monthHero.grid-14,
+.style-monthHero.grid-15 {
+  grid-template-columns: repeat(5, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+}
+
+.style-monthHero .month-hero-number {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #d4a574 0%, #c4956a 100%);
+  border-radius: 50%;
+  aspect-ratio: 1 / 1;
+  padding: 16px;
+  box-shadow: 0 4px 20px rgba(196, 149, 106, 0.3);
+}
+
+.style-monthHero .month-digit {
+  font-family: 'Fraunces', serif;
+  font-size: 4rem;
+  font-weight: 700;
+  color: white;
+  line-height: 1;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.style-monthHero .month-label {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: rgba(255,255,255,0.9);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-top: 4px;
+}
+
+.style-monthHero .collage-item {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.style-monthHero .collage-item img {
+  aspect-ratio: 1 / 1;
+}
+
+/* Responsive adjustments for month digit */
+@media (max-width: 640px) {
+  .style-monthHero .month-digit {
+    font-size: 2.5rem;
+  }
+  .style-monthHero .month-label {
+    font-size: 0.625rem;
+  }
+}
+
 /* Fallback for grids without style prefix (backward compatibility) */
 .grid-1:not([class*="style-"]) {
   grid-template-columns: 1fr;

@@ -334,7 +334,8 @@ export const userBookPages = pgTable("user_book_pages", {
   titleOverride: text("title_override"), // User can customize the title
   textContent: jsonb("text_content").default([]), // Array of text blocks with content
   photos: jsonb("photos").default([]), // Array of photo URLs
-  videoUrl: text("video_url"),
+  videoUrl: text("video_url"), // Legacy: kept for backward compatibility
+  videoMediaId: varchar("video_media_id"), // Reference to mediaFiles for persistent video URLs
   customData: jsonb("custom_data").default({}), // For special pages like birth_info
   isCompleted: boolean("is_completed").default(false),
   completedAt: timestamp("completed_at"),

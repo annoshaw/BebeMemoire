@@ -886,7 +886,10 @@ export function PageEditor({
               </div>
 
               {/* Photos - grows to fill all available space */}
-              <div className="flex-1 min-h-0 overflow-hidden">
+              <div 
+                className="overflow-hidden"
+                style={{ flex: '1 1 0', minHeight: 0 }}
+              >
                 {photos.length > 0 ? (
                   editMode ? (
                     <motion.div
@@ -898,7 +901,8 @@ export function PageEditor({
                         x: (blockPositions.photos?.x || 0) + info.offset.x, 
                         y: (blockPositions.photos?.y || 0) + info.offset.y 
                       })}
-                      className="cursor-move ring-2 ring-sage-400 ring-offset-2 rounded-lg h-full"
+                      className="cursor-move ring-2 ring-sage-400 ring-offset-2 rounded-lg"
+                      style={{ height: '100%' }}
                     >
                       <CollageBlockNew
                         photos={photos}
@@ -912,8 +916,8 @@ export function PageEditor({
                     </motion.div>
                   ) : (
                     <div 
-                      className="h-full"
                       style={{ 
+                        height: '100%',
                         transform: blockPositions.photos 
                           ? `translate(${blockPositions.photos.x}px, ${blockPositions.photos.y}px)` 
                           : undefined 

@@ -974,7 +974,10 @@ export function PageEditor({
                 const textSizePercent = hasText ? calculateAutoTextSize() : 25;
                 
                 const renderTextBlock = () => (
-                  <div className="space-y-1 text-stone-700 p-2 overflow-auto">
+                  <div 
+                    className="space-y-1 text-stone-700 p-2 overflow-auto"
+                    style={{ maxWidth: '100%', minWidth: 0 }}
+                  >
                     {textContent.map((text, idx) => {
                       if (!text || !text.trim()) return null;
                       const style = textStyles[idx] || { bgColor: "#FFFFFF", textColor: "#374151", fontFamily: "'Poppins', sans-serif", fontSize: 14 };
@@ -988,7 +991,11 @@ export function PageEditor({
                             fontSize: `${previewFontSize}px`,
                             backgroundColor: hasCustomBg ? style.bgColor : 'transparent',
                             color: style.textColor,
-                            fontFamily: style.fontFamily || "'Poppins', sans-serif"
+                            fontFamily: style.fontFamily || "'Poppins', sans-serif",
+                            wordBreak: 'break-word',
+                            overflowWrap: 'anywhere',
+                            hyphens: 'auto',
+                            maxWidth: '100%'
                           }}
                         >
                           {text}

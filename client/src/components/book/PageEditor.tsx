@@ -957,93 +957,18 @@ export function PageEditor({
                 )}
               </div>
 
-              {/* Photos - Simple direct grid rendering */}
-              <div 
-                style={{ 
-                  flex: 1,
-                  minHeight: 0,
-                  marginTop: '8px',
-                  marginBottom: '8px',
-                  overflow: 'hidden'
-                }}
-              >
-                {photos.length > 0 ? (
-                  <div 
-                    style={{ 
-                      width: '100%',
-                      height: '100%',
-                      display: 'grid',
-                      gridTemplateColumns: photos.length === 1 ? '1fr' 
-                        : photos.length === 2 ? '1fr 1fr' 
-                        : photos.length <= 4 ? 'repeat(2, 1fr)'
-                        : photos.length <= 6 ? 'repeat(3, 1fr)'
-                        : 'repeat(4, 1fr)',
-                      gridTemplateRows: photos.length === 1 ? '1fr'
-                        : photos.length === 2 ? '1fr'
-                        : photos.length <= 4 ? 'repeat(2, 1fr)'
-                        : photos.length <= 6 ? 'repeat(2, 1fr)'
-                        : 'repeat(auto-fill, 1fr)',
-                      gap: '4px'
-                    }}
-                  >
-                    {photos.map((photo, index) => (
-                      <div 
-                        key={index}
-                        style={{
-                          overflow: 'hidden',
-                          borderRadius: '4px',
-                          minHeight: 0
-                        }}
-                      >
-                        <img 
-                          src={photo} 
-                          alt={`Photo ${index + 1}`}
-                          style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover',
-                            display: 'block'
-                          }}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                ) : (templatePage?.maxPhotos || 0) > 0 ? (
-                  <div 
-                    style={{ 
-                      width: '100%', 
-                      height: '100%', 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center',
-                      backgroundColor: '#f5f5f4',
-                      borderRadius: '8px',
-                      border: '2px dashed #d6d3d1'
-                    }}
-                  >
-                    <div className="text-center text-stone-400">
-                      <ImageIcon className="w-6 h-6 mx-auto mb-1" />
-                      <span className="text-[10px]">
-                        {language === "fr" ? "Ajoutez des photos" : "Add photos"}
-                      </span>
-                    </div>
-                  </div>
-                ) : (
-                  <div style={{ width: '100%', height: '100%' }} />
-                )}
-              </div>
-
-              {/* Footer */}
-              <div style={{ flexShrink: 0, maxHeight: '100px', overflow: 'hidden' }}>
-                {/* Text Content - Show user text */}
-                {textContent.length > 0 && textContent.some(t => t && t.trim()) && (
-                  <div className="space-y-1 text-stone-700 mb-2">
+              {/* Dynamic Layout Body - Photos and Text based on textLayout.position */}
+              {(() => {
+                const hasText = textContent.length > 0 && textContent.some(t => t && t.trim());
+                const textSizePercent = textLayout.textSize || 25;
+                
+                const renderTextBlock = () => (
+                  <div className="space-y-1 text-stone-700 p-2 overflow-auto">
                     {textContent.map((text, idx) => {
                       if (!text || !text.trim()) return null;
                       const style = textStyles[idx] || { bgColor: "#FFFFFF", textColor: "#374151", fontFamily: "'Poppins', sans-serif", fontSize: 14 };
                       const hasCustomBg = style.bgColor !== "#FFFFFF";
                       const previewFontSize = Math.max((style.fontSize || 14) * 0.7, 9);
-
                       return (
                         <p 
                           key={idx}
@@ -1060,19 +985,125 @@ export function PageEditor({
                       );
                     })}
                   </div>
-                )}
+                );
 
+                const renderPhotosGrid = () => (
+                  photos.length > 0 ? (
+                    <div 
+                      style={{ 
+                        width: '100%',
+                        height: '100%',
+                        display: 'grid',
+                        gridTemplateColumns: photos.length === 1 ? '1fr' 
+                          : photos.length === 2 ? '1fr 1fr' 
+                          : photos.length <= 4 ? 'repeat(2, 1fr)'
+                          : photos.length <= 6 ? 'repeat(3, 1fr)'
+                          : 'repeat(4, 1fr)',
+                        gridAutoRows: '1fr',
+                        gap: '4px'
+                      }}
+                    >
+                      {photos.map((photo, index) => (
+                        <div key={index} style={{ overflow: 'hidden', borderRadius: '4px', minHeight: 0 }}>
+                          <img src={photo} alt={`Photo ${index + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (templatePage?.maxPhotos || 0) > 0 ? (
+                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f5f5f4', borderRadius: '8px', border: '2px dashed #d6d3d1' }}>
+                      <div className="text-center text-stone-400">
+                        <ImageIcon className="w-6 h-6 mx-auto mb-1" />
+                        <span className="text-[10px]">{language === "fr" ? "Ajoutez des photos" : "Add photos"}</span>
+                      </div>
+                    </div>
+                  ) : null
+                );
+
+                const layoutPosition = textLayout.position;
+
+                if (layoutPosition === 'top') {
+                  return (
+                    <div style={{ flex: 1, minHeight: 0, marginTop: '8px', marginBottom: '8px', display: 'grid', gridTemplateRows: hasText ? `${textSizePercent}% 1fr` : '1fr', gap: '8px', overflow: 'hidden' }}>
+                      {hasText && <div style={{ overflow: 'auto', borderBottom: '1px solid #e5e5e5' }}>{renderTextBlock()}</div>}
+                      <div style={{ minHeight: 0, overflow: 'hidden' }}>{renderPhotosGrid()}</div>
+                    </div>
+                  );
+                }
+
+                if (layoutPosition === 'bottom') {
+                  return (
+                    <div style={{ flex: 1, minHeight: 0, marginTop: '8px', marginBottom: '8px', display: 'grid', gridTemplateRows: hasText ? `1fr ${textSizePercent}%` : '1fr', gap: '8px', overflow: 'hidden' }}>
+                      <div style={{ minHeight: 0, overflow: 'hidden' }}>{renderPhotosGrid()}</div>
+                      {hasText && <div style={{ overflow: 'auto', borderTop: '1px solid #e5e5e5' }}>{renderTextBlock()}</div>}
+                    </div>
+                  );
+                }
+
+                if (layoutPosition === 'left') {
+                  return (
+                    <div style={{ flex: 1, minHeight: 0, marginTop: '8px', marginBottom: '8px', display: 'grid', gridTemplateColumns: hasText ? `${textSizePercent}% 1fr` : '1fr', gap: '8px', overflow: 'hidden' }}>
+                      {hasText && <div style={{ overflow: 'auto', borderRight: '1px solid #e5e5e5', paddingRight: '8px' }}>{renderTextBlock()}</div>}
+                      <div style={{ minHeight: 0, overflow: 'hidden' }}>{renderPhotosGrid()}</div>
+                    </div>
+                  );
+                }
+
+                if (layoutPosition === 'right') {
+                  return (
+                    <div style={{ flex: 1, minHeight: 0, marginTop: '8px', marginBottom: '8px', display: 'grid', gridTemplateColumns: hasText ? `1fr ${textSizePercent}%` : '1fr', gap: '8px', overflow: 'hidden' }}>
+                      <div style={{ minHeight: 0, overflow: 'hidden' }}>{renderPhotosGrid()}</div>
+                      {hasText && <div style={{ overflow: 'auto', borderLeft: '1px solid #e5e5e5', paddingLeft: '8px' }}>{renderTextBlock()}</div>}
+                    </div>
+                  );
+                }
+
+                if (layoutPosition === 'center') {
+                  return (
+                    <div style={{ flex: 1, minHeight: 0, marginTop: '8px', marginBottom: '8px', position: 'relative', overflow: 'hidden' }}>
+                      <div style={{ width: '100%', height: '100%' }}>{renderPhotosGrid()}</div>
+                      {hasText && (
+                        <div style={{ 
+                          position: 'absolute', 
+                          top: '50%', 
+                          left: '50%', 
+                          transform: 'translate(-50%, -50%)', 
+                          backgroundColor: 'rgba(255,255,255,0.95)', 
+                          padding: '12px', 
+                          borderRadius: '8px', 
+                          maxWidth: '70%', 
+                          maxHeight: '50%', 
+                          overflow: 'auto',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                        }}>
+                          {renderTextBlock()}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
+                // Default fallback (bottom)
+                return (
+                  <div style={{ flex: 1, minHeight: 0, marginTop: '8px', marginBottom: '8px', display: 'grid', gridTemplateRows: hasText ? '1fr 25%' : '1fr', gap: '8px', overflow: 'hidden' }}>
+                    <div style={{ minHeight: 0, overflow: 'hidden' }}>{renderPhotosGrid()}</div>
+                    {hasText && <div style={{ overflow: 'auto', borderTop: '1px solid #e5e5e5' }}>{renderTextBlock()}</div>}
+                  </div>
+                );
+              })()}
+
+              {/* Footer with custom data and page number */}
+              <div style={{ flexShrink: 0, paddingTop: '4px' }}>
                 {/* Custom Data (Birth Info) - Filter out internal fields */}
                 {(() => {
                   const displayData = Object.entries(customData).filter(
-                    ([key, value]) => value && key !== 'collageStyle' && key !== 'blockPositions'
+                    ([key, value]) => value && key !== 'collageStyle' && key !== 'blockPositions' && key !== 'textLayout'
                   );
                   return displayData.length > 0 ? (
-                    <div className="grid grid-cols-2 gap-2 text-center">
+                    <div className="grid grid-cols-2 gap-1 text-center mb-1">
                       {displayData.map(([key, value]) => (
-                        <div key={key} className="bg-stone-50 rounded p-1.5">
-                          <p className="text-[10px] text-stone-500">{key}</p>
-                          <p className="font-medium text-stone-800 text-xs">{value}</p>
+                        <div key={key} className="bg-stone-50 rounded p-1">
+                          <p className="text-[8px] text-stone-500">{key}</p>
+                          <p className="font-medium text-stone-800 text-[10px]">{value}</p>
                         </div>
                       ))}
                     </div>
@@ -1081,22 +1112,18 @@ export function PageEditor({
 
                 {/* Video with QR Code indicator in preview */}
                 {videoUrl && (
-                  <div className="p-2 bg-purple-50 rounded border border-purple-200">
-                    <div className="flex items-center justify-center gap-2">
-                      <div className="bg-white p-1 rounded shadow-sm">
+                  <div className="p-1 bg-purple-50 rounded border border-purple-200 mb-1">
+                    <div className="flex items-center justify-center gap-1">
+                      <div className="bg-white p-0.5 rounded shadow-sm">
                         {videoUrl.startsWith('data:') ? (
-                          <div className="w-6 h-6 bg-purple-100 rounded flex items-center justify-center">
-                            <Video className="w-3 h-3 text-purple-400" />
+                          <div className="w-4 h-4 bg-purple-100 rounded flex items-center justify-center">
+                            <Video className="w-2 h-2 text-purple-400" />
                           </div>
                         ) : (
-                          <QRCodeSVG 
-                            value={videoUrl}
-                            size={24}
-                            level="M"
-                          />
+                          <QRCodeSVG value={videoUrl} size={16} level="M" />
                         )}
                       </div>
-                      <span className="text-purple-700 font-medium text-[10px]">
+                      <span className="text-purple-700 font-medium text-[8px]">
                         {language === "fr" ? "Vidéo" : "Video"}
                       </span>
                     </div>
@@ -1104,8 +1131,8 @@ export function PageEditor({
                 )}
 
                 {/* Page number at bottom */}
-                <div className="text-center pt-2 border-t border-stone-100">
-                  <span className="text-xs text-stone-400">{pageNumber}</span>
+                <div className="text-center pt-1 border-t border-stone-100">
+                  <span className="text-[10px] text-stone-400">{pageNumber}</span>
                 </div>
               </div>
             </div>

@@ -157,8 +157,10 @@ export function PageEditor({
     photos?: BlockPosition;
     texts?: Record<number, BlockPosition>;
     video?: BlockPosition;
+    qr?: BlockPosition;
   }>((userPage?.customData as any)?.blockPositions || {});
   const [editMode, setEditMode] = useState(false);
+  const [isVideoUploading, setIsVideoUploading] = useState(false);
 
   useEffect(() => {
     setTextContent((userPage?.textContent as string[]) || []);
@@ -181,7 +183,7 @@ export function PageEditor({
   };
 
   // Block position handlers
-  const updateBlockPosition = (blockType: 'photos' | 'video', position: BlockPosition) => {
+  const updateBlockPosition = (blockType: 'photos' | 'video' | 'qr', position: BlockPosition) => {
     setBlockPositions(prev => ({ ...prev, [blockType]: position }));
     setIsDirty(true);
   };
@@ -378,13 +380,59 @@ export function PageEditor({
     setIsDirty(true);
   };
 
-  const handleVideoAdd = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setVideoUrl(e.target?.result as string);
+  const handleVideoAdd = async (file: File) => {
+    setIsVideoUploading(true);
+    try {
+      const response = await fetch('/api/media/upload-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          filename: file.name,
+          contentType: file.type,
+          size: file.size,
+          bookId,
+          pageId: userPage?.id,
+          mediaType: 'video'
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Erreur lors de la préparation de l\'upload');
+      }
+
+      const { mediaId, uploadUrl } = await response.json();
+
+      const uploadResponse = await fetch(uploadUrl, {
+        method: 'PUT',
+        headers: { 'Content-Type': file.type },
+        body: file
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error('Erreur lors du téléversement vers S3');
+      }
+
+      const confirmResponse = await fetch(`/api/media/${mediaId}/confirm`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+
+      if (!confirmResponse.ok) {
+        throw new Error('Erreur lors de la confirmation');
+      }
+
+      const { downloadUrl } = await confirmResponse.json();
+      setVideoUrl(downloadUrl);
       setIsDirty(true);
-    };
-    reader.readAsDataURL(file);
+      toast.success(language === 'fr' ? 'Vidéo téléversée!' : 'Video uploaded!');
+    } catch (error) {
+      console.error('Video upload error:', error);
+      toast.error(error instanceof Error ? error.message : 'Erreur de téléversement');
+    } finally {
+      setIsVideoUploading(false);
+    }
   };
 
   const handleVideoRemove = () => {
@@ -466,9 +514,9 @@ export function PageEditor({
               <VideoBlock
                 videoUrl={videoUrl}
                 onAdd={handleVideoAdd}
-                
                 onRemove={handleVideoRemove}
                 language={language}
+                isUploading={isVideoUploading}
               />
             )}
           </div>
@@ -506,9 +554,9 @@ export function PageEditor({
               <VideoBlock
                 videoUrl={videoUrl}
                 onAdd={handleVideoAdd}
-                
                 onRemove={handleVideoRemove}
                 language={language}
+                isUploading={isVideoUploading}
               />
             )}
           </div>
@@ -540,9 +588,9 @@ export function PageEditor({
               <VideoBlock
                 videoUrl={videoUrl}
                 onAdd={handleVideoAdd}
-                
                 onRemove={handleVideoRemove}
                 language={language}
+                isUploading={isVideoUploading}
               />
             )}
           </div>
@@ -580,9 +628,9 @@ export function PageEditor({
               <VideoBlock
                 videoUrl={videoUrl}
                 onAdd={handleVideoAdd}
-                
                 onRemove={handleVideoRemove}
                 language={language}
+                isUploading={isVideoUploading}
               />
             )}
           </div>
@@ -644,9 +692,9 @@ export function PageEditor({
               <VideoBlock
                 videoUrl={videoUrl}
                 onAdd={handleVideoAdd}
-                
                 onRemove={handleVideoRemove}
                 language={language}
+                isUploading={isVideoUploading}
               />
             )}
           </div>
@@ -1167,12 +1215,12 @@ export function PageEditor({
               </div>
 
               {/* Draggable QR Code - Positioned absolutely within the 8x11 page */}
-              {videoUrl && !videoUrl.startsWith('data:') && (
+              {videoUrl && (videoUrl.startsWith('https://') || videoUrl.startsWith('http://')) && (
                 <Draggable
                   bounds="parent"
-                  defaultPosition={blockPositions.video || { x: 280, y: 400 }}
+                  defaultPosition={blockPositions.qr || { x: 280, y: 400 }}
                   onStop={(e, data) => {
-                    updateBlockPosition('video', { x: data.x, y: data.y });
+                    updateBlockPosition('qr', { x: data.x, y: data.y });
                   }}
                 >
                   <div 
@@ -1185,35 +1233,16 @@ export function PageEditor({
                     <div className="bg-white p-2 rounded-lg shadow-lg border-2 border-purple-300 hover:border-purple-500 transition-colors">
                       <QRCodeSVG 
                         value={videoUrl} 
-                        size={80} 
+                        size={100} 
                         level="H"
                         includeMargin={true}
                       />
                       <p className="text-center text-[8px] text-purple-600 mt-1 font-medium">
-                        {language === "fr" ? "Scannez" : "Scan"}
+                        {language === "fr" ? "Scannez pour la vidéo" : "Scan for video"}
                       </p>
                     </div>
                   </div>
                 </Draggable>
-              )}
-
-              {/* Message for local video (no QR) */}
-              {videoUrl && videoUrl.startsWith('data:') && (
-                <div 
-                  style={{ 
-                    position: 'absolute',
-                    bottom: '40px',
-                    right: '10px',
-                    zIndex: 10
-                  }}
-                >
-                  <div className="bg-purple-100 p-2 rounded-lg border border-purple-200">
-                    <Video className="w-6 h-6 text-purple-400 mx-auto" />
-                    <p className="text-[7px] text-purple-500 text-center mt-1">
-                      {language === "fr" ? "Ajoutez un lien" : "Add a link"}
-                    </p>
-                  </div>
-                </div>
               )}
             </div>
           </div>

@@ -500,6 +500,20 @@ export async function registerRoutes(
 
       const userPages = await storage.getUserBookPages(req.params.bookId);
       
+      // Generate fresh video URLs for pages with videoMediaId
+      const pagesWithFreshUrls = await Promise.all(
+        userPages.map(async (page) => {
+          if (page.videoMediaId) {
+            const mediaFile = await storage.getMediaFile(page.videoMediaId);
+            if (mediaFile && mediaFile.status === 'uploaded') {
+              const freshVideoUrl = await generateDownloadUrl(mediaFile.s3Key, 3600);
+              return { ...page, videoUrl: freshVideoUrl };
+            }
+          }
+          return page;
+        })
+      );
+      
       // If prebuilt book, get template info
       let template = null;
       let templateParts = null;
@@ -514,7 +528,7 @@ export async function registerRoutes(
       }
 
       res.json({ 
-        pages: userPages,
+        pages: pagesWithFreshUrls,
         template,
         templateParts,
         templatePages,
@@ -566,12 +580,13 @@ export async function registerRoutes(
         return res.status(403).json({ message: "Accès refusé" });
       }
 
-      const { textContent, photos, videoUrl, customData, titleOverride } = req.body;
+      const { textContent, photos, videoUrl, videoMediaId, customData, titleOverride } = req.body;
       
       const updateData: any = {};
       if (textContent !== undefined) updateData.textContent = textContent;
       if (photos !== undefined) updateData.photos = photos;
       if (videoUrl !== undefined) updateData.videoUrl = videoUrl;
+      if (videoMediaId !== undefined) updateData.videoMediaId = videoMediaId;
       if (customData !== undefined) updateData.customData = customData;
       if (titleOverride !== undefined) updateData.titleOverride = titleOverride;
 
@@ -1358,11 +1373,19 @@ export async function registerRoutes(
 
       const updated = await storage.updateMediaFileStatus(mediaId, "uploaded", new Date());
 
+      // If media is a video and has a page associated, update the page with the mediaId
+      if (mediaFile.mediaType === 'video' && mediaFile.pageId) {
+        await storage.updateUserBookPage(mediaFile.pageId, {
+          videoMediaId: mediaId
+        });
+      }
+
       // Generate download URL for immediate use
       const downloadUrl = await generateDownloadUrl(mediaFile.s3Key, 3600);
 
       res.json({
         media: updated,
+        mediaId, // Return mediaId so frontend can store it
         downloadUrl
       });
     } catch (error) {

@@ -968,58 +968,51 @@ export function PageEditor({
               </div>
 
               {/* Footer */}
-              <div style={{ flexShrink: 0, maxHeight: '80px', overflow: 'hidden' }}>
-                {/* Text Content */}
-                {textContent.length > 0 && textContent.some(t => t && t.trim()) && (
-                  <div className="space-y-1 text-stone-700">
-                  {textContent.map((text, idx) => {
-                    if (!text || !text.trim()) return null;
-                    const style = textStyles[idx] || { bgColor: "#FFFFFF", textColor: "#374151", fontFamily: "'Poppins', sans-serif", fontSize: 14 };
-                    const hasCustomBg = style.bgColor !== "#FFFFFF";
-                    const previewFontSize = Math.max((style.fontSize || 14) * 0.75, 10);
-                    const textPosition = getTextBlockPosition(idx);
+              <div style={{ flexShrink: 0, maxHeight: '100px', overflow: 'hidden' }}>
+                {/* Text Content - Show user text or prompts as placeholder */}
+                {(() => {
+                  const hasUserText = textContent.length > 0 && textContent.some(t => t && t.trim());
+                  const prompts = language === "fr" ? templatePage?.promptsFr : templatePage?.promptsEn;
+                  
+                  if (hasUserText) {
+                    return (
+                      <div className="space-y-1 text-stone-700">
+                        {textContent.map((text, idx) => {
+                          if (!text || !text.trim()) return null;
+                          const style = textStyles[idx] || { bgColor: "#FFFFFF", textColor: "#374151", fontFamily: "'Poppins', sans-serif", fontSize: 14 };
+                          const hasCustomBg = style.bgColor !== "#FFFFFF";
+                          const previewFontSize = Math.max((style.fontSize || 14) * 0.7, 9);
 
-                    return editMode ? (
-                      <motion.p
-                        key={idx}
-                        drag
-                        dragMomentum={false}
-                        dragElastic={0}
-                        initial={textPosition}
-                        onDragEnd={(e, info) => updateTextBlockPosition(idx, { 
-                          x: textPosition.x + info.offset.x, 
-                          y: textPosition.y + info.offset.y 
+                          return (
+                            <p 
+                              key={idx}
+                              className={`leading-snug ${hasCustomBg ? 'px-2 py-1 rounded' : ''}`} 
+                              style={{ 
+                                fontSize: `${previewFontSize}px`,
+                                backgroundColor: hasCustomBg ? style.bgColor : 'transparent',
+                                color: style.textColor,
+                                fontFamily: style.fontFamily || "'Poppins', sans-serif"
+                              }}
+                            >
+                              {text}
+                            </p>
+                          );
                         })}
-                        className={`leading-relaxed cursor-move ring-2 ring-sage-400 ring-offset-1 rounded ${hasCustomBg ? 'p-3 rounded-lg' : ''}`}
-                        style={{ 
-                          fontSize: `${previewFontSize}px`,
-                          backgroundColor: hasCustomBg ? style.bgColor : 'transparent',
-                          color: style.textColor,
-                          fontFamily: style.fontFamily || "'Poppins', sans-serif"
-                        }}
-                      >
-                        {text}
-                      </motion.p>
-                    ) : (
-                      <p 
-                        key={idx}
-                        className={`leading-relaxed ${hasCustomBg ? 'p-3 rounded-lg' : ''}`} 
-                        style={{ 
-                          fontSize: `${previewFontSize}px`,
-                          backgroundColor: hasCustomBg ? style.bgColor : 'transparent',
-                          color: style.textColor,
-                          fontFamily: style.fontFamily || "'Poppins', sans-serif",
-                          transform: textPosition.x !== 0 || textPosition.y !== 0 
-                            ? `translate(${textPosition.x}px, ${textPosition.y}px)` 
-                            : undefined
-                        }}
-                      >
-                        {text}
-                      </p>
+                      </div>
                     );
-                  })}
-                  </div>
-                )}
+                  } else if (prompts && Array.isArray(prompts) && prompts.length > 0) {
+                    return (
+                      <div className="space-y-0.5 text-stone-400 italic">
+                        {prompts.slice(0, 2).map((prompt: string, idx: number) => (
+                          <p key={idx} className="text-[9px] leading-tight truncate">
+                            {prompt}
+                          </p>
+                        ))}
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
 
                 {/* Custom Data (Birth Info) - Filter out internal fields */}
                 {(() => {

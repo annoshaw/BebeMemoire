@@ -116,6 +116,9 @@ export function PageEditor({
   const [videoUrl, setVideoUrl] = useState<string | null>(
     userPage?.videoUrl || null
   );
+  const [videoMediaId, setVideoMediaId] = useState<string | null>(
+    (userPage as any)?.videoMediaId || null
+  );
   const [customData, setCustomData] = useState<Record<string, string>>(
     (userPage?.customData as Record<string, string>) || {}
   );
@@ -166,6 +169,7 @@ export function PageEditor({
     setTextContent((userPage?.textContent as string[]) || []);
     setPhotos((userPage?.photos as string[]) || []);
     setVideoUrl(userPage?.videoUrl || null);
+    setVideoMediaId((userPage as any)?.videoMediaId || null);
     const data = (userPage?.customData as Record<string, any>) || {};
     const { photoLayouts: layouts, textStyles: styles, titleStyle: tStyle, blockPositions: positions, textLayout: tLayout, ...rest } = data;
     setCustomData(rest);
@@ -313,6 +317,7 @@ export function PageEditor({
           textContent,
           photos,
           videoUrl,
+          videoMediaId,
           customData: dataToSave,
         }),
       });
@@ -423,8 +428,9 @@ export function PageEditor({
         throw new Error('Erreur lors de la confirmation');
       }
 
-      const { downloadUrl } = await confirmResponse.json();
+      const { downloadUrl, mediaId: confirmedMediaId } = await confirmResponse.json();
       setVideoUrl(downloadUrl);
+      setVideoMediaId(confirmedMediaId);
       setIsDirty(true);
       toast.success(language === 'fr' ? 'Vidéo téléversée!' : 'Video uploaded!');
     } catch (error) {
@@ -437,6 +443,7 @@ export function PageEditor({
 
   const handleVideoRemove = () => {
     setVideoUrl(null);
+    setVideoMediaId(null);
     setIsDirty(true);
   };
 

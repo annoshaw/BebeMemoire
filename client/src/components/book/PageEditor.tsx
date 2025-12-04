@@ -883,7 +883,7 @@ export function PageEditor({
                 )}
               </div>
 
-              {/* Photos Section - Using Collage Component */}
+              {/* Photos Section - Using Collage Component with full-height for 8x11 */}
               {photos.length > 0 && (
                 editMode ? (
                   <motion.div
@@ -895,7 +895,7 @@ export function PageEditor({
                       x: (blockPositions.photos?.x || 0) + info.offset.x, 
                       y: (blockPositions.photos?.y || 0) + info.offset.y 
                     })}
-                    className="mb-4 cursor-move ring-2 ring-sage-400 ring-offset-2 rounded-lg"
+                    className="flex-1 min-h-0 cursor-move ring-2 ring-sage-400 ring-offset-2 rounded-lg"
                   >
                     <CollageBlockNew
                       photos={photos}
@@ -904,11 +904,12 @@ export function PageEditor({
                       editable={false}
                       style={collageStyle}
                       month={monthNumber}
+                      fullHeight
                     />
                   </motion.div>
                 ) : (
                   <div 
-                    className="mb-4"
+                    className="flex-1 min-h-0"
                     style={{ 
                       transform: blockPositions.photos 
                         ? `translate(${blockPositions.photos.x}px, ${blockPositions.photos.y}px)` 
@@ -922,6 +923,7 @@ export function PageEditor({
                       editable={false}
                       style={collageStyle}
                       month={monthNumber}
+                      fullHeight
                     />
                   </div>
                 )
@@ -929,7 +931,7 @@ export function PageEditor({
 
               {/* Empty photo placeholder */}
               {photos.length === 0 && (templatePage?.maxPhotos || 0) > 0 && (
-                <div className="mb-4 aspect-[4/3] max-h-32 bg-stone-100 rounded border-2 border-dashed border-stone-300 flex items-center justify-center">
+                <div className="flex-1 min-h-0 bg-stone-100 rounded border-2 border-dashed border-stone-300 flex items-center justify-center">
                   <div className="text-center text-stone-400">
                     <ImageIcon className="w-8 h-8 mx-auto mb-1" />
                     <span className="text-xs">
@@ -939,9 +941,9 @@ export function PageEditor({
                 </div>
               )}
 
-              {/* Text Content - Only show user's text with custom styles */}
+              {/* Text Content - Only show user's text with custom styles (shrink to fit) */}
               {textContent.length > 0 && textContent.some(t => t && t.trim()) && (
-                <div className="space-y-3 text-stone-700">
+                <div className="space-y-2 text-stone-700 mt-3 flex-shrink-0">
                   {textContent.map((text, idx) => {
                     if (!text || !text.trim()) return null;
                     const style = textStyles[idx] || { bgColor: "#FFFFFF", textColor: "#374151", fontFamily: "'Poppins', sans-serif", fontSize: 14 };

@@ -24,6 +24,7 @@ interface CollageBlockNewProps {
   onApplyToAll?: () => void;
   applyingToAll?: boolean;
   month?: number;
+  fullHeight?: boolean;
 }
 
 const STYLES: { id: CollageStyle; labelFr: string; labelEn: string; icon: React.ReactNode }[] = [
@@ -68,6 +69,7 @@ export function CollageBlockNew({
   onApplyToAll,
   applyingToAll = false,
   month,
+  fullHeight = false,
 }: CollageBlockNewProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [localStyle, setLocalStyle] = useState<CollageStyle>(style);
@@ -178,10 +180,12 @@ export function CollageBlockNew({
     );
   }
 
+  const containerClass = fullHeight ? "collage-block-new full-height" : "collage-block-new space-y-3";
+
   return (
-    <div className="space-y-3">
+    <div className={containerClass}>
       {editable && (
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-3">
           <Label className="text-sm text-sage-700">
             {language === "fr" ? "Photos" : "Photos"} ({photos.length}/{maxPhotos})
           </Label>

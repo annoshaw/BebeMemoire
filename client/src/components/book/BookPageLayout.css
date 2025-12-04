@@ -1,0 +1,263 @@
+/* BookPageLayout - 8x11 inch print format */
+
+.book-page-layout {
+  aspect-ratio: 8 / 11;
+  width: 100%;
+  max-width: 880px;
+  margin: 0 auto;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  box-sizing: border-box;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Preview container for scaling */
+.book-page-preview-container {
+  width: 100%;
+  margin: 0 auto;
+}
+
+.book-page-preview-container .book-page-layout {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e7e5e4;
+}
+
+/* Header section */
+.book-page-header {
+  text-align: center;
+  margin-bottom: 16px;
+  flex-shrink: 0;
+}
+
+.book-page-header h1 {
+  margin: 0;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.book-page-subtitle {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: #78716c;
+  font-family: 'DM Sans', sans-serif;
+}
+
+/* Text zone */
+.book-page-text-zone {
+  flex-shrink: 0;
+  padding: 12px;
+}
+
+.layout-text-top .book-page-text-zone {
+  margin-bottom: 12px;
+}
+
+.layout-text-bottom .book-page-text-zone {
+  margin-top: 12px;
+}
+
+.book-page-text {
+  margin: 0;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.book-page-text.has-bg {
+  padding: 8px 12px;
+  border-radius: 6px;
+}
+
+.book-page-text + .book-page-text {
+  margin-top: 8px;
+}
+
+/* Photo zone - takes remaining space */
+.book-page-photo-zone {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.book-page-photo-zone .collage-block-new {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+}
+
+.book-page-photo-zone .collage-container {
+  height: 100%;
+}
+
+.book-page-photo-zone .photo-grid {
+  height: 100%;
+}
+
+/* Side layout (left/right text placement) */
+.book-page-side-layout {
+  display: grid;
+  gap: 16px;
+  flex: 1;
+  min-height: 0;
+}
+
+.layout-text-left .book-page-side-layout {
+  grid-template-columns: minmax(120px, 30%) 1fr;
+}
+
+.layout-text-right .book-page-side-layout {
+  grid-template-columns: 1fr minmax(120px, 30%);
+}
+
+.book-page-side-layout .book-page-text-zone {
+  margin: 0;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.book-page-side-layout .book-page-photo-zone {
+  min-height: 0;
+}
+
+/* Footer/page number */
+.book-page-footer {
+  margin-top: auto;
+  padding-top: 12px;
+  text-align: center;
+  font-size: 11px;
+  color: #a8a29e;
+  flex-shrink: 0;
+}
+
+/* Layout variations */
+.layout-text-none .book-page-photo-zone {
+  flex: 1;
+}
+
+/* Ensure collage fills available space */
+.book-page-photo-zone .photo-grid {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  height: 100%;
+}
+
+.book-page-photo-zone .photo-grid img,
+.book-page-photo-zone .photo-grid .photo-slot {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+/* Collage style overrides for full-height behavior */
+.book-page-photo-zone .collage-grid-1 { grid-template-rows: 1fr; }
+.book-page-photo-zone .collage-grid-2 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr; }
+.book-page-photo-zone .collage-grid-3 { grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr; }
+.book-page-photo-zone .collage-grid-4 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+.book-page-photo-zone .collage-grid-5 { grid-template-columns: repeat(3, 1fr); grid-template-rows: 1fr 1fr; }
+.book-page-photo-zone .collage-grid-6 { grid-template-columns: repeat(3, 1fr); grid-template-rows: 1fr 1fr; }
+
+/* Featured layout */
+.book-page-photo-zone .collage-featured {
+  grid-template-columns: 2fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  height: 100%;
+}
+
+.book-page-photo-zone .collage-featured .featured-main {
+  grid-row: span 2;
+  height: 100%;
+}
+
+/* Mosaic layout */
+.book-page-photo-zone .collage-mosaic {
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr 1fr;
+  height: 100%;
+}
+
+/* Strips layouts */
+.book-page-photo-zone .collage-strips {
+  grid-template-columns: 1fr;
+  height: 100%;
+}
+
+.book-page-photo-zone .collage-strips-vertical {
+  grid-template-rows: 1fr;
+  height: 100%;
+}
+
+/* Polaroid layout */
+.book-page-photo-zone .collage-polaroid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  height: 100%;
+  padding: 16px;
+}
+
+/* Scrapbook layout */
+.book-page-photo-zone .collage-scrapbook {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  height: 100%;
+  padding: 12px;
+}
+
+/* Month hero layout */
+.book-page-photo-zone .collage-month-hero {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 8px;
+  height: 100%;
+}
+
+/* Responsive behavior */
+@media (max-width: 600px) {
+  .book-page-layout {
+    padding: 16px;
+  }
+  
+  .book-page-header h1 {
+    font-size: 16px !important;
+  }
+  
+  .book-page-text {
+    font-size: 11px !important;
+  }
+  
+  .layout-text-left .book-page-side-layout,
+  .layout-text-right .book-page-side-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+}
+
+/* Print-specific styles */
+@media print {
+  .book-page-layout {
+    width: 8in;
+    height: 11in;
+    max-width: none;
+    padding: 0.5in;
+    box-shadow: none;
+    border: none;
+    page-break-after: always;
+  }
+  
+  .book-page-preview-container {
+    max-width: none;
+  }
+}

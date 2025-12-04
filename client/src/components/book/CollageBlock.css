@@ -702,3 +702,84 @@
 .grid-15:not([class*="style-"]) .collage-item {
   aspect-ratio: 1 / 1;
 }
+
+/* ===================== */
+/* FULL HEIGHT MODE      */
+/* For 8x11 page layouts */
+/* ===================== */
+.collage-block-new {
+  display: flex;
+  flex-direction: column;
+}
+
+.collage-block-new.full-height {
+  height: 100%;
+}
+
+.collage-block-new.full-height .collage {
+  flex: 1;
+  height: 100%;
+}
+
+.collage-block-new.full-height .collage-item {
+  aspect-ratio: unset;
+  height: 100%;
+}
+
+/* Grid fill for full-height mode */
+.full-height .style-grid.grid-1 { grid-template-rows: 1fr; }
+.full-height .style-grid.grid-2 { grid-template-rows: 1fr; }
+.full-height .style-grid.grid-3 { grid-template-rows: 1fr; }
+.full-height .style-grid.grid-4 { grid-template-rows: 1fr 1fr; }
+.full-height .style-grid.grid-5 { grid-template-rows: 1fr 1fr; }
+.full-height .style-grid.grid-6 { grid-template-rows: 1fr 1fr; }
+.full-height .style-grid.grid-7,
+.full-height .style-grid.grid-8,
+.full-height .style-grid.grid-9 { grid-template-rows: 1fr 1fr 1fr; }
+.full-height .style-grid.grid-10,
+.full-height .style-grid.grid-11,
+.full-height .style-grid.grid-12 { grid-template-rows: 1fr 1fr 1fr; }
+.full-height .style-grid.grid-13,
+.full-height .style-grid.grid-14,
+.full-height .style-grid.grid-15 { grid-template-rows: 1fr 1fr 1fr; }
+
+/* Featured fill for full-height mode */
+.full-height .style-featured { height: 100%; }
+.full-height .style-featured .collage-item:first-child { height: 100%; }
+
+/* Mosaic fill for full-height mode */
+.full-height .style-mosaic { height: 100%; }
+
+/* Strips fill for full-height mode */
+.full-height .style-strips {
+  height: 100%;
+  grid-auto-rows: 1fr;
+}
+.full-height .style-strips .collage-item {
+  aspect-ratio: unset;
+}
+
+/* Vertical strips fill */
+.full-height .style-stripsVertical {
+  height: 100%;
+}
+.full-height .style-stripsVertical .collage-item {
+  aspect-ratio: unset;
+}
+
+/* Polaroid fill */
+.full-height .style-polaroid {
+  height: 100%;
+  align-content: center;
+}
+
+/* Scrapbook fill */
+.full-height .style-scrapbook {
+  height: 100%;
+  align-content: center;
+}
+
+/* Month hero fill */
+.full-height .style-monthHero {
+  height: 100%;
+}

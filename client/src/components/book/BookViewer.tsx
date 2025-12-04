@@ -171,8 +171,8 @@ export function BookViewer({ bookId, language, onGoToInspiration }: BookViewerPr
       <Separator />
 
       {templateParts && templateParts.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-1">
+        <div className="flex gap-6">
+          <div className="w-1/3 min-w-[250px] max-w-[350px] flex-shrink-0">
             <ScrollArea className="h-[500px] pr-4">
               <div className="space-y-2">
                 {templateParts.map((part, index) => {
@@ -216,7 +216,7 @@ export function BookViewer({ bookId, language, onGoToInspiration }: BookViewerPr
             </ScrollArea>
           </div>
 
-          <div className="md:col-span-2 min-h-[200px]">
+          <div className="flex-1 min-h-[200px]">
             {templateParts[selectedPartIndex] && (
               <Card className="border-sage-200">
                 <CardHeader className="pb-4">

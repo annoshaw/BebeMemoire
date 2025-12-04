@@ -853,106 +853,105 @@ export function PageEditor({
             </div>
           </DialogHeader>
           
-          <div className="p-6 bg-stone-100 overflow-auto max-h-[calc(95vh-180px)]">
-            {/* Book page simulation - 8x11 aspect ratio with CSS Grid */}
+          <div className="p-4 bg-stone-100 flex justify-center overflow-auto max-h-[calc(95vh-180px)]">
+            {/* Book page 8x11 - Using fixed pixel dimensions for reliability */}
             <div 
-              className="mx-auto bg-white shadow-2xl border border-stone-300 relative"
+              className="bg-white shadow-2xl border border-stone-300 relative overflow-hidden"
               style={{
-                width: 'min(100%, 440px)',
-                aspectRatio: '8 / 11',
-                padding: 'clamp(16px, 4%, 28px)',
-                display: 'grid',
-                gridTemplateRows: 'auto 1fr auto',
-                gap: '8px',
-                boxSizing: 'border-box'
+                width: '400px',
+                height: '550px',
+                padding: '20px'
               }}
               onMouseMove={handlePhotoMouseMove}
               onMouseUp={handlePhotoMouseUp}
               onMouseLeave={handlePhotoMouseUp}
             >
-              {/* Row 1: Page Header (auto height) */}
-              <div className="text-center pb-2 border-b border-stone-200">
+              {/* Header - absolute top */}
+              <div 
+                className="text-center border-b border-stone-200 pb-2"
+                style={{ marginBottom: '12px' }}
+              >
                 <h2 
                   className="font-bold text-stone-800"
                   style={{ 
                     fontFamily: titleStyle.fontFamily, 
-                    fontSize: `${Math.max(titleStyle.fontSize * 0.7, 14)}px` 
+                    fontSize: `${Math.max(titleStyle.fontSize * 0.6, 12)}px`,
+                    lineHeight: 1.2
                   }}
                 >
                   {language === "fr" ? templatePage?.titleFr : templatePage?.titleEn}
                 </h2>
                 {templatePage?.subtitleFr && (
-                  <p className="text-sm text-stone-500 mt-1">
+                  <p className="text-xs text-stone-500 mt-1">
                     {language === "fr" ? templatePage?.subtitleFr : templatePage?.subtitleEn}
                   </p>
                 )}
               </div>
 
-              {/* Row 2: Photos Section (1fr = fills remaining space) */}
-              {photos.length > 0 ? (
-                editMode ? (
-                  <motion.div
-                    drag
-                    dragMomentum={false}
-                    dragElastic={0}
-                    initial={blockPositions.photos || { x: 0, y: 0 }}
-                    onDragEnd={(e, info) => updateBlockPosition('photos', { 
-                      x: (blockPositions.photos?.x || 0) + info.offset.x, 
-                      y: (blockPositions.photos?.y || 0) + info.offset.y 
-                    })}
-                    className="cursor-move ring-2 ring-sage-400 ring-offset-2 rounded-lg"
-                    style={{ height: '100%', minHeight: 0, overflow: 'hidden' }}
-                  >
-                    <CollageBlockNew
-                      photos={photos}
-                      maxPhotos={templatePage?.maxPhotos || 15}
-                      language={language}
-                      editable={false}
-                      style={collageStyle}
-                      month={monthNumber}
-                      fullHeight
-                    />
-                  </motion.div>
-                ) : (
-                  <div 
-                    style={{ 
-                      height: '100%',
-                      minHeight: 0,
-                      overflow: 'hidden',
-                      transform: blockPositions.photos 
-                        ? `translate(${blockPositions.photos.x}px, ${blockPositions.photos.y}px)` 
-                        : undefined 
-                    }}
-                  >
-                    <CollageBlockNew
-                      photos={photos}
-                      maxPhotos={templatePage?.maxPhotos || 15}
-                      language={language}
-                      editable={false}
-                      style={collageStyle}
-                      month={monthNumber}
-                      fullHeight
-                    />
+              {/* Photos - takes remaining space with calculated height */}
+              <div 
+                style={{ 
+                  height: 'calc(100% - 100px)',
+                  marginBottom: '8px'
+                }}
+              >
+                {photos.length > 0 ? (
+                  editMode ? (
+                    <motion.div
+                      drag
+                      dragMomentum={false}
+                      dragElastic={0}
+                      initial={blockPositions.photos || { x: 0, y: 0 }}
+                      onDragEnd={(e, info) => updateBlockPosition('photos', { 
+                        x: (blockPositions.photos?.x || 0) + info.offset.x, 
+                        y: (blockPositions.photos?.y || 0) + info.offset.y 
+                      })}
+                      className="cursor-move ring-2 ring-sage-400 ring-offset-2 rounded-lg h-full"
+                    >
+                      <CollageBlockNew
+                        photos={photos}
+                        maxPhotos={templatePage?.maxPhotos || 15}
+                        language={language}
+                        editable={false}
+                        style={collageStyle}
+                        month={monthNumber}
+                        fullHeight
+                      />
+                    </motion.div>
+                  ) : (
+                    <div 
+                      className="h-full"
+                      style={{ 
+                        transform: blockPositions.photos 
+                          ? `translate(${blockPositions.photos.x}px, ${blockPositions.photos.y}px)` 
+                          : undefined 
+                      }}
+                    >
+                      <CollageBlockNew
+                        photos={photos}
+                        maxPhotos={templatePage?.maxPhotos || 15}
+                        language={language}
+                        editable={false}
+                        style={collageStyle}
+                        month={monthNumber}
+                        fullHeight
+                      />
+                    </div>
+                  )
+                ) : (templatePage?.maxPhotos || 0) > 0 ? (
+                  <div className="h-full bg-stone-100 rounded border-2 border-dashed border-stone-300 flex items-center justify-center">
+                    <div className="text-center text-stone-400">
+                      <ImageIcon className="w-8 h-8 mx-auto mb-1" />
+                      <span className="text-xs">
+                        {language === "fr" ? "Ajoutez des photos" : "Add photos"}
+                      </span>
+                    </div>
                   </div>
-                )
-              ) : (templatePage?.maxPhotos || 0) > 0 ? (
-                <div 
-                  className="bg-stone-100 rounded border-2 border-dashed border-stone-300 flex items-center justify-center"
-                  style={{ height: '100%', minHeight: 0 }}
-                >
-                  <div className="text-center text-stone-400">
-                    <ImageIcon className="w-8 h-8 mx-auto mb-1" />
-                    <span className="text-xs">
-                      {language === "fr" ? "Ajoutez des photos" : "Add photos"}
-                    </span>
-                  </div>
-                </div>
-              ) : (
-                <div style={{ minHeight: 0 }} />
-              )}
+                ) : null}
+              </div>
 
-              {/* Row 3: Footer section (auto height) */}
-              <div className="space-y-2" style={{ minHeight: 0 }}>
+              {/* Footer - fixed height at bottom */}
+              <div style={{ height: '60px', overflow: 'hidden' }}>
                 {/* Text Content */}
                 {textContent.length > 0 && textContent.some(t => t && t.trim()) && (
                   <div className="space-y-1 text-stone-700">

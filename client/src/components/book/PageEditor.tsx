@@ -423,14 +423,28 @@ export function PageEditor({
 
       const { mediaId, uploadUrl } = await response.json();
 
-      const uploadResponse = await fetch(uploadUrl, {
-        method: 'PUT',
-        headers: { 'Content-Type': file.type },
-        body: file
-      });
+      console.log('Uploading video to S3...', { uploadUrl: uploadUrl.substring(0, 100) + '...' });
+      
+      try {
+        const uploadResponse = await fetch(uploadUrl, {
+          method: 'PUT',
+          headers: { 'Content-Type': file.type },
+          body: file
+        });
 
-      if (!uploadResponse.ok) {
-        throw new Error('Erreur lors du téléversement vers S3');
+        if (!uploadResponse.ok) {
+          const errorText = await uploadResponse.text().catch(() => 'Unknown error');
+          console.error('S3 upload failed:', uploadResponse.status, errorText);
+          throw new Error(`Erreur S3 (${uploadResponse.status}): ${errorText.substring(0, 100)}`);
+        }
+        
+        console.log('S3 upload successful!');
+      } catch (uploadError) {
+        console.error('S3 upload error (possibly CORS):', uploadError);
+        if (uploadError instanceof TypeError && uploadError.message.includes('Failed to fetch')) {
+          throw new Error('Erreur CORS: Le bucket S3 doit être configuré pour autoriser les uploads depuis ce domaine');
+        }
+        throw uploadError;
       }
 
       const confirmResponse = await fetch(`/api/media/${mediaId}/confirm`, {

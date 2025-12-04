@@ -664,16 +664,26 @@ export async function registerRoutes(
         return res.status(403).json({ message: "Accès refusé" });
       }
 
-      const { styleType, titleStyle, textStyle } = req.body;
+      const { styleType, titleStyle, textStyle, collageStyle } = req.body;
       
-      if (!styleType || (styleType !== 'title' && styleType !== 'description')) {
+      if (!styleType || !['title', 'description', 'collage'].includes(styleType)) {
         return res.status(400).json({ message: "Type de style invalide" });
       }
 
       // Get all pages for this book
       const pages = await storage.getUserBookPages(req.params.bookId);
       
+      // Get template pages to know which pages support photos
+      let templatePagesData: Awaited<ReturnType<typeof storage.getTemplatePages>> = [];
+      if (book.templateSlug) {
+        const template = await storage.getBookTemplateBySlug(book.templateSlug);
+        if (template) {
+          templatePagesData = await storage.getTemplatePages(template.id);
+        }
+      }
+      
       // Update each page with the style
+      let updatedCount = 0;
       for (const page of pages) {
         const currentCustomData = (page.customData as Record<string, any>) || {};
         
@@ -683,7 +693,9 @@ export async function registerRoutes(
             ...currentCustomData,
             titleStyle: titleStyle
           };
-        } else {
+          await storage.updateUserBookPage(page.id, { customData: updatedCustomData });
+          updatedCount++;
+        } else if (styleType === 'description') {
           // Apply description style to all text indices
           const currentTextStyles = currentCustomData.textStyles || {};
           const updatedTextStyles: Record<number, any> = {};
@@ -697,9 +709,20 @@ export async function registerRoutes(
             ...currentCustomData,
             textStyles: updatedTextStyles
           };
+          await storage.updateUserBookPage(page.id, { customData: updatedCustomData });
+          updatedCount++;
+        } else if (styleType === 'collage') {
+          // Only apply collage style to pages that support photos (maxPhotos > 1)
+          const templatePage = templatePagesData.find(tp => tp.pageNumber === page.pageNumber);
+          if (templatePage && (templatePage.maxPhotos || 0) > 1) {
+            updatedCustomData = {
+              ...currentCustomData,
+              collageStyle: collageStyle
+            };
+            await storage.updateUserBookPage(page.id, { customData: updatedCustomData });
+            updatedCount++;
+          }
         }
-        
-        await storage.updateUserBookPage(page.id, { customData: updatedCustomData });
       }
 
       res.json({ message: "Style appliqué avec succès", pagesUpdated: pages.length });

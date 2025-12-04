@@ -181,7 +181,7 @@ export function PageEditor({
   // Apply style to all pages
   const [applyingStyle, setApplyingStyle] = useState(false);
 
-  const applyStyleToAllPages = async (styleType: 'title' | 'description') => {
+  const applyStyleToAllPages = async (styleType: 'title' | 'description' | 'collage') => {
     setApplyingStyle(true);
     try {
       const res = await fetch(`/api/books/${bookId}/apply-style`, {
@@ -192,6 +192,7 @@ export function PageEditor({
           styleType,
           titleStyle: styleType === 'title' ? titleStyle : undefined,
           textStyle: styleType === 'description' ? textStyles[0] : undefined,
+          collageStyle: styleType === 'collage' ? collageStyle : undefined,
         }),
       });
 
@@ -199,11 +200,12 @@ export function PageEditor({
 
       await queryClient.invalidateQueries({ queryKey: [`/api/books/${bookId}/pages`] });
       
-      toast.success(
-        styleType === 'title'
-          ? (language === "fr" ? "Style de titre appliqué à toutes les pages" : "Title style applied to all pages")
-          : (language === "fr" ? "Style de description appliqué à toutes les pages" : "Description style applied to all pages")
-      );
+      const messages = {
+        title: language === "fr" ? "Style de titre appliqué à toutes les pages" : "Title style applied to all pages",
+        description: language === "fr" ? "Style de description appliqué à toutes les pages" : "Description style applied to all pages",
+        collage: language === "fr" ? "Style de collage appliqué à toutes les pages photos" : "Collage style applied to all photo pages"
+      };
+      toast.success(messages[styleType]);
     } catch (error) {
       toast.error(language === "fr" ? "Erreur lors de l'application du style" : "Error applying style");
     } finally {
@@ -437,6 +439,8 @@ export function PageEditor({
               language={language}
               style={collageStyle}
               onStyleChange={handleCollageStyleChange}
+              onApplyToAll={() => applyStyleToAllPages('collage')}
+              applyingToAll={applyingStyle}
             />
             {hasVideo && (
               <VideoBlock
@@ -501,6 +505,8 @@ export function PageEditor({
               language={language}
               style={collageStyle}
               onStyleChange={handleCollageStyleChange}
+              onApplyToAll={() => applyStyleToAllPages('collage')}
+              applyingToAll={applyingStyle}
             />
             {hasVideo && (
               <VideoBlock

@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Camera, X, Grid3X3, LayoutGrid, Layers, GalleryHorizontal, Image, BookOpen } from "lucide-react";
+import { Camera, X, Grid3X3, LayoutGrid, Layers, GalleryHorizontal, Image, BookOpen, Loader2, Copy } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,6 +21,8 @@ interface CollageBlockNewProps {
   editable?: boolean;
   style?: CollageStyle;
   onStyleChange?: (style: CollageStyle) => void;
+  onApplyToAll?: () => void;
+  applyingToAll?: boolean;
 }
 
 const STYLES: { id: CollageStyle; labelFr: string; labelEn: string; icon: React.ReactNode }[] = [
@@ -60,6 +62,8 @@ export function CollageBlockNew({
   editable = true,
   style = "grid",
   onStyleChange,
+  onApplyToAll,
+  applyingToAll = false,
 }: CollageBlockNewProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [localStyle, setLocalStyle] = useState<CollageStyle>(style);
@@ -103,29 +107,48 @@ export function CollageBlockNew({
           <Label className="text-sm text-sage-700">
             {language === "fr" ? "Photos du collage" : "Collage photos"}
           </Label>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2" data-testid="collage-style-selector">
-                {currentStyleInfo.icon}
-                <span className="text-xs">
-                  {language === "fr" ? currentStyleInfo.labelFr : currentStyleInfo.labelEn}
-                </span>
+          <div className="flex items-center gap-2">
+            {onApplyToAll && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onApplyToAll}
+                disabled={applyingToAll}
+                className="gap-1.5 text-xs text-sage-600 hover:text-sage-800"
+                data-testid="apply-collage-style-to-all"
+              >
+                {applyingToAll ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : (
+                  <Copy className="w-3 h-3" />
+                )}
+                {language === "fr" ? "Appliquer à tout" : "Apply to all"}
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {STYLES.map((s) => (
-                <DropdownMenuItem
-                  key={s.id}
-                  onClick={() => setStyle(s.id)}
-                  className={currentStyle === s.id ? "bg-sage-100" : ""}
-                  data-testid={`style-option-${s.id}`}
-                >
-                  <span className="mr-2">{s.icon}</span>
-                  {language === "fr" ? s.labelFr : s.labelEn}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2" data-testid="collage-style-selector">
+                  {currentStyleInfo.icon}
+                  <span className="text-xs">
+                    {language === "fr" ? currentStyleInfo.labelFr : currentStyleInfo.labelEn}
+                  </span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {STYLES.map((s) => (
+                  <DropdownMenuItem
+                    key={s.id}
+                    onClick={() => setStyle(s.id)}
+                    className={currentStyle === s.id ? "bg-sage-100" : ""}
+                    data-testid={`style-option-${s.id}`}
+                  >
+                    <span className="mr-2">{s.icon}</span>
+                    {language === "fr" ? s.labelFr : s.labelEn}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
         <div
           className="aspect-video rounded-lg border-2 border-dashed border-sage-300 hover:border-sage-400 hover:bg-sage-50 transition-colors flex flex-col items-center justify-center cursor-pointer"
@@ -158,29 +181,48 @@ export function CollageBlockNew({
           <Label className="text-sm text-sage-700">
             {language === "fr" ? "Photos" : "Photos"} ({photos.length}/{maxPhotos})
           </Label>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2" data-testid="collage-style-selector">
-                {currentStyleInfo.icon}
-                <span className="text-xs">
-                  {language === "fr" ? currentStyleInfo.labelFr : currentStyleInfo.labelEn}
-                </span>
+          <div className="flex items-center gap-2">
+            {onApplyToAll && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onApplyToAll}
+                disabled={applyingToAll}
+                className="gap-1.5 text-xs text-sage-600 hover:text-sage-800"
+                data-testid="apply-collage-style-to-all"
+              >
+                {applyingToAll ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : (
+                  <Copy className="w-3 h-3" />
+                )}
+                {language === "fr" ? "Appliquer à tout" : "Apply to all"}
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {STYLES.map((s) => (
-                <DropdownMenuItem
-                  key={s.id}
-                  onClick={() => setStyle(s.id)}
-                  className={currentStyle === s.id ? "bg-sage-100" : ""}
-                  data-testid={`style-option-${s.id}`}
-                >
-                  <span className="mr-2">{s.icon}</span>
-                  {language === "fr" ? s.labelFr : s.labelEn}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2" data-testid="collage-style-selector">
+                  {currentStyleInfo.icon}
+                  <span className="text-xs">
+                    {language === "fr" ? currentStyleInfo.labelFr : currentStyleInfo.labelEn}
+                  </span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {STYLES.map((s) => (
+                  <DropdownMenuItem
+                    key={s.id}
+                    onClick={() => setStyle(s.id)}
+                    className={currentStyle === s.id ? "bg-sage-100" : ""}
+                    data-testid={`style-option-${s.id}`}
+                  >
+                    <span className="mr-2">{s.icon}</span>
+                    {language === "fr" ? s.labelFr : s.labelEn}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       )}
 

@@ -8,6 +8,7 @@ import { setupAuth, isAuthenticated } from "./replitAuth";
 import express from "express";
 import path from "path";
 import fs from "fs";
+import { generateUploadUrl, generateDownloadUrl, deleteFile, generateMediaKey, isS3Configured } from "./s3";
 
 // Extend Express Request to include user
 declare global {
@@ -1209,6 +1210,231 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Update notification settings error:", error);
       res.status(500).json({ message: "Erreur" });
+    }
+  });
+
+  // ============ MEDIA / S3 ROUTES ============
+
+  // Check if S3 is configured
+  app.get("/api/media/config", requireAuth, async (_req: Request, res: Response) => {
+    res.json({ 
+      s3Configured: isS3Configured(),
+      message: isS3Configured() 
+        ? "S3 est configuré et prêt" 
+        : "S3 n'est pas configuré. Veuillez ajouter les clés AWS."
+    });
+  });
+
+  // Get user storage usage
+  app.get("/api/media/storage", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      
+      const storageUsedBytes = await storage.getUserStorageUsed(userId);
+      const userPlan = await storage.getUserPlan(userId);
+      const plan = userPlan?.plan || "free";
+      const storageLimitMB = storage.getStorageLimit(plan);
+      
+      res.json({
+        usedBytes: storageUsedBytes,
+        usedMB: Math.round(storageUsedBytes / (1024 * 1024) * 100) / 100,
+        limitMB: storageLimitMB,
+        limitBytes: storageLimitMB * 1024 * 1024,
+        percentUsed: Math.round((storageUsedBytes / (storageLimitMB * 1024 * 1024)) * 100 * 10) / 10,
+        plan
+      });
+    } catch (error) {
+      console.error("Get storage error:", error);
+      res.status(500).json({ message: "Erreur lors de la récupération du stockage" });
+    }
+  });
+
+  // Request upload URL (presigned URL for direct upload to S3)
+  app.post("/api/media/upload-url", requireAuth, async (req: Request, res: Response) => {
+    try {
+      if (!isS3Configured()) {
+        return res.status(503).json({ message: "Le stockage S3 n'est pas configuré" });
+      }
+
+      const userId = (req as any).userId;
+      const { filename, contentType, size, bookId, pageId, mediaType } = req.body;
+
+      if (!filename || !contentType || !size || !bookId || !mediaType) {
+        return res.status(400).json({ message: "Paramètres manquants" });
+      }
+
+      if (!["photo", "video"].includes(mediaType)) {
+        return res.status(400).json({ message: "Type de média invalide" });
+      }
+
+      // Check storage quota
+      const currentUsage = await storage.getUserStorageUsed(userId);
+      const userPlan = await storage.getUserPlan(userId);
+      const plan = userPlan?.plan || "free";
+      const limitBytes = storage.getStorageLimit(plan) * 1024 * 1024;
+
+      if (currentUsage + size > limitBytes) {
+        return res.status(413).json({ 
+          message: "Quota de stockage dépassé",
+          currentUsage,
+          limit: limitBytes,
+          required: size
+        });
+      }
+
+      // Verify book ownership
+      const book = await storage.getBook(bookId);
+      if (!book || book.userId !== userId) {
+        return res.status(403).json({ message: "Accès refusé" });
+      }
+
+      // Generate S3 key
+      const s3Key = generateMediaKey(userId, bookId, filename, mediaType);
+
+      // Create media record
+      const mediaFile = await storage.createMediaFile({
+        userId,
+        bookId,
+        pageId: pageId || null,
+        s3Key,
+        filename,
+        contentType,
+        size,
+        mediaType,
+        status: "pending"
+      });
+
+      // Generate presigned upload URL
+      const uploadUrl = await generateUploadUrl(s3Key, contentType, 3600);
+
+      res.json({
+        mediaId: mediaFile.id,
+        uploadUrl,
+        s3Key
+      });
+    } catch (error) {
+      console.error("Generate upload URL error:", error);
+      res.status(500).json({ message: "Erreur lors de la génération de l'URL d'upload" });
+    }
+  });
+
+  // Confirm upload completed
+  app.post("/api/media/:mediaId/confirm", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const { mediaId } = req.params;
+
+      const mediaFile = await storage.getMediaFile(mediaId);
+      if (!mediaFile) {
+        return res.status(404).json({ message: "Fichier non trouvé" });
+      }
+
+      if (mediaFile.userId !== userId) {
+        return res.status(403).json({ message: "Accès refusé" });
+      }
+
+      const updated = await storage.updateMediaFileStatus(mediaId, "uploaded", new Date());
+
+      // Generate download URL for immediate use
+      const downloadUrl = await generateDownloadUrl(mediaFile.s3Key, 3600);
+
+      res.json({
+        media: updated,
+        downloadUrl
+      });
+    } catch (error) {
+      console.error("Confirm upload error:", error);
+      res.status(500).json({ message: "Erreur lors de la confirmation de l'upload" });
+    }
+  });
+
+  // Get download URL for a media file
+  app.get("/api/media/:mediaId/url", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const { mediaId } = req.params;
+
+      const mediaFile = await storage.getMediaFile(mediaId);
+      if (!mediaFile) {
+        return res.status(404).json({ message: "Fichier non trouvé" });
+      }
+
+      // Verify ownership through book
+      const book = await storage.getBook(mediaFile.bookId || "");
+      if (!book || book.userId !== userId) {
+        return res.status(403).json({ message: "Accès refusé" });
+      }
+
+      const downloadUrl = await generateDownloadUrl(mediaFile.s3Key, 3600);
+
+      res.json({ url: downloadUrl });
+    } catch (error) {
+      console.error("Get download URL error:", error);
+      res.status(500).json({ message: "Erreur lors de la récupération de l'URL" });
+    }
+  });
+
+  // Get all media for a book
+  app.get("/api/books/:bookId/media", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const { bookId } = req.params;
+
+      const book = await storage.getBook(bookId);
+      if (!book || book.userId !== userId) {
+        return res.status(403).json({ message: "Accès refusé" });
+      }
+
+      const mediaFiles = await storage.getMediaFilesByBook(bookId);
+
+      // Generate download URLs for each file
+      const mediaWithUrls = await Promise.all(
+        mediaFiles
+          .filter(m => m.status === "uploaded")
+          .map(async (media) => ({
+            ...media,
+            url: await generateDownloadUrl(media.s3Key, 3600)
+          }))
+      );
+
+      res.json({ media: mediaWithUrls });
+    } catch (error) {
+      console.error("Get book media error:", error);
+      res.status(500).json({ message: "Erreur lors de la récupération des médias" });
+    }
+  });
+
+  // Delete a media file
+  app.delete("/api/media/:mediaId", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const { mediaId } = req.params;
+
+      const mediaFile = await storage.getMediaFile(mediaId);
+      if (!mediaFile) {
+        return res.status(404).json({ message: "Fichier non trouvé" });
+      }
+
+      if (mediaFile.userId !== userId) {
+        return res.status(403).json({ message: "Accès refusé" });
+      }
+
+      // Delete from S3
+      if (isS3Configured()) {
+        try {
+          await deleteFile(mediaFile.s3Key);
+        } catch (s3Error) {
+          console.error("S3 delete error:", s3Error);
+        }
+      }
+
+      // Delete from database
+      await storage.deleteMediaFile(mediaId);
+
+      res.json({ message: "Fichier supprimé" });
+    } catch (error) {
+      console.error("Delete media error:", error);
+      res.status(500).json({ message: "Erreur lors de la suppression" });
     }
   });
 

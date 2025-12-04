@@ -928,7 +928,7 @@ export function PageEditor({
                       {language === "fr" ? "Position texte" : "Text position"}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-56 p-3" align="end">
+                  <PopoverContent className="w-56 p-3 bg-[#ffffff] text-center" align="end">
                     <div className="space-y-2">
                       <p className="text-xs font-medium text-stone-600 mb-2">
                         {language === "fr" ? "Positionnement du texte" : "Text positioning"}

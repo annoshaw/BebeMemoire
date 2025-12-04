@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import "./CollageBlock.css";
 
-export type CollageStyle = "grid" | "featured" | "mosaic" | "strips" | "polaroid" | "scrapbook" | "monthHero";
+export type CollageStyle = "grid" | "featured" | "mosaic" | "strips" | "stripsVertical" | "polaroid" | "scrapbook" | "monthHero";
 
 interface CollageBlockNewProps {
   photos: string[];
@@ -30,7 +30,8 @@ const STYLES: { id: CollageStyle; labelFr: string; labelEn: string; icon: React.
   { id: "grid", labelFr: "Grille", labelEn: "Grid", icon: <Grid3X3 className="w-4 h-4" /> },
   { id: "featured", labelFr: "Photo vedette", labelEn: "Featured", icon: <LayoutGrid className="w-4 h-4" /> },
   { id: "mosaic", labelFr: "Mosaïque", labelEn: "Mosaic", icon: <Layers className="w-4 h-4" /> },
-  { id: "strips", labelFr: "Bandes", labelEn: "Strips", icon: <GalleryHorizontal className="w-4 h-4" /> },
+  { id: "strips", labelFr: "Bandes horizontales", labelEn: "Horizontal Strips", icon: <GalleryHorizontal className="w-4 h-4" /> },
+  { id: "stripsVertical", labelFr: "Bandes verticales", labelEn: "Vertical Strips", icon: <GalleryHorizontal className="w-4 h-4 rotate-90" /> },
   { id: "polaroid", labelFr: "Polaroid", labelEn: "Polaroid", icon: <Image className="w-4 h-4" /> },
   { id: "scrapbook", labelFr: "Album créatif", labelEn: "Scrapbook", icon: <BookOpen className="w-4 h-4" /> },
   { id: "monthHero", labelFr: "Mois vedette", labelEn: "Month Hero", icon: <Hash className="w-4 h-4" /> },

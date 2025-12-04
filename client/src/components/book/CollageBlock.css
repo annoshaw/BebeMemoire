@@ -364,6 +364,56 @@
 }
 
 /* ===================== */
+/* STYLE: STRIPS VERTICAL*/
+/* Bandes verticales     */
+/* ===================== */
+.style-stripsVertical {
+  gap: 6px;
+}
+.style-stripsVertical.grid-1 {
+  grid-template-columns: 1fr;
+}
+.style-stripsVertical.grid-2 {
+  grid-template-columns: 1fr 1fr;
+}
+.style-stripsVertical.grid-3 {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+.style-stripsVertical.grid-4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+.style-stripsVertical.grid-5 {
+  grid-template-columns: repeat(5, 1fr);
+}
+.style-stripsVertical.grid-6 {
+  grid-template-columns: repeat(6, 1fr);
+}
+.style-stripsVertical.grid-7,
+.style-stripsVertical.grid-8 {
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: 1fr 1fr;
+}
+.style-stripsVertical.grid-9,
+.style-stripsVertical.grid-10 {
+  grid-template-columns: repeat(5, 1fr);
+  grid-template-rows: 1fr 1fr;
+}
+.style-stripsVertical.grid-11,
+.style-stripsVertical.grid-12 {
+  grid-template-columns: repeat(6, 1fr);
+  grid-template-rows: 1fr 1fr;
+}
+.style-stripsVertical.grid-13,
+.style-stripsVertical.grid-14,
+.style-stripsVertical.grid-15 {
+  grid-template-columns: repeat(5, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+}
+.style-stripsVertical .collage-item {
+  aspect-ratio: 5 / 16;
+}
+
+/* ===================== */
 /* STYLE: POLAROID       */
 /* Style Polaroid        */
 /* ===================== */

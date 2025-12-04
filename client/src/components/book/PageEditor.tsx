@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import Draggable from "react-draggable";
+import { motion } from "framer-motion";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -838,21 +838,25 @@ export function PageEditor({
               {/* Photos Section - Using Collage Component */}
               {photos.length > 0 && (
                 editMode ? (
-                  <Draggable
-                    position={blockPositions.photos || { x: 0, y: 0 }}
-                    onStop={(e, data) => updateBlockPosition('photos', { x: data.x, y: data.y })}
-                    bounds="parent"
+                  <motion.div
+                    drag
+                    dragMomentum={false}
+                    dragElastic={0}
+                    initial={blockPositions.photos || { x: 0, y: 0 }}
+                    onDragEnd={(e, info) => updateBlockPosition('photos', { 
+                      x: (blockPositions.photos?.x || 0) + info.offset.x, 
+                      y: (blockPositions.photos?.y || 0) + info.offset.y 
+                    })}
+                    className="mb-4 cursor-move ring-2 ring-sage-400 ring-offset-2 rounded-lg"
                   >
-                    <div className="mb-4 cursor-move ring-2 ring-sage-400 ring-offset-2 rounded-lg">
-                      <CollageBlockNew
-                        photos={photos}
-                        maxPhotos={templatePage?.maxPhotos || 15}
-                        language={language}
-                        editable={false}
-                        style={collageStyle}
-                      />
-                    </div>
-                  </Draggable>
+                    <CollageBlockNew
+                      photos={photos}
+                      maxPhotos={templatePage?.maxPhotos || 15}
+                      language={language}
+                      editable={false}
+                      style={collageStyle}
+                    />
+                  </motion.div>
                 ) : (
                   <div 
                     className="mb-4"
@@ -894,35 +898,44 @@ export function PageEditor({
                     const hasCustomBg = style.bgColor !== "#FFFFFF";
                     const previewFontSize = Math.max((style.fontSize || 14) * 0.75, 10);
                     const textPosition = getTextBlockPosition(idx);
-                    
-                    const textElement = (
+
+                    return editMode ? (
+                      <motion.p
+                        key={idx}
+                        drag
+                        dragMomentum={false}
+                        dragElastic={0}
+                        initial={textPosition}
+                        onDragEnd={(e, info) => updateTextBlockPosition(idx, { 
+                          x: textPosition.x + info.offset.x, 
+                          y: textPosition.y + info.offset.y 
+                        })}
+                        className={`leading-relaxed cursor-move ring-2 ring-sage-400 ring-offset-1 rounded ${hasCustomBg ? 'p-3 rounded-lg' : ''}`}
+                        style={{ 
+                          fontSize: `${previewFontSize}px`,
+                          backgroundColor: hasCustomBg ? style.bgColor : 'transparent',
+                          color: style.textColor,
+                          fontFamily: style.fontFamily || "'Poppins', sans-serif"
+                        }}
+                      >
+                        {text}
+                      </motion.p>
+                    ) : (
                       <p 
-                        className={`leading-relaxed ${hasCustomBg ? 'p-3 rounded-lg' : ''} ${editMode ? 'cursor-move ring-2 ring-sage-400 ring-offset-1 rounded' : ''}`} 
+                        key={idx}
+                        className={`leading-relaxed ${hasCustomBg ? 'p-3 rounded-lg' : ''}`} 
                         style={{ 
                           fontSize: `${previewFontSize}px`,
                           backgroundColor: hasCustomBg ? style.bgColor : 'transparent',
                           color: style.textColor,
                           fontFamily: style.fontFamily || "'Poppins', sans-serif",
-                          ...(!editMode && textPosition.x !== 0 || textPosition.y !== 0 
-                            ? { transform: `translate(${textPosition.x}px, ${textPosition.y}px)` } 
-                            : {})
+                          transform: textPosition.x !== 0 || textPosition.y !== 0 
+                            ? `translate(${textPosition.x}px, ${textPosition.y}px)` 
+                            : undefined
                         }}
                       >
                         {text}
                       </p>
-                    );
-
-                    return editMode ? (
-                      <Draggable
-                        key={idx}
-                        position={textPosition}
-                        onStop={(e, data) => updateTextBlockPosition(idx, { x: data.x, y: data.y })}
-                        bounds="parent"
-                      >
-                        <div>{textElement}</div>
-                      </Draggable>
-                    ) : (
-                      <div key={idx}>{textElement}</div>
                     );
                   })}
                 </div>

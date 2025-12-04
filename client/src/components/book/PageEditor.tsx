@@ -395,7 +395,7 @@ export function PageEditor({
               onChange={handleCustomDataChange}
               language={language}
             />
-            {maxPhotos > 1 ? (
+            {maxPhotos > 0 && (
               <CollageBlockNew
                 photos={photos}
                 maxPhotos={maxPhotos}
@@ -406,14 +406,6 @@ export function PageEditor({
                 onStyleChange={handleCollageStyleChange}
                 onApplyToAll={() => applyStyleToAllPages('collage')}
                 applyingToAll={applyingStyle}
-              />
-            ) : maxPhotos > 0 && (
-              <PhotoBlock
-                photos={photos}
-                maxPhotos={maxPhotos}
-                onAdd={handlePhotoAdd}
-                onRemove={handlePhotoRemove}
-                language={language}
               />
             )}
             {hasVideo && (
@@ -473,7 +465,7 @@ export function PageEditor({
               onChange={(value) => handleTextChange(0, value)}
               language={language}
             />
-            {maxPhotos > 1 ? (
+            {maxPhotos > 0 && (
               <CollageBlockNew
                 photos={photos}
                 maxPhotos={maxPhotos}
@@ -484,14 +476,6 @@ export function PageEditor({
                 onStyleChange={handleCollageStyleChange}
                 onApplyToAll={() => applyStyleToAllPages('collage')}
                 applyingToAll={applyingStyle}
-              />
-            ) : maxPhotos > 0 && (
-              <PhotoBlock
-                photos={photos}
-                maxPhotos={maxPhotos}
-                onAdd={handlePhotoAdd}
-                onRemove={handlePhotoRemove}
-                language={language}
               />
             )}
             {hasVideo && (
@@ -581,7 +565,7 @@ export function PageEditor({
                 applyingStyle={applyingStyle}
               />
             )}
-            {maxPhotos > 1 ? (
+            {maxPhotos > 0 && (
               <CollageBlockNew
                 photos={photos}
                 maxPhotos={maxPhotos}
@@ -592,14 +576,6 @@ export function PageEditor({
                 onStyleChange={handleCollageStyleChange}
                 onApplyToAll={() => applyStyleToAllPages('collage')}
                 applyingToAll={applyingStyle}
-              />
-            ) : maxPhotos > 0 && (
-              <PhotoBlock
-                photos={photos}
-                maxPhotos={maxPhotos}
-                onAdd={handlePhotoAdd}
-                onRemove={handlePhotoRemove}
-                language={language}
               />
             )}
             {hasVideo && (

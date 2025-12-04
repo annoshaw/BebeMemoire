@@ -712,9 +712,9 @@ export async function registerRoutes(
           await storage.updateUserBookPage(page.id, { customData: updatedCustomData });
           updatedCount++;
         } else if (styleType === 'collage') {
-          // Only apply collage style to pages that support photos (maxPhotos > 1)
+          // Apply collage style to all pages that support photos (maxPhotos > 0)
           const templatePage = templatePagesData.find(tp => tp.pageNumber === page.pageNumber);
-          if (templatePage && (templatePage.maxPhotos || 0) > 1) {
+          if (templatePage && (templatePage.maxPhotos || 0) > 0) {
             updatedCustomData = {
               ...currentCustomData,
               collageStyle: collageStyle

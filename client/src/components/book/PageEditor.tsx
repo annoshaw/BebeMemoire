@@ -395,7 +395,19 @@ export function PageEditor({
               onChange={handleCustomDataChange}
               language={language}
             />
-            {maxPhotos > 0 && (
+            {maxPhotos > 1 ? (
+              <CollageBlockNew
+                photos={photos}
+                maxPhotos={maxPhotos}
+                onAdd={handlePhotoAdd}
+                onRemove={handlePhotoRemove}
+                language={language}
+                style={collageStyle}
+                onStyleChange={handleCollageStyleChange}
+                onApplyToAll={() => applyStyleToAllPages('collage')}
+                applyingToAll={applyingStyle}
+              />
+            ) : maxPhotos > 0 && (
               <PhotoBlock
                 photos={photos}
                 maxPhotos={maxPhotos}
@@ -461,7 +473,19 @@ export function PageEditor({
               onChange={(value) => handleTextChange(0, value)}
               language={language}
             />
-            {maxPhotos > 0 && (
+            {maxPhotos > 1 ? (
+              <CollageBlockNew
+                photos={photos}
+                maxPhotos={maxPhotos}
+                onAdd={handlePhotoAdd}
+                onRemove={handlePhotoRemove}
+                language={language}
+                style={collageStyle}
+                onStyleChange={handleCollageStyleChange}
+                onApplyToAll={() => applyStyleToAllPages('collage')}
+                applyingToAll={applyingStyle}
+              />
+            ) : maxPhotos > 0 && (
               <PhotoBlock
                 photos={photos}
                 maxPhotos={maxPhotos}
@@ -557,7 +581,19 @@ export function PageEditor({
                 applyingStyle={applyingStyle}
               />
             )}
-            {maxPhotos > 0 && (
+            {maxPhotos > 1 ? (
+              <CollageBlockNew
+                photos={photos}
+                maxPhotos={maxPhotos}
+                onAdd={handlePhotoAdd}
+                onRemove={handlePhotoRemove}
+                language={language}
+                style={collageStyle}
+                onStyleChange={handleCollageStyleChange}
+                onApplyToAll={() => applyStyleToAllPages('collage')}
+                applyingToAll={applyingStyle}
+              />
+            ) : maxPhotos > 0 && (
               <PhotoBlock
                 photos={photos}
                 maxPhotos={maxPhotos}

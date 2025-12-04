@@ -854,47 +854,39 @@ export function PageEditor({
           </DialogHeader>
           
           <div className="p-4 bg-stone-100 flex justify-center overflow-auto max-h-[calc(95vh-180px)]">
-            {/* Book page 8x11 - Using fixed pixel dimensions for reliability */}
+            {/* Book page 8x11 - Flexbox layout for proper space distribution */}
             <div 
-              className="bg-white shadow-2xl border border-stone-300 relative overflow-hidden"
+              className="bg-white shadow-2xl border border-stone-300 flex flex-col"
               style={{
                 width: '400px',
                 height: '550px',
-                padding: '20px'
+                padding: '16px'
               }}
               onMouseMove={handlePhotoMouseMove}
               onMouseUp={handlePhotoMouseUp}
               onMouseLeave={handlePhotoMouseUp}
             >
-              {/* Header - absolute top */}
-              <div 
-                className="text-center border-b border-stone-200 pb-2"
-                style={{ marginBottom: '12px' }}
-              >
+              {/* Header - shrink to content */}
+              <div className="text-center border-b border-stone-200 pb-2 mb-2 flex-shrink-0">
                 <h2 
                   className="font-bold text-stone-800"
                   style={{ 
                     fontFamily: titleStyle.fontFamily, 
-                    fontSize: `${Math.max(titleStyle.fontSize * 0.6, 12)}px`,
+                    fontSize: `${Math.max(titleStyle.fontSize * 0.55, 11)}px`,
                     lineHeight: 1.2
                   }}
                 >
                   {language === "fr" ? templatePage?.titleFr : templatePage?.titleEn}
                 </h2>
                 {templatePage?.subtitleFr && (
-                  <p className="text-xs text-stone-500 mt-1">
+                  <p className="text-[10px] text-stone-500 mt-0.5">
                     {language === "fr" ? templatePage?.subtitleFr : templatePage?.subtitleEn}
                   </p>
                 )}
               </div>
 
-              {/* Photos - takes remaining space with calculated height */}
-              <div 
-                style={{ 
-                  height: 'calc(100% - 100px)',
-                  marginBottom: '8px'
-                }}
-              >
+              {/* Photos - grows to fill all available space */}
+              <div className="flex-1 min-h-0 overflow-hidden">
                 {photos.length > 0 ? (
                   editMode ? (
                     <motion.div
@@ -941,8 +933,8 @@ export function PageEditor({
                 ) : (templatePage?.maxPhotos || 0) > 0 ? (
                   <div className="h-full bg-stone-100 rounded border-2 border-dashed border-stone-300 flex items-center justify-center">
                     <div className="text-center text-stone-400">
-                      <ImageIcon className="w-8 h-8 mx-auto mb-1" />
-                      <span className="text-xs">
+                      <ImageIcon className="w-6 h-6 mx-auto mb-1" />
+                      <span className="text-[10px]">
                         {language === "fr" ? "Ajoutez des photos" : "Add photos"}
                       </span>
                     </div>
@@ -950,8 +942,8 @@ export function PageEditor({
                 ) : null}
               </div>
 
-              {/* Footer - fixed height at bottom */}
-              <div style={{ height: '60px', overflow: 'hidden' }}>
+              {/* Footer - shrink to content, max 80px */}
+              <div className="flex-shrink-0 mt-2 max-h-[80px] overflow-hidden">
                 {/* Text Content */}
                 {textContent.length > 0 && textContent.some(t => t && t.trim()) && (
                   <div className="space-y-1 text-stone-700">

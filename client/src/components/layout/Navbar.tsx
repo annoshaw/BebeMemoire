@@ -21,11 +21,9 @@ export default function Navbar() {
     <nav className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-stone-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
-          <Link href="/">
-            <a className="font-serif text-2xl font-bold text-stone-800 tracking-tight flex items-center gap-2">
-              <span className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white font-sans text-lg">M</span>
-              Memoria
-            </a>
+          <Link href="/" className="font-serif text-2xl font-bold text-stone-800 tracking-tight flex items-center gap-2">
+            <span className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white font-sans text-lg">M</span>
+            Memoria
           </Link>
 
           {/* Desktop Nav */}
@@ -48,7 +46,7 @@ export default function Navbar() {
               <span>{lang.toUpperCase()}</span>
             </button>
 
-            <Link href="/register">
+            <Link href="/register" asChild>
               <Button className="bg-primary hover:bg-primary/90 text-white rounded-full px-6">
                 {lang === "fr" ? "Commencer" : "Get Started"}
               </Button>
@@ -95,7 +93,7 @@ export default function Navbar() {
                 </a>
               ))}
               <div className="pt-4">
-                <Link href="/app">
+                <Link href="/app" asChild>
                   <Button className="w-full bg-primary hover:bg-primary/90 text-white rounded-full">
                     {lang === "fr" ? "Commencer mon livre" : "Start my book"}
                   </Button>

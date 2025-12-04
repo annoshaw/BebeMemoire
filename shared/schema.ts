@@ -350,3 +350,27 @@ export const insertUserBookPageSchema = createInsertSchema(userBookPages).omit({
 
 export type InsertUserBookPage = z.infer<typeof insertUserBookPageSchema>;
 export type UserBookPage = typeof userBookPages.$inferSelect;
+
+// Media files table for S3 storage tracking
+export const mediaFiles = pgTable("media_files", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  bookId: varchar("book_id").references(() => books.id, { onDelete: "cascade" }),
+  pageId: varchar("page_id").references(() => userBookPages.id, { onDelete: "set null" }),
+  s3Key: text("s3_key").notNull().unique(),
+  filename: text("filename").notNull(),
+  contentType: text("content_type").notNull(),
+  size: integer("size").notNull(), // in bytes
+  mediaType: text("media_type").notNull(), // photo, video
+  status: text("status").notNull().default("pending"), // pending, uploaded, failed
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  uploadedAt: timestamp("uploaded_at"),
+});
+
+export const insertMediaFileSchema = createInsertSchema(mediaFiles).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertMediaFile = z.infer<typeof insertMediaFileSchema>;
+export type MediaFile = typeof mediaFiles.$inferSelect;

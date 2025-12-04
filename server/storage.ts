@@ -1,6 +1,6 @@
 import { db } from "./db";
-import { users, books, memories, userPlans, qrCodes, passwordResetTokens, bookPages, notifications, notificationSettings, bookTemplates, templateSections, templateParts, templatePages, userBookPages, type User, type InsertUser, type UpsertUser, type Book, type InsertBook, type Memory, type InsertMemory, type UserPlan, type InsertUserPlan, type QRCode, type InsertQRCode, type PasswordResetToken, type InsertPasswordResetToken, type BookPage, type InsertBookPage, type Notification, type InsertNotification, type NotificationSettings, type InsertNotificationSettings, type BookTemplate, type InsertBookTemplate, type TemplateSection, type InsertTemplateSection, type TemplatePart, type InsertTemplatePart, type TemplatePage, type InsertTemplatePage, type UserBookPage, type InsertUserBookPage } from "@shared/schema";
-import { eq, desc, and, gt, asc, lte, or, isNull } from "drizzle-orm";
+import { users, books, memories, userPlans, qrCodes, passwordResetTokens, bookPages, notifications, notificationSettings, bookTemplates, templateSections, templateParts, templatePages, userBookPages, mediaFiles, type User, type InsertUser, type UpsertUser, type Book, type InsertBook, type Memory, type InsertMemory, type UserPlan, type InsertUserPlan, type QRCode, type InsertQRCode, type PasswordResetToken, type InsertPasswordResetToken, type BookPage, type InsertBookPage, type Notification, type InsertNotification, type NotificationSettings, type InsertNotificationSettings, type BookTemplate, type InsertBookTemplate, type TemplateSection, type InsertTemplateSection, type TemplatePart, type InsertTemplatePart, type TemplatePage, type InsertTemplatePage, type UserBookPage, type InsertUserBookPage, type MediaFile, type InsertMediaFile } from "@shared/schema";
+import { eq, desc, and, gt, asc, lte, or, isNull, sum } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (Replit Auth)
@@ -84,6 +84,16 @@ export interface IStorage {
   updateUserBookPage(id: string, data: Partial<InsertUserBookPage>): Promise<UserBookPage | undefined>;
   createUserBookPagesFromTemplate(bookId: string, templateId: string): Promise<UserBookPage[]>;
   markPageAsCompleted(id: string): Promise<UserBookPage | undefined>;
+  
+  // Media File operations (S3)
+  createMediaFile(media: InsertMediaFile): Promise<MediaFile>;
+  getMediaFile(id: string): Promise<MediaFile | undefined>;
+  getMediaFileByKey(s3Key: string): Promise<MediaFile | undefined>;
+  getMediaFilesByUser(userId: string): Promise<MediaFile[]>;
+  getMediaFilesByBook(bookId: string): Promise<MediaFile[]>;
+  updateMediaFileStatus(id: string, status: string, uploadedAt?: Date): Promise<MediaFile | undefined>;
+  deleteMediaFile(id: string): Promise<boolean>;
+  getUserStorageUsed(userId: string): Promise<number>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -581,6 +591,65 @@ export class DatabaseStorage implements IStorage {
       .where(eq(userBookPages.id, id))
       .returning();
     return result[0];
+  }
+
+  // Media File operations (S3)
+  async createMediaFile(media: InsertMediaFile): Promise<MediaFile> {
+    const result = await db.insert(mediaFiles).values(media).returning();
+    return result[0];
+  }
+
+  async getMediaFile(id: string): Promise<MediaFile | undefined> {
+    const result = await db.select().from(mediaFiles).where(eq(mediaFiles.id, id)).limit(1);
+    return result[0];
+  }
+
+  async getMediaFileByKey(s3Key: string): Promise<MediaFile | undefined> {
+    const result = await db.select().from(mediaFiles).where(eq(mediaFiles.s3Key, s3Key)).limit(1);
+    return result[0];
+  }
+
+  async getMediaFilesByUser(userId: string): Promise<MediaFile[]> {
+    return db.select().from(mediaFiles)
+      .where(eq(mediaFiles.userId, userId))
+      .orderBy(desc(mediaFiles.createdAt));
+  }
+
+  async getMediaFilesByBook(bookId: string): Promise<MediaFile[]> {
+    return db.select().from(mediaFiles)
+      .where(eq(mediaFiles.bookId, bookId))
+      .orderBy(desc(mediaFiles.createdAt));
+  }
+
+  async updateMediaFileStatus(id: string, status: string, uploadedAt?: Date): Promise<MediaFile | undefined> {
+    const updateData: any = { status };
+    if (uploadedAt) {
+      updateData.uploadedAt = uploadedAt;
+    }
+    const result = await db.update(mediaFiles)
+      .set(updateData)
+      .where(eq(mediaFiles.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteMediaFile(id: string): Promise<boolean> {
+    const result = await db.delete(mediaFiles).where(eq(mediaFiles.id, id)).returning();
+    return result.length > 0;
+  }
+
+  async getUserStorageUsed(userId: string): Promise<number> {
+    const result = await db.select({
+      total: sum(mediaFiles.size)
+    })
+      .from(mediaFiles)
+      .where(
+        and(
+          eq(mediaFiles.userId, userId),
+          eq(mediaFiles.status, "uploaded")
+        )
+      );
+    return parseInt(result[0]?.total || "0", 10);
   }
 }
 

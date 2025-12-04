@@ -38,6 +38,7 @@ import { CollageBlockNew, type CollageStyle } from "./CollageBlockNew";
 import type { TemplatePage, UserBookPage } from "@shared/schema";
 import { toast } from "sonner";
 import { QRCodeSVG } from "qrcode.react";
+import "./BookPageLayout.css";
 
 // Title font and size options
 const TITLE_FONTS = [
@@ -853,20 +854,15 @@ export function PageEditor({
           </DialogHeader>
           
           <div className="p-6 bg-stone-100 overflow-auto max-h-[calc(95vh-180px)]">
-            {/* Book page simulation - 8x11 aspect ratio (8:11 = 0.727) */}
+            {/* Book page simulation - 8x11 aspect ratio */}
             <div 
-              className="mx-auto bg-white shadow-2xl border border-stone-300 relative flex flex-col"
-              style={{ 
-                width: "min(100%, 440px)", 
-                aspectRatio: "8 / 11",
-                padding: "clamp(16px, 4%, 32px)"
-              }}
+              className="book-page-8x11 mx-auto bg-white shadow-2xl border border-stone-300 relative"
               onMouseMove={handlePhotoMouseMove}
               onMouseUp={handlePhotoMouseUp}
               onMouseLeave={handlePhotoMouseUp}
             >
               {/* Page Header */}
-              <div className="text-center mb-4 pb-3 border-b border-stone-200">
+              <div className="book-page-header text-center pb-3 border-b border-stone-200">
                 <h2 
                   className="font-bold text-stone-800"
                   style={{ 
@@ -883,7 +879,7 @@ export function PageEditor({
                 )}
               </div>
 
-              {/* Photos Section - Using Collage Component with full-height for 8x11 */}
+              {/* Photos Section - Fill remaining space */}
               {photos.length > 0 && (
                 editMode ? (
                   <motion.div
@@ -895,7 +891,7 @@ export function PageEditor({
                       x: (blockPositions.photos?.x || 0) + info.offset.x, 
                       y: (blockPositions.photos?.y || 0) + info.offset.y 
                     })}
-                    className="flex-1 min-h-0 cursor-move ring-2 ring-sage-400 ring-offset-2 rounded-lg"
+                    className="book-page-photos cursor-move ring-2 ring-sage-400 ring-offset-2 rounded-lg"
                   >
                     <CollageBlockNew
                       photos={photos}
@@ -909,7 +905,7 @@ export function PageEditor({
                   </motion.div>
                 ) : (
                   <div 
-                    className="flex-1 min-h-0"
+                    className="book-page-photos"
                     style={{ 
                       transform: blockPositions.photos 
                         ? `translate(${blockPositions.photos.x}px, ${blockPositions.photos.y}px)` 
@@ -931,7 +927,7 @@ export function PageEditor({
 
               {/* Empty photo placeholder */}
               {photos.length === 0 && (templatePage?.maxPhotos || 0) > 0 && (
-                <div className="flex-1 min-h-0 bg-stone-100 rounded border-2 border-dashed border-stone-300 flex items-center justify-center">
+                <div className="book-page-photos bg-stone-100 rounded border-2 border-dashed border-stone-300 flex items-center justify-center">
                   <div className="text-center text-stone-400">
                     <ImageIcon className="w-8 h-8 mx-auto mb-1" />
                     <span className="text-xs">
@@ -941,9 +937,9 @@ export function PageEditor({
                 </div>
               )}
 
-              {/* Text Content - Only show user's text with custom styles (shrink to fit) */}
+              {/* Text Content - Fixed at bottom */}
               {textContent.length > 0 && textContent.some(t => t && t.trim()) && (
-                <div className="space-y-2 text-stone-700 mt-3 flex-shrink-0">
+                <div className="book-page-text space-y-2 text-stone-700">
                   {textContent.map((text, idx) => {
                     if (!text || !text.trim()) return null;
                     const style = textStyles[idx] || { bgColor: "#FFFFFF", textColor: "#374151", fontFamily: "'Poppins', sans-serif", fontSize: 14 };
@@ -994,17 +990,17 @@ export function PageEditor({
               )}
 
 
-              {/* Custom Data (Birth Info) - Filter out internal fields like collageStyle */}
+              {/* Custom Data (Birth Info) - Filter out internal fields */}
               {(() => {
                 const displayData = Object.entries(customData).filter(
-                  ([key, value]) => value && key !== 'collageStyle'
+                  ([key, value]) => value && key !== 'collageStyle' && key !== 'blockPositions'
                 );
                 return displayData.length > 0 ? (
-                  <div className="mt-4 grid grid-cols-2 gap-2 text-center">
+                  <div className="book-page-text grid grid-cols-2 gap-2 text-center">
                     {displayData.map(([key, value]) => (
-                      <div key={key} className="bg-stone-50 rounded p-2">
-                        <p className="text-xs text-stone-500">{key}</p>
-                        <p className="font-medium text-stone-800 text-sm">{value}</p>
+                      <div key={key} className="bg-stone-50 rounded p-1.5">
+                        <p className="text-[10px] text-stone-500">{key}</p>
+                        <p className="font-medium text-stone-800 text-xs">{value}</p>
                       </div>
                     ))}
                   </div>
@@ -1013,41 +1009,30 @@ export function PageEditor({
 
               {/* Video with QR Code indicator in preview */}
               {videoUrl && (
-                <div className="mt-4 p-3 bg-purple-50 rounded border border-purple-200">
-                  <div className="flex items-center justify-center gap-3">
-                    <div className="bg-white p-1.5 rounded shadow-sm">
+                <div className="book-page-text p-2 bg-purple-50 rounded border border-purple-200">
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="bg-white p-1 rounded shadow-sm">
                       {videoUrl.startsWith('data:') ? (
-                        <div className="w-12 h-12 bg-purple-100 rounded flex items-center justify-center">
-                          <Video className="w-6 h-6 text-purple-400" />
+                        <div className="w-6 h-6 bg-purple-100 rounded flex items-center justify-center">
+                          <Video className="w-3 h-3 text-purple-400" />
                         </div>
                       ) : (
                         <QRCodeSVG 
                           value={videoUrl}
-                          size={48}
+                          size={24}
                           level="M"
                         />
                       )}
                     </div>
-                    <div className="text-left">
-                      <div className="flex items-center gap-1 text-purple-700 font-medium text-xs">
-                        <Video className="w-3 h-3" />
-                        {language === "fr" ? "Vidéo ajoutée" : "Video added"}
-                      </div>
-                      <p className="text-[10px] text-purple-500 mt-0.5">
-                        {videoUrl.startsWith('data:') 
-                          ? (language === "fr" ? "QR généré à l'impression" : "QR generated on print")
-                          : (language === "fr" ? "Code QR imprimé" : "Printed QR code")}
-                      </p>
-                    </div>
+                    <span className="text-purple-700 font-medium text-[10px]">
+                      {language === "fr" ? "Vidéo" : "Video"}
+                    </span>
                   </div>
                 </div>
               )}
 
-              {/* Spacer to push page number to bottom */}
-              <div className="flex-1" />
-
-              {/* Page number */}
-              <div className="text-center mt-4 pt-2 border-t border-stone-100">
+              {/* Page number at bottom */}
+              <div className="book-page-footer text-center pt-2 border-t border-stone-100">
                 <span className="text-xs text-stone-400">{pageNumber}</span>
               </div>
             </div>

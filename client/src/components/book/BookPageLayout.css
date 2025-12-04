@@ -1,5 +1,57 @@
 /* BookPageLayout - 8x11 inch print format */
 
+/* Page container with CSS Grid for reliable layout */
+.book-page-8x11 {
+  width: min(100%, 440px);
+  aspect-ratio: 8 / 11;
+  padding: clamp(16px, 4%, 28px);
+  display: grid;
+  grid-template-rows: auto 1fr auto auto;
+  gap: 12px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.book-page-header {
+  grid-row: 1;
+}
+
+.book-page-photos {
+  grid-row: 2;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.book-page-photos .collage-block-new {
+  height: 100%;
+}
+
+.book-page-photos .collage {
+  height: 100%;
+}
+
+.book-page-text {
+  grid-row: 3;
+}
+
+.book-page-footer {
+  grid-row: 4;
+}
+
+/* When there's no text content */
+.book-page-8x11:not(:has(.book-page-text)) {
+  grid-template-rows: auto 1fr auto;
+}
+
+.book-page-8x11:not(:has(.book-page-text)) .book-page-photos {
+  grid-row: 2;
+}
+
+.book-page-8x11:not(:has(.book-page-text)) .book-page-footer {
+  grid-row: 3;
+}
+
+/* Legacy layout component */
 .book-page-layout {
   aspect-ratio: 8 / 11;
   width: 100%;

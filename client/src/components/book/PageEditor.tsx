@@ -1146,21 +1146,26 @@ export function PageEditor({
                   ) : null;
                 })()}
 
-                {/* Video with QR Code indicator in preview */}
+                {/* Video with QR Code - Large and scannable */}
                 {videoUrl && (
-                  <div className="p-1 bg-purple-50 rounded border border-purple-200 mb-1">
-                    <div className="flex items-center justify-center gap-1">
-                      <div className="bg-white p-0.5 rounded shadow-sm">
+                  <div className="p-3 bg-purple-50 rounded-lg border border-purple-200 mb-2">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <div className="bg-white p-2 rounded-lg shadow-md">
                         {videoUrl.startsWith('data:') ? (
-                          <div className="w-4 h-4 bg-purple-100 rounded flex items-center justify-center">
-                            <Video className="w-2 h-2 text-purple-400" />
+                          <div className="w-20 h-20 bg-purple-100 rounded flex items-center justify-center">
+                            <Video className="w-8 h-8 text-purple-400" />
                           </div>
                         ) : (
-                          <QRCodeSVG value={videoUrl} size={16} level="M" />
+                          <QRCodeSVG 
+                            value={videoUrl} 
+                            size={80} 
+                            level="H"
+                            includeMargin={true}
+                          />
                         )}
                       </div>
-                      <span className="text-purple-700 font-medium text-[8px]">
-                        {language === "fr" ? "Vidéo" : "Video"}
+                      <span className="text-purple-700 font-medium text-[10px]">
+                        {language === "fr" ? "Scannez pour voir la vidéo" : "Scan to watch video"}
                       </span>
                     </div>
                   </div>

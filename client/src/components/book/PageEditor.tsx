@@ -1221,11 +1221,30 @@ export function PageEditor({
                 </div>
               </div>
 
-              {/* Draggable QR Code - Positioned absolutely within the 8x11 page */}
+              {/* Draggable QR Code - Positioned intelligently based on text layout */}
               {videoUrl && (videoUrl.startsWith('https://') || videoUrl.startsWith('http://')) && (
                 <Draggable
                   bounds="parent"
-                  defaultPosition={blockPositions.qr || { x: 280, y: 400 }}
+                  defaultPosition={blockPositions.qr || (() => {
+                    const pageWidth = 400;
+                    const pageHeight = 550;
+                    const qrSize = 120;
+                    const margin = 8;
+                    
+                    switch (textLayout.position) {
+                      case 'bottom':
+                        return { x: pageWidth - qrSize - margin, y: margin };
+                      case 'top':
+                        return { x: pageWidth - qrSize - margin, y: pageHeight - qrSize - margin };
+                      case 'left':
+                        return { x: pageWidth - qrSize - margin, y: pageHeight - qrSize - margin };
+                      case 'right':
+                        return { x: margin, y: pageHeight - qrSize - margin };
+                      case 'center':
+                      default:
+                        return { x: pageWidth - qrSize - margin, y: margin };
+                    }
+                  })()}
                   onStop={(e, data) => {
                     updateBlockPosition('qr', { x: data.x, y: data.y });
                   }}

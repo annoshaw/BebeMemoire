@@ -854,24 +854,24 @@ export function PageEditor({
           </DialogHeader>
           
           <div className="p-6 bg-stone-100 overflow-auto max-h-[calc(95vh-180px)]">
-            {/* Book page simulation - 8x11 aspect ratio using flexbox for better control */}
+            {/* Book page simulation - 8x11 aspect ratio with CSS Grid */}
             <div 
               className="mx-auto bg-white shadow-2xl border border-stone-300 relative"
               style={{
                 width: 'min(100%, 440px)',
                 aspectRatio: '8 / 11',
                 padding: 'clamp(16px, 4%, 28px)',
-                display: 'flex',
-                flexDirection: 'column',
-                boxSizing: 'border-box',
-                overflow: 'hidden'
+                display: 'grid',
+                gridTemplateRows: 'auto 1fr auto',
+                gap: '8px',
+                boxSizing: 'border-box'
               }}
               onMouseMove={handlePhotoMouseMove}
               onMouseUp={handlePhotoMouseUp}
               onMouseLeave={handlePhotoMouseUp}
             >
-              {/* Page Header - Fixed height */}
-              <div className="text-center pb-3 border-b border-stone-200 flex-shrink-0">
+              {/* Row 1: Page Header (auto height) */}
+              <div className="text-center pb-2 border-b border-stone-200">
                 <h2 
                   className="font-bold text-stone-800"
                   style={{ 
@@ -888,8 +888,8 @@ export function PageEditor({
                 )}
               </div>
 
-              {/* Photos Section - FLEX GROW to fill ALL remaining space */}
-              {photos.length > 0 && (
+              {/* Row 2: Photos Section (1fr = fills remaining space) */}
+              {photos.length > 0 ? (
                 editMode ? (
                   <motion.div
                     drag
@@ -900,8 +900,8 @@ export function PageEditor({
                       x: (blockPositions.photos?.x || 0) + info.offset.x, 
                       y: (blockPositions.photos?.y || 0) + info.offset.y 
                     })}
-                    className="cursor-move ring-2 ring-sage-400 ring-offset-2 rounded-lg my-3"
-                    style={{ flex: '1 1 0', minHeight: 0, overflow: 'hidden' }}
+                    className="cursor-move ring-2 ring-sage-400 ring-offset-2 rounded-lg"
+                    style={{ height: '100%', minHeight: 0, overflow: 'hidden' }}
                   >
                     <CollageBlockNew
                       photos={photos}
@@ -915,9 +915,8 @@ export function PageEditor({
                   </motion.div>
                 ) : (
                   <div 
-                    className="my-3"
                     style={{ 
-                      flex: '1 1 0',
+                      height: '100%',
                       minHeight: 0,
                       overflow: 'hidden',
                       transform: blockPositions.photos 
@@ -936,13 +935,10 @@ export function PageEditor({
                     />
                   </div>
                 )
-              )}
-
-              {/* Empty photo placeholder if no photos */}
-              {photos.length === 0 && (templatePage?.maxPhotos || 0) > 0 && (
+              ) : (templatePage?.maxPhotos || 0) > 0 ? (
                 <div 
-                  className="bg-stone-100 rounded border-2 border-dashed border-stone-300 flex items-center justify-center my-3"
-                  style={{ flex: '1 1 0', minHeight: 0 }}
+                  className="bg-stone-100 rounded border-2 border-dashed border-stone-300 flex items-center justify-center"
+                  style={{ height: '100%', minHeight: 0 }}
                 >
                   <div className="text-center text-stone-400">
                     <ImageIcon className="w-8 h-8 mx-auto mb-1" />
@@ -951,10 +947,12 @@ export function PageEditor({
                     </span>
                   </div>
                 </div>
+              ) : (
+                <div style={{ minHeight: 0 }} />
               )}
 
-              {/* Footer section - Fixed at bottom with max height limit */}
-              <div className="space-y-2 flex-shrink-0" style={{ maxHeight: '25%', overflow: 'auto' }}>
+              {/* Row 3: Footer section (auto height) */}
+              <div className="space-y-2" style={{ minHeight: 0 }}>
                 {/* Text Content */}
                 {textContent.length > 0 && textContent.some(t => t && t.trim()) && (
                   <div className="space-y-1 text-stone-700">

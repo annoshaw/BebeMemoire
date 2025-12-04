@@ -585,7 +585,17 @@ export async function registerRoutes(
       const updateData: any = {};
       if (textContent !== undefined) updateData.textContent = textContent;
       if (photos !== undefined) updateData.photos = photos;
-      if (videoUrl !== undefined) updateData.videoUrl = videoUrl;
+      // Only accept valid S3 URLs for videos, reject base64 data URLs
+      if (videoUrl !== undefined) {
+        if (videoUrl === null || videoUrl.startsWith('https://')) {
+          updateData.videoUrl = videoUrl;
+        } else if (videoUrl.startsWith('data:')) {
+          console.warn('Rejecting base64 video URL - videos must be uploaded to S3');
+          // Don't update videoUrl if it's a base64 URL
+        } else {
+          updateData.videoUrl = videoUrl;
+        }
+      }
       if (videoMediaId !== undefined) updateData.videoMediaId = videoMediaId;
       if (customData !== undefined) updateData.customData = customData;
       if (titleOverride !== undefined) updateData.titleOverride = titleOverride;
@@ -1481,6 +1491,40 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Delete media error:", error);
       res.status(500).json({ message: "Erreur lors de la suppression" });
+    }
+  });
+
+  // Maintenance endpoint: Clean up base64 video URLs from database
+  app.post("/api/maintenance/cleanup-base64-videos", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      
+      // Get all books for this user
+      const books = await storage.getBooksByUserId(userId);
+      let cleanedCount = 0;
+      
+      for (const book of books) {
+        // Get all pages for this book
+        const pages = await storage.getUserBookPages(book.id);
+        
+        for (const page of pages) {
+          // Check if videoUrl is a base64 URL
+          if (page.videoUrl && page.videoUrl.startsWith('data:')) {
+            // Clear the invalid base64 URL
+            await storage.updateUserBookPage(page.id, { videoUrl: null });
+            cleanedCount++;
+            console.log(`Cleaned base64 video URL from page ${page.id}`);
+          }
+        }
+      }
+      
+      res.json({ 
+        message: `Nettoyage terminé: ${cleanedCount} URL(s) base64 supprimée(s)`,
+        cleanedCount 
+      });
+    } catch (error) {
+      console.error("Cleanup error:", error);
+      res.status(500).json({ message: "Erreur lors du nettoyage" });
     }
   });
 

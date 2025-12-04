@@ -113,9 +113,14 @@ export function PageEditor({
   const [photos, setPhotos] = useState<string[]>(
     (userPage?.photos as string[]) || []
   );
-  const [videoUrl, setVideoUrl] = useState<string | null>(
-    userPage?.videoUrl || null
-  );
+  // Only accept S3 URLs (https://), not base64 data URLs
+  const [videoUrl, setVideoUrl] = useState<string | null>(() => {
+    const url = userPage?.videoUrl;
+    if (url && url.startsWith('https://')) {
+      return url;
+    }
+    return null;
+  });
   const [videoMediaId, setVideoMediaId] = useState<string | null>(
     (userPage as any)?.videoMediaId || null
   );
@@ -168,7 +173,13 @@ export function PageEditor({
   useEffect(() => {
     setTextContent((userPage?.textContent as string[]) || []);
     setPhotos((userPage?.photos as string[]) || []);
-    setVideoUrl(userPage?.videoUrl || null);
+    // Only accept S3 URLs (https://), filter out base64 data URLs
+    const videoUrlFromDb = userPage?.videoUrl;
+    if (videoUrlFromDb && videoUrlFromDb.startsWith('https://')) {
+      setVideoUrl(videoUrlFromDb);
+    } else {
+      setVideoUrl(null);
+    }
     setVideoMediaId((userPage as any)?.videoMediaId || null);
     const data = (userPage?.customData as Record<string, any>) || {};
     const { photoLayouts: layouts, textStyles: styles, titleStyle: tStyle, blockPositions: positions, textLayout: tLayout, ...rest } = data;
@@ -309,6 +320,9 @@ export function PageEditor({
         textLayout
       };
       
+      // Only save video URL if it's a valid S3 URL (not base64)
+      const videoUrlToSave = videoUrl && videoUrl.startsWith('https://') ? videoUrl : null;
+      
       const res = await fetch(`/api/books/${bookId}/pages/${userPage.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -316,7 +330,7 @@ export function PageEditor({
         body: JSON.stringify({
           textContent,
           photos,
-          videoUrl,
+          videoUrl: videoUrlToSave,
           videoMediaId,
           customData: dataToSave,
         }),

@@ -64,6 +64,22 @@ const TITLE_SIZES = [
   { value: 32, label: "Très grand" },
 ];
 
+// Text/Photo Layout options
+type TextLayoutPosition = 'top' | 'bottom' | 'left' | 'right' | 'center';
+
+interface TextLayout {
+  position: TextLayoutPosition;
+  textSize: number; // percentage of available space for text (20-50%)
+}
+
+const TEXT_LAYOUTS: { id: TextLayoutPosition; labelFr: string; labelEn: string; icon: string }[] = [
+  { id: 'top', labelFr: 'Texte en haut', labelEn: 'Text on top', icon: '⬆️' },
+  { id: 'bottom', labelFr: 'Texte en bas', labelEn: 'Text at bottom', icon: '⬇️' },
+  { id: 'left', labelFr: 'Texte à gauche', labelEn: 'Text on left', icon: '⬅️' },
+  { id: 'right', labelFr: 'Texte à droite', labelEn: 'Text on right', icon: '➡️' },
+  { id: 'center', labelFr: 'Texte au centre', labelEn: 'Text in center', icon: '⏺️' },
+];
+
 interface PageEditorProps {
   bookId: string;
   pageNumber: number;
@@ -128,6 +144,11 @@ export function PageEditor({
     (userPage?.customData as any)?.titleStyle || { fontFamily: "'Fraunces', serif", fontSize: 20 }
   );
 
+  // Text layout position state
+  const [textLayout, setTextLayout] = useState<TextLayout>(
+    (userPage?.customData as any)?.textLayout || { position: 'bottom', textSize: 25 }
+  );
+
   // Block positions for free positioning (drag and drop)
   type BlockPosition = { x: number; y: number };
   const [blockPositions, setBlockPositions] = useState<{
@@ -142,11 +163,12 @@ export function PageEditor({
     setPhotos((userPage?.photos as string[]) || []);
     setVideoUrl(userPage?.videoUrl || null);
     const data = (userPage?.customData as Record<string, any>) || {};
-    const { photoLayouts: layouts, textStyles: styles, titleStyle: tStyle, blockPositions: positions, ...rest } = data;
+    const { photoLayouts: layouts, textStyles: styles, titleStyle: tStyle, blockPositions: positions, textLayout: tLayout, ...rest } = data;
     setCustomData(rest);
     setPhotoLayouts(layouts || {});
     setTextStyles(styles || {});
     setTitleStyle(tStyle || { fontFamily: "'Fraunces', serif", fontSize: 20 });
+    setTextLayout(tLayout || { position: 'bottom', textSize: 25 });
     setBlockPositions(positions || {});
     setIsDirty(false);
   }, [userPage, pageNumber]);
@@ -269,13 +291,14 @@ export function PageEditor({
     mutationFn: async () => {
       if (!userPage?.id) throw new Error("No user page found");
       
-      // Merge photoLayouts, textStyles, titleStyle, and blockPositions into customData for saving
+      // Merge photoLayouts, textStyles, titleStyle, textLayout and blockPositions into customData for saving
       const dataToSave = {
         ...customData,
         ...(Object.keys(photoLayouts).length > 0 ? { photoLayouts } : {}),
         ...(Object.keys(textStyles).length > 0 ? { textStyles } : {}),
         ...(Object.keys(blockPositions).length > 0 ? { blockPositions } : {}),
-        titleStyle
+        titleStyle,
+        textLayout
       };
       
       const res = await fetch(`/api/books/${bookId}/pages/${userPage.id}`, {

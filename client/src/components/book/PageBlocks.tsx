@@ -632,12 +632,18 @@ export function VideoBlock({ videoUrl, onAdd, onRemove, language, qrCodeUrl }: V
           <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
             <div className="flex items-start gap-4">
               <div className="bg-white p-2 rounded-lg shadow-sm">
-                <QRCodeSVG 
-                  value={qrCodeUrl || videoUrl} 
-                  size={80}
-                  level="M"
-                  includeMargin={false}
-                />
+                {(qrCodeUrl || videoUrl).startsWith('data:') ? (
+                  <div className="w-20 h-20 bg-purple-100 rounded flex items-center justify-center">
+                    <Video className="w-8 h-8 text-purple-400" />
+                  </div>
+                ) : (
+                  <QRCodeSVG 
+                    value={qrCodeUrl || videoUrl} 
+                    size={80}
+                    level="M"
+                    includeMargin={false}
+                  />
+                )}
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-2 text-purple-700 font-medium text-sm mb-1">
@@ -645,9 +651,13 @@ export function VideoBlock({ videoUrl, onAdd, onRemove, language, qrCodeUrl }: V
                   {language === "fr" ? "Code QR pour le livre imprimé" : "QR Code for printed book"}
                 </div>
                 <p className="text-xs text-purple-600">
-                  {language === "fr" 
-                    ? "Ce code QR apparaîtra dans votre livre imprimé. Scannez-le pour voir la vidéo."
-                    : "This QR code will appear in your printed book. Scan it to watch the video."}
+                  {(qrCodeUrl || videoUrl).startsWith('data:')
+                    ? (language === "fr" 
+                        ? "Le code QR sera généré lorsque la vidéo sera uploadée."
+                        : "QR code will be generated when the video is uploaded.")
+                    : (language === "fr" 
+                        ? "Ce code QR apparaîtra dans votre livre imprimé. Scannez-le pour voir la vidéo."
+                        : "This QR code will appear in your printed book. Scan it to watch the video.")}
                 </p>
               </div>
             </div>

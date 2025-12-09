@@ -501,6 +501,9 @@ export class DatabaseStorage implements IStorage {
       savedPages.sort((a, b) => a.pageIndex - b.pageIndex);
     }
 
+    // Also create UserBookPages from template pages (filtered by babyStatus)
+    await this.createUserBookPagesFromTemplate(book.id, template.id, bookData.babyStatus || undefined);
+
     return { book, pages: savedPages };
   }
 

@@ -836,13 +836,17 @@ export async function registerRoutes(
         });
       }
 
-      // If templateSlug is provided and not 'custom', create book with template
-      if (templateSlug && templateSlug !== 'custom') {
+      // Determine templateSlug: use provided value, or default to 'prebuilt_pregnancy' if babyStatus is set
+      const effectiveTemplateSlug = templateSlug || 
+        (validation.data.babyStatus ? 'prebuilt_pregnancy' : null);
+      
+      // If we have a template slug and it's not 'custom', create book with template
+      if (effectiveTemplateSlug && effectiveTemplateSlug !== 'custom') {
         try {
           const result = await storage.createBookWithTemplate(
             userId, 
             validation.data, 
-            templateSlug,
+            effectiveTemplateSlug,
             validation.data.birthDate
           );
           res.status(201).json({ book: result.book, pages: result.pages });

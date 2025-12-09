@@ -1064,7 +1064,7 @@ export function PageEditor({
                 height: '550px',
                 display: 'flex',
                 flexDirection: 'column',
-                padding: '16px',
+                padding: '12px',
                 boxSizing: 'border-box',
                 position: 'relative'
               }}
@@ -1074,7 +1074,7 @@ export function PageEditor({
             >
               {/* Header */}
               <div 
-                className="text-center border-b border-stone-200 pb-2"
+                className="text-center border-b border-stone-200 pb-1"
                 style={{ flexShrink: 0 }}
               >
                 <h2 
@@ -1228,7 +1228,7 @@ export function PageEditor({
 
                 if (layoutPosition === 'top') {
                   return (
-                    <div style={{ flex: 1, minHeight: 0, marginTop: '8px', marginBottom: '8px', display: 'grid', gridTemplateRows: hasText ? `${textSizePercent}% 1fr` : '1fr', gap: '8px', overflow: 'hidden' }}>
+                    <div style={{ flex: 1, minHeight: 0, marginTop: '5px', marginBottom: '5px', display: 'grid', gridTemplateRows: hasText ? `${textSizePercent}% 1fr` : '1fr', gap: '5px', overflow: 'hidden' }}>
                       {hasText && <div style={{ overflow: 'auto', borderBottom: '1px solid #e5e5e5' }}>{renderTextBlock()}</div>}
                       <div style={{ minHeight: 0, overflow: 'hidden' }}>{renderPhotosGrid()}</div>
                     </div>
@@ -1237,7 +1237,7 @@ export function PageEditor({
 
                 if (layoutPosition === 'bottom') {
                   return (
-                    <div style={{ flex: 1, minHeight: 0, marginTop: '8px', marginBottom: '8px', display: 'grid', gridTemplateRows: hasText ? `1fr ${textSizePercent}%` : '1fr', gap: '8px', overflow: 'hidden' }}>
+                    <div style={{ flex: 1, minHeight: 0, marginTop: '5px', marginBottom: '5px', display: 'grid', gridTemplateRows: hasText ? `1fr ${textSizePercent}%` : '1fr', gap: '5px', overflow: 'hidden' }}>
                       <div style={{ minHeight: 0, overflow: 'hidden' }}>{renderPhotosGrid()}</div>
                       {hasText && <div style={{ overflow: 'auto', borderTop: '1px solid #e5e5e5' }}>{renderTextBlock()}</div>}
                     </div>
@@ -1246,8 +1246,8 @@ export function PageEditor({
 
                 if (layoutPosition === 'left') {
                   return (
-                    <div style={{ flex: 1, minHeight: 0, marginTop: '8px', marginBottom: '8px', display: 'grid', gridTemplateColumns: hasText ? `${textSizePercent}% 1fr` : '1fr', gap: '8px', overflow: 'hidden' }}>
-                      {hasText && <div style={{ overflow: 'auto', borderRight: '1px solid #e5e5e5', paddingRight: '8px' }}>{renderTextBlock()}</div>}
+                    <div style={{ flex: 1, minHeight: 0, marginTop: '5px', marginBottom: '5px', display: 'grid', gridTemplateColumns: hasText ? `${textSizePercent}% 1fr` : '1fr', gap: '5px', overflow: 'hidden' }}>
+                      {hasText && <div style={{ overflow: 'auto', borderRight: '1px solid #e5e5e5', paddingRight: '5px' }}>{renderTextBlock()}</div>}
                       <div style={{ minHeight: 0, overflow: 'hidden' }}>{renderPhotosGrid()}</div>
                     </div>
                   );
@@ -1255,16 +1255,16 @@ export function PageEditor({
 
                 if (layoutPosition === 'right') {
                   return (
-                    <div style={{ flex: 1, minHeight: 0, marginTop: '8px', marginBottom: '8px', display: 'grid', gridTemplateColumns: hasText ? `1fr ${textSizePercent}%` : '1fr', gap: '8px', overflow: 'hidden' }}>
+                    <div style={{ flex: 1, minHeight: 0, marginTop: '5px', marginBottom: '5px', display: 'grid', gridTemplateColumns: hasText ? `1fr ${textSizePercent}%` : '1fr', gap: '5px', overflow: 'hidden' }}>
                       <div style={{ minHeight: 0, overflow: 'hidden' }}>{renderPhotosGrid()}</div>
-                      {hasText && <div style={{ overflow: 'auto', borderLeft: '1px solid #e5e5e5', paddingLeft: '8px' }}>{renderTextBlock()}</div>}
+                      {hasText && <div style={{ overflow: 'auto', borderLeft: '1px solid #e5e5e5', paddingLeft: '5px' }}>{renderTextBlock()}</div>}
                     </div>
                   );
                 }
 
                 if (layoutPosition === 'center') {
                   return (
-                    <div style={{ flex: 1, minHeight: 0, marginTop: '8px', marginBottom: '8px', position: 'relative', overflow: 'hidden' }}>
+                    <div style={{ flex: 1, minHeight: 0, marginTop: '5px', marginBottom: '5px', position: 'relative', overflow: 'hidden' }}>
                       <div style={{ width: '100%', height: '100%' }}>{renderPhotosGrid()}</div>
                       {hasText && (
                         <div style={{ 
@@ -1289,7 +1289,7 @@ export function PageEditor({
 
                 // Default fallback (bottom)
                 return (
-                  <div style={{ flex: 1, minHeight: 0, marginTop: '8px', marginBottom: '8px', display: 'grid', gridTemplateRows: hasText ? '1fr 25%' : '1fr', gap: '8px', overflow: 'hidden' }}>
+                  <div style={{ flex: 1, minHeight: 0, marginTop: '5px', marginBottom: '5px', display: 'grid', gridTemplateRows: hasText ? '1fr 25%' : '1fr', gap: '5px', overflow: 'hidden' }}>
                     <div style={{ minHeight: 0, overflow: 'hidden' }}>{renderPhotosGrid()}</div>
                     {hasText && <div style={{ overflow: 'auto', borderTop: '1px solid #e5e5e5' }}>{renderTextBlock()}</div>}
                   </div>

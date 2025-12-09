@@ -31,6 +31,17 @@ export default function Prototype() {
   const babyName = typeof window !== "undefined" ? localStorage.getItem("babyName") || "Léo" : "Léo";
   const language = typeof window !== "undefined" ? (localStorage.getItem("language") || "fr") : "fr";
   
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get("tab");
+      if (tab === "inspiration") {
+        setActiveTab("inspiration");
+        window.history.replaceState({}, "", window.location.pathname);
+      }
+    }
+  }, []);
+  
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const cameraInputRef = useRef<HTMLInputElement>(null);

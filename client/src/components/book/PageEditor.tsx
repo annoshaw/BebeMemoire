@@ -936,6 +936,7 @@ export function PageEditor({
 
         <Button
           variant="outline"
+          className="bg-[#ead5c8]"
           onClick={() => saveMutation.mutate()}
           disabled={isSaving || !isDirty}
           data-testid="save-page"

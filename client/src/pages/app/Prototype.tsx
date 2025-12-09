@@ -351,6 +351,7 @@ export default function Prototype() {
   };
   
   const addPageToBook = async (page: {title: string, icon: string, color: string}, bookId: string | null, position: number) => {
+    const targetBookId = bookId || activeBookId;
     const targetBook = bookId ? userBooks.find(b => b.id === bookId) : activeBook;
     const bookName = targetBook?.childName || "votre livre";
     
@@ -381,6 +382,8 @@ export default function Prototype() {
     
     setPageAddedFeedback({ bookName, pageTitle: page.title });
     setTimeout(() => setPageAddedFeedback(null), 3000);
+    
+    setActiveTab("creations");
   };
   
   useEffect(() => {

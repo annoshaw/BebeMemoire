@@ -24,6 +24,7 @@ interface BookViewerProps {
   bookId: string;
   language: "fr" | "en";
   onGoToInspiration?: () => void;
+  initialPage?: number;
 }
 
 interface BookPagesResponse {
@@ -34,10 +35,11 @@ interface BookPagesResponse {
   book: Book;
 }
 
-export function BookViewer({ bookId, language, onGoToInspiration }: BookViewerProps) {
+export function BookViewer({ bookId, language, onGoToInspiration, initialPage }: BookViewerProps) {
   const [selectedPartIndex, setSelectedPartIndex] = useState(0);
   const [selectedPageNumber, setSelectedPageNumber] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<"parts" | "page">("parts");
+  const [hasInitialPageOpened, setHasInitialPageOpened] = useState(false);
   const queryClient = useQueryClient();
 
   const { data, isLoading, error } = useQuery<BookPagesResponse>({
@@ -73,6 +75,17 @@ export function BookViewer({ bookId, language, onGoToInspiration }: BookViewerPr
       initializeMutation.mutate();
     }
   }, [data]);
+
+  useEffect(() => {
+    if (initialPage && data?.templatePages && !hasInitialPageOpened) {
+      const page = data.templatePages.find(p => p.pageNumber === initialPage);
+      if (page) {
+        setSelectedPageNumber(initialPage);
+        setViewMode("page");
+        setHasInitialPageOpened(true);
+      }
+    }
+  }, [initialPage, data, hasInitialPageOpened]);
 
   if (isLoading) {
     return (

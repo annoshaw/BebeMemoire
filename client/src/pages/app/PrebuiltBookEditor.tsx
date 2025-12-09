@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,21 @@ export default function PrebuiltBookEditor() {
   const bookId = params.id;
   const [language, setLanguage] = useState<"fr" | "en">("fr");
   const [, setLocation] = useLocation();
+  const [initialPage, setInitialPage] = useState<number | undefined>(undefined);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      const pageParam = urlParams.get("page");
+      if (pageParam) {
+        const pageNum = parseInt(pageParam, 10);
+        if (!isNaN(pageNum) && pageNum > 0) {
+          setInitialPage(pageNum);
+          window.history.replaceState({}, "", window.location.pathname);
+        }
+      }
+    }
+  }, []);
 
   const { data: bookData, isLoading, error } = useQuery<{ book: Book }>({
     queryKey: ["/api/books", bookId],
@@ -114,6 +129,7 @@ export default function PrebuiltBookEditor() {
           bookId={bookId!} 
           language={language} 
           onGoToInspiration={() => setLocation("/app?tab=inspiration")}
+          initialPage={initialPage}
         />
       </main>
     </div>

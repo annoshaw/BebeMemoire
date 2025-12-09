@@ -517,7 +517,7 @@ export async function registerRoutes(
       // If prebuilt book, get template info
       let template = null;
       let templateParts = null;
-      let templatePages = null;
+      let templatePages: any[] | null = null;
       
       if (book.templateSlug) {
         template = await storage.getBookTemplateBySlug(book.templateSlug);
@@ -525,6 +525,42 @@ export async function registerRoutes(
           templateParts = await storage.getTemplateParts(template.id);
           templatePages = await storage.getTemplatePages(template.id);
         }
+      }
+
+      // Add inspiration pages (from userPages with isInspirationPage flag) to templatePages
+      const inspirationPages = pagesWithFreshUrls.filter(page => {
+        const customData = page.customData as any;
+        return customData?.isInspirationPage === true;
+      });
+
+      if (inspirationPages.length > 0 && templatePages) {
+        const inspirationTemplatePages = inspirationPages.map(page => {
+          const customData = page.customData as any;
+          return {
+            id: `inspiration-${page.id}`,
+            templateId: template?.id || null,
+            partId: null, // Inspiration pages are not part of any template part
+            pageNumber: page.pageNumber,
+            titleFr: customData.titleFr || page.titleOverride || "Page d'inspiration",
+            titleEn: customData.titleEn || page.titleOverride || "Inspiration Page",
+            subtitleFr: customData.subtitleFr || null,
+            subtitleEn: customData.subtitleEn || null,
+            promptsFr: customData.promptsFr || [],
+            promptsEn: customData.promptsEn || [],
+            pageType: customData.pageType || "text_photo",
+            layoutStyle: "single",
+            maxPhotos: customData.maxPhotos || 4,
+            hasVideo: customData.hasVideo ?? true,
+            hasTextBlocks: 2,
+            iconName: null,
+            backgroundImage: null,
+            createdAt: page.createdAt,
+            isInspirationPage: true,
+          };
+        });
+        
+        // Merge and sort by page number
+        templatePages = [...templatePages, ...inspirationTemplatePages].sort((a, b) => a.pageNumber - b.pageNumber);
       }
 
       res.json({ 

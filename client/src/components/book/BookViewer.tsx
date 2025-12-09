@@ -15,8 +15,20 @@ import {
   List,
   Grid,
   Sparkles,
-  Pencil
+  Pencil,
+  Trash2
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { PageEditor } from "./PageEditor";
 import type { TemplatePart, TemplatePage, UserBookPage, Book, BookTemplate } from "@shared/schema";
 
@@ -62,6 +74,23 @@ export function BookViewer({ bookId, language, onGoToInspiration, initialPage }:
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.message || "Failed to initialize pages");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/books", bookId, "pages"] });
+    },
+  });
+
+  const deletePageMutation = useMutation({
+    mutationFn: async (pageId: string) => {
+      const res = await fetch(`/api/books/${bookId}/pages/${pageId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || "Failed to delete page");
       }
       return res.json();
     },
@@ -294,44 +323,83 @@ export function BookViewer({ bookId, language, onGoToInspiration, initialPage }:
                       {inspirationPages.map((page: any) => {
                         const completed = isPageCompleted(page.pageNumber);
                         return (
-                          <button
+                          <div
                             key={page.id}
-                            onClick={() => {
-                              setSelectedPageNumber(page.pageNumber);
-                              setViewMode("page");
-                            }}
-                            className={`p-4 rounded-lg border text-left transition-all hover:shadow-md group ${
+                            className={`p-4 rounded-lg border text-left transition-all hover:shadow-md group relative ${
                               completed 
                                 ? "bg-green-50 border-green-200 hover:bg-green-100" 
                                 : "bg-white border-amber-200 hover:border-amber-300"
                             }`}
-                            data-testid={`page-button-${page.pageNumber}`}
+                            data-testid={`page-card-${page.pageNumber}`}
                           >
-                            <div className="flex items-start gap-3">
-                              <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                                completed ? "bg-green-500 text-white" : "bg-amber-100 text-amber-600"
-                              }`}>
-                                {completed ? <Check className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2">
-                                  <h4 className="font-medium text-sage-900 truncate">
-                                    {language === "fr" ? page.titleFr : page.titleEn}
-                                  </h4>
+                            <button
+                              onClick={() => {
+                                setSelectedPageNumber(page.pageNumber);
+                                setViewMode("page");
+                              }}
+                              className="w-full text-left"
+                              data-testid={`page-button-${page.pageNumber}`}
+                            >
+                              <div className="flex items-start gap-3">
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                                  completed ? "bg-green-500 text-white" : "bg-amber-100 text-amber-600"
+                                }`}>
+                                  {completed ? <Check className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
                                 </div>
-                                {page.subtitleFr && (
-                                  <p className="text-sm text-sage-500 truncate">
-                                    {language === "fr" ? page.subtitleFr : page.subtitleEn}
-                                  </p>
-                                )}
-                                <div className="flex items-center gap-2 mt-2 flex-wrap">
-                                  <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-700">
-                                    Page {page.pageNumber}
-                                  </Badge>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <h4 className="font-medium text-sage-900 truncate">
+                                      {language === "fr" ? page.titleFr : page.titleEn}
+                                    </h4>
+                                  </div>
+                                  {page.subtitleFr && (
+                                    <p className="text-sm text-sage-500 truncate">
+                                      {language === "fr" ? page.subtitleFr : page.subtitleEn}
+                                    </p>
+                                  )}
+                                  <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                    <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-700">
+                                      Page {page.pageNumber}
+                                    </Badge>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          </button>
+                            </button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <button
+                                  className="absolute top-2 right-2 p-1.5 rounded-full bg-red-100 text-red-600 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-200"
+                                  data-testid={`delete-page-${page.pageNumber}`}
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>
+                                    {language === "fr" ? "Supprimer cette page ?" : "Delete this page?"}
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    {language === "fr" 
+                                      ? "Cette action est irréversible. La page et tout son contenu seront supprimés définitivement." 
+                                      : "This action cannot be undone. The page and all its content will be permanently deleted."}
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>
+                                    {language === "fr" ? "Annuler" : "Cancel"}
+                                  </AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => deletePageMutation.mutate(page.id.replace("inspiration-", ""))}
+                                    className="bg-red-600 hover:bg-red-700"
+                                  >
+                                    {language === "fr" ? "Supprimer" : "Delete"}
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
                         );
                       })}
                     </div>

@@ -1203,6 +1203,33 @@ export async function registerRoutes(
     }
   });
 
+  // Delete inspiration page from a book
+  app.delete("/api/books/:bookId/pages/:pageId", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const book = await storage.getBook(req.params.bookId);
+      
+      if (!book) {
+        return res.status(404).json({ message: "Livre non trouvé" });
+      }
+      
+      if (book.userId !== userId) {
+        return res.status(403).json({ message: "Accès refusé" });
+      }
+      
+      const deleted = await storage.deleteInspirationPage(req.params.pageId);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Page non trouvée" });
+      }
+      
+      res.json({ message: "Page supprimée avec succès" });
+    } catch (error) {
+      console.error("Delete inspiration page error:", error);
+      res.status(500).json({ message: "Erreur lors de la suppression de la page" });
+    }
+  });
+
   // NOTIFICATION ROUTES
 
   // Get all notifications for user

@@ -1102,6 +1102,62 @@ export async function registerRoutes(
     }
   });
 
+  // Add inspiration page to a book
+  app.post("/api/books/:bookId/add-inspiration-page", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const book = await storage.getBook(req.params.bookId);
+      
+      if (!book) {
+        return res.status(404).json({ message: "Livre non trouvé" });
+      }
+      
+      if (book.userId !== userId) {
+        return res.status(403).json({ message: "Accès refusé" });
+      }
+      
+      const { title, titleEn, subtitle, subtitleEn, pageType, prompts, promptsEn, position } = req.body;
+      
+      if (!title) {
+        return res.status(400).json({ message: "Titre requis" });
+      }
+      
+      // Get existing pages to calculate new page number
+      const existingPages = await storage.getBookPages(req.params.bookId);
+      const templatePages = book.templateSlug ? await storage.getTemplatePages(book.templateSlug) : [];
+      
+      // Calculate position
+      const totalExistingPages = Math.max(existingPages.length, templatePages.length);
+      const insertPosition = position !== undefined ? Math.min(position, totalExistingPages + 1) : totalExistingPages + 1;
+      
+      // Create new user book page
+      const newPage = await storage.addInspirationPage(req.params.bookId, {
+        pageNumber: insertPosition,
+        titleOverride: title,
+        textContent: [],
+        photos: [],
+        customData: { 
+          isInspirationPage: true, 
+          titleFr: title,
+          titleEn: titleEn || title,
+          subtitleFr: subtitle || "",
+          subtitleEn: subtitleEn || subtitle || "",
+          pageType: pageType || "text_photo",
+          promptsFr: prompts || [],
+          promptsEn: promptsEn || prompts || [],
+          hasVideo: true,
+          maxPhotos: 4
+        },
+        isCompleted: false,
+      });
+      
+      res.json({ page: newPage, pageNumber: insertPosition, message: "Page d'inspiration ajoutée avec succès" });
+    } catch (error) {
+      console.error("Add inspiration page error:", error);
+      res.status(500).json({ message: "Erreur lors de l'ajout de la page d'inspiration" });
+    }
+  });
+
   // NOTIFICATION ROUTES
 
   // Get all notifications for user

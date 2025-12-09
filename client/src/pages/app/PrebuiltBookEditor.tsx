@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Settings, Sparkles, ChevronRight, Plus, X } from "lucide-react";
+import { ArrowLeft, Settings, Sparkles, ChevronRight, Plus, X, Loader2 } from "lucide-react";
 import { BookViewer } from "@/components/book";
 import type { Book } from "@shared/schema";
 import {
@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 
 const inspirationCategories = [
   { title: "Présentation de la famille", icon: "👨‍👩‍👧‍👦", color: "from-teal-100", hasSubPages: true },
@@ -66,6 +67,63 @@ export default function PrebuiltBookEditor() {
   const [initialPage, setInitialPage] = useState<number | undefined>(undefined);
   const [showInspirationModal, setShowInspirationModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [isAddingPage, setIsAddingPage] = useState(false);
+  const queryClient = useQueryClient();
+
+  const addInspirationPageToBook = async (pageTitle: string, pageDesc?: string) => {
+    if (!bookId || isAddingPage) return;
+    
+    setIsAddingPage(true);
+    try {
+      const response = await fetch(`/api/books/${bookId}/add-inspiration-page`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          title: pageTitle,
+          titleEn: pageTitle,
+          subtitle: pageDesc || "",
+          subtitleEn: pageDesc || "",
+          pageType: "text_photo",
+          prompts: pageDesc ? [pageDesc] : [],
+          promptsEn: pageDesc ? [pageDesc] : [],
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to add page");
+      }
+
+      const data = await response.json();
+      
+      // Refresh the book pages
+      queryClient.invalidateQueries({ queryKey: ["/api/books", bookId, "user-pages"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/books", bookId] });
+      
+      toast.success(
+        language === "fr" 
+          ? `Page "${pageTitle}" ajoutée au livre!` 
+          : `Page "${pageTitle}" added to book!`
+      );
+      
+      setShowInspirationModal(false);
+      setSelectedCategory(null);
+      
+      // Navigate to the new page
+      if (data.pageNumber) {
+        setInitialPage(data.pageNumber);
+      }
+    } catch (error) {
+      console.error("Error adding inspiration page:", error);
+      toast.error(
+        language === "fr" 
+          ? "Erreur lors de l'ajout de la page" 
+          : "Error adding page"
+      );
+    } finally {
+      setIsAddingPage(false);
+    }
+  };
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -251,12 +309,7 @@ export default function PrebuiltBookEditor() {
                         key={subPage.id}
                         initial={{ opacity: 0, x: 10 }}
                         animate={{ opacity: 1, x: 0 }}
-                        className="bg-white rounded-xl border border-stone-200 p-3 flex items-center justify-between hover:border-amber-300 transition-colors cursor-pointer"
-                        onClick={() => {
-                          setLocation(`/app?tab=inspiration`);
-                          setShowInspirationModal(false);
-                          setSelectedCategory(null);
-                        }}
+                        className="bg-white rounded-xl border border-stone-200 p-3 flex items-center justify-between hover:border-amber-300 transition-colors"
                       >
                         <div className="flex items-center gap-3">
                           <div className={`w-10 h-10 bg-gradient-to-b ${subPage.color} to-stone-50 rounded-lg flex items-center justify-center flex-shrink-0`}>
@@ -269,8 +322,18 @@ export default function PrebuiltBookEditor() {
                             )}
                           </div>
                         </div>
-                        <Button size="sm" variant="outline" className="h-7 text-xs flex-shrink-0 ml-2">
-                          <Plus size={12} className="mr-1" />
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="h-7 text-xs flex-shrink-0 ml-2"
+                          disabled={isAddingPage}
+                          onClick={() => addInspirationPageToBook(subPage.title, subPage.desc)}
+                        >
+                          {isAddingPage ? (
+                            <Loader2 size={12} className="mr-1 animate-spin" />
+                          ) : (
+                            <Plus size={12} className="mr-1" />
+                          )}
                           {language === "fr" ? "Ajouter" : "Add"}
                         </Button>
                       </motion.div>
@@ -285,13 +348,10 @@ export default function PrebuiltBookEditor() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: idx * 0.03 }}
-                        className="bg-white rounded-xl border border-stone-200 p-3 flex items-center justify-between hover:border-amber-300 transition-colors cursor-pointer"
+                        className={`bg-white rounded-xl border border-stone-200 p-3 flex items-center justify-between hover:border-amber-300 transition-colors ${category.hasSubPages ? 'cursor-pointer' : ''}`}
                         onClick={() => {
                           if (category.hasSubPages) {
                             setSelectedCategory(category.title);
-                          } else {
-                            setLocation(`/app?tab=inspiration`);
-                            setShowInspirationModal(false);
                           }
                         }}
                       >
@@ -306,8 +366,21 @@ export default function PrebuiltBookEditor() {
                         {category.hasSubPages ? (
                           <ChevronRight size={18} className="text-stone-400" />
                         ) : (
-                          <Button size="sm" variant="outline" className="h-7 text-xs">
-                            <Plus size={12} className="mr-1" />
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="h-7 text-xs"
+                            disabled={isAddingPage}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              addInspirationPageToBook(category.title);
+                            }}
+                          >
+                            {isAddingPage ? (
+                              <Loader2 size={12} className="mr-1 animate-spin" />
+                            ) : (
+                              <Plus size={12} className="mr-1" />
+                            )}
                             {language === "fr" ? "Ajouter" : "Add"}
                           </Button>
                         )}

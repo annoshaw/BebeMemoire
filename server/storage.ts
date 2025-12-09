@@ -84,6 +84,7 @@ export interface IStorage {
   updateUserBookPage(id: string, data: Partial<InsertUserBookPage>): Promise<UserBookPage | undefined>;
   createUserBookPagesFromTemplate(bookId: string, templateId: string): Promise<UserBookPage[]>;
   markPageAsCompleted(id: string): Promise<UserBookPage | undefined>;
+  addInspirationPage(bookId: string, pageData: Partial<InsertUserBookPage>): Promise<UserBookPage>;
   
   // Media File operations (S3)
   createMediaFile(media: InsertMediaFile): Promise<MediaFile>;
@@ -590,6 +591,21 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(userBookPages.id, id))
       .returning();
+    return result[0];
+  }
+
+  async addInspirationPage(bookId: string, pageData: Partial<InsertUserBookPage>): Promise<UserBookPage> {
+    const insertData: InsertUserBookPage = {
+      bookId,
+      pageNumber: pageData.pageNumber || 1,
+      titleOverride: pageData.titleOverride || null,
+      textContent: pageData.textContent || [],
+      photos: pageData.photos || [],
+      customData: pageData.customData || {},
+      isCompleted: false,
+    };
+    
+    const result = await db.insert(userBookPages).values(insertData).returning();
     return result[0];
   }
 

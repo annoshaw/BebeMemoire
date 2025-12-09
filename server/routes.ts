@@ -536,10 +536,19 @@ export async function registerRoutes(
               partNumber: index + 1, // Renumber to 1, 2, 3
             }));
             const includedPartIds = new Set(filteredParts.map(p => p.id));
-            templatePages = allPages.filter(page => page.partId === null || includedPartIds.has(page.partId));
+            const filteredPages = allPages.filter(page => page.partId === null || includedPartIds.has(page.partId));
+            // Add displayPageNumber for sequential numbering (1, 2, 3...)
+            templatePages = filteredPages.map((page, index) => ({
+              ...page,
+              displayPageNumber: index + 1,
+            }));
           } else {
             templateParts = allParts;
-            templatePages = allPages;
+            // For expecting books, displayPageNumber matches pageNumber
+            templatePages = allPages.map(page => ({
+              ...page,
+              displayPageNumber: page.pageNumber,
+            }));
           }
         }
       }
@@ -579,8 +588,12 @@ export async function registerRoutes(
           };
         });
         
-        // Merge and sort by page number
-        templatePages = [...templatePages, ...inspirationTemplatePages].sort((a, b) => a.pageNumber - b.pageNumber);
+        // Merge and sort by page number, then recalculate displayPageNumber
+        const mergedPages = [...templatePages, ...inspirationTemplatePages].sort((a, b) => a.pageNumber - b.pageNumber);
+        templatePages = mergedPages.map((page, index) => ({
+          ...page,
+          displayPageNumber: index + 1,
+        }));
         
         // Add virtual Inspiration part at the end
         const nextPartNumber = templateParts ? Math.max(...templateParts.map(p => p.partNumber), 0) + 1 : 1;

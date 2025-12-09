@@ -101,6 +101,7 @@ const TEXT_LAYOUTS: { id: TextLayoutPosition; labelFr: string; labelEn: string; 
 interface PageEditorProps {
   bookId: string;
   pageNumber: number;
+  displayPageNumber?: number; // Sequential display number for born/adoption books
   templatePage: TemplatePage | null;
   userPage: UserBookPage | null;
   language: "fr" | "en";
@@ -113,6 +114,7 @@ interface PageEditorProps {
 export function PageEditor({
   bookId,
   pageNumber,
+  displayPageNumber,
   templatePage,
   userPage,
   language,
@@ -121,6 +123,8 @@ export function PageEditor({
   hasNext,
   hasPrev,
 }: PageEditorProps) {
+  // Use displayPageNumber for UI, fallback to pageNumber if not provided
+  const shownPageNumber = displayPageNumber ?? pageNumber;
   const queryClient = useQueryClient();
 
   const [textContent, setTextContent] = useState<string[]>(
@@ -788,7 +792,7 @@ export function PageEditor({
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <span className="text-sm text-sage-600 px-2">
-            {language === "fr" ? "Page" : "Page"} {pageNumber}
+            {language === "fr" ? "Page" : "Page"} {shownPageNumber}
           </span>
           <Button
             variant="outline"
@@ -808,7 +812,7 @@ export function PageEditor({
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <Badge variant="outline">
-                  {language === "fr" ? "Page" : "Page"} {pageNumber}
+                  {language === "fr" ? "Page" : "Page"} {shownPageNumber}
                 </Badge>
                 <Badge variant="secondary">
                   {pageType.replace(/_/g, " ")}
@@ -1318,7 +1322,7 @@ export function PageEditor({
 
                 {/* Page number at bottom */}
                 <div className="text-center pt-1 border-t border-stone-100">
-                  <span className="text-[10px] text-stone-400">{pageNumber}</span>
+                  <span className="text-[10px] text-stone-400">{shownPageNumber}</span>
                 </div>
               </div>
 

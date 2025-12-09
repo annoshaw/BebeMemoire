@@ -156,6 +156,7 @@ export function BookViewer({ bookId, language, onGoToInspiration, initialPage }:
       <PageEditor
         bookId={bookId}
         pageNumber={selectedPageNumber}
+        displayPageNumber={(templatePage as any)?.displayPageNumber}
         templatePage={templatePage || null}
         userPage={userPage || null}
         language={language}
@@ -340,7 +341,7 @@ export function BookViewer({ bookId, language, onGoToInspiration, initialPage }:
                                   )}
                                   <div className="flex items-center gap-2 mt-2 flex-wrap">
                                     <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-700">
-                                      Page {page.pageNumber}
+                                      Page {(page as any).displayPageNumber || page.pageNumber}
                                     </Badge>
                                   </div>
                                 </div>
@@ -431,7 +432,7 @@ export function BookViewer({ bookId, language, onGoToInspiration, initialPage }:
                                 <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                                   completed ? "bg-green-500 text-white" : "bg-sage-100 text-sage-500"
                                 }`}>
-                                  {completed ? <Check className="w-4 h-4" /> : <span>{page.pageNumber}</span>}
+                                  {completed ? <Check className="w-4 h-4" /> : <span>{(page as any).displayPageNumber || page.pageNumber}</span>}
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-2">

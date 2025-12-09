@@ -51,8 +51,10 @@ export default function Onboarding() {
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [babyStatus, setBabyStatus] = useState<"born" | "expecting" | "adoption" | null>(null);
   const [babyDate, setBabyDate] = useState("");
+  const [dateUnknown, setDateUnknown] = useState(false);
   const [babyGender, setBabyGender] = useState<string>("");
   const [babyName, setBabyName] = useState("");
+  const [nameUnknown, setNameUnknown] = useState(false);
   const [notificationFrequency, setNotificationFrequency] = useState<string>("");
   const [pushNotificationsEnabled, setPushNotificationsEnabled] = useState(false);
   const [pushPermissionStatus, setPushPermissionStatus] = useState<"default" | "granted" | "denied" | "unsupported">("default");
@@ -158,12 +160,15 @@ export default function Onboarding() {
       return response.json();
     },
     onSuccess: async (data) => {
+      const effectiveName = nameUnknown ? "Mon enfant" : babyName;
+      const effectiveDate = dateUnknown ? "" : babyDate;
+      
       queryClient.invalidateQueries({ queryKey: ["/api/books"] });
       localStorage.setItem("activeBookId", data.book.id);
-      localStorage.setItem("babyName", babyName);
+      localStorage.setItem("babyName", effectiveName);
       localStorage.setItem("babyStatus", babyStatus || "");
-      localStorage.setItem("babyDate", babyDate);
-      localStorage.setItem("babyBirthDate", babyDate);
+      localStorage.setItem("babyDate", effectiveDate);
+      localStorage.setItem("babyBirthDate", effectiveDate);
       localStorage.setItem("babyGender", babyGender);
       localStorage.setItem("notificationFrequency", notificationFrequency);
       localStorage.setItem("pushNotificationsEnabled", String(pushNotificationsEnabled));
@@ -206,10 +211,13 @@ export default function Onboarding() {
         await saveNotificationSettings(notificationFrequency, pushNotificationsEnabled);
       }
       
-      localStorage.setItem("babyName", babyName);
+      const effectiveName = nameUnknown ? "Mon enfant" : babyName;
+      const effectiveDate = dateUnknown ? "" : babyDate;
+      
+      localStorage.setItem("babyName", effectiveName);
       localStorage.setItem("babyStatus", babyStatus || "");
-      localStorage.setItem("babyDate", babyDate);
-      localStorage.setItem("babyBirthDate", babyDate);
+      localStorage.setItem("babyDate", effectiveDate);
+      localStorage.setItem("babyBirthDate", effectiveDate);
       localStorage.setItem("babyGender", babyGender);
       localStorage.setItem("notificationFrequency", notificationFrequency);
       localStorage.setItem("pushNotificationsEnabled", String(pushNotificationsEnabled));
@@ -223,9 +231,9 @@ export default function Onboarding() {
   const handleNext = () => {
     if (step === "template" && selectedTemplate) setStep("baby-status");
     else if (step === "baby-status" && babyStatus) setStep("date");
-    else if (step === "date" && babyDate) setStep("gender");
+    else if (step === "date" && (babyDate || dateUnknown)) setStep("gender");
     else if (step === "gender" && babyGender) setStep("name");
-    else if (step === "name" && babyName) setStep("notifications");
+    else if (step === "name" && (babyName || nameUnknown)) setStep("notifications");
     else if (step === "notifications" && notificationFrequency) setStep("complete");
   };
 
@@ -237,25 +245,27 @@ export default function Onboarding() {
   const canContinue = () => {
     if (step === "template") return selectedTemplate !== null;
     if (step === "baby-status") return babyStatus !== null;
-    if (step === "date") return babyDate !== "";
+    if (step === "date") return babyDate !== "" || dateUnknown;
     if (step === "gender") return babyGender !== "";
-    if (step === "name") return babyName.trim() !== "";
+    if (step === "name") return babyName.trim() !== "" || nameUnknown;
     if (step === "notifications") return notificationFrequency !== "";
     return false;
   };
 
   const handleCreateBook = async () => {
-    if (!babyName || !babyStatus || !babyDate || !babyGender) return;
-    if (babyStatus === "adoption" && notificationWeekday === null) return;
+    const effectiveName = nameUnknown ? "Mon enfant" : babyName;
+    const effectiveDate = dateUnknown ? new Date().toISOString().split('T')[0] : babyDate;
+    
+    if (!effectiveName || !babyStatus || (!effectiveDate && !dateUnknown) || !babyGender) return;
     
     setIsCreating(true);
     const isPrebuilt = selectedTemplate && selectedTemplate !== "custom";
     
     createBookMutation.mutate({
-      childName: babyName,
+      childName: effectiveName,
       babyStatus: babyStatus,
       babyGender: babyGender,
-      birthDate: babyDate,
+      birthDate: effectiveDate,
       notificationWeekday: babyStatus === "adoption" ? notificationWeekday : null,
       templateSlug: isPrebuilt ? selectedTemplate : null,
       bookType: isPrebuilt ? "prebuilt" : "custom",
@@ -489,24 +499,47 @@ export default function Onboarding() {
             >
               <div>
                 <h2 className="text-3xl font-serif font-bold text-stone-900 mb-2">
-                  {babyStatus === "born" ? "Date de naissance" : babyStatus === "adoption" ? "Date d'arrivée" : "Date prévue d'accouchement"}
+                  {babyStatus === "born" ? "Date de naissance" : babyStatus === "adoption" ? "Date prévue d'adoption" : "Date prévue d'accouchement"}
                 </h2>
                 <p className="text-stone-600">
                   {babyStatus === "born"
                     ? "Quand est né votre bébé?"
                     : babyStatus === "adoption"
-                    ? "Quand est-il/elle arrivé(e) dans votre famille?"
+                    ? "Quand est prévue l'arrivée de votre enfant?"
                     : "Quand est prévue l'arrivée?"}
                 </p>
               </div>
 
-              <input
-                type="date"
-                value={babyDate}
-                onChange={(e) => setBabyDate(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg border border-stone-200 focus:border-primary focus:outline-none text-lg"
-                data-testid="input-baby-date"
-              />
+              {babyStatus === "adoption" && (
+                <button
+                  onClick={() => {
+                    setDateUnknown(!dateUnknown);
+                    if (!dateUnknown) setBabyDate("");
+                  }}
+                  className={`w-full p-4 rounded-lg border-2 transition-all flex items-center gap-3 ${
+                    dateUnknown
+                      ? "border-primary bg-primary/5"
+                      : "border-stone-200 hover:border-primary"
+                  }`}
+                  data-testid="button-date-unknown"
+                >
+                  <span className="text-xl">❓</span>
+                  <div className="text-left">
+                    <p className="font-bold text-stone-900">Je ne sais pas encore</p>
+                    <p className="text-sm text-stone-600">La date n'est pas encore déterminée</p>
+                  </div>
+                </button>
+              )}
+
+              {!dateUnknown && (
+                <input
+                  type="date"
+                  value={babyDate}
+                  onChange={(e) => setBabyDate(e.target.value)}
+                  className="w-full px-4 py-3 rounded-lg border border-stone-200 focus:border-primary focus:outline-none text-lg"
+                  data-testid="input-baby-date"
+                />
+              )}
 
               <div className="flex gap-3">
                 <Button
@@ -598,14 +631,37 @@ export default function Onboarding() {
                 <p className="text-stone-600">Ce nom sera sur la couverture du livre</p>
               </div>
 
-              <input
-                type="text"
-                placeholder="Prénom"
-                value={babyName}
-                onChange={(e) => setBabyName(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg border border-stone-200 focus:border-primary focus:outline-none text-lg"
-                data-testid="input-baby-name"
-              />
+              {babyStatus === "adoption" && (
+                <button
+                  onClick={() => {
+                    setNameUnknown(!nameUnknown);
+                    if (!nameUnknown) setBabyName("");
+                  }}
+                  className={`w-full p-4 rounded-lg border-2 transition-all flex items-center gap-3 ${
+                    nameUnknown
+                      ? "border-primary bg-primary/5"
+                      : "border-stone-200 hover:border-primary"
+                  }`}
+                  data-testid="button-name-unknown"
+                >
+                  <span className="text-xl">❓</span>
+                  <div className="text-left">
+                    <p className="font-bold text-stone-900">Je ne sais pas encore</p>
+                    <p className="text-sm text-stone-600">Le prénom n'est pas encore choisi</p>
+                  </div>
+                </button>
+              )}
+
+              {!nameUnknown && (
+                <input
+                  type="text"
+                  placeholder="Prénom"
+                  value={babyName}
+                  onChange={(e) => setBabyName(e.target.value)}
+                  className="w-full px-4 py-3 rounded-lg border border-stone-200 focus:border-primary focus:outline-none text-lg"
+                  data-testid="input-baby-name"
+                />
+              )}
 
               <div className="flex gap-3">
                 <Button

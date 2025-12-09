@@ -111,6 +111,14 @@ export function BookViewer({ bookId, language, onGoToInspiration, initialPage }:
 
   const { pages, templateParts, templatePages, book } = data;
 
+  // Separate inspiration pages from regular template pages
+  const inspirationPages = templatePages?.filter((p: any) => p.isInspirationPage === true) || [];
+  const regularTemplatePages = templatePages?.filter((p: any) => !p.isInspirationPage) || [];
+  
+  // Create a virtual "Inspiration" part if there are inspiration pages
+  const hasInspirationSection = inspirationPages.length > 0;
+  const inspirationPartId = "inspiration-section";
+
   if (viewMode === "page" && selectedPageNumber !== null) {
     const templatePage = templatePages?.find(p => p.pageNumber === selectedPageNumber);
     const userPage = pages.find(p => p.pageNumber === selectedPageNumber);
@@ -144,8 +152,14 @@ export function BookViewer({ bookId, language, onGoToInspiration, initialPage }:
   const progressPercent = totalPages > 0 ? (completedCount / totalPages) * 100 : 0;
 
   const getPagesByPart = (partId: string) => {
-    return templatePages?.filter(p => p.partId === partId) || [];
+    if (partId === inspirationPartId) {
+      return inspirationPages;
+    }
+    return regularTemplatePages?.filter(p => p.partId === partId) || [];
   };
+  
+  // Check if we're viewing the inspiration section
+  const isInspirationSelected = hasInspirationSection && selectedPartIndex === (templateParts?.length || 0);
 
   const isPageCompleted = (pageNumber: number) => {
     return pages.find(p => p.pageNumber === pageNumber)?.isCompleted || false;
@@ -225,12 +239,106 @@ export function BookViewer({ bookId, language, onGoToInspiration, initialPage }:
                     </button>
                   );
                 })}
+                
+                {/* Inspiration Section */}
+                {hasInspirationSection && (
+                  <button
+                    onClick={() => setSelectedPartIndex(templateParts?.length || 0)}
+                    className={`w-full text-left p-4 rounded-lg transition-all ${
+                      isInspirationSelected 
+                        ? "bg-gradient-to-r from-amber-100 to-orange-100 border-amber-300 border-2" 
+                        : "bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 hover:from-amber-100 hover:to-orange-100"
+                    }`}
+                    data-testid="part-button-inspiration"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-xs bg-amber-100 border-amber-300 text-amber-700">
+                            <Sparkles className="w-3 h-3 mr-1" />
+                            {language === "fr" ? "Bonus" : "Bonus"}
+                          </Badge>
+                        </div>
+                        <h3 className="font-medium text-amber-800 mt-1">
+                          {language === "fr" ? "Pages d'inspiration" : "Inspiration Pages"}
+                        </h3>
+                        <p className="text-sm text-amber-600 mt-1">
+                          {inspirationPages.length} {language === "fr" ? "pages ajoutées" : "pages added"}
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+                )}
               </div>
             </ScrollArea>
           </div>
 
           <div className="flex-1 min-h-[200px]">
-            {templateParts[selectedPartIndex] && (
+            {/* Show inspiration pages section */}
+            {isInspirationSelected ? (
+              <Card className="border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-lg font-fraunces text-amber-800 flex items-center gap-2">
+                    <Sparkles className="w-5 h-5" />
+                    {language === "fr" ? "Pages d'inspiration" : "Inspiration Pages"}
+                  </CardTitle>
+                  <p className="text-sm text-amber-600">
+                    {language === "fr" 
+                      ? "Pages personnalisées ajoutées à votre livre" 
+                      : "Custom pages added to your book"}
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <ScrollArea className="h-[400px]">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {inspirationPages.map((page: any) => {
+                        const completed = isPageCompleted(page.pageNumber);
+                        return (
+                          <button
+                            key={page.id}
+                            onClick={() => {
+                              setSelectedPageNumber(page.pageNumber);
+                              setViewMode("page");
+                            }}
+                            className={`p-4 rounded-lg border text-left transition-all hover:shadow-md group ${
+                              completed 
+                                ? "bg-green-50 border-green-200 hover:bg-green-100" 
+                                : "bg-white border-amber-200 hover:border-amber-300"
+                            }`}
+                            data-testid={`page-button-${page.pageNumber}`}
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                                completed ? "bg-green-500 text-white" : "bg-amber-100 text-amber-600"
+                              }`}>
+                                {completed ? <Check className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <h4 className="font-medium text-sage-900 truncate">
+                                    {language === "fr" ? page.titleFr : page.titleEn}
+                                  </h4>
+                                </div>
+                                {page.subtitleFr && (
+                                  <p className="text-sm text-sage-500 truncate">
+                                    {language === "fr" ? page.subtitleFr : page.subtitleEn}
+                                  </p>
+                                )}
+                                <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                  <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-700">
+                                    Page {page.pageNumber}
+                                  </Badge>
+                                </div>
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+            ) : templateParts && templateParts[selectedPartIndex] ? (
               <Card className="border-sage-200">
                 <CardHeader className="pb-4">
                   <CardTitle className="text-lg font-fraunces">
@@ -304,7 +412,7 @@ export function BookViewer({ bookId, language, onGoToInspiration, initialPage }:
                   </ScrollArea>
                 </CardContent>
               </Card>
-            )}
+            ) : null}
           </div>
         </div>
       ) : (

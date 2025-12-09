@@ -22,12 +22,13 @@ export const PAGE_SPEC = {
 };
 
 // Calculate preview dimensions - matches PageEditor's 400x550 frame
+// Optimized for maximum content space while respecting print margins
 export const PREVIEW_DIMS = {
   width: 400,  // Fixed to match PageEditor
   height: 550, // Fixed to match PageEditor
-  margin: 16,  // Page padding
-  activeWidth: 400 - 32,  // 368px usable width
-  activeHeight: 550 - 32 - 24, // 494px usable height (minus header/footer)
+  margin: 12,  // Reduced page padding (0.25" at print scale)
+  activeWidth: 400 - 24,  // 376px usable width
+  activeHeight: 550 - 24, // 526px usable height
 };
 
 // Zone definitions for the page
@@ -56,37 +57,38 @@ const activeArea = {
   height: PREVIEW_DIMS.activeHeight,
 };
 
-// Vertical gap between zones - 0.5cm ≈ 7px at preview scale
-const VERTICAL_GAP = 7;
+// Vertical gap between zones - minimal 5px (~0.4cm at preview scale)
+const VERTICAL_GAP = 5;
 
 // Total gaps: 3 gaps (header-image, image-text, text-footer)
 const totalGapHeight = VERTICAL_GAP * 3;
 
-// Distribute remaining height: header 6%, images 70%, text 20%, footer 4%
+// Distribute remaining height: header 5%, images 75%, text 17%, footer 3%
+// Maximized photo space while keeping readable text area
 const usableHeight = activeArea.height - totalGapHeight;
 
-// Header zone (title area) - compact
+// Header zone (title area) - compact single line
 export const HEADER_ZONE: PageZone = {
   x: activeArea.x,
   y: activeArea.y,
   width: activeArea.width,
-  height: usableHeight * 0.06,
+  height: usableHeight * 0.05,
 };
 
-// Image zone - maximized for photos (70%)
+// Image zone - maximized for photos (75%)
 export const IMAGE_ZONE: PageZone = {
   x: activeArea.x,
   y: HEADER_ZONE.y + HEADER_ZONE.height + VERTICAL_GAP,
   width: activeArea.width,
-  height: usableHeight * 0.70,
+  height: usableHeight * 0.75,
 };
 
-// Text zone - below images with 0.5cm gap
+// Text zone - below images with minimal gap
 export const TEXT_ZONE: PageZone = {
   x: activeArea.x,
   y: IMAGE_ZONE.y + IMAGE_ZONE.height + VERTICAL_GAP,
   width: activeArea.width,
-  height: usableHeight * 0.20,
+  height: usableHeight * 0.17,
 };
 
 // Footer zone (page number) - minimal
@@ -94,7 +96,7 @@ export const FOOTER_ZONE: PageZone = {
   x: activeArea.x,
   y: TEXT_ZONE.y + TEXT_ZONE.height + VERTICAL_GAP,
   width: activeArea.width,
-  height: usableHeight * 0.04,
+  height: usableHeight * 0.03,
 };
 
 // QR Code reserved zone (inside text zone, right side)

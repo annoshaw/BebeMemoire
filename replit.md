@@ -144,6 +144,20 @@ Preferred communication style: Simple, everyday language.
 - Memories CRUD operations
 - User plan management
 - QR code generation and retrieval
+- Inspiration pages management (add/delete custom pages to prebuilt books)
+
+**Inspiration Pages Feature**
+- Users can add custom "inspiration" pages from a gallery of templates
+- Inspiration pages are stored as UserBookPage with `isInspirationPage: true` in customData
+- Pages are numbered sequentially after template pages (e.g., page 52+ for a 51-page template)
+- Displayed in a special "Bonus" section in the BookViewer
+- `POST /api/books/:bookId/add-inspiration-page` - Add inspiration page
+- `DELETE /api/books/:bookId/pages/:pageId` - Delete/reset page content
+
+**Page Delete/Reset Feature**
+- Template pages (1-51): Delete button resets page to initial empty state
+- Inspiration pages: Delete button completely removes the page from the book
+- Confirmation dialog prevents accidental deletions
 
 All API routes require authentication via session-based middleware.
 

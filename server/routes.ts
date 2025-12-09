@@ -529,8 +529,13 @@ export async function registerRoutes(
           // For "born" or "adoption": exclude sections 2, 3, 4, 5 (pregnancy sections)
           if (book.babyStatus === 'born' || book.babyStatus === 'adoption') {
             const excludedPartNumbers = [2, 3, 4, 5];
-            templateParts = allParts.filter(part => !excludedPartNumbers.includes(part.partNumber));
-            const includedPartIds = new Set(templateParts.map(p => p.id));
+            const filteredParts = allParts.filter(part => !excludedPartNumbers.includes(part.partNumber));
+            // Renumber parts sequentially (1, 2, 3 instead of 1, 6, 7)
+            templateParts = filteredParts.map((part, index) => ({
+              ...part,
+              partNumber: index + 1, // Renumber to 1, 2, 3
+            }));
+            const includedPartIds = new Set(filteredParts.map(p => p.id));
             templatePages = allPages.filter(page => page.partId === null || includedPartIds.has(page.partId));
           } else {
             templateParts = allParts;
@@ -545,13 +550,16 @@ export async function registerRoutes(
         return customData?.isInspirationPage === true;
       });
 
+      // Create a virtual "Inspiration" part for inspiration pages
+      const inspirationPartId = 'inspiration-part';
+      
       if (inspirationPages.length > 0 && templatePages) {
         const inspirationTemplatePages = inspirationPages.map(page => {
           const customData = page.customData as any;
           return {
             id: `inspiration-${page.id}`,
             templateId: template?.id || null,
-            partId: null, // Inspiration pages are not part of any template part
+            partId: inspirationPartId, // Link to virtual inspiration part
             pageNumber: page.pageNumber,
             titleFr: customData.titleFr || page.titleOverride || "Page d'inspiration",
             titleEn: customData.titleEn || page.titleOverride || "Inspiration Page",
@@ -573,6 +581,22 @@ export async function registerRoutes(
         
         // Merge and sort by page number
         templatePages = [...templatePages, ...inspirationTemplatePages].sort((a, b) => a.pageNumber - b.pageNumber);
+        
+        // Add virtual Inspiration part at the end
+        const nextPartNumber = templateParts ? Math.max(...templateParts.map(p => p.partNumber), 0) + 1 : 1;
+        const inspirationPart = {
+          id: inspirationPartId,
+          templateId: template?.id || null,
+          partNumber: nextPartNumber,
+          titleFr: "Bonus",
+          titleEn: "Bonus",
+          descriptionFr: "Pages d'inspiration ajoutées",
+          descriptionEn: "Added inspiration pages",
+          iconName: "sparkles",
+          createdAt: new Date(),
+          isInspirationSection: true,
+        };
+        templateParts = [...(templateParts || []), inspirationPart];
       }
 
       res.json({ 

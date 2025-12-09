@@ -144,9 +144,9 @@ export function BookViewer({ bookId, language, onGoToInspiration, initialPage }:
   const inspirationPages = templatePages?.filter((p: any) => p.isInspirationPage === true) || [];
   const regularTemplatePages = templatePages?.filter((p: any) => !p.isInspirationPage) || [];
   
-  // Create a virtual "Inspiration" part if there are inspiration pages
-  const hasInspirationSection = inspirationPages.length > 0;
-  const inspirationPartId = "inspiration-section";
+  // Check if there's an inspiration/bonus section in templateParts (from API)
+  const hasInspirationSection = templateParts?.some((p: any) => p.isInspirationSection === true) || false;
+  const inspirationPartId = "inspiration-part"; // Match the API's virtual part ID
 
   if (viewMode === "page" && selectedPageNumber !== null) {
     const templatePage = templatePages?.find(p => p.pageNumber === selectedPageNumber);
@@ -181,14 +181,13 @@ export function BookViewer({ bookId, language, onGoToInspiration, initialPage }:
   const progressPercent = totalPages > 0 ? (completedCount / totalPages) * 100 : 0;
 
   const getPagesByPart = (partId: string) => {
-    if (partId === inspirationPartId) {
-      return inspirationPages;
-    }
-    return regularTemplatePages?.filter(p => p.partId === partId) || [];
+    // For inspiration part, return pages from templatePages that have this partId
+    return templatePages?.filter(p => p.partId === partId) || [];
   };
   
-  // Check if we're viewing the inspiration section
-  const isInspirationSelected = hasInspirationSection && selectedPartIndex === (templateParts?.length || 0);
+  // Check if we're viewing the inspiration section (last part with isInspirationSection flag)
+  const isInspirationSelected = templateParts && selectedPartIndex < templateParts.length && 
+    (templateParts[selectedPartIndex] as any)?.isInspirationSection === true;
 
   const isPageCompleted = (pageNumber: number) => {
     return pages.find(p => p.pageNumber === pageNumber)?.isCompleted || false;
@@ -235,32 +234,44 @@ export function BookViewer({ bookId, language, onGoToInspiration, initialPage }:
                   const partPages = getPagesByPart(part.id);
                   const partCompletedCount = partPages.filter(p => isPageCompleted(p.pageNumber)).length;
                   const isSelected = selectedPartIndex === index;
+                  const isInspirationPart = (part as any).isInspirationSection === true;
 
                   return (
                     <button
                       key={part.id}
                       onClick={() => setSelectedPartIndex(index)}
                       className={`w-full text-left p-4 rounded-lg transition-all ${
-                        isSelected 
-                          ? "bg-sage-100 border-sage-300 border-2" 
-                          : "bg-white border border-sage-200 hover:bg-sage-50"
+                        isInspirationPart
+                          ? isSelected
+                            ? "bg-gradient-to-r from-amber-100 to-orange-100 border-amber-300 border-2"
+                            : "bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 hover:from-amber-100 hover:to-orange-100"
+                          : isSelected 
+                            ? "bg-sage-100 border-sage-300 border-2" 
+                            : "bg-white border border-sage-200 hover:bg-sage-50"
                       }`}
-                      data-testid={`part-button-${index}`}
+                      data-testid={isInspirationPart ? "part-button-inspiration" : `part-button-${index}`}
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="text-xs">
-                              {language === "fr" ? "Partie" : "Part"} {part.partNumber}
-                            </Badge>
+                            {isInspirationPart ? (
+                              <Badge variant="outline" className="text-xs bg-amber-100 border-amber-300 text-amber-700">
+                                <Sparkles className="w-3 h-3 mr-1" />
+                                {language === "fr" ? "Bonus" : "Bonus"}
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-xs">
+                                {language === "fr" ? "Partie" : "Part"} {part.partNumber}
+                              </Badge>
+                            )}
                             {partCompletedCount === partPages.length && partPages.length > 0 && (
                               <Check className="w-4 h-4 text-green-500" />
                             )}
                           </div>
-                          <h3 className="font-medium text-sage-900 mt-1">
+                          <h3 className={`font-medium mt-1 ${isInspirationPart ? "text-amber-800" : "text-sage-900"}`}>
                             {language === "fr" ? part.titleFr : part.titleEn}
                           </h3>
-                          <p className="text-sm text-sage-500 mt-1">
+                          <p className={`text-sm mt-1 ${isInspirationPart ? "text-amber-600" : "text-sage-500"}`}>
                             {partCompletedCount}/{partPages.length} {language === "fr" ? "pages" : "pages"}
                           </p>
                         </div>
@@ -268,36 +279,6 @@ export function BookViewer({ bookId, language, onGoToInspiration, initialPage }:
                     </button>
                   );
                 })}
-                
-                {/* Inspiration Section */}
-                {hasInspirationSection && (
-                  <button
-                    onClick={() => setSelectedPartIndex(templateParts?.length || 0)}
-                    className={`w-full text-left p-4 rounded-lg transition-all ${
-                      isInspirationSelected 
-                        ? "bg-gradient-to-r from-amber-100 to-orange-100 border-amber-300 border-2" 
-                        : "bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 hover:from-amber-100 hover:to-orange-100"
-                    }`}
-                    data-testid="part-button-inspiration"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="text-xs bg-amber-100 border-amber-300 text-amber-700">
-                            <Sparkles className="w-3 h-3 mr-1" />
-                            {language === "fr" ? "Bonus" : "Bonus"}
-                          </Badge>
-                        </div>
-                        <h3 className="font-medium text-amber-800 mt-1">
-                          {language === "fr" ? "Pages d'inspiration" : "Inspiration Pages"}
-                        </h3>
-                        <p className="text-sm text-amber-600 mt-1">
-                          {inspirationPages.length} {language === "fr" ? "pages ajoutées" : "pages added"}
-                        </p>
-                      </div>
-                    </div>
-                  </button>
-                )}
               </div>
             </ScrollArea>
           </div>

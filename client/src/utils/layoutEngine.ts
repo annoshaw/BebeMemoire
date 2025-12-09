@@ -56,36 +56,45 @@ const activeArea = {
   height: PREVIEW_DIMS.activeHeight,
 };
 
-// Header zone (title area) - top 8% of active area
+// Vertical gap between zones - 0.5cm ≈ 7px at preview scale
+const VERTICAL_GAP = 7;
+
+// Total gaps: 3 gaps (header-image, image-text, text-footer)
+const totalGapHeight = VERTICAL_GAP * 3;
+
+// Distribute remaining height: header 6%, images 70%, text 20%, footer 4%
+const usableHeight = activeArea.height - totalGapHeight;
+
+// Header zone (title area) - compact
 export const HEADER_ZONE: PageZone = {
   x: activeArea.x,
   y: activeArea.y,
   width: activeArea.width,
-  height: activeArea.height * 0.08,
+  height: usableHeight * 0.06,
 };
 
-// Image zone - 65% of active area (below header)
+// Image zone - maximized for photos (70%)
 export const IMAGE_ZONE: PageZone = {
   x: activeArea.x,
-  y: HEADER_ZONE.y + HEADER_ZONE.height + 4,
+  y: HEADER_ZONE.y + HEADER_ZONE.height + VERTICAL_GAP,
   width: activeArea.width,
-  height: activeArea.height * 0.65,
+  height: usableHeight * 0.70,
 };
 
-// Text zone - 22% of active area (below images)
+// Text zone - below images with 0.5cm gap
 export const TEXT_ZONE: PageZone = {
   x: activeArea.x,
-  y: IMAGE_ZONE.y + IMAGE_ZONE.height + 8,
+  y: IMAGE_ZONE.y + IMAGE_ZONE.height + VERTICAL_GAP,
   width: activeArea.width,
-  height: activeArea.height * 0.22,
+  height: usableHeight * 0.20,
 };
 
-// Footer zone (page number) - 5% of active area
+// Footer zone (page number) - minimal
 export const FOOTER_ZONE: PageZone = {
   x: activeArea.x,
-  y: TEXT_ZONE.y + TEXT_ZONE.height + 4,
+  y: TEXT_ZONE.y + TEXT_ZONE.height + VERTICAL_GAP,
   width: activeArea.width,
-  height: activeArea.height * 0.05,
+  height: usableHeight * 0.04,
 };
 
 // QR Code reserved zone (inside text zone, right side)

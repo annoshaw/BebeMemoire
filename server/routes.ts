@@ -840,6 +840,8 @@ export async function registerRoutes(
       const effectiveTemplateSlug = templateSlug || 
         (validation.data.babyStatus ? 'prebuilt_pregnancy' : null);
       
+      console.log("Creating book with babyStatus:", validation.data.babyStatus, "templateSlug:", effectiveTemplateSlug);
+      
       // If we have a template slug and it's not 'custom', create book with template
       if (effectiveTemplateSlug && effectiveTemplateSlug !== 'custom') {
         try {

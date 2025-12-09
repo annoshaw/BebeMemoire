@@ -525,9 +525,10 @@ export async function registerRoutes(
           const allParts = await storage.getTemplateParts(template.id);
           const allPages = await storage.getTemplatePages(template.id);
           
-          // Filter parts and pages based on babyStatus
-          // For "born" or "adoption": exclude sections 2, 3, 4, 5 (pregnancy sections)
-          if (book.babyStatus === 'born' || book.babyStatus === 'adoption') {
+          // Filter parts and pages based on babyStatus - only for pregnancy template
+          // For "born" using pregnancy template: exclude sections 2, 3, 4, 5 (pregnancy sections)
+          // For "adoption" using adoption template: include all sections (dedicated template)
+          if (book.babyStatus === 'born' && book.templateSlug === 'prebuilt_pregnancy') {
             const excludedPartNumbers = [2, 3, 4, 5];
             const filteredParts = allParts.filter(part => !excludedPartNumbers.includes(part.partNumber));
             // Renumber parts sequentially (1, 2, 3 instead of 1, 6, 7)
@@ -543,8 +544,8 @@ export async function registerRoutes(
               displayPageNumber: index + 1,
             }));
           } else {
+            // For expecting books AND adoption books (dedicated template): include all parts
             templateParts = allParts;
-            // For expecting books, displayPageNumber matches pageNumber
             templatePages = allPages.map(page => ({
               ...page,
               displayPageNumber: page.pageNumber,
@@ -873,9 +874,17 @@ export async function registerRoutes(
         });
       }
 
-      // Determine templateSlug: use provided value, or default to 'prebuilt_pregnancy' if babyStatus is set
-      const effectiveTemplateSlug = templateSlug || 
-        (validation.data.babyStatus ? 'prebuilt_pregnancy' : null);
+      // Determine templateSlug based on babyStatus
+      let effectiveTemplateSlug = templateSlug;
+      if (!effectiveTemplateSlug && validation.data.babyStatus) {
+        // Use appropriate template based on baby status
+        if (validation.data.babyStatus === 'adoption') {
+          effectiveTemplateSlug = 'prebuilt_adoption';
+        } else {
+          // For 'expecting' and 'born', use the pregnancy template
+          effectiveTemplateSlug = 'prebuilt_pregnancy';
+        }
+      }
       
       console.log("Creating book with babyStatus:", validation.data.babyStatus, "templateSlug:", effectiveTemplateSlug);
       

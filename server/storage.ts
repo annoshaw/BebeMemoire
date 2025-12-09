@@ -571,15 +571,20 @@ export class DatabaseStorage implements IStorage {
       return [];
     }
 
+    // Get the template to check its slug
+    const template = await db.select().from(bookTemplates).where(eq(bookTemplates.id, templateId)).limit(1);
+    const templateSlug = template[0]?.slug;
+
     // Get template parts to filter by part number
     const parts = await this.getTemplateParts(templateId);
     const partNumberMap = new Map(parts.map(p => [p.id, p.partNumber]));
     
-    // Filter pages based on babyStatus
-    // For "born" or "adoption": exclude sections 2, 3, 4, 5 (pregnancy sections)
+    // Filter pages based on babyStatus - only for pregnancy template
+    // For "born" using pregnancy template: exclude sections 2, 3, 4, 5 (pregnancy sections)
+    // For "adoption" using adoption template: include all sections (dedicated template)
     // For "expecting": include all sections
     let pages = allPages;
-    if (babyStatus === 'born' || babyStatus === 'adoption') {
+    if (babyStatus === 'born' && templateSlug === 'prebuilt_pregnancy') {
       const excludedPartNumbers = [2, 3, 4, 5]; // Pregnancy-related sections
       pages = allPages.filter(page => {
         if (!page.partId) return true; // Pages without partId are included
@@ -588,6 +593,7 @@ export class DatabaseStorage implements IStorage {
         return !excludedPartNumbers.includes(partNumber);
       });
     }
+    // Note: adoption books using prebuilt_adoption template get all pages (no filtering needed)
 
     // Create user book pages for each template page
     const userPages: InsertUserBookPage[] = pages.map(page => ({

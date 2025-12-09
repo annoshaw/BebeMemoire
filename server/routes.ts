@@ -516,14 +516,26 @@ export async function registerRoutes(
       
       // If prebuilt book, get template info
       let template = null;
-      let templateParts = null;
+      let templateParts: any[] | null = null;
       let templatePages: any[] | null = null;
       
       if (book.templateSlug) {
         template = await storage.getBookTemplateBySlug(book.templateSlug);
         if (template) {
-          templateParts = await storage.getTemplateParts(template.id);
-          templatePages = await storage.getTemplatePages(template.id);
+          const allParts = await storage.getTemplateParts(template.id);
+          const allPages = await storage.getTemplatePages(template.id);
+          
+          // Filter parts and pages based on babyStatus
+          // For "born" or "adoption": exclude sections 2, 3, 4, 5 (pregnancy sections)
+          if (book.babyStatus === 'born' || book.babyStatus === 'adoption') {
+            const excludedPartNumbers = [2, 3, 4, 5];
+            templateParts = allParts.filter(part => !excludedPartNumbers.includes(part.partNumber));
+            const includedPartIds = new Set(templateParts.map(p => p.id));
+            templatePages = allPages.filter(page => page.partId === null || includedPartIds.has(page.partId));
+          } else {
+            templateParts = allParts;
+            templatePages = allPages;
+          }
         }
       }
 
@@ -703,7 +715,7 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Les pages existent déjà pour ce livre" });
       }
 
-      const pages = await storage.createUserBookPagesFromTemplate(req.params.bookId, template.id);
+      const pages = await storage.createUserBookPagesFromTemplate(req.params.bookId, template.id, book.babyStatus || undefined);
       
       res.status(201).json({ pages, message: "Pages initialisées avec succès" });
     } catch (error) {

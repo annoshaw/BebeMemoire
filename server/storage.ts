@@ -82,7 +82,7 @@ export interface IStorage {
   getUserBookPage(bookId: string, pageNumber: number): Promise<UserBookPage | undefined>;
   createUserBookPage(page: InsertUserBookPage): Promise<UserBookPage>;
   updateUserBookPage(id: string, data: Partial<InsertUserBookPage>): Promise<UserBookPage | undefined>;
-  createUserBookPagesFromTemplate(bookId: string, templateId: string): Promise<UserBookPage[]>;
+  createUserBookPagesFromTemplate(bookId: string, templateId: string, babyStatus?: string): Promise<UserBookPage[]>;
   markPageAsCompleted(id: string): Promise<UserBookPage | undefined>;
   addInspirationPage(bookId: string, pageData: Partial<InsertUserBookPage>): Promise<UserBookPage>;
   deleteInspirationPage(pageId: string): Promise<boolean>;
@@ -560,12 +560,30 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
-  async createUserBookPagesFromTemplate(bookId: string, templateId: string): Promise<UserBookPage[]> {
+  async createUserBookPagesFromTemplate(bookId: string, templateId: string, babyStatus?: string): Promise<UserBookPage[]> {
     // Get all template pages
-    const pages = await this.getTemplatePages(templateId);
+    const allPages = await this.getTemplatePages(templateId);
     
-    if (pages.length === 0) {
+    if (allPages.length === 0) {
       return [];
+    }
+
+    // Get template parts to filter by part number
+    const parts = await this.getTemplateParts(templateId);
+    const partNumberMap = new Map(parts.map(p => [p.id, p.partNumber]));
+    
+    // Filter pages based on babyStatus
+    // For "born" or "adoption": exclude sections 2, 3, 4, 5 (pregnancy sections)
+    // For "expecting": include all sections
+    let pages = allPages;
+    if (babyStatus === 'born' || babyStatus === 'adoption') {
+      const excludedPartNumbers = [2, 3, 4, 5]; // Pregnancy-related sections
+      pages = allPages.filter(page => {
+        if (!page.partId) return true; // Pages without partId are included
+        const partNumber = partNumberMap.get(page.partId);
+        if (partNumber === undefined) return true; // Unknown parts are included
+        return !excludedPartNumbers.includes(partNumber);
+      });
     }
 
     // Create user book pages for each template page

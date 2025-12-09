@@ -427,53 +427,95 @@ export function BookViewer({ bookId, language, onGoToInspiration, initialPage }:
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {getPagesByPart(templateParts[selectedPartIndex].id).map((page) => {
                         const completed = isPageCompleted(page.pageNumber);
+                        const userPage = pages.find(p => p.pageNumber === page.pageNumber);
                         return (
-                          <button
+                          <div
                             key={page.id}
-                            onClick={() => {
-                              setSelectedPageNumber(page.pageNumber);
-                              setViewMode("page");
-                            }}
-                            className={`p-4 rounded-lg border text-left transition-all hover:shadow-md group ${
+                            className={`p-4 rounded-lg border text-left transition-all hover:shadow-md group relative ${
                               completed 
                                 ? "bg-green-50 border-green-200 hover:bg-green-100" 
                                 : "bg-white border-sage-200 hover:border-sage-300"
                             }`}
-                            data-testid={`page-button-${page.pageNumber}`}
+                            data-testid={`page-card-${page.pageNumber}`}
                           >
-                            <div className="flex items-start gap-3">
-                              <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                                completed ? "bg-green-500 text-white" : "bg-sage-100 text-sage-500"
-                              }`}>
-                                {completed ? <Check className="w-4 h-4" /> : <span>{page.pageNumber}</span>}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2">
-                                  <h4 className="font-medium text-sage-900 truncate">
-                                    {language === "fr" ? page.titleFr : page.titleEn}
-                                  </h4>
-                                  {completed && (
-                                    <Pencil className="w-3 h-3 text-sage-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                  )}
+                            <button
+                              onClick={() => {
+                                setSelectedPageNumber(page.pageNumber);
+                                setViewMode("page");
+                              }}
+                              className="w-full text-left"
+                              data-testid={`page-button-${page.pageNumber}`}
+                            >
+                              <div className="flex items-start gap-3">
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                                  completed ? "bg-green-500 text-white" : "bg-sage-100 text-sage-500"
+                                }`}>
+                                  {completed ? <Check className="w-4 h-4" /> : <span>{page.pageNumber}</span>}
                                 </div>
-                                {page.subtitleFr && (
-                                  <p className="text-sm text-sage-500 truncate">
-                                    {language === "fr" ? page.subtitleFr : page.subtitleEn}
-                                  </p>
-                                )}
-                                <div className="flex items-center gap-2 mt-2 flex-wrap">
-                                  <Badge variant="secondary" className="text-xs">
-                                    {page.pageType.replace(/_/g, " ")}
-                                  </Badge>
-                                  {completed && (
-                                    <Badge variant="outline" className="text-xs text-green-600 border-green-300 bg-green-50">
-                                      {language === "fr" ? "Modifier" : "Edit"}
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <h4 className="font-medium text-sage-900 truncate">
+                                      {language === "fr" ? page.titleFr : page.titleEn}
+                                    </h4>
+                                    {completed && (
+                                      <Pencil className="w-3 h-3 text-sage-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    )}
+                                  </div>
+                                  {page.subtitleFr && (
+                                    <p className="text-sm text-sage-500 truncate">
+                                      {language === "fr" ? page.subtitleFr : page.subtitleEn}
+                                    </p>
+                                  )}
+                                  <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                    <Badge variant="secondary" className="text-xs">
+                                      {page.pageType.replace(/_/g, " ")}
                                     </Badge>
-                                  )}
+                                    {completed && (
+                                      <Badge variant="outline" className="text-xs text-green-600 border-green-300 bg-green-50">
+                                        {language === "fr" ? "Modifier" : "Edit"}
+                                      </Badge>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          </button>
+                            </button>
+                            {userPage && (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <button
+                                    className="absolute top-2 right-2 p-1.5 rounded-full bg-red-100 text-red-600 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-200"
+                                    data-testid={`delete-page-${page.pageNumber}`}
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>
+                                      {language === "fr" ? "Réinitialiser cette page ?" : "Reset this page?"}
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      {language === "fr" 
+                                        ? "Cette action supprimera tout le contenu que vous avez ajouté à cette page (textes, photos, vidéos). La page reviendra à son état initial." 
+                                        : "This will delete all content you've added to this page (text, photos, videos). The page will return to its initial state."}
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>
+                                      {language === "fr" ? "Annuler" : "Cancel"}
+                                    </AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => deletePageMutation.mutate(userPage.id)}
+                                      className="bg-red-600 hover:bg-red-700"
+                                    >
+                                      {language === "fr" ? "Réinitialiser" : "Reset"}
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            )}
+                          </div>
                         );
                       })}
                     </div>

@@ -434,17 +434,17 @@ export function BookViewer({ bookId, language, onGoToInspiration, initialPage }:
                                 }`}>
                                   {completed ? <Check className="w-4 h-4" /> : <span>{(page as any).displayPageNumber || page.pageNumber}</span>}
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2">
-                                    <h4 className="font-medium text-sage-900 truncate">
+                                <div className="flex-1">
+                                  <div className="flex items-start gap-2">
+                                    <h4 className="font-medium text-sage-900 leading-tight">
                                       {language === "fr" ? page.titleFr : page.titleEn}
                                     </h4>
                                     {completed && (
-                                      <Pencil className="w-3 h-3 text-sage-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                      <Pencil className="w-3 h-3 text-sage-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 mt-1" />
                                     )}
                                   </div>
                                   {page.subtitleFr && (
-                                    <p className="text-sm text-sage-500 truncate">
+                                    <p className="text-sm text-sage-500 leading-tight mt-1">
                                       {language === "fr" ? page.subtitleFr : page.subtitleEn}
                                     </p>
                                   )}

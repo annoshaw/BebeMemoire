@@ -874,16 +874,16 @@ export async function registerRoutes(
         });
       }
 
-      // Determine templateSlug based on babyStatus
+      // Determine templateSlug based on babyStatus - ALWAYS override for prebuilt books
       let effectiveTemplateSlug = templateSlug;
-      if (!effectiveTemplateSlug && validation.data.babyStatus) {
-        // Use appropriate template based on baby status
-        if (validation.data.babyStatus === 'adoption') {
-          effectiveTemplateSlug = 'prebuilt_adoption';
-        } else {
-          // For 'expecting' and 'born', use the pregnancy template
-          effectiveTemplateSlug = 'prebuilt_pregnancy';
-        }
+      
+      // For prebuilt books, always use the correct template based on babyStatus
+      if (validation.data.babyStatus === 'adoption') {
+        // Adoption always uses the adoption template
+        effectiveTemplateSlug = 'prebuilt_adoption';
+      } else if (validation.data.babyStatus && (templateSlug === 'prebuilt_pregnancy' || !templateSlug)) {
+        // For 'expecting' and 'born', use the pregnancy template
+        effectiveTemplateSlug = 'prebuilt_pregnancy';
       }
       
       console.log("Creating book with babyStatus:", validation.data.babyStatus, "templateSlug:", effectiveTemplateSlug);

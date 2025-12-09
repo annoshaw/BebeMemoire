@@ -12,3 +12,5 @@ export {
 export { CollageBlockNew } from "./CollageBlockNew";
 export { FontSelector, FontSizeSelector, FONT_CATEGORIES } from "./FontSelector";
 export { ThemeSwitcher, ColorPicker, THEMES, COLOR_PRESETS } from "./ThemeSwitcher";
+export { PrintPreview } from "./PrintPreview";
+export { LayoutSelector } from "./LayoutSelector";

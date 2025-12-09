@@ -24,7 +24,8 @@ import {
   RotateCcw,
   Type,
   ALargeSmall,
-  Palette
+  Palette,
+  Grid
 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { 
@@ -35,12 +36,27 @@ import {
   MessageBlock 
 } from "./PageBlocks";
 import { CollageBlockNew, type CollageStyle } from "./CollageBlockNew";
+import { PrintPreview } from "./PrintPreview";
+import { LayoutSelector } from "./LayoutSelector";
 import type { TemplatePage, UserBookPage } from "@shared/schema";
 import { toast } from "sonner";
 import { QRCodeSVG } from "qrcode.react";
 import Draggable from "react-draggable";
 import "./BookPageLayout.css";
 import "./CollageBlock.css";
+import { 
+  PREVIEW_DIMS, 
+  HEADER_ZONE, 
+  IMAGE_ZONE, 
+  TEXT_ZONE, 
+  FOOTER_ZONE, 
+  QR_ZONE,
+  TYPOGRAPHY,
+  getLayoutForPhotoCount,
+  getAvailableLayouts,
+  generateCollageZones,
+  type PhotoLayout
+} from "@/utils/layoutEngine";
 
 // Title font and size options
 const TITLE_FONTS = [
@@ -169,6 +185,9 @@ export function PageEditor({
   }>((userPage?.customData as any)?.blockPositions || {});
   const [editMode, setEditMode] = useState(false);
   const [isVideoUploading, setIsVideoUploading] = useState(false);
+  const [selectedPhotoLayoutId, setSelectedPhotoLayoutId] = useState<string | undefined>(
+    (userPage?.customData as any)?.selectedPhotoLayoutId
+  );
 
   useEffect(() => {
     setTextContent((userPage?.textContent as string[]) || []);
@@ -182,13 +201,14 @@ export function PageEditor({
     }
     setVideoMediaId((userPage as any)?.videoMediaId || null);
     const data = (userPage?.customData as Record<string, any>) || {};
-    const { photoLayouts: layouts, textStyles: styles, titleStyle: tStyle, blockPositions: positions, textLayout: tLayout, ...rest } = data;
+    const { photoLayouts: layouts, textStyles: styles, titleStyle: tStyle, blockPositions: positions, textLayout: tLayout, selectedPhotoLayoutId: layoutId, ...rest } = data;
     setCustomData(rest);
     setPhotoLayouts(layouts || {});
     setTextStyles(styles || {});
     setTitleStyle(tStyle || { fontFamily: "'Fraunces', serif", fontSize: 20 });
     setTextLayout(tLayout || { position: 'bottom', textSize: 25 });
     setBlockPositions(positions || {});
+    setSelectedPhotoLayoutId(layoutId);
     setIsDirty(false);
   }, [userPage, pageNumber]);
 
@@ -213,6 +233,11 @@ export function PageEditor({
 
   const getTextBlockPosition = (index: number): BlockPosition => {
     return blockPositions.texts?.[index] || { x: 0, y: 0 };
+  };
+
+  const handleLayoutChange = (layoutId: string) => {
+    setSelectedPhotoLayoutId(layoutId);
+    setIsDirty(true);
   };
 
   const handleTitleStyleChange = (updates: Partial<TitleStyle>) => {
@@ -310,12 +335,13 @@ export function PageEditor({
     mutationFn: async () => {
       if (!userPage?.id) throw new Error("No user page found");
       
-      // Merge photoLayouts, textStyles, titleStyle, textLayout and blockPositions into customData for saving
+      // Merge photoLayouts, textStyles, titleStyle, textLayout, blockPositions and selectedPhotoLayoutId into customData for saving
       const dataToSave = {
         ...customData,
         ...(Object.keys(photoLayouts).length > 0 ? { photoLayouts } : {}),
         ...(Object.keys(textStyles).length > 0 ? { textStyles } : {}),
         ...(Object.keys(blockPositions).length > 0 ? { blockPositions } : {}),
+        ...(selectedPhotoLayoutId ? { selectedPhotoLayoutId } : {}),
         titleStyle,
         textLayout
       };
@@ -993,6 +1019,26 @@ export function PageEditor({
                     </div>
                   </PopoverContent>
                 </Popover>
+
+                {/* Photo Layout Selector */}
+                {photos.length > 0 && (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className="flex items-center gap-2">
+                        <Grid className="w-4 h-4" />
+                        {language === "fr" ? "Disposition photos" : "Photo layout"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-64 p-3 bg-[#ffffff]" align="end">
+                      <LayoutSelector
+                        photoCount={photos.length}
+                        selectedLayoutId={selectedPhotoLayoutId}
+                        onLayoutChange={handleLayoutChange}
+                        language={language}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                )}
 
                 <Button
                   variant={editMode ? "default" : "outline"}

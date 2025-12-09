@@ -1,0 +1,31 @@
+Pour que ton application génère des layouts esthétiques et automatiques tout en respectant le gabarit 8x11 que nous avons défini, il faut combiner des règles techniques avec des moteurs de design intelligents. Voici les éléments clés à ajouter :
+
+🧩 1. Moteur de mise en page automatique
+- Grille adaptative : définir une grille fixe basée sur le gabarit (zone image 7.75x7, zone texte 7.75x3.75).
+- Algorithmes de disposition : utiliser des règles pour placer 1 à 4 photos sans chevauchement, avec marges uniformes.
+- Templates prédéfinis : prévoir plusieurs variantes (1 grande photo, 2 côte à côte, 3 en mosaïque, etc.) que l’IA choisit selon le contenu.
+
+🎨 2. Esthétique et harmonie visuelle
+- Palette de couleurs dynamiques : générer des couleurs CMJN cohérentes avec les photos (ex. extraire les tons dominants).
+- Typographie cohérente : imposer une police douce (Lato, Nunito) avec tailles fixes pour titres et notes.
+- Espacement automatique : calculer marges et interlignes pour éviter la surcharge visuelle.
+- Icônes et illustrations : proposer des petits visuels optionnels (ex. cœur, étoile, feuille) placés dans les zones prévues.
+
+⚙️ 3. Contraintes du gabarit
+- Zone active verrouillée : empêcher que texte ou images sortent des 7.75x10.75 pouces.
+- Fond perdu automatique : si une image est en pleine page, ajouter 0.125 pouces de débord.
+- Validation avant export : l’application vérifie que chaque page respecte marges et zones définies avant de générer le PDF.
+
+🤖 4. Intelligence et personnalisation
+- Reconnaissance de contenu : analyser si une photo est horizontale ou verticale et choisir le layout adapté.
+- Suggestions automatiques : proposer un style moderne, organique ou coloré selon le thème choisi par le parent.
+- Chronologie intégrée : générer automatiquement les titres de pages (ex. “Mois 3”, “Naissance”, “Premier Noël”) en fonction des données saisies.
+- QR code intégré : réserver un emplacement fixe dans la zone texte pour insérer un QR code lié à une vidéo.
+
+📐 5. Outils techniques à intégrer
+- Moteur de rendu PDF (ex. pdf-lib, WeasyPrint, ou API Gelato).
+- Bibliothèque de layout (ex. Figma API, Flutter LayoutBuilder, ou CSS Grid si web).
+- Algorithmes de design génératif (ex. règles heuristiques ou IA légère pour choisir le meilleur template).
+
+👉 En résumé : il faut que ton application combine grilles fixes (gabarit) + templates variés + algorithmes de choix automatique pour que chaque page soit esthétique, cohérente et imprimable sans erreur.
+Je peux te proposer un schéma visuel du moteur de layout (zones, règles, flux de génération) pour que tes développeurs comprennent comment l’implémenter. Veux-tu que je le prépare?

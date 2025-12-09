@@ -578,6 +578,23 @@ export default function Onboarding() {
               </div>
 
               <div className="space-y-3">
+                {babyStatus === "adoption" && (
+                  <button
+                    onClick={() => setBabyGender("unknown")}
+                    className={`w-full p-4 rounded-lg border-2 transition-all flex items-center gap-3 ${
+                      babyGender === "unknown"
+                        ? "border-primary bg-primary/5"
+                        : "border-stone-200 hover:border-primary"
+                    }`}
+                    data-testid="button-gender-unknown"
+                  >
+                    <span className="text-2xl">❓</span>
+                    <div className="text-left">
+                      <p className="font-bold text-stone-900">Je ne sais pas encore</p>
+                      <p className="text-sm text-stone-600">Le sexe n'est pas encore connu</p>
+                    </div>
+                  </button>
+                )}
                 {[
                   { value: "boy", label: "Garçon", emoji: "👦" },
                   { value: "girl", label: "Fille", emoji: "👧" },

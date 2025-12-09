@@ -1115,12 +1115,12 @@ export default function Prototype() {
                   </div>
                   
                   {[
-                    { id: 1, title: "Quand j'ai appris la nouvelle", icon: "💝", color: "from-pink-100" },
-                    { id: 2, title: "Quand ton père a appris la nouvelle", icon: "👨", color: "from-blue-100" },
-                    { id: 3, title: "Quand ta mère a appris la nouvelle", icon: "👩", color: "from-purple-100" },
-                    { id: 4, title: "Quand tes grands-parents ont appris la nouvelle", icon: "👴👵", color: "from-amber-100" },
-                    { id: 5, title: "Quand nous avons appris la nouvelle", icon: "💑", color: "from-red-100" },
-                    { id: 6, title: "Quand la famille a appris la nouvelle", icon: "👨‍👩‍👧‍👦", color: "from-green-100" },
+                    { id: 1, title: "Réaction de tes grands-parents", icon: "👴👵", color: "from-amber-100", desc: "Comment ont-ils réagi, qui leur a annoncé et de quelle façon" },
+                    { id: 2, title: "Réaction de ton parrain", icon: "👨", color: "from-blue-100", desc: "Comment a-t-il réagi, qui lui a annoncé et de quelle façon" },
+                    { id: 3, title: "Réaction de ta marraine", icon: "👩", color: "from-pink-100", desc: "Comment a-t-elle réagi, qui lui a annoncé et de quelle façon" },
+                    { id: 4, title: "Réaction de tes oncles/tantes", icon: "👨‍👩‍👦", color: "from-teal-100", desc: "Comment ont-ils réagi, qui leur a annoncé et de quelle façon" },
+                    { id: 5, title: "Réaction de tes cousin(e)s", icon: "👧👦", color: "from-green-100", desc: "Comment ont-ils réagi, qui leur a annoncé et de quelle façon" },
+                    { id: 6, title: "Réaction de tes amis poilus", icon: "🐾", color: "from-orange-100", desc: "Comment ont-ils réagi, qui leur a annoncé et de quelle façon" },
                   ].map((subPage, idx) => (
                     <motion.div 
                       key={subPage.id}
@@ -1261,8 +1261,8 @@ export default function Prototype() {
                     </motion.div>
                   ))}
                 </>
-              ) : selectedInspiration === "La présentation de la famille" ? (
-                // Sub-pages for "La présentation de la famille"
+              ) : selectedInspiration === "Présentation de la famille" ? (
+                // Sub-pages for "Présentation de la famille"
                 <>
                   <div className="flex items-center gap-3 mb-4">
                     <button 
@@ -1273,23 +1273,17 @@ export default function Prototype() {
                       <ChevronLeft size={20} className="text-stone-600" />
                     </button>
                     <div>
-                      <h3 className="text-sm font-bold text-stone-800">La présentation de la famille</h3>
+                      <h3 className="text-sm font-bold text-stone-800">Présentation de la famille</h3>
                       <p className="text-xs text-stone-500">Choisissez une page à ajouter</p>
                     </div>
                   </div>
                   
                   {[
-                    { id: 1, title: "Ta famille", icon: "👨‍👩‍👧‍👦", color: "from-teal-100" },
-                    { id: 2, title: "Arbre généalogique", icon: "🌳", color: "from-green-100" },
-                    { id: 3, title: "Tes parents", icon: "👨‍👩", color: "from-pink-100" },
-                    { id: 4, title: "Tes grands-parents", icon: "👴👵", color: "from-amber-100" },
-                    { id: 5, title: "Ton/Tes oncle(s)", icon: "👨", color: "from-blue-100" },
-                    { id: 6, title: "Ta/Tes tante(s)", icon: "👩", color: "from-purple-100" },
-                    { id: 7, title: "Ton/Tes parrain(s)", icon: "🤵", color: "from-indigo-100" },
-                    { id: 8, title: "Ta/Tes marraine(s)", icon: "👸", color: "from-rose-100" },
-                    { id: 9, title: "Les cousin(e)s", icon: "👧👦", color: "from-cyan-100" },
-                    { id: 10, title: "Les amis qui sont devenus notre famille", icon: "💝", color: "from-red-100" },
-                    { id: 11, title: "Animaux de compagnie", icon: "🐾", color: "from-orange-100" },
+                    { id: 1, title: "Tes grands-parents", icon: "👴👵", color: "from-amber-100", desc: "Leur lien, date de naissance, hobbies, ce qu'ils aiment" },
+                    { id: 2, title: "Tes oncles et tantes", icon: "👨‍👩‍👦", color: "from-blue-100", desc: "Nom, lien avec les parents, date de naissance, hobbies, travail" },
+                    { id: 3, title: "Tes cousin(e)s", icon: "👧👦", color: "from-green-100", desc: "Noms, liens (enfants de qui?), date de naissance" },
+                    { id: 4, title: "Tes amis poilus", icon: "🐾", color: "from-orange-100", desc: "Description, date de naissance, depuis quand dans la famille" },
+                    { id: 5, title: "Les amis de la famille", icon: "🤝", color: "from-purple-100", desc: "Lien avec les parents, pourquoi importants, depuis quand" },
                   ].map((subPage, idx) => (
                     <motion.div 
                       key={subPage.id}
@@ -1344,22 +1338,22 @@ export default function Prototype() {
                   
                   {[
                     { 
-                      title: "La présentation de la famille", 
-                      desc: "Qui sommes-nous?", 
+                      title: "Présentation de la famille", 
+                      desc: "Grands-parents, oncles, tantes, cousins, amis", 
                       icon: "👨‍👩‍👧‍👦", 
                       color: "from-teal-100", 
-                      keywords: ["famille", "présentation", "parents", "proches"], 
+                      keywords: ["famille", "présentation", "parents", "proches", "grands-parents", "oncles", "tantes", "cousins", "amis poilus", "animaux"], 
                       hasSubPages: true,
-                      subPages: ["Ta famille", "Arbre généalogique", "Tes parents", "Tes grands-parents", "Ton oncle", "Tes oncles", "Ta tante", "Tes tantes", "Ton parrain", "Tes parrains", "Ta marraine", "Tes marraines", "Les cousins", "Les cousines", "Les amis", "Animaux de compagnie", "chien", "chat", "animal"]
+                      subPages: ["Tes grands-parents", "Tes oncles et tantes", "Tes cousin(e)s", "Tes amis poilus", "Les amis de la famille"]
                     },
                     { 
                       title: "Annonce de grossesse", 
-                      desc: "Partagez la grande nouvelle", 
+                      desc: "Réactions de la famille et des proches", 
                       icon: "🤰", 
                       color: "from-pink-100", 
-                      keywords: ["annonce", "grossesse", "nouvelle", "enceinte"], 
+                      keywords: ["annonce", "grossesse", "nouvelle", "enceinte", "réaction"], 
                       hasSubPages: true,
-                      subPages: ["Quand j'ai appris la nouvelle", "Quand ton père a appris", "Quand ta mère a appris", "Quand tes grands-parents ont appris", "Quand nous avons appris", "Quand la famille a appris", "père", "mère", "grands-parents"]
+                      subPages: ["Réaction de tes grands-parents", "Réaction de ton parrain", "Réaction de ta marraine", "Réaction de tes oncles/tantes", "Réaction de tes cousin(e)s", "Réaction de tes amis poilus"]
                     },
                     { 
                       title: "Échographie", 

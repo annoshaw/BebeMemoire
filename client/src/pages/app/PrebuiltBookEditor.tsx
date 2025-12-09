@@ -14,7 +14,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 
 const inspirationCategories = [
-  { title: "La présentation de la famille", icon: "👨‍👩‍👧‍👦", color: "from-teal-100", hasSubPages: true },
+  { title: "Présentation de la famille", icon: "👨‍👩‍👧‍👦", color: "from-teal-100", hasSubPages: true },
   { title: "Annonce de grossesse", icon: "🤰", color: "from-pink-100", hasSubPages: true },
   { title: "Échographie", icon: "🔊", color: "from-purple-100", hasSubPages: true },
   { title: "Adoption", icon: "💕", color: "from-blue-100", hasSubPages: false },
@@ -26,14 +26,21 @@ const inspirationCategories = [
   { title: "Première dent", icon: "🦷", color: "from-cyan-100", hasSubPages: false },
 ];
 
-const inspirationSubPages: Record<string, {id: number, title: string, icon: string, color: string}[]> = {
+const inspirationSubPages: Record<string, {id: number, title: string, icon: string, color: string, desc?: string}[]> = {
+  "Présentation de la famille": [
+    { id: 1, title: "Tes grands-parents", icon: "👴👵", color: "from-amber-100", desc: "Leur lien, date de naissance, hobbies, ce qu'ils aiment" },
+    { id: 2, title: "Tes oncles et tantes", icon: "👨‍👩‍👦", color: "from-blue-100", desc: "Nom, lien avec les parents, date de naissance, hobbies, travail" },
+    { id: 3, title: "Tes cousin(e)s", icon: "👧👦", color: "from-green-100", desc: "Noms, liens (enfants de qui?), date de naissance" },
+    { id: 4, title: "Tes amis poilus", icon: "🐾", color: "from-orange-100", desc: "Description, date de naissance, depuis quand dans la famille" },
+    { id: 5, title: "Les amis de la famille", icon: "🤝", color: "from-purple-100", desc: "Lien avec les parents, pourquoi importants, depuis quand" },
+  ],
   "Annonce de grossesse": [
-    { id: 1, title: "Quand j'ai appris la nouvelle", icon: "💝", color: "from-pink-100" },
-    { id: 2, title: "Quand ton père a appris la nouvelle", icon: "👨", color: "from-blue-100" },
-    { id: 3, title: "Quand ta mère a appris la nouvelle", icon: "👩", color: "from-purple-100" },
-    { id: 4, title: "Quand tes grands-parents ont appris la nouvelle", icon: "👴👵", color: "from-amber-100" },
-    { id: 5, title: "Quand nous avons appris la nouvelle", icon: "💑", color: "from-red-100" },
-    { id: 6, title: "Quand la famille a appris la nouvelle", icon: "👨‍👩‍👧‍👦", color: "from-green-100" },
+    { id: 1, title: "Réaction de tes grands-parents", icon: "👴👵", color: "from-amber-100", desc: "Comment ont-ils réagi, qui leur a annoncé et de quelle façon" },
+    { id: 2, title: "Réaction de ton parrain", icon: "👨", color: "from-blue-100", desc: "Comment a-t-il réagi, qui lui a annoncé et de quelle façon" },
+    { id: 3, title: "Réaction de ta marraine", icon: "👩", color: "from-pink-100", desc: "Comment a-t-elle réagi, qui lui a annoncé et de quelle façon" },
+    { id: 4, title: "Réaction de tes oncles/tantes", icon: "👨‍👩‍👦", color: "from-teal-100", desc: "Comment ont-ils réagi, qui leur a annoncé et de quelle façon" },
+    { id: 5, title: "Réaction de tes cousin(e)s", icon: "👧👦", color: "from-green-100", desc: "Comment ont-ils réagi, qui leur a annoncé et de quelle façon" },
+    { id: 6, title: "Réaction de tes amis poilus", icon: "🐾", color: "from-orange-100", desc: "Comment ont-ils réagi, qui leur a annoncé et de quelle façon" },
   ],
   "Échographie": [
     { id: 1, title: "Ta première échographie", icon: "🔊", color: "from-purple-100" },
@@ -41,13 +48,6 @@ const inspirationSubPages: Record<string, {id: number, title: string, icon: stri
     { id: 3, title: "Ta troisième échographie", icon: "🔊", color: "from-blue-100" },
     { id: 4, title: "Les échographies de suivi", icon: "📋", color: "from-teal-100" },
     { id: 5, title: "La première fois que j'ai entendu ton coeur", icon: "💓", color: "from-pink-100" },
-  ],
-  "La présentation de la famille": [
-    { id: 1, title: "Ta famille", icon: "👨‍👩‍👧‍👦", color: "from-teal-100" },
-    { id: 2, title: "Arbre généalogique", icon: "🌳", color: "from-green-100" },
-    { id: 3, title: "Tes parents", icon: "👫", color: "from-blue-100" },
-    { id: 4, title: "Tes grands-parents", icon: "👴👵", color: "from-amber-100" },
-    { id: 5, title: "Ton parrain et ta marraine", icon: "✨", color: "from-purple-100" },
   ],
   "Événements lors de la grossesse": [
     { id: 1, title: "L'annonce du parrain", icon: "👨", color: "from-blue-100" },
@@ -259,12 +259,17 @@ export default function PrebuiltBookEditor() {
                         }}
                       >
                         <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 bg-gradient-to-b ${subPage.color} to-stone-50 rounded-lg flex items-center justify-center`}>
+                          <div className={`w-10 h-10 bg-gradient-to-b ${subPage.color} to-stone-50 rounded-lg flex items-center justify-center flex-shrink-0`}>
                             <span className="text-lg">{subPage.icon}</span>
                           </div>
-                          <span className="font-medium text-stone-800 text-sm">{subPage.title}</span>
+                          <div className="flex-1 min-w-0">
+                            <span className="font-medium text-stone-800 text-sm block">{subPage.title}</span>
+                            {subPage.desc && (
+                              <span className="text-xs text-stone-500 line-clamp-2">{subPage.desc}</span>
+                            )}
+                          </div>
                         </div>
-                        <Button size="sm" variant="outline" className="h-7 text-xs">
+                        <Button size="sm" variant="outline" className="h-7 text-xs flex-shrink-0 ml-2">
                           <Plus size={12} className="mr-1" />
                           {language === "fr" ? "Ajouter" : "Add"}
                         </Button>

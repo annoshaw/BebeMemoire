@@ -1141,45 +1141,70 @@ export function PageEditor({
                   </div>
                 );
 
-                const getGridClass = (count: number): string => {
-                  if (count <= 0) return "grid-1";
-                  if (count === 1) return "grid-1";
-                  if (count === 2) return "grid-2";
-                  if (count === 3) return "grid-3";
-                  if (count === 4) return "grid-4";
-                  if (count === 5) return "grid-5";
-                  if (count === 6) return "grid-6";
-                  if (count === 7) return "grid-7";
-                  if (count === 8) return "grid-8";
-                  if (count === 9) return "grid-9";
-                  if (count === 10) return "grid-10";
-                  if (count === 11) return "grid-11";
-                  if (count === 12) return "grid-12";
-                  if (count === 13) return "grid-13";
-                  if (count === 14) return "grid-14";
-                  return "grid-15";
-                };
-
                 const renderPhotosGrid = () => {
                   if (photos.length > 0) {
-                    const gridClass = getGridClass(photos.length);
-                    const styleClass = `style-${collageStyle}`;
+                    const currentLayout = getLayoutForPhotoCount(photos.length, selectedPhotoLayoutId);
+                    const photoZones = photos.length <= 5 
+                      ? currentLayout.zones.slice(0, photos.length)
+                      : generateCollageZones(photos.length);
+                    
+                    const containerWidth = 368;
+                    const containerHeight = 320;
+                    const scaleX = containerWidth / IMAGE_ZONE.width;
+                    const scaleY = containerHeight / IMAGE_ZONE.height;
+                    
                     return (
-                      <div 
-                        className={`collage ${styleClass} ${gridClass}`}
-                        style={{ width: '100%', height: '100%' }}
-                      >
+                      <div style={{ width: '100%', height: '100%', position: 'relative' }}>
                         {collageStyle === "monthHero" && monthNumber !== undefined && (
-                          <div className="month-hero-number">
-                            <span className="month-digit">{monthNumber}</span>
-                            <span className="month-label">{language === "fr" ? "mois" : "months"}</span>
+                          <div style={{
+                            position: 'absolute',
+                            left: 10,
+                            top: 10,
+                            backgroundColor: 'rgba(255,255,255,0.9)',
+                            borderRadius: '50%',
+                            width: 45,
+                            height: 45,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                            zIndex: 10,
+                          }}>
+                            <span style={{ fontSize: '16px', fontWeight: 700, color: '#4a5568' }}>{monthNumber}</span>
+                            <span style={{ fontSize: '7px', color: '#718096' }}>{language === "fr" ? "mois" : "mo"}</span>
                           </div>
                         )}
-                        {photos.map((photo, index) => (
-                          <div key={index} className="collage-item">
-                            <img src={photo} alt={`Photo ${index + 1}`} />
-                          </div>
-                        ))}
+                        {photos.map((photo, index) => {
+                          const zone = photoZones[index];
+                          if (!zone) return null;
+                          const left = (zone.x - IMAGE_ZONE.x) * scaleX;
+                          const top = (zone.y - IMAGE_ZONE.y) * scaleY;
+                          const width = zone.width * scaleX;
+                          const height = zone.height * scaleY;
+                          
+                          return (
+                            <div
+                              key={index}
+                              style={{
+                                position: 'absolute',
+                                left,
+                                top,
+                                width,
+                                height,
+                                overflow: 'hidden',
+                                borderRadius: '6px',
+                                boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+                              }}
+                            >
+                              <img 
+                                src={photo} 
+                                alt={`Photo ${index + 1}`}
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                              />
+                            </div>
+                          );
+                        })}
                       </div>
                     );
                   }

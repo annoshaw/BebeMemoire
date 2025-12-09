@@ -1152,23 +1152,32 @@ export async function registerRoutes(
         return res.status(403).json({ message: "Accès refusé" });
       }
       
-      const { title, titleEn, subtitle, subtitleEn, pageType, prompts, promptsEn, position } = req.body;
+      const { title, titleEn, subtitle, subtitleEn, pageType, prompts, promptsEn } = req.body;
       
       if (!title) {
         return res.status(400).json({ message: "Titre requis" });
       }
       
-      // Get existing pages to calculate new page number
-      const existingPages = await storage.getBookPages(req.params.bookId);
-      const templatePages = book.templateSlug ? await storage.getTemplatePages(book.templateSlug) : [];
+      // Get template pages to find max template page number
+      let maxTemplatePageNumber = 0;
+      if (book.templateSlug) {
+        const template = await storage.getBookTemplateBySlug(book.templateSlug);
+        if (template) {
+          const templatePagesData = await storage.getTemplatePages(template.id);
+          maxTemplatePageNumber = Math.max(...templatePagesData.map(p => p.pageNumber), 0);
+        }
+      }
       
-      // Calculate position
-      const totalExistingPages = Math.max(existingPages.length, templatePages.length);
-      const insertPosition = position !== undefined ? Math.min(position, totalExistingPages + 1) : totalExistingPages + 1;
+      // Get existing user pages to find max page number including inspiration pages
+      const existingUserPages = await storage.getUserBookPages(req.params.bookId);
+      const maxUserPageNumber = Math.max(...existingUserPages.map(p => p.pageNumber), 0);
+      
+      // New page number is after all existing pages (template + inspiration)
+      const newPageNumber = Math.max(maxTemplatePageNumber, maxUserPageNumber) + 1;
       
       // Create new user book page
       const newPage = await storage.addInspirationPage(req.params.bookId, {
-        pageNumber: insertPosition,
+        pageNumber: newPageNumber,
         titleOverride: title,
         textContent: [],
         photos: [],
@@ -1187,7 +1196,7 @@ export async function registerRoutes(
         isCompleted: false,
       });
       
-      res.json({ page: newPage, pageNumber: insertPosition, message: "Page d'inspiration ajoutée avec succès" });
+      res.json({ page: newPage, pageNumber: newPageNumber, message: "Page d'inspiration ajoutée avec succès" });
     } catch (error) {
       console.error("Add inspiration page error:", error);
       res.status(500).json({ message: "Erreur lors de l'ajout de la page d'inspiration" });

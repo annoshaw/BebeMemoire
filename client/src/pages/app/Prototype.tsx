@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Plus, Minus, Image as ImageIcon, Mic, Video, MoreHorizontal, Calendar, Share2, BookOpen, Printer, CheckCircle, Bell, QrCode, Baby, LogOut, Settings, User, Sparkles, ShoppingBag, FolderHeart, Trash2, Crown, Mail, Phone, MapPin, UserPlus, Users, Edit2, CreditCard, X, Lock, Search, Clock, AlertTriangle, Gift, Loader2, Camera } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Minus, Image as ImageIcon, Mic, Video, MoreHorizontal, Calendar, Share2, BookOpen, Printer, CheckCircle, Bell, QrCode, Baby, LogOut, Settings, User, Sparkles, ShoppingBag, FolderHeart, Trash2, Crown, Mail, Phone, MapPin, UserPlus, Users, Edit2, CreditCard, X, Lock, Search, Clock, AlertTriangle, Gift, Loader2, Camera, ArrowUp, ArrowDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -29,6 +29,7 @@ export default function Prototype() {
   ]);
   
   const babyName = typeof window !== "undefined" ? localStorage.getItem("babyName") || "Léo" : "Léo";
+  const language = typeof window !== "undefined" ? (localStorage.getItem("language") || "fr") : "fr";
   
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -244,6 +245,9 @@ export default function Prototype() {
   const [showTrialExpiredModal, setShowTrialExpiredModal] = useState(false);
   const [showBookSelectorModal, setShowBookSelectorModal] = useState(false);
   const [pendingInspirationPage, setPendingInspirationPage] = useState<{title: string, icon: string, color: string} | null>(null);
+  const [showPositionModal, setShowPositionModal] = useState(false);
+  const [selectedBookForInsert, setSelectedBookForInsert] = useState<string | null>(null);
+  const [bookPagesForInsert, setBookPagesForInsert] = useState<any[]>([]);
   
   const [pageAddedFeedback, setPageAddedFeedback] = useState<{bookName: string, pageTitle: string} | null>(null);
   const [showDeleteBookModal, setShowDeleteBookModal] = useState(false);
@@ -316,13 +320,26 @@ export default function Prototype() {
       setPendingInspirationPage(page);
       setShowBookSelectorModal(true);
     } else if (userBooks.length === 1) {
-      addPageToBook(page, userBooks[0].id);
+      selectBookForInsert(page, userBooks[0].id);
     } else {
-      addPageToBook(page, null);
+      addPageToBook(page, null, 0);
     }
   };
   
-  const addPageToBook = (page: {title: string, icon: string, color: string}, bookId: string | null) => {
+  const selectBookForInsert = (page: {title: string, icon: string, color: string}, bookId: string) => {
+    setPendingInspirationPage(page);
+    setSelectedBookForInsert(bookId);
+    setShowBookSelectorModal(false);
+    
+    if (bookId && bookId !== activeBookId) {
+      setActiveBookMutation.mutate(bookId);
+    }
+    
+    setBookPagesForInsert(bookPages);
+    setShowPositionModal(true);
+  };
+  
+  const addPageToBook = async (page: {title: string, icon: string, color: string}, bookId: string | null, position: number) => {
     const targetBook = bookId ? userBooks.find(b => b.id === bookId) : activeBook;
     const bookName = targetBook?.childName || "votre livre";
     
@@ -339,10 +356,17 @@ export default function Prototype() {
       image: "",
       stats: undefined
     };
-    setBookPages([...bookPages, newPage as any]);
-    setCurrentPage(bookPages.length);
+    
+    const newPages = [...bookPages];
+    newPages.splice(position, 0, newPage as any);
+    setBookPages(newPages);
+    setCurrentPage(position);
+    
     setShowBookSelectorModal(false);
+    setShowPositionModal(false);
     setPendingInspirationPage(null);
+    setSelectedBookForInsert(null);
+    setBookPagesForInsert([]);
     
     setPageAddedFeedback({ bookName, pageTitle: page.title });
     setTimeout(() => setPageAddedFeedback(null), 3000);
@@ -3226,7 +3250,7 @@ export default function Prototype() {
                     <motion.div
                       key={book.id}
                       whileTap={{ scale: 0.98 }}
-                      onClick={() => addPageToBook(pendingInspirationPage, book.id)}
+                      onClick={() => pendingInspirationPage && selectBookForInsert(pendingInspirationPage, book.id)}
                       className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all ${
                         isActive 
                           ? 'bg-primary/10 border-2 border-primary' 
@@ -3269,6 +3293,156 @@ export default function Prototype() {
                   data-testid="button-cancel-book-selector"
                 >
                   Annuler
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Position Selector Modal */}
+      <AnimatePresence>
+        {showPositionModal && pendingInspirationPage && selectedBookForInsert && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-[60] flex items-end sm:items-center justify-center"
+            onClick={() => {
+              setShowPositionModal(false);
+              setPendingInspirationPage(null);
+              setSelectedBookForInsert(null);
+              setBookPagesForInsert([]);
+            }}
+          >
+            <motion.div
+              initial={{ y: 50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 50, opacity: 0 }}
+              className="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-md max-h-[80vh] overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="p-4 border-b border-stone-100">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-bold text-stone-900 text-lg">
+                      {language === "fr" ? "Où insérer cette page ?" : "Where to insert this page?"}
+                    </h3>
+                    <p className="text-xs text-stone-500">
+                      {language === "fr" ? "Choisissez la position dans le livre" : "Choose position in the book"}
+                    </p>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      setShowPositionModal(false);
+                      setPendingInspirationPage(null);
+                      setSelectedBookForInsert(null);
+                      setBookPagesForInsert([]);
+                    }}
+                    className="p-2 hover:bg-stone-100 rounded-full"
+                  >
+                    <X size={20} className="text-stone-500" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Page to add info */}
+              <div className="px-4 py-3 bg-stone-50 border-b border-stone-100">
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 bg-gradient-to-b ${pendingInspirationPage.color} to-stone-50 rounded-xl flex items-center justify-center`}>
+                    <span className="text-lg">{pendingInspirationPage.icon}</span>
+                  </div>
+                  <div>
+                    <p className="text-xs text-stone-500">{language === "fr" ? "Page à ajouter" : "Page to add"}</p>
+                    <p className="text-sm font-medium text-stone-800">{pendingInspirationPage.title}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Position List */}
+              <div className="p-4 space-y-2 max-h-[50vh] overflow-y-auto">
+                {/* Insert at beginning */}
+                <motion.div
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => addPageToBook(pendingInspirationPage, selectedBookForInsert, 0)}
+                  className="flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all bg-primary/10 border-2 border-primary hover:bg-primary/20"
+                  data-testid="position-start"
+                >
+                  <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                    <ArrowUp size={16} className="text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-stone-900">
+                      {language === "fr" ? "Au début du livre" : "At the beginning"}
+                    </p>
+                    <p className="text-xs text-stone-500">
+                      {language === "fr" ? "Avant toutes les pages" : "Before all pages"}
+                    </p>
+                  </div>
+                </motion.div>
+
+                {/* Insert after specific pages */}
+                {bookPagesForInsert.map((page, idx) => (
+                  <motion.div
+                    key={page.id || idx}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => addPageToBook(pendingInspirationPage, selectedBookForInsert, idx + 1)}
+                    className="flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all bg-white border border-stone-200 hover:border-primary/50"
+                    data-testid={`position-after-${idx}`}
+                  >
+                    <div className="w-8 h-8 bg-stone-100 rounded-lg flex items-center justify-center text-stone-600 font-bold text-sm">
+                      {idx + 1}
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-stone-800 text-sm">
+                        {language === "fr" ? "Après : " : "After: "}
+                        {page.title || page.type || `Page ${idx + 1}`}
+                      </p>
+                      <p className="text-xs text-stone-500">
+                        {language === "fr" ? `Insérer en position ${idx + 2}` : `Insert at position ${idx + 2}`}
+                      </p>
+                    </div>
+                  </motion.div>
+                ))}
+
+                {/* Insert at end */}
+                {bookPagesForInsert.length > 0 && (
+                  <motion.div
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => addPageToBook(pendingInspirationPage, selectedBookForInsert, bookPagesForInsert.length)}
+                    className="flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all bg-secondary/10 border-2 border-secondary hover:bg-secondary/20"
+                    data-testid="position-end"
+                  >
+                    <div className="w-8 h-8 bg-secondary rounded-full flex items-center justify-center">
+                      <ArrowDown size={16} className="text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-stone-900">
+                        {language === "fr" ? "À la fin du livre" : "At the end"}
+                      </p>
+                      <p className="text-xs text-stone-500">
+                        {language === "fr" ? "Après toutes les pages" : "After all pages"}
+                      </p>
+                    </div>
+                  </motion.div>
+                )}
+              </div>
+
+              {/* Cancel Button */}
+              <div className="p-4 border-t border-stone-100">
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => {
+                    setShowPositionModal(false);
+                    setPendingInspirationPage(null);
+                    setSelectedBookForInsert(null);
+                    setBookPagesForInsert([]);
+                  }}
+                  data-testid="button-cancel-position-selector"
+                >
+                  {language === "fr" ? "Annuler" : "Cancel"}
                 </Button>
               </div>
             </motion.div>

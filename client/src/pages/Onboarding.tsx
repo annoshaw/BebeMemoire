@@ -383,7 +383,10 @@ export default function Onboarding() {
                                   <Heart size={12} /> Grossesse
                                 </span>
                                 <span className="inline-flex items-center gap-1 px-2 py-1 bg-stone-100 rounded-md text-xs text-stone-600">
-                                  <Users size={12} /> Famille
+                                  <Baby size={12} /> Naissance
+                                </span>
+                                <span className="inline-flex items-center gap-1 px-2 py-1 bg-stone-100 rounded-md text-xs text-stone-600">
+                                  <Users size={12} /> Adoption
                                 </span>
                                 <span className="inline-flex items-center gap-1 px-2 py-1 bg-stone-100 rounded-md text-xs text-stone-600">
                                   <Cake size={12} /> Jalons
@@ -826,7 +829,7 @@ export default function Onboarding() {
               <div className="bg-primary/5 rounded-lg p-4 space-y-2 text-left">
                 <p className="text-sm">
                   <span className="font-bold">Type de livre:</span>{" "}
-                  {selectedTemplate && selectedTemplate !== "custom" ? "Parcours Grossesse & Bébé" : "Personnalisé"}
+                  {selectedTemplate && selectedTemplate !== "custom" ? "Parcours Grossesse, Bébé & Adoption" : "Personnalisé"}
                 </p>
                 <p className="text-sm">
                   <span className="font-bold">Date:</span> {babyDate}

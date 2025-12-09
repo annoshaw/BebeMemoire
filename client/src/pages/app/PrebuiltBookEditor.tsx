@@ -2,9 +2,61 @@ import { useState, useEffect } from "react";
 import { useParams, Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Settings, Sparkles } from "lucide-react";
+import { ArrowLeft, Settings, Sparkles, ChevronRight, Plus, X } from "lucide-react";
 import { BookViewer } from "@/components/book";
 import type { Book } from "@shared/schema";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { motion, AnimatePresence } from "framer-motion";
+
+const inspirationCategories = [
+  { title: "La présentation de la famille", icon: "👨‍👩‍👧‍👦", color: "from-teal-100", hasSubPages: true },
+  { title: "Annonce de grossesse", icon: "🤰", color: "from-pink-100", hasSubPages: true },
+  { title: "Échographie", icon: "🔊", color: "from-purple-100", hasSubPages: true },
+  { title: "Adoption", icon: "💕", color: "from-blue-100", hasSubPages: false },
+  { title: "FIV", icon: "🌱", color: "from-orange-100", hasSubPages: false },
+  { title: "Événements lors de la grossesse", icon: "🎉", color: "from-yellow-100", hasSubPages: true },
+  { title: "Chambre de bébé", icon: "🛏️", color: "from-green-100", hasSubPages: false },
+  { title: "Lettre à bébé", icon: "💌", color: "from-red-100", hasSubPages: false },
+  { title: "Premier mot", icon: "💬", color: "from-indigo-100", hasSubPages: false },
+  { title: "Première dent", icon: "🦷", color: "from-cyan-100", hasSubPages: false },
+];
+
+const inspirationSubPages: Record<string, {id: number, title: string, icon: string, color: string}[]> = {
+  "Annonce de grossesse": [
+    { id: 1, title: "Quand j'ai appris la nouvelle", icon: "💝", color: "from-pink-100" },
+    { id: 2, title: "Quand ton père a appris la nouvelle", icon: "👨", color: "from-blue-100" },
+    { id: 3, title: "Quand ta mère a appris la nouvelle", icon: "👩", color: "from-purple-100" },
+    { id: 4, title: "Quand tes grands-parents ont appris la nouvelle", icon: "👴👵", color: "from-amber-100" },
+    { id: 5, title: "Quand nous avons appris la nouvelle", icon: "💑", color: "from-red-100" },
+    { id: 6, title: "Quand la famille a appris la nouvelle", icon: "👨‍👩‍👧‍👦", color: "from-green-100" },
+  ],
+  "Échographie": [
+    { id: 1, title: "Ta première échographie", icon: "🔊", color: "from-purple-100" },
+    { id: 2, title: "Ta deuxième échographie", icon: "🔊", color: "from-indigo-100" },
+    { id: 3, title: "Ta troisième échographie", icon: "🔊", color: "from-blue-100" },
+    { id: 4, title: "Les échographies de suivi", icon: "📋", color: "from-teal-100" },
+    { id: 5, title: "La première fois que j'ai entendu ton coeur", icon: "💓", color: "from-pink-100" },
+  ],
+  "La présentation de la famille": [
+    { id: 1, title: "Ta famille", icon: "👨‍👩‍👧‍👦", color: "from-teal-100" },
+    { id: 2, title: "Arbre généalogique", icon: "🌳", color: "from-green-100" },
+    { id: 3, title: "Tes parents", icon: "👫", color: "from-blue-100" },
+    { id: 4, title: "Tes grands-parents", icon: "👴👵", color: "from-amber-100" },
+    { id: 5, title: "Ton parrain et ta marraine", icon: "✨", color: "from-purple-100" },
+  ],
+  "Événements lors de la grossesse": [
+    { id: 1, title: "L'annonce du parrain", icon: "👨", color: "from-blue-100" },
+    { id: 2, title: "L'annonce de la marraine", icon: "👩", color: "from-pink-100" },
+    { id: 3, title: "Le dévoilement de sexe", icon: "🎀", color: "from-purple-100" },
+    { id: 4, title: "Le baby shower", icon: "🎁", color: "from-yellow-100" },
+    { id: 5, title: "Le baby moon", icon: "🌙", color: "from-indigo-100" },
+  ],
+};
 
 export default function PrebuiltBookEditor() {
   const params = useParams<{ id: string }>();
@@ -12,6 +64,8 @@ export default function PrebuiltBookEditor() {
   const [language, setLanguage] = useState<"fr" | "en">("fr");
   const [, setLocation] = useLocation();
   const [initialPage, setInitialPage] = useState<number | undefined>(undefined);
+  const [showInspirationModal, setShowInspirationModal] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -99,7 +153,7 @@ export default function PrebuiltBookEditor() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setLocation("/app?tab=inspiration")}
+                onClick={() => setShowInspirationModal(true)}
                 className="bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200 hover:from-amber-100 hover:to-orange-100 text-amber-700"
                 data-testid="button-inspiration"
               >
@@ -128,10 +182,139 @@ export default function PrebuiltBookEditor() {
         <BookViewer 
           bookId={bookId!} 
           language={language} 
-          onGoToInspiration={() => setLocation("/app?tab=inspiration")}
+          onGoToInspiration={() => setShowInspirationModal(true)}
           initialPage={initialPage}
         />
       </main>
+
+      {/* Inspiration Modal */}
+      <AnimatePresence>
+        {showInspirationModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-[60] flex items-end sm:items-center justify-center"
+            onClick={() => {
+              setShowInspirationModal(false);
+              setSelectedCategory(null);
+            }}
+          >
+            <motion.div
+              initial={{ y: 50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 50, opacity: 0 }}
+              className="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-md max-h-[80vh] overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="p-4 border-b border-stone-100">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-bold text-stone-900 text-lg">
+                      {language === "fr" ? "Pages d'inspiration" : "Inspiration Pages"}
+                    </h3>
+                    <p className="text-xs text-stone-500">
+                      {language === "fr" ? "Ajoutez ces pages spéciales à votre livre" : "Add these special pages to your book"}
+                    </p>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      setShowInspirationModal(false);
+                      setSelectedCategory(null);
+                    }}
+                    className="p-2 hover:bg-stone-100 rounded-full"
+                  >
+                    <X size={20} className="text-stone-500" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="p-4 space-y-2 max-h-[60vh] overflow-y-auto">
+                {selectedCategory ? (
+                  <>
+                    {/* Back button */}
+                    <button 
+                      onClick={() => setSelectedCategory(null)}
+                      className="flex items-center gap-2 text-sm text-stone-600 hover:text-stone-800 mb-4"
+                    >
+                      <ArrowLeft size={16} />
+                      {language === "fr" ? "Retour" : "Back"}
+                    </button>
+                    
+                    <h4 className="font-bold text-stone-800 mb-3">{selectedCategory}</h4>
+                    
+                    {/* Sub-pages list */}
+                    {inspirationSubPages[selectedCategory]?.map((subPage) => (
+                      <motion.div
+                        key={subPage.id}
+                        initial={{ opacity: 0, x: 10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="bg-white rounded-xl border border-stone-200 p-3 flex items-center justify-between hover:border-amber-300 transition-colors cursor-pointer"
+                        onClick={() => {
+                          setLocation(`/app?tab=inspiration`);
+                          setShowInspirationModal(false);
+                          setSelectedCategory(null);
+                        }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 bg-gradient-to-b ${subPage.color} to-stone-50 rounded-lg flex items-center justify-center`}>
+                            <span className="text-lg">{subPage.icon}</span>
+                          </div>
+                          <span className="font-medium text-stone-800 text-sm">{subPage.title}</span>
+                        </div>
+                        <Button size="sm" variant="outline" className="h-7 text-xs">
+                          <Plus size={12} className="mr-1" />
+                          {language === "fr" ? "Ajouter" : "Add"}
+                        </Button>
+                      </motion.div>
+                    ))}
+                  </>
+                ) : (
+                  <>
+                    {/* Categories list */}
+                    {inspirationCategories.map((category, idx) => (
+                      <motion.div
+                        key={category.title}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: idx * 0.03 }}
+                        className="bg-white rounded-xl border border-stone-200 p-3 flex items-center justify-between hover:border-amber-300 transition-colors cursor-pointer"
+                        onClick={() => {
+                          if (category.hasSubPages) {
+                            setSelectedCategory(category.title);
+                          } else {
+                            setLocation(`/app?tab=inspiration`);
+                            setShowInspirationModal(false);
+                          }
+                        }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 bg-gradient-to-b ${category.color} to-stone-50 rounded-lg flex items-center justify-center`}>
+                            <span className="text-lg">{category.icon}</span>
+                          </div>
+                          <div>
+                            <span className="font-medium text-stone-800 text-sm">{category.title}</span>
+                          </div>
+                        </div>
+                        {category.hasSubPages ? (
+                          <ChevronRight size={18} className="text-stone-400" />
+                        ) : (
+                          <Button size="sm" variant="outline" className="h-7 text-xs">
+                            <Plus size={12} className="mr-1" />
+                            {language === "fr" ? "Ajouter" : "Add"}
+                          </Button>
+                        )}
+                      </motion.div>
+                    ))}
+                  </>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

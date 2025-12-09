@@ -336,7 +336,7 @@ export default function Onboarding() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {templates.map((template) => {
+                  {templates.filter(t => t.slug !== 'prebuilt_adoption').map((template) => {
                     const isSelected = selectedTemplate === template.slug;
                     const isPrebuilt = isPrebuiltTemplate(template.slug);
                     

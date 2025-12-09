@@ -1144,14 +1144,9 @@ export function PageEditor({
                 const renderPhotosGrid = () => {
                   if (photos.length > 0) {
                     const currentLayout = getLayoutForPhotoCount(photos.length, selectedPhotoLayoutId);
-                    const photoZones = photos.length <= 5 
+                    const photoZones = (photos.length <= currentLayout.zones.length)
                       ? currentLayout.zones.slice(0, photos.length)
                       : generateCollageZones(photos.length);
-                    
-                    const containerWidth = 368;
-                    const containerHeight = 320;
-                    const scaleX = containerWidth / IMAGE_ZONE.width;
-                    const scaleY = containerHeight / IMAGE_ZONE.height;
                     
                     return (
                       <div style={{ width: '100%', height: '100%', position: 'relative' }}>
@@ -1178,20 +1173,21 @@ export function PageEditor({
                         {photos.map((photo, index) => {
                           const zone = photoZones[index];
                           if (!zone) return null;
-                          const left = (zone.x - IMAGE_ZONE.x) * scaleX;
-                          const top = (zone.y - IMAGE_ZONE.y) * scaleY;
-                          const width = zone.width * scaleX;
-                          const height = zone.height * scaleY;
+                          
+                          const leftPct = ((zone.x - IMAGE_ZONE.x) / IMAGE_ZONE.width) * 100;
+                          const topPct = ((zone.y - IMAGE_ZONE.y) / IMAGE_ZONE.height) * 100;
+                          const widthPct = (zone.width / IMAGE_ZONE.width) * 100;
+                          const heightPct = (zone.height / IMAGE_ZONE.height) * 100;
                           
                           return (
                             <div
                               key={index}
                               style={{
                                 position: 'absolute',
-                                left,
-                                top,
-                                width,
-                                height,
+                                left: `${leftPct}%`,
+                                top: `${topPct}%`,
+                                width: `${widthPct}%`,
+                                height: `${heightPct}%`,
                                 overflow: 'hidden',
                                 borderRadius: '6px',
                                 boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
@@ -1200,7 +1196,12 @@ export function PageEditor({
                               <img 
                                 src={photo} 
                                 alt={`Photo ${index + 1}`}
-                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                style={{ 
+                                  width: '100%', 
+                                  height: '100%', 
+                                  objectFit: 'cover',
+                                  objectPosition: 'center center'
+                                }}
                               />
                             </div>
                           );

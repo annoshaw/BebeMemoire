@@ -28,6 +28,7 @@ export const users = pgTable("users", {
   phone: text("phone"),
   country: text("country"),
   authProvider: text("auth_provider").default("email"),
+  role: text("role").notNull().default("user"), // user, admin
   onboardingCompleted: boolean("onboarding_completed").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -375,3 +376,178 @@ export const insertMediaFileSchema = createInsertSchema(mediaFiles).omit({
 
 export type InsertMediaFile = z.infer<typeof insertMediaFileSchema>;
 export type MediaFile = typeof mediaFiles.$inferSelect;
+
+// =====================================================
+// ADMIN & E-COMMERCE TABLES (Phase 0-1)
+// =====================================================
+
+// Extend users with role for admin access
+// Note: role field added to users table via migration
+
+// Subscriptions table - Stripe subscription tracking
+export const subscriptions = pgTable("subscriptions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }).unique(),
+  stripeCustomerId: varchar("stripe_customer_id"),
+  stripeSubscriptionId: varchar("stripe_subscription_id"),
+  plan: text("plan").notNull().default("free"), // free, premium, platine
+  status: text("status").notNull().default("active"), // active, canceled, past_due, incomplete
+  currentPeriodStart: timestamp("current_period_start"),
+  currentPeriodEnd: timestamp("current_period_end"),
+  cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
+export type Subscription = typeof subscriptions.$inferSelect;
+
+// Orders table - Print orders tracking
+export const orders = pgTable("orders", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  bookId: varchar("book_id").references(() => books.id, { onDelete: "set null" }),
+  orderNumber: varchar("order_number").notNull().unique(), // Human-readable order number
+  status: text("status").notNull().default("pending"), // pending, processing, printing, shipped, delivered, cancelled
+  productType: text("product_type").notNull(), // softcover, hardcover, ebook
+  quantity: integer("quantity").notNull().default(1),
+  pageCount: integer("page_count").notNull().default(50),
+  basePrice: integer("base_price").notNull(), // in cents
+  extraPagesPrice: integer("extra_pages_price").notNull().default(0), // in cents
+  shippingPrice: integer("shipping_price").notNull().default(0), // in cents
+  taxAmount: integer("tax_amount").notNull().default(0), // in cents
+  totalAmount: integer("total_amount").notNull(), // in cents
+  currency: varchar("currency").notNull().default("CAD"),
+  // Shipping info
+  shippingName: text("shipping_name"),
+  shippingAddress: text("shipping_address"),
+  shippingCity: text("shipping_city"),
+  shippingPostalCode: text("shipping_postal_code"),
+  shippingCountry: text("shipping_country"),
+  shippingPhone: text("shipping_phone"),
+  // Payment info
+  stripePaymentIntentId: varchar("stripe_payment_intent_id"),
+  paymentStatus: text("payment_status").default("pending"), // pending, paid, failed, refunded
+  paidAt: timestamp("paid_at"),
+  // PDF export
+  pdfExportKey: text("pdf_export_key"), // S3 key for generated PDF
+  pdfGeneratedAt: timestamp("pdf_generated_at"),
+  // Tracking
+  trackingNumber: varchar("tracking_number"),
+  shippedAt: timestamp("shipped_at"),
+  deliveredAt: timestamp("delivered_at"),
+  // Notes
+  adminNotes: text("admin_notes"),
+  customerNotes: text("customer_notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertOrderSchema = createInsertSchema(orders).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertOrder = z.infer<typeof insertOrderSchema>;
+export type Order = typeof orders.$inferSelect;
+
+// Order events table - Audit trail for order status changes
+export const orderEvents = pgTable("order_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  orderId: varchar("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }),
+  eventType: text("event_type").notNull(), // status_change, payment_received, shipped, note_added
+  previousStatus: text("previous_status"),
+  newStatus: text("new_status"),
+  description: text("description"),
+  performedBy: varchar("performed_by").references(() => users.id), // Admin who made the change
+  metadata: jsonb("metadata").default({}),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertOrderEventSchema = createInsertSchema(orderEvents).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertOrderEvent = z.infer<typeof insertOrderEventSchema>;
+export type OrderEvent = typeof orderEvents.$inferSelect;
+
+// Payments table - All payment transactions
+export const payments = pgTable("payments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  orderId: varchar("order_id").references(() => orders.id, { onDelete: "set null" }),
+  subscriptionId: varchar("subscription_id").references(() => subscriptions.id, { onDelete: "set null" }),
+  stripePaymentIntentId: varchar("stripe_payment_intent_id"),
+  stripeChargeId: varchar("stripe_charge_id"),
+  amount: integer("amount").notNull(), // in cents
+  currency: varchar("currency").notNull().default("CAD"),
+  status: text("status").notNull().default("pending"), // pending, succeeded, failed, refunded
+  paymentMethod: text("payment_method"), // card, paypal
+  paymentType: text("payment_type").notNull(), // order, subscription
+  description: text("description"),
+  receiptUrl: text("receipt_url"),
+  failureReason: text("failure_reason"),
+  refundedAt: timestamp("refunded_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertPaymentSchema = createInsertSchema(payments).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertPayment = z.infer<typeof insertPaymentSchema>;
+export type Payment = typeof payments.$inferSelect;
+
+// PDF Exports table - Track generated PDFs
+export const pdfExports = pgTable("pdf_exports", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  bookId: varchar("book_id").notNull().references(() => books.id, { onDelete: "cascade" }),
+  orderId: varchar("order_id").references(() => orders.id, { onDelete: "set null" }),
+  s3Key: text("s3_key").notNull(),
+  filename: text("filename").notNull(),
+  fileSize: integer("file_size"), // in bytes
+  pageCount: integer("page_count"),
+  status: text("status").notNull().default("pending"), // pending, generating, completed, failed
+  generatedAt: timestamp("generated_at"),
+  expiresAt: timestamp("expires_at"), // For temporary download links
+  errorMessage: text("error_message"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertPdfExportSchema = createInsertSchema(pdfExports).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertPdfExport = z.infer<typeof insertPdfExportSchema>;
+export type PdfExport = typeof pdfExports.$inferSelect;
+
+// Admin activity log - For audit trail
+export const adminActivityLogs = pgTable("admin_activity_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  adminId: varchar("admin_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  action: text("action").notNull(), // view_order, update_order, view_user, export_data, etc.
+  targetType: text("target_type"), // order, user, subscription
+  targetId: varchar("target_id"),
+  details: jsonb("details").default({}),
+  ipAddress: varchar("ip_address"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertAdminActivityLogSchema = createInsertSchema(adminActivityLogs).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertAdminActivityLog = z.infer<typeof insertAdminActivityLogSchema>;
+export type AdminActivityLog = typeof adminActivityLogs.$inferSelect;

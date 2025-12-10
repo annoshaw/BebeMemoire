@@ -1,6 +1,6 @@
 import { db } from "./db";
-import { users, books, memories, userPlans, qrCodes, passwordResetTokens, bookPages, notifications, notificationSettings, bookTemplates, templateSections, templateParts, templatePages, userBookPages, mediaFiles, type User, type InsertUser, type UpsertUser, type Book, type InsertBook, type Memory, type InsertMemory, type UserPlan, type InsertUserPlan, type QRCode, type InsertQRCode, type PasswordResetToken, type InsertPasswordResetToken, type BookPage, type InsertBookPage, type Notification, type InsertNotification, type NotificationSettings, type InsertNotificationSettings, type BookTemplate, type InsertBookTemplate, type TemplateSection, type InsertTemplateSection, type TemplatePart, type InsertTemplatePart, type TemplatePage, type InsertTemplatePage, type UserBookPage, type InsertUserBookPage, type MediaFile, type InsertMediaFile } from "@shared/schema";
-import { eq, desc, and, gt, asc, lte, or, isNull, sum } from "drizzle-orm";
+import { users, books, memories, userPlans, qrCodes, passwordResetTokens, bookPages, notifications, notificationSettings, bookTemplates, templateSections, templateParts, templatePages, userBookPages, mediaFiles, subscriptions, orders, orderEvents, payments, pdfExports, adminActivityLogs, type User, type InsertUser, type UpsertUser, type Book, type InsertBook, type Memory, type InsertMemory, type UserPlan, type InsertUserPlan, type QRCode, type InsertQRCode, type PasswordResetToken, type InsertPasswordResetToken, type BookPage, type InsertBookPage, type Notification, type InsertNotification, type NotificationSettings, type InsertNotificationSettings, type BookTemplate, type InsertBookTemplate, type TemplateSection, type InsertTemplateSection, type TemplatePart, type InsertTemplatePart, type TemplatePage, type InsertTemplatePage, type UserBookPage, type InsertUserBookPage, type MediaFile, type InsertMediaFile, type Subscription, type InsertSubscription, type Order, type InsertOrder, type OrderEvent, type InsertOrderEvent, type Payment, type InsertPayment, type PdfExport, type InsertPdfExport, type AdminActivityLog, type InsertAdminActivityLog } from "@shared/schema";
+import { eq, desc, and, gt, asc, lte, or, isNull, sum, count, sql } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (Replit Auth)
@@ -96,6 +96,53 @@ export interface IStorage {
   updateMediaFileStatus(id: string, status: string, uploadedAt?: Date): Promise<MediaFile | undefined>;
   deleteMediaFile(id: string): Promise<boolean>;
   getUserStorageUsed(userId: string): Promise<number>;
+  
+  // Subscription operations
+  getSubscription(userId: string): Promise<Subscription | undefined>;
+  getSubscriptionByStripeCustomerId(stripeCustomerId: string): Promise<Subscription | undefined>;
+  createSubscription(subscription: InsertSubscription): Promise<Subscription>;
+  updateSubscription(userId: string, data: Partial<InsertSubscription>): Promise<Subscription | undefined>;
+  
+  // Order operations
+  getOrder(id: string): Promise<Order | undefined>;
+  getOrderByNumber(orderNumber: string): Promise<Order | undefined>;
+  getOrdersByUserId(userId: string): Promise<Order[]>;
+  getOrdersByStatus(status: string): Promise<Order[]>;
+  getAllOrders(limit?: number, offset?: number): Promise<Order[]>;
+  createOrder(order: InsertOrder): Promise<Order>;
+  updateOrder(id: string, data: Partial<InsertOrder>): Promise<Order | undefined>;
+  getOrdersCount(): Promise<number>;
+  getOrdersCountByStatus(): Promise<Record<string, number>>;
+  
+  // Order Events operations
+  getOrderEvents(orderId: string): Promise<OrderEvent[]>;
+  createOrderEvent(event: InsertOrderEvent): Promise<OrderEvent>;
+  
+  // Payment operations
+  getPayment(id: string): Promise<Payment | undefined>;
+  getPaymentsByUserId(userId: string): Promise<Payment[]>;
+  getPaymentsByOrderId(orderId: string): Promise<Payment[]>;
+  createPayment(payment: InsertPayment): Promise<Payment>;
+  updatePayment(id: string, data: Partial<InsertPayment>): Promise<Payment | undefined>;
+  
+  // PDF Export operations
+  getPdfExport(id: string): Promise<PdfExport | undefined>;
+  getPdfExportsByBook(bookId: string): Promise<PdfExport[]>;
+  createPdfExport(pdfExport: InsertPdfExport): Promise<PdfExport>;
+  updatePdfExport(id: string, data: Partial<InsertPdfExport>): Promise<PdfExport | undefined>;
+  
+  // Admin operations
+  getAdminUsers(): Promise<User[]>;
+  getAllUsers(limit?: number, offset?: number): Promise<User[]>;
+  getUsersCount(): Promise<number>;
+  setUserRole(userId: string, role: string): Promise<User | undefined>;
+  createAdminActivityLog(log: InsertAdminActivityLog): Promise<AdminActivityLog>;
+  getAdminActivityLogs(adminId?: string, limit?: number): Promise<AdminActivityLog[]>;
+  
+  // Admin statistics
+  getSubscriptionStats(): Promise<{ plan: string; count: number }[]>;
+  getOrderStats(): Promise<{ status: string; count: number; totalAmount: number }[]>;
+  getRevenueStats(days: number): Promise<{ date: string; amount: number }[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -699,6 +746,233 @@ export class DatabaseStorage implements IStorage {
         )
       );
     return parseInt(result[0]?.total || "0", 10);
+  }
+
+  // Subscription operations
+  async getSubscription(userId: string): Promise<Subscription | undefined> {
+    const result = await db.select().from(subscriptions).where(eq(subscriptions.userId, userId)).limit(1);
+    return result[0];
+  }
+
+  async getSubscriptionByStripeCustomerId(stripeCustomerId: string): Promise<Subscription | undefined> {
+    const result = await db.select().from(subscriptions)
+      .where(eq(subscriptions.stripeCustomerId, stripeCustomerId))
+      .limit(1);
+    return result[0];
+  }
+
+  async createSubscription(subscription: InsertSubscription): Promise<Subscription> {
+    const result = await db.insert(subscriptions).values(subscription).returning();
+    return result[0];
+  }
+
+  async updateSubscription(userId: string, data: Partial<InsertSubscription>): Promise<Subscription | undefined> {
+    const result = await db.update(subscriptions)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(subscriptions.userId, userId))
+      .returning();
+    return result[0];
+  }
+
+  // Order operations
+  async getOrder(id: string): Promise<Order | undefined> {
+    const result = await db.select().from(orders).where(eq(orders.id, id)).limit(1);
+    return result[0];
+  }
+
+  async getOrderByNumber(orderNumber: string): Promise<Order | undefined> {
+    const result = await db.select().from(orders).where(eq(orders.orderNumber, orderNumber)).limit(1);
+    return result[0];
+  }
+
+  async getOrdersByUserId(userId: string): Promise<Order[]> {
+    return db.select().from(orders).where(eq(orders.userId, userId)).orderBy(desc(orders.createdAt));
+  }
+
+  async getOrdersByStatus(status: string): Promise<Order[]> {
+    return db.select().from(orders).where(eq(orders.status, status)).orderBy(desc(orders.createdAt));
+  }
+
+  async getAllOrders(limit: number = 50, offset: number = 0): Promise<Order[]> {
+    return db.select().from(orders).orderBy(desc(orders.createdAt)).limit(limit).offset(offset);
+  }
+
+  async createOrder(order: InsertOrder): Promise<Order> {
+    const result = await db.insert(orders).values(order).returning();
+    return result[0];
+  }
+
+  async updateOrder(id: string, data: Partial<InsertOrder>): Promise<Order | undefined> {
+    const result = await db.update(orders)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(orders.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async getOrdersCount(): Promise<number> {
+    const result = await db.select({ count: count() }).from(orders);
+    return result[0]?.count || 0;
+  }
+
+  async getOrdersCountByStatus(): Promise<Record<string, number>> {
+    const result = await db.select({
+      status: orders.status,
+      count: count()
+    }).from(orders).groupBy(orders.status);
+    
+    const counts: Record<string, number> = {};
+    result.forEach(r => {
+      counts[r.status] = r.count;
+    });
+    return counts;
+  }
+
+  // Order Events operations
+  async getOrderEvents(orderId: string): Promise<OrderEvent[]> {
+    return db.select().from(orderEvents).where(eq(orderEvents.orderId, orderId)).orderBy(desc(orderEvents.createdAt));
+  }
+
+  async createOrderEvent(event: InsertOrderEvent): Promise<OrderEvent> {
+    const result = await db.insert(orderEvents).values(event).returning();
+    return result[0];
+  }
+
+  // Payment operations
+  async getPayment(id: string): Promise<Payment | undefined> {
+    const result = await db.select().from(payments).where(eq(payments.id, id)).limit(1);
+    return result[0];
+  }
+
+  async getPaymentsByUserId(userId: string): Promise<Payment[]> {
+    return db.select().from(payments).where(eq(payments.userId, userId)).orderBy(desc(payments.createdAt));
+  }
+
+  async getPaymentsByOrderId(orderId: string): Promise<Payment[]> {
+    return db.select().from(payments).where(eq(payments.orderId, orderId)).orderBy(desc(payments.createdAt));
+  }
+
+  async createPayment(payment: InsertPayment): Promise<Payment> {
+    const result = await db.insert(payments).values(payment).returning();
+    return result[0];
+  }
+
+  async updatePayment(id: string, data: Partial<InsertPayment>): Promise<Payment | undefined> {
+    const result = await db.update(payments)
+      .set(data)
+      .where(eq(payments.id, id))
+      .returning();
+    return result[0];
+  }
+
+  // PDF Export operations
+  async getPdfExport(id: string): Promise<PdfExport | undefined> {
+    const result = await db.select().from(pdfExports).where(eq(pdfExports.id, id)).limit(1);
+    return result[0];
+  }
+
+  async getPdfExportsByBook(bookId: string): Promise<PdfExport[]> {
+    return db.select().from(pdfExports).where(eq(pdfExports.bookId, bookId)).orderBy(desc(pdfExports.createdAt));
+  }
+
+  async createPdfExport(pdfExport: InsertPdfExport): Promise<PdfExport> {
+    const result = await db.insert(pdfExports).values(pdfExport).returning();
+    return result[0];
+  }
+
+  async updatePdfExport(id: string, data: Partial<InsertPdfExport>): Promise<PdfExport | undefined> {
+    const result = await db.update(pdfExports)
+      .set(data)
+      .where(eq(pdfExports.id, id))
+      .returning();
+    return result[0];
+  }
+
+  // Admin operations
+  async getAdminUsers(): Promise<User[]> {
+    return db.select().from(users).where(eq(users.role, "admin")).orderBy(users.fullName);
+  }
+
+  async getAllUsers(limit: number = 50, offset: number = 0): Promise<User[]> {
+    return db.select().from(users).orderBy(desc(users.createdAt)).limit(limit).offset(offset);
+  }
+
+  async getUsersCount(): Promise<number> {
+    const result = await db.select({ count: count() }).from(users);
+    return result[0]?.count || 0;
+  }
+
+  async setUserRole(userId: string, role: string): Promise<User | undefined> {
+    const result = await db.update(users)
+      .set({ role, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+    return result[0];
+  }
+
+  async createAdminActivityLog(log: InsertAdminActivityLog): Promise<AdminActivityLog> {
+    const result = await db.insert(adminActivityLogs).values(log).returning();
+    return result[0];
+  }
+
+  async getAdminActivityLogs(adminId?: string, limit: number = 100): Promise<AdminActivityLog[]> {
+    if (adminId) {
+      return db.select().from(adminActivityLogs)
+        .where(eq(adminActivityLogs.adminId, adminId))
+        .orderBy(desc(adminActivityLogs.createdAt))
+        .limit(limit);
+    }
+    return db.select().from(adminActivityLogs)
+      .orderBy(desc(adminActivityLogs.createdAt))
+      .limit(limit);
+  }
+
+  // Admin statistics
+  async getSubscriptionStats(): Promise<{ plan: string; count: number }[]> {
+    const result = await db.select({
+      plan: subscriptions.plan,
+      count: count()
+    }).from(subscriptions).groupBy(subscriptions.plan);
+    
+    return result.map(r => ({ plan: r.plan, count: r.count }));
+  }
+
+  async getOrderStats(): Promise<{ status: string; count: number; totalAmount: number }[]> {
+    const result = await db.select({
+      status: orders.status,
+      count: count(),
+      totalAmount: sum(orders.totalAmount)
+    }).from(orders).groupBy(orders.status);
+    
+    return result.map(r => ({
+      status: r.status,
+      count: r.count,
+      totalAmount: parseInt(r.totalAmount || "0", 10)
+    }));
+  }
+
+  async getRevenueStats(days: number): Promise<{ date: string; amount: number }[]> {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    
+    const result = await db.select({
+      date: sql<string>`DATE(${payments.createdAt})`,
+      amount: sum(payments.amount)
+    })
+      .from(payments)
+      .where(
+        and(
+          eq(payments.status, "succeeded"),
+          gt(payments.createdAt, startDate)
+        )
+      )
+      .groupBy(sql`DATE(${payments.createdAt})`)
+      .orderBy(sql`DATE(${payments.createdAt})`);
+    
+    return result.map(r => ({
+      date: r.date,
+      amount: parseInt(r.amount || "0", 10)
+    }));
   }
 }
 

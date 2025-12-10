@@ -43,6 +43,37 @@ function requireAuth(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
+// Admin middleware - requires user to have admin role
+async function requireAdmin(req: Request, res: Response, next: NextFunction) {
+  if (!req.isAuthenticated() || !req.user) {
+    return res.status(401).json({ message: "Non autorisé" });
+  }
+  const user = req.user as any;
+  const userId = user.claims?.sub || user.id;
+  if (!userId) {
+    return res.status(401).json({ message: "Non autorisé" });
+  }
+  
+  // Check if user has admin role
+  const dbUser = await storage.getUser(userId);
+  if (!dbUser || dbUser.role !== "admin") {
+    return res.status(403).json({ message: "Accès refusé - Droits administrateur requis" });
+  }
+  
+  (req as any).userId = userId;
+  (req as any).isAdmin = true;
+  next();
+}
+
+// Generate unique order number
+function generateOrderNumber(): string {
+  const date = new Date();
+  const year = date.getFullYear().toString().slice(-2);
+  const month = (date.getMonth() + 1).toString().padStart(2, "0");
+  const random = Math.random().toString(36).substring(2, 8).toUpperCase();
+  return `MEM-${year}${month}-${random}`;
+}
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express

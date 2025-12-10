@@ -11,12 +11,12 @@ interface Book {
   id: string;
   childName: string;
   babyStatus: string;
+  pageCount?: number;
 }
 
 export default function TestCheckout() {
   const [selectedBook, setSelectedBook] = useState<string | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<ProductType>("softcover");
-  const [pageCount, setPageCount] = useState(51);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,6 +29,10 @@ export default function TestCheckout() {
       return res.json();
     },
   });
+
+  // Get page count from selected book (default to 50 if not set)
+  const selectedBookData = booksData?.books?.find(b => b.id === selectedBook);
+  const pageCount = selectedBookData?.pageCount || 50;
 
   // Calculate pricing - 50 pages included, extra pages charged beyond that
   const INCLUDED_PAGES = 50;
@@ -150,8 +154,13 @@ export default function TestCheckout() {
                     }`}
                     data-testid={`book-select-${book.id}`}
                   >
-                    <div className="font-medium">{book.childName}</div>
-                    <div className="text-xs text-stone-500">{book.babyStatus}</div>
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <div className="font-medium">{book.childName}</div>
+                        <div className="text-xs text-stone-500">{book.babyStatus}</div>
+                      </div>
+                      <div className="text-xs text-stone-400">{book.pageCount || 50} pages</div>
+                    </div>
                   </button>
                 ))}
               </div>
@@ -188,34 +197,10 @@ export default function TestCheckout() {
           </CardContent>
         </Card>
 
-        {/* Page Count */}
-        <Card className="mb-4">
-          <CardHeader>
-            <CardTitle className="text-sm">3. Nombre de pages</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-4">
-              <input
-                type="range"
-                min="20"
-                max="100"
-                value={pageCount}
-                onChange={(e) => setPageCount(Number(e.target.value))}
-                className="flex-1"
-                data-testid="input-pages"
-              />
-              <span className="font-bold w-12 text-center">{pageCount}</span>
-            </div>
-            <p className="text-xs text-stone-500 mt-2">
-              50 pages incluses. {selectedProduct === "ebook" ? "0,50$" : "0,98$"} par page au-delà de 50.
-            </p>
-          </CardContent>
-        </Card>
-
         {/* Pricing Summary */}
         <Card className="mb-4">
           <CardHeader>
-            <CardTitle className="text-sm">Résumé</CardTitle>
+            <CardTitle className="text-sm">Résumé ({pageCount} pages)</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2 text-sm">

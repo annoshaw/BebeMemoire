@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, Link, useLocation } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Settings, Sparkles, ChevronRight, Plus, X, Loader2 } from "lucide-react";
+import { ArrowLeft, Settings, Sparkles, ChevronRight, Plus, X, Loader2, ShoppingCart } from "lucide-react";
 import { BookViewer } from "@/components/book";
 import type { Book } from "@shared/schema";
 import {
@@ -243,6 +243,16 @@ export default function PrebuiltBookEditor() {
                 <Sparkles className="w-4 h-4 mr-1" />
                 {language === "fr" ? "Inspiration" : "Inspiration"}
               </Button>
+              <Link href={`/app/book/${bookId}/order`}>
+                <Button
+                  size="sm"
+                  className="bg-gradient-to-r from-primary to-sage-600 hover:from-primary/90 hover:to-sage-600/90 text-white"
+                  data-testid="button-order"
+                >
+                  <ShoppingCart className="w-4 h-4 mr-1" />
+                  {language === "fr" ? "Commander" : "Order"}
+                </Button>
+              </Link>
               <Button
                 variant="outline"
                 size="sm"

@@ -555,8 +555,8 @@ export default function Prototype() {
   };
 
   const handleSelectProduct = (name: string, price: string) => {
-    setSelectedProduct({ name, price });
-    setShowCheckout(true);
+    // Redirect to Stripe checkout page
+    setLocation("/app/test-checkout");
   };
 
   const addInvitedUser = () => {

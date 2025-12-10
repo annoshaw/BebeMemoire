@@ -243,7 +243,7 @@ export default function PrebuiltBookEditor() {
                 <Sparkles className="w-4 h-4 mr-1" />
                 {language === "fr" ? "Inspiration" : "Inspiration"}
               </Button>
-              <Link href="/app?tab=order">
+              <Link href="/app/test-checkout">
                 <Button
                   size="sm"
                   className="bg-[#6a8c79] text-white"

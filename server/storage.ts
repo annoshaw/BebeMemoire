@@ -108,6 +108,8 @@ export interface IStorage {
   getOrderByNumber(orderNumber: string): Promise<Order | undefined>;
   getOrdersByUserId(userId: string): Promise<Order[]>;
   getOrdersByStatus(status: string): Promise<Order[]>;
+  getOrdersByStripeSessionId(sessionId: string): Promise<Order[]>;
+  getOrdersByPaymentIntentId(paymentIntentId: string): Promise<Order[]>;
   getAllOrders(limit?: number, offset?: number): Promise<Order[]>;
   createOrder(order: InsertOrder): Promise<Order>;
   updateOrder(id: string, data: Partial<InsertOrder>): Promise<Order | undefined>;
@@ -791,6 +793,14 @@ export class DatabaseStorage implements IStorage {
 
   async getOrdersByStatus(status: string): Promise<Order[]> {
     return db.select().from(orders).where(eq(orders.status, status)).orderBy(desc(orders.createdAt));
+  }
+
+  async getOrdersByStripeSessionId(sessionId: string): Promise<Order[]> {
+    return db.select().from(orders).where(eq(orders.stripeSessionId, sessionId));
+  }
+
+  async getOrdersByPaymentIntentId(paymentIntentId: string): Promise<Order[]> {
+    return db.select().from(orders).where(eq(orders.stripePaymentIntentId, paymentIntentId));
   }
 
   async getAllOrders(limit: number = 50, offset: number = 0): Promise<Order[]> {

@@ -166,6 +166,9 @@ const inspirationTemplates: InspirationTemplate[] = [
   { id: "premierBain", category: "premiers", title: "PREMIER", subtitle: "BAIN", description: "Barbotage et découverte de l'eau.", layoutStyle: "journi", icon: "🛁", color: "from-blue-300 to-cyan-400" },
   { id: "premierRepas", category: "premiers", title: "PREMIER", subtitle: "REPAS SOLIDE", description: "La diversification commence, nouvelles saveurs!", layoutStyle: "mosaic", icon: "🥄", color: "from-green-300 to-emerald-400" },
   { id: "premierNoel", category: "premiers", title: "PREMIER", subtitle: "NOËL", description: "La magie de Noël à travers tes yeux émerveillés.", layoutStyle: "colorful", icon: "🎄", color: "from-red-400 to-green-500" },
+  { id: "premierVoyage", category: "premiers", title: "PREMIER", subtitle: "VOYAGE", description: "Notre première aventure ensemble loin de la maison.", layoutStyle: "mosaic", icon: "✈️", color: "from-sky-300 to-blue-400" },
+  { id: "premierePlage", category: "premiers", title: "PREMIÈRE FOIS", subtitle: "À LA PLAGE", description: "Le sable, la mer, de nouvelles sensations.", layoutStyle: "journi", icon: "🏖️", color: "from-amber-300 to-cyan-400" },
+  { id: "allaitement", category: "premiers", title: "NOTRE", subtitle: "ALLAITEMENT", description: "Ces moments précieux de connexion et de nourriture.", layoutStyle: "elegant", icon: "🤱", color: "from-rose-300 to-pink-400" },
   
   // FÊTES & CÉLÉBRATIONS
   { id: "anniversaire1", category: "fetes", title: "1", subtitle: "AN", description: "Ta première bougie, une année de bonheur.", layoutStyle: "playful", icon: "🎂", color: "from-pink-400 to-purple-400" },

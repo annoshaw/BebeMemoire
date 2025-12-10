@@ -1048,7 +1048,7 @@ export default function Prototype() {
                     </div>
                     <div className="text-right">
                       <span className="text-lg font-bold text-stone-800">43,24 $</span>
-                      <p className="text-[10px] text-stone-400">+ 0,50$/page supp.</p>
+                      <p className="text-[10px] text-stone-400">+ 0,98$/page supp.</p>
                     </div>
                   </motion.div>
 
@@ -1071,7 +1071,7 @@ export default function Prototype() {
                     </div>
                     <div className="text-right">
                       <span className="text-lg font-bold text-stone-800">54,99 $</span>
-                      <p className="text-[10px] text-stone-400">+ 0,65$/page supp.</p>
+                      <p className="text-[10px] text-stone-400">+ 0,98$/page supp.</p>
                     </div>
                   </motion.div>
 
@@ -1080,7 +1080,7 @@ export default function Prototype() {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.2 }}
-                    onClick={() => handleSelectProduct("E-Book", "19,99 $")}
+                    onClick={() => handleSelectProduct("E-Book", "30,00 $")}
                     className="bg-white rounded-xl border border-stone-200 p-3 flex items-center justify-between cursor-pointer hover:border-primary hover:shadow-md transition-all"
                   >
                     <div className="flex items-center gap-3">
@@ -1093,8 +1093,8 @@ export default function Prototype() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <span className="text-lg font-bold text-stone-800">19,99 $</span>
-                      <p className="text-[10px] text-stone-400">+ 0,05$/page supp.</p>
+                      <span className="text-lg font-bold text-stone-800">30,00 $</span>
+                      <p className="text-[10px] text-stone-400">+ 0,50$/page supp.</p>
                     </div>
                   </motion.div>
                 </div>

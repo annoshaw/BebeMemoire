@@ -1,0 +1,47 @@
+ Architecture Backend (Vue d’ensemble)
+1. Frontend (React)
+•	Interface utilisateur pour les parents (création d’album, collages, export PDF).
+•	Interface administrateur (dashboard sécurisé).
+2. API Backend (Node.js / Express ou NestJS)
+•	Endpoints REST/GraphQL :
+o	/users → gestion des inscriptions, abonnements.
+o	/orders → commandes (à faire, en cours, exécutées).
+o	/auth → authentification et gestion des sessions.
+o	/admin → accès réservé à l’administrateur.
+•	Logique métier :
+•	Génération automatique des collages.
+•	Export PDF des commandes.
+•	Statistiques (nombre d’inscriptions, commandes par statut).
+3. Base de données (PostgreSQL ou MongoDB)
+•	Tables/Collections principales :
+o	Users : nom, sexe, pays, adresse, courriel, type d’abonnement.
+o	Orders : statut (à faire, en cours, exécuté), détails, PDF généré.
+o	Subscriptions : type d’abonnement, date de début/fin.
+•	⚠️ Sécurité :
+•	Mots de passe → hashés (bcrypt/argon2).
+•	Cartes de crédit → jamais stockées en clair, uniquement via un prestataire (Stripe, PayPal).
+4. Stockage fichiers
+•	Photos/Vidéos : hébergées sur un service cloud (AWS S3, Google Cloud Storage).
+•	PDF commandes : générés côté serveur et stockés pour consultation/admin.
+5. Paiement sécurisé
+•	Intégration avec Stripe/PayPal :
+•	Gestion des abonnements.
+•	Paiements des commandes.
+•	Conformité PCI DSS (sécurité bancaire).
+6. Admin Dashboard
+•	Accès réservé (authentification renforcée).
+•	Fonctionnalités :
+o	Voir les inscriptions actives + type d’abonnement.
+o	Voir les commandes (à faire, en cours, exécutées).
+o	Accéder aux infos clients (nom, sexe, pays, adresse, courriel).
+o	Télécharger les commandes en PDF.
+•	Statistiques visuelles : graphiques sur inscriptions et commandes.
+7. Services complémentaires
+•	Logs & monitoring : suivi des erreurs et performances (ex. Sentry, Datadog).
+•	Notifications : email ou push pour informer l’admin des nouvelles commandes.
+•	Sécurité avancée : rate limiting, protection contre XSS/CSRF/SQL injection.
+✨ Résultat attendu
+•	Un backend robuste qui gère utilisateurs, abonnements, commandes et fichiers.
+•	Un admin dashboard clair et sécurisé pour suivre l’activité.
+•	Des PDF générés automatiquement pour chaque commande.
+•	Respect des normes de sécurité et confidentialité (RGPD, PCI DSS).

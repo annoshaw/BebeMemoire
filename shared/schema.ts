@@ -29,6 +29,7 @@ export const users = pgTable("users", {
   country: text("country"),
   authProvider: text("auth_provider").default("email"),
   role: text("role").notNull().default("user"), // user, admin
+  stripeCustomerId: varchar("stripe_customer_id"),
   onboardingCompleted: boolean("onboarding_completed").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -432,6 +433,7 @@ export const orders = pgTable("orders", {
   shippingCountry: text("shipping_country"),
   shippingPhone: text("shipping_phone"),
   // Payment info
+  stripeSessionId: varchar("stripe_session_id"),
   stripePaymentIntentId: varchar("stripe_payment_intent_id"),
   paymentStatus: text("payment_status").default("pending"), // pending, paid, failed, refunded
   paidAt: timestamp("paid_at"),

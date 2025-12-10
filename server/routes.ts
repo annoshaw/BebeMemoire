@@ -1833,22 +1833,21 @@ export async function registerRoutes(
         orderNumber: generateOrderNumber(),
         status: "pending_payment",
         productType,
-        printOptions: printOptions || null,
         pageCount,
-        subtotal,
+        basePrice,
+        extraPagesPrice: pageCount * pageRate,
+        shippingPrice: shippingAmount,
         taxAmount,
-        shippingAmount,
         totalAmount,
-        currency: "cad",
-        shippingAddress: shippingAddress || null,
-        billingAddress: billingAddress || null,
+        currency: "CAD",
+        shippingAddress: shippingAddress ? JSON.stringify(shippingAddress) : null,
       });
 
       // Log order creation event
       await storage.createOrderEvent({
         orderId: order.id,
-        event: "order_created",
-        status: "pending_payment",
+        eventType: "order_created",
+        newStatus: "pending_payment",
         metadata: { productType, pageCount },
       });
 
@@ -1934,6 +1933,162 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Get payments error:", error);
       res.status(500).json({ message: "Erreur lors de la récupération des paiements" });
+    }
+  });
+
+  // ============ STRIPE CHECKOUT ROUTES ============
+
+  // Get Stripe publishable key
+  app.get("/api/stripe/config", async (_req: Request, res: Response) => {
+    try {
+      const { getStripePublishableKey } = await import('./stripeClient');
+      const publishableKey = await getStripePublishableKey();
+      res.json({ publishableKey });
+    } catch (error) {
+      console.error("Get Stripe config error:", error);
+      res.status(500).json({ message: "Erreur lors de la récupération de la configuration Stripe" });
+    }
+  });
+
+  // Create checkout session for an order
+  app.post("/api/orders/:orderId/checkout", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const { orderId } = req.params;
+
+      const order = await storage.getOrder(orderId);
+      if (!order) {
+        return res.status(404).json({ message: "Commande non trouvée" });
+      }
+
+      if (order.userId !== userId) {
+        return res.status(403).json({ message: "Accès refusé" });
+      }
+
+      if (order.status !== "pending_payment") {
+        return res.status(400).json({ message: "Cette commande a déjà été payée" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "Utilisateur non trouvé" });
+      }
+
+      const { stripeService } = await import('./stripeService');
+
+      // Create or get Stripe customer
+      let stripeCustomerId = user.stripeCustomerId;
+      if (!stripeCustomerId) {
+        const customer = await stripeService.createCustomer(
+          user.email || `${userId}@memoria.app`,
+          userId,
+          user.fullName || undefined
+        );
+        stripeCustomerId = customer.id;
+        await storage.updateUser(userId, { stripeCustomerId: customer.id });
+      }
+
+      // Build product name based on order type
+      const productName = order.productType === "ebook" 
+        ? `Livre Memoria E-Book (${order.pageCount} pages)`
+        : order.productType === "hardcover"
+        ? `Livre Memoria Couverture Rigide (${order.pageCount} pages)`
+        : `Livre Memoria Couverture Souple (${order.pageCount} pages)`;
+
+      const baseUrl = `https://${process.env.REPLIT_DOMAINS?.split(',')[0]}`;
+
+      // Create checkout session
+      const session = await stripeService.createCheckoutSession({
+        customerId: stripeCustomerId,
+        orderId: order.id,
+        items: [
+          {
+            name: productName,
+            unitAmount: order.totalAmount,
+            quantity: 1,
+          },
+        ],
+        successUrl: `${baseUrl}/app/order/${order.id}/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancelUrl: `${baseUrl}/app/order/${order.id}/cancel`,
+        metadata: {
+          orderNumber: order.orderNumber,
+          productType: order.productType,
+        },
+      });
+
+      // Update order with Stripe session ID
+      await storage.updateOrder(order.id, { stripeSessionId: session.id });
+
+      // Log checkout event
+      await storage.createOrderEvent({
+        orderId: order.id,
+        eventType: "checkout_started",
+        newStatus: order.status,
+        metadata: { stripeSessionId: session.id },
+      });
+
+      res.json({ checkoutUrl: session.url });
+    } catch (error) {
+      console.error("Create checkout session error:", error);
+      res.status(500).json({ message: "Erreur lors de la création de la session de paiement" });
+    }
+  });
+
+  // Verify payment success and update order
+  app.post("/api/orders/:orderId/verify-payment", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const { orderId } = req.params;
+      const { sessionId } = req.body;
+
+      const order = await storage.getOrder(orderId);
+      if (!order) {
+        return res.status(404).json({ message: "Commande non trouvée" });
+      }
+
+      if (order.userId !== userId) {
+        return res.status(403).json({ message: "Accès refusé" });
+      }
+
+      const { stripeService } = await import('./stripeService');
+      const session = await stripeService.retrieveCheckoutSession(sessionId);
+
+      if (session.payment_status === "paid") {
+        // Update order status to paid
+        await storage.updateOrder(order.id, {
+          status: "paid",
+          stripePaymentIntentId: (session.payment_intent as any)?.id || null,
+        });
+
+        // Create payment record
+        await storage.createPayment({
+          userId,
+          orderId: order.id,
+          stripePaymentIntentId: (session.payment_intent as any)?.id || null,
+          amount: order.totalAmount,
+          currency: order.currency,
+          paymentType: "order",
+          status: "succeeded",
+        });
+
+        // Log payment event
+        await storage.createOrderEvent({
+          orderId: order.id,
+          eventType: "payment_received",
+          newStatus: "paid",
+          metadata: { 
+            stripeSessionId: session.id,
+            paymentIntentId: (session.payment_intent as any)?.id,
+          },
+        });
+
+        res.json({ success: true, status: "paid" });
+      } else {
+        res.json({ success: false, status: session.payment_status });
+      }
+    } catch (error) {
+      console.error("Verify payment error:", error);
+      res.status(500).json({ message: "Erreur lors de la vérification du paiement" });
     }
   });
 
@@ -2025,9 +2180,10 @@ export async function registerRoutes(
       // Log the status change
       await storage.createOrderEvent({
         orderId,
-        event: "status_changed",
-        status: status || order.status,
-        metadata: { previousStatus: order.status, notes, changedBy: adminId },
+        eventType: "status_changed",
+        previousStatus: order.status,
+        newStatus: status || order.status,
+        metadata: { notes, changedBy: adminId },
       });
 
       // Log admin activity

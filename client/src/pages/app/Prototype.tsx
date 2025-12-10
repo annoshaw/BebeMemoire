@@ -821,6 +821,16 @@ export default function Prototype() {
           {activeTab === 'order' ? (
             // Order/Commander options - Plans with benefits
             <div className="p-4 space-y-4 pb-24">
+              {/* Page Title */}
+              <div className="text-center mb-6">
+                <h1 className="text-2xl font-bold text-stone-800 font-fraunces">
+                  {language === "fr" ? "Commander mon livre" : "Order my book"}
+                </h1>
+                <p className="text-sm text-stone-500 mt-1">
+                  {language === "fr" ? "Choisissez votre formule et imprimez vos souvenirs" : "Choose your plan and print your memories"}
+                </p>
+              </div>
+              
               {/* Trial Banner */}
               {isTrialActive && (
                 <motion.div 

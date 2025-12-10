@@ -1819,10 +1819,13 @@ export async function registerRoutes(
       
       const { bookId, productType, printOptions, pageCount, shippingAddress, billingAddress } = parseResult.data;
 
-      // Calculate pricing (amounts in cents)
+      // Calculate pricing (amounts in cents) - 50 pages included in base price
+      const INCLUDED_PAGES = 50;
       const basePrice = productType === "ebook" ? 3000 : productType === "hardcover" ? 5499 : 4324;
       const pageRate = productType === "ebook" ? 50 : 98;
-      const subtotal = basePrice + (pageCount * pageRate);
+      const extraPages = Math.max(0, pageCount - INCLUDED_PAGES);
+      const extraPagesPrice = extraPages * pageRate;
+      const subtotal = basePrice + extraPagesPrice;
       const taxAmount = Math.round(subtotal * 0.15); // 15% tax (approx Canadian)
       const shippingAmount = productType === "ebook" ? 0 : 1200; // $12 shipping for print
       const totalAmount = subtotal + taxAmount + shippingAmount;
@@ -1835,7 +1838,7 @@ export async function registerRoutes(
         productType,
         pageCount,
         basePrice,
-        extraPagesPrice: pageCount * pageRate,
+        extraPagesPrice,
         shippingPrice: shippingAmount,
         taxAmount,
         totalAmount,

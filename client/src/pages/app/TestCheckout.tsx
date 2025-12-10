@@ -30,15 +30,18 @@ export default function TestCheckout() {
     },
   });
 
-  // Calculate pricing
+  // Calculate pricing - 50 pages included, extra pages charged beyond that
+  const INCLUDED_PAGES = 50;
   const calculatePrice = (type: ProductType, pages: number) => {
     const basePrice = type === "ebook" ? 3000 : type === "hardcover" ? 5499 : 4324;
     const pageRate = type === "ebook" ? 50 : 98;
-    const subtotal = basePrice + (pages * pageRate);
+    const extraPages = Math.max(0, pages - INCLUDED_PAGES);
+    const extraPagesPrice = extraPages * pageRate;
+    const subtotal = basePrice + extraPagesPrice;
     const tax = Math.round(subtotal * 0.15);
     const shipping = type === "ebook" ? 0 : 1200;
     const total = subtotal + tax + shipping;
-    return { basePrice, subtotal, tax, shipping, total };
+    return { basePrice, extraPages, extraPagesPrice, subtotal, tax, shipping, total };
   };
 
   const pricing = calculatePrice(selectedProduct, pageCount);
@@ -204,7 +207,7 @@ export default function TestCheckout() {
               <span className="font-bold w-12 text-center">{pageCount}</span>
             </div>
             <p className="text-xs text-stone-500 mt-2">
-              {selectedProduct === "ebook" ? "0,50$" : "0,98$"} par page supplémentaire
+              50 pages incluses. {selectedProduct === "ebook" ? "0,50$" : "0,98$"} par page au-delà de 50.
             </p>
           </CardContent>
         </Card>
@@ -217,13 +220,15 @@ export default function TestCheckout() {
           <CardContent>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span>Prix de base</span>
+                <span>Prix de base (50 pages incluses)</span>
                 <span>{(pricing.basePrice / 100).toFixed(2)}$</span>
               </div>
-              <div className="flex justify-between">
-                <span>{pageCount} pages</span>
-                <span>{((pricing.subtotal - pricing.basePrice) / 100).toFixed(2)}$</span>
-              </div>
+              {pricing.extraPages > 0 && (
+                <div className="flex justify-between">
+                  <span>{pricing.extraPages} page{pricing.extraPages > 1 ? 's' : ''} supplémentaire{pricing.extraPages > 1 ? 's' : ''}</span>
+                  <span>{(pricing.extraPagesPrice / 100).toFixed(2)}$</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span>Taxes (15%)</span>
                 <span>{(pricing.tax / 100).toFixed(2)}$</span>

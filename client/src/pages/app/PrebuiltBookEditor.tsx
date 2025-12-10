@@ -243,10 +243,10 @@ export default function PrebuiltBookEditor() {
                 <Sparkles className="w-4 h-4 mr-1" />
                 {language === "fr" ? "Inspiration" : "Inspiration"}
               </Button>
-              <Link href={`/app/book/${bookId}/order`}>
+              <Link href="/app?tab=order">
                 <Button
                   size="sm"
-                  className="from-primary to-sage-600 hover:from-primary/90 hover:to-sage-600/90 text-white bg-[#6a8c79]"
+                  className="bg-[#6a8c79] text-white"
                   data-testid="button-order"
                 >
                   <ShoppingCart className="w-4 h-4 mr-1" />

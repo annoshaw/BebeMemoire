@@ -38,6 +38,9 @@ export default function Prototype() {
       if (tab === "inspiration") {
         setActiveTab("inspiration");
         window.history.replaceState({}, "", window.location.pathname);
+      } else if (tab === "order") {
+        setActiveTab("order");
+        window.history.replaceState({}, "", window.location.pathname);
       }
     }
   }, []);

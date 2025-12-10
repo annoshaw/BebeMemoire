@@ -18,13 +18,12 @@ const inspirationCategories = [
   { title: "Présentation de la famille", icon: "👨‍👩‍👧‍👦", color: "from-teal-100", hasSubPages: true },
   { title: "Annonce de grossesse", icon: "🤰", color: "from-pink-100", hasSubPages: true },
   { title: "Échographie", icon: "🔊", color: "from-purple-100", hasSubPages: true },
+  { title: "Premières fois", icon: "👣", color: "from-amber-100", hasSubPages: true },
   { title: "Adoption", icon: "💕", color: "from-blue-100", hasSubPages: false },
   { title: "FIV", icon: "🌱", color: "from-orange-100", hasSubPages: false },
   { title: "Événements lors de la grossesse", icon: "🎉", color: "from-yellow-100", hasSubPages: true },
   { title: "Chambre de bébé", icon: "🛏️", color: "from-green-100", hasSubPages: false },
   { title: "Lettre à bébé", icon: "💌", color: "from-red-100", hasSubPages: false },
-  { title: "Premier mot", icon: "💬", color: "from-indigo-100", hasSubPages: false },
-  { title: "Première dent", icon: "🦷", color: "from-cyan-100", hasSubPages: false },
 ];
 
 const inspirationSubPages: Record<string, {id: number, title: string, icon: string, color: string, desc?: string}[]> = {
@@ -56,6 +55,18 @@ const inspirationSubPages: Record<string, {id: number, title: string, icon: stri
     { id: 3, title: "Le dévoilement de sexe", icon: "🎀", color: "from-purple-100" },
     { id: 4, title: "Le baby shower", icon: "🎁", color: "from-yellow-100" },
     { id: 5, title: "Le baby moon", icon: "🌙", color: "from-indigo-100" },
+  ],
+  "Premières fois": [
+    { id: 1, title: "Tes premiers pas", icon: "👣", color: "from-orange-100", desc: "Ces pas hésitants vers l'aventure" },
+    { id: 2, title: "Ton premier voyage", icon: "✈️", color: "from-sky-100", desc: "Notre première aventure ensemble loin de la maison" },
+    { id: 3, title: "Première fois à la plage", icon: "🏖️", color: "from-amber-100", desc: "Le sable, la mer, de nouvelles sensations" },
+    { id: 4, title: "Notre allaitement", icon: "🤱", color: "from-rose-100", desc: "Ces moments précieux de connexion et de nourriture" },
+    { id: 5, title: "Premier sourire", icon: "😊", color: "from-yellow-100", desc: "Ce sourire qui illumine nos journées" },
+    { id: 6, title: "Premier mot", icon: "💬", color: "from-indigo-100", desc: "Ta petite voix qui prononce ses premiers sons" },
+    { id: 7, title: "Première dent", icon: "🦷", color: "from-cyan-100", desc: "Cette petite perle blanche tant attendue" },
+    { id: 8, title: "Premier bain", icon: "🛁", color: "from-blue-100", desc: "Barbotage et découverte de l'eau" },
+    { id: 9, title: "Premier repas solide", icon: "🥄", color: "from-green-100", desc: "La diversification commence, nouvelles saveurs!" },
+    { id: 10, title: "Premier Noël", icon: "🎄", color: "from-red-100", desc: "La magie de Noël à travers tes yeux émerveillés" },
   ],
 };
 

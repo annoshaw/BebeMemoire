@@ -3,9 +3,32 @@
 
 import Stripe from 'stripe';
 
-let connectionSettings: any;
+// In-memory cache for Stripe credentials (fetched once per process)
+let cachedCredentials: { publishableKey: string; secretKey: string } | null = null;
+let credentialsFetchPromise: Promise<{ publishableKey: string; secretKey: string }> | null = null;
 
-async function getCredentials() {
+async function getCredentials(): Promise<{ publishableKey: string; secretKey: string }> {
+  // Return cached credentials if available
+  if (cachedCredentials) {
+    return cachedCredentials;
+  }
+
+  // Prevent concurrent fetches - reuse in-flight promise
+  if (credentialsFetchPromise) {
+    return credentialsFetchPromise;
+  }
+
+  credentialsFetchPromise = fetchCredentialsFromConnector();
+  
+  try {
+    cachedCredentials = await credentialsFetchPromise;
+    return cachedCredentials;
+  } finally {
+    credentialsFetchPromise = null;
+  }
+}
+
+async function fetchCredentialsFromConnector(): Promise<{ publishableKey: string; secretKey: string }> {
   const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
   const xReplitToken = process.env.REPL_IDENTITY
     ? 'repl ' + process.env.REPL_IDENTITY
@@ -35,7 +58,7 @@ async function getCredentials() {
 
   const data = await response.json();
   
-  connectionSettings = data.items?.[0];
+  const connectionSettings = data.items?.[0];
 
   if (!connectionSettings || (!connectionSettings.settings.publishable || !connectionSettings.settings.secret)) {
     throw new Error(`Stripe ${targetEnvironment} connection not found`);

@@ -246,7 +246,7 @@ export default function PrebuiltBookEditor() {
               <Link href={`/app/book/${bookId}/order`}>
                 <Button
                   size="sm"
-                  className="bg-gradient-to-r from-primary to-sage-600 hover:from-primary/90 hover:to-sage-600/90 text-white"
+                  className="from-primary to-sage-600 hover:from-primary/90 hover:to-sage-600/90 text-white bg-[#6a8c79]"
                   data-testid="button-order"
                 >
                   <ShoppingCart className="w-4 h-4 mr-1" />

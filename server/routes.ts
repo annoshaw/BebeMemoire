@@ -74,6 +74,56 @@ function generateOrderNumber(): string {
   return `MEM-${year}${month}-${random}`;
 }
 
+// Valid product types and order statuses
+const VALID_PRODUCT_TYPES = ["softcover", "hardcover", "ebook"] as const;
+const VALID_ORDER_STATUSES = ["pending_payment", "paid", "processing", "shipped", "delivered", "cancelled", "refunded"] as const;
+
+// Valid status transitions
+const VALID_STATUS_TRANSITIONS: Record<string, string[]> = {
+  pending_payment: ["paid", "cancelled"],
+  paid: ["processing", "refunded"],
+  processing: ["shipped", "refunded"],
+  shipped: ["delivered"],
+  delivered: [],
+  cancelled: [],
+  refunded: [],
+};
+
+// Zod schema for order creation
+import { z } from "zod";
+const createOrderSchema = z.object({
+  bookId: z.string().min(1),
+  productType: z.enum(VALID_PRODUCT_TYPES),
+  printOptions: z.object({
+    coverType: z.enum(["soft", "hard"]).optional(),
+    finish: z.enum(["matte", "glossy"]).optional(),
+    paperQuality: z.enum(["standard", "premium"]).optional(),
+  }).optional().nullable(),
+  pageCount: z.number().int().positive().min(1),
+  shippingAddress: z.object({
+    name: z.string(),
+    street: z.string(),
+    city: z.string(),
+    province: z.string(),
+    postalCode: z.string(),
+    country: z.string(),
+  }).optional().nullable(),
+  billingAddress: z.object({
+    name: z.string(),
+    street: z.string(),
+    city: z.string(),
+    province: z.string(),
+    postalCode: z.string(),
+    country: z.string(),
+  }).optional().nullable(),
+});
+
+const updateOrderStatusSchema = z.object({
+  status: z.enum(VALID_ORDER_STATUSES).optional(),
+  trackingNumber: z.string().optional(),
+  notes: z.string().optional(),
+});
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
@@ -1748,6 +1798,321 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Cleanup error:", error);
       res.status(500).json({ message: "Erreur lors du nettoyage" });
+    }
+  });
+
+  // ============ ORDER ROUTES ============
+
+  // Create a new order
+  app.post("/api/orders", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      
+      // Validate request body with Zod
+      const parseResult = createOrderSchema.safeParse(req.body);
+      if (!parseResult.success) {
+        return res.status(400).json({ 
+          message: "Données de commande invalides",
+          errors: parseResult.error.flatten().fieldErrors
+        });
+      }
+      
+      const { bookId, productType, printOptions, pageCount, shippingAddress, billingAddress } = parseResult.data;
+
+      // Calculate pricing (amounts in cents)
+      const basePrice = productType === "ebook" ? 3000 : productType === "hardcover" ? 5499 : 4324;
+      const pageRate = productType === "ebook" ? 50 : 98;
+      const subtotal = basePrice + (pageCount * pageRate);
+      const taxAmount = Math.round(subtotal * 0.15); // 15% tax (approx Canadian)
+      const shippingAmount = productType === "ebook" ? 0 : 1200; // $12 shipping for print
+      const totalAmount = subtotal + taxAmount + shippingAmount;
+
+      const order = await storage.createOrder({
+        userId,
+        bookId,
+        orderNumber: generateOrderNumber(),
+        status: "pending_payment",
+        productType,
+        printOptions: printOptions || null,
+        pageCount,
+        subtotal,
+        taxAmount,
+        shippingAmount,
+        totalAmount,
+        currency: "cad",
+        shippingAddress: shippingAddress || null,
+        billingAddress: billingAddress || null,
+      });
+
+      // Log order creation event
+      await storage.createOrderEvent({
+        orderId: order.id,
+        event: "order_created",
+        status: "pending_payment",
+        metadata: { productType, pageCount },
+      });
+
+      res.status(201).json(order);
+    } catch (error) {
+      console.error("Create order error:", error);
+      res.status(500).json({ message: "Erreur lors de la création de la commande" });
+    }
+  });
+
+  // Get user's orders
+  app.get("/api/orders", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const orders = await storage.getOrdersByUserId(userId);
+      res.json(orders);
+    } catch (error) {
+      console.error("Get orders error:", error);
+      res.status(500).json({ message: "Erreur lors de la récupération des commandes" });
+    }
+  });
+
+  // Get single order by ID
+  app.get("/api/orders/:orderId", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const { orderId } = req.params;
+      
+      const order = await storage.getOrder(orderId);
+      if (!order) {
+        return res.status(404).json({ message: "Commande non trouvée" });
+      }
+      
+      // Users can only see their own orders
+      if (order.userId !== userId) {
+        return res.status(403).json({ message: "Accès refusé" });
+      }
+      
+      res.json(order);
+    } catch (error) {
+      console.error("Get order error:", error);
+      res.status(500).json({ message: "Erreur lors de la récupération de la commande" });
+    }
+  });
+
+  // Get order events/history
+  app.get("/api/orders/:orderId/events", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const { orderId } = req.params;
+      
+      const order = await storage.getOrder(orderId);
+      if (!order || order.userId !== userId) {
+        return res.status(404).json({ message: "Commande non trouvée" });
+      }
+      
+      const events = await storage.getOrderEvents(orderId);
+      res.json(events);
+    } catch (error) {
+      console.error("Get order events error:", error);
+      res.status(500).json({ message: "Erreur lors de la récupération des événements" });
+    }
+  });
+
+  // Get user's subscription
+  app.get("/api/subscription", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const subscription = await storage.getSubscription(userId);
+      res.json(subscription || { plan: "free", status: "active" });
+    } catch (error) {
+      console.error("Get subscription error:", error);
+      res.status(500).json({ message: "Erreur lors de la récupération de l'abonnement" });
+    }
+  });
+
+  // Get user's payments history
+  app.get("/api/payments", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const payments = await storage.getPaymentsByUserId(userId);
+      res.json(payments);
+    } catch (error) {
+      console.error("Get payments error:", error);
+      res.status(500).json({ message: "Erreur lors de la récupération des paiements" });
+    }
+  });
+
+  // ============ ADMIN ROUTES ============
+
+  // Get admin dashboard stats
+  app.get("/api/admin/stats", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const [usersCount, ordersCount, ordersByStatus, subscriptionStats, orderStats, revenueStats] = await Promise.all([
+        storage.getUsersCount(),
+        storage.getOrdersCount(),
+        storage.getOrdersCountByStatus(),
+        storage.getSubscriptionStats(),
+        storage.getOrderStats(),
+        storage.getRevenueStats(30),
+      ]);
+
+      res.json({
+        users: { total: usersCount },
+        orders: { total: ordersCount, byStatus: ordersByStatus },
+        subscriptions: subscriptionStats,
+        orderStats,
+        revenue: { last30Days: revenueStats },
+      });
+    } catch (error) {
+      console.error("Admin stats error:", error);
+      res.status(500).json({ message: "Erreur lors de la récupération des statistiques" });
+    }
+  });
+
+  // Get all orders (admin)
+  app.get("/api/admin/orders", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const { status, limit = 50, offset = 0 } = req.query;
+      
+      let orders;
+      if (status && typeof status === "string") {
+        orders = await storage.getOrdersByStatus(status);
+      } else {
+        orders = await storage.getAllOrders(Number(limit), Number(offset));
+      }
+      
+      res.json(orders);
+    } catch (error) {
+      console.error("Admin get orders error:", error);
+      res.status(500).json({ message: "Erreur lors de la récupération des commandes" });
+    }
+  });
+
+  // Update order status (admin)
+  app.patch("/api/admin/orders/:orderId", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const adminId = (req as any).userId;
+      const { orderId } = req.params;
+      
+      // Validate request body
+      const parseResult = updateOrderStatusSchema.safeParse(req.body);
+      if (!parseResult.success) {
+        return res.status(400).json({ 
+          message: "Données invalides",
+          errors: parseResult.error.flatten().fieldErrors
+        });
+      }
+      
+      const { status, trackingNumber, notes } = parseResult.data;
+
+      const order = await storage.getOrder(orderId);
+      if (!order) {
+        return res.status(404).json({ message: "Commande non trouvée" });
+      }
+
+      // Validate status transition if status is being changed
+      if (status && status !== order.status) {
+        const allowedTransitions = VALID_STATUS_TRANSITIONS[order.status] || [];
+        if (!allowedTransitions.includes(status)) {
+          return res.status(400).json({ 
+            message: `Transition de statut invalide: ${order.status} → ${status}`,
+            allowedTransitions
+          });
+        }
+      }
+
+      const updateData: any = {};
+      if (status) updateData.status = status;
+      if (trackingNumber) updateData.trackingNumber = trackingNumber;
+
+      const updatedOrder = await storage.updateOrder(orderId, updateData);
+
+      // Log the status change
+      await storage.createOrderEvent({
+        orderId,
+        event: "status_changed",
+        status: status || order.status,
+        metadata: { previousStatus: order.status, notes, changedBy: adminId },
+      });
+
+      // Log admin activity
+      await storage.createAdminActivityLog({
+        adminId,
+        action: "order_status_update",
+        targetType: "order",
+        targetId: orderId,
+        details: { previousStatus: order.status, newStatus: status, notes },
+      });
+
+      res.json(updatedOrder);
+    } catch (error) {
+      console.error("Admin update order error:", error);
+      res.status(500).json({ message: "Erreur lors de la mise à jour de la commande" });
+    }
+  });
+
+  // Get all users (admin)
+  app.get("/api/admin/users", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const { limit = 50, offset = 0 } = req.query;
+      const users = await storage.getAllUsers(Number(limit), Number(offset));
+      
+      // Remove sensitive info
+      const safeUsers = users.map(u => ({
+        id: u.id,
+        email: u.email,
+        fullName: u.fullName,
+        firstName: u.firstName,
+        lastName: u.lastName,
+        role: u.role,
+        authProvider: u.authProvider,
+        onboardingCompleted: u.onboardingCompleted,
+        createdAt: u.createdAt,
+      }));
+      
+      res.json(safeUsers);
+    } catch (error) {
+      console.error("Admin get users error:", error);
+      res.status(500).json({ message: "Erreur lors de la récupération des utilisateurs" });
+    }
+  });
+
+  // Set user role (admin)
+  app.patch("/api/admin/users/:userId/role", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const adminId = (req as any).userId;
+      const { userId } = req.params;
+      const { role } = req.body;
+
+      if (!["user", "admin"].includes(role)) {
+        return res.status(400).json({ message: "Rôle invalide" });
+      }
+
+      const updatedUser = await storage.setUserRole(userId, role);
+      if (!updatedUser) {
+        return res.status(404).json({ message: "Utilisateur non trouvé" });
+      }
+
+      // Log admin activity
+      await storage.createAdminActivityLog({
+        adminId,
+        action: "user_role_change",
+        targetType: "user",
+        targetId: userId,
+        details: { newRole: role },
+      });
+
+      res.json({ id: updatedUser.id, email: updatedUser.email, role: updatedUser.role });
+    } catch (error) {
+      console.error("Admin set role error:", error);
+      res.status(500).json({ message: "Erreur lors de la modification du rôle" });
+    }
+  });
+
+  // Get admin activity logs
+  app.get("/api/admin/activity-logs", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const { limit = 100 } = req.query;
+      const logs = await storage.getAdminActivityLogs(undefined, Number(limit));
+      res.json(logs);
+    } catch (error) {
+      console.error("Admin activity logs error:", error);
+      res.status(500).json({ message: "Erreur lors de la récupération des logs" });
     }
   });
 

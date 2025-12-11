@@ -135,6 +135,110 @@ export async function sendPaymentReminderEmail(data: OrderReminderData): Promise
   }
 }
 
+interface SubscriptionReminderData {
+  customerEmail: string;
+  customerName: string;
+}
+
+export async function sendSubscriptionReminderEmail(data: SubscriptionReminderData): Promise<boolean> {
+  try {
+    const { client, fromEmail } = await getResendClient();
+    
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #7c9a7a 0%, #5a7d5a 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+    .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+    .info-box { background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; margin: 20px 0; }
+    .plan-comparison { margin: 20px 0; }
+    .plan { background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; margin: 10px 0; }
+    .plan-free { border-left: 4px solid #9ca3af; }
+    .plan-premium { border-left: 4px solid #7c9a7a; }
+    .btn { display: inline-block; background: #7c9a7a; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; }
+    .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+    .highlight { color: #7c9a7a; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📖 Memoria</h1>
+      <p>Votre album de souvenirs</p>
+    </div>
+    <div class="content">
+      <h2>Bonjour ${data.customerName || 'cher parent'},</h2>
+      
+      <p>Cela fait maintenant 14 jours que vous avez créé votre compte Memoria ! 🎉</p>
+      
+      <p>Nous voulions vous rappeler que si vous ne choisissez pas d'abonnement, <strong>l'abonnement gratuit sera automatiquement attribué</strong> à votre compte.</p>
+      
+      <div class="info-box">
+        <h3>⚠️ Important à savoir sur l'abonnement gratuit :</h3>
+        <ul>
+          <li><strong>Les vidéos ne sont pas incluses</strong> dans l'abonnement gratuit</li>
+          <li>Stockage limité à 1 Go pour les photos</li>
+          <li>Pas de codes QR pour les vidéos dans le livre imprimé</li>
+        </ul>
+      </div>
+      
+      <div class="plan-comparison">
+        <div class="plan plan-free">
+          <strong>Gratuit</strong>
+          <ul>
+            <li>1 Go de stockage photos</li>
+            <li>❌ Pas de vidéos</li>
+          </ul>
+        </div>
+        <div class="plan plan-premium">
+          <strong class="highlight">Premium</strong>
+          <ul>
+            <li>Photos illimitées</li>
+            <li>✅ 2 Go de vidéos inclus</li>
+            <li>Codes QR pour vos vidéos</li>
+          </ul>
+        </div>
+      </div>
+      
+      <p>Pour ajouter des vidéos à votre livre de souvenirs, pensez à passer à un abonnement Premium ou Platine.</p>
+      
+      <p style="text-align: center; margin: 30px 0;">
+        <a href="https://memoria.replit.app/app" class="btn">
+          Voir les abonnements
+        </a>
+      </p>
+      
+      <p>Si vous avez des questions, n'hésitez pas à nous contacter.</p>
+      
+      <p>L'équipe Memoria</p>
+    </div>
+    <div class="footer">
+      <p>Memoria - Créez des souvenirs qui durent toute une vie</p>
+    </div>
+  </div>
+</body>
+</html>
+    `;
+
+    await client.emails.send({
+      from: fromEmail || 'Memoria <noreply@memoria.app>',
+      to: data.customerEmail,
+      subject: 'Rappel: Choisissez votre abonnement Memoria',
+      html,
+    });
+
+    console.log(`Subscription reminder sent to ${data.customerEmail}`);
+    return true;
+  } catch (error) {
+    console.error('Failed to send subscription reminder email:', error);
+    return false;
+  }
+}
+
 interface OrderCancellationData {
   customerEmail: string;
   customerName: string;

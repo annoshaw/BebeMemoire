@@ -256,10 +256,15 @@ UPDATE users SET role = 'user' WHERE email = 'user@example.com';
 - After 14 days without payment, orders are automatically cancelled
 - Only ONE email is sent: when the order is cancelled (to minimize email volume)
 
+**Subscription Reminders**
+- 14 days after registration, users without a paid subscription receive ONE reminder email
+- Email explains that the free plan will be assigned by default and that videos are not included
+- Only sent once per user (tracked via `subscriptionReminderSentAt` field)
+
 **Email Service**
 - Uses Resend integration for transactional emails
 - Service file: `server/emailService.ts`
-- Templates: Order cancellation notification
+- Templates: Order cancellation notification, Subscription reminder
 
 **Cleanup Job**
 - Runs hourly via `server/orderCleanupJob.ts`

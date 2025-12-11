@@ -1,6 +1,6 @@
 import { db } from "./db";
 import { users, books, memories, userPlans, qrCodes, passwordResetTokens, bookPages, notifications, notificationSettings, bookTemplates, templateSections, templateParts, templatePages, userBookPages, mediaFiles, subscriptions, orders, orderEvents, payments, pdfExports, adminActivityLogs, type User, type InsertUser, type UpsertUser, type Book, type InsertBook, type Memory, type InsertMemory, type UserPlan, type InsertUserPlan, type QRCode, type InsertQRCode, type PasswordResetToken, type InsertPasswordResetToken, type BookPage, type InsertBookPage, type Notification, type InsertNotification, type NotificationSettings, type InsertNotificationSettings, type BookTemplate, type InsertBookTemplate, type TemplateSection, type InsertTemplateSection, type TemplatePart, type InsertTemplatePart, type TemplatePage, type InsertTemplatePage, type UserBookPage, type InsertUserBookPage, type MediaFile, type InsertMediaFile, type Subscription, type InsertSubscription, type Order, type InsertOrder, type OrderEvent, type InsertOrderEvent, type Payment, type InsertPayment, type PdfExport, type InsertPdfExport, type AdminActivityLog, type InsertAdminActivityLog } from "@shared/schema";
-import { eq, desc, and, gt, asc, lte, or, isNull, sum, count, sql } from "drizzle-orm";
+import { eq, desc, and, gt, lt, asc, lte, or, isNull, sum, count, sql } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (Replit Auth)
@@ -988,6 +988,30 @@ export class DatabaseStorage implements IStorage {
       date: r.date,
       amount: parseInt(r.amount || "0", 10)
     }));
+  }
+
+  // Get users who need subscription reminder (14+ days old, no reminder sent yet, no paid subscription)
+  async getUsersNeedingSubscriptionReminder(): Promise<User[]> {
+    const fourteenDaysAgo = new Date();
+    fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+    
+    // Get users created 14+ days ago who haven't received a reminder
+    const result = await db.select()
+      .from(users)
+      .where(
+        and(
+          lt(users.createdAt, fourteenDaysAgo),
+          isNull(users.subscriptionReminderSentAt)
+        )
+      );
+    
+    return result;
+  }
+
+  async updateUserSubscriptionReminder(userId: string): Promise<void> {
+    await db.update(users)
+      .set({ subscriptionReminderSentAt: new Date() })
+      .where(eq(users.id, userId));
   }
 }
 

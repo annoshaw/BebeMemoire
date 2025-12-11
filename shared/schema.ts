@@ -31,6 +31,7 @@ export const users = pgTable("users", {
   role: text("role").notNull().default("user"), // user, admin
   stripeCustomerId: varchar("stripe_customer_id"),
   onboardingCompleted: boolean("onboarding_completed").default(false),
+  subscriptionReminderSentAt: timestamp("subscription_reminder_sent_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

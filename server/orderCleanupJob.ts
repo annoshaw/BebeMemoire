@@ -1,6 +1,6 @@
-// Job to handle pending orders: auto-cancel after 14 days (email only on cancellation)
+// Job to handle pending orders and subscription reminders
 import { storage } from './storage';
-import { sendOrderCancellationEmail } from './emailService';
+import { sendOrderCancellationEmail, sendSubscriptionReminderEmail } from './emailService';
 
 const EXPIRATION_DAYS = 14;
 
@@ -65,6 +65,47 @@ export async function processPendingOrders(): Promise<void> {
   }
 }
 
+export async function processSubscriptionReminders(): Promise<void> {
+  console.log('[SubscriptionReminder] Starting subscription reminders processing...');
+  
+  try {
+    // Get users who registered 14+ days ago and haven't received a reminder
+    const usersNeedingReminder = await storage.getUsersNeedingSubscriptionReminder();
+    console.log(`[SubscriptionReminder] Found ${usersNeedingReminder.length} users needing reminder`);
+    
+    for (const user of usersNeedingReminder) {
+      if (!user.email) {
+        console.log(`[SubscriptionReminder] No email for user ${user.id}, skipping`);
+        continue;
+      }
+      
+      // Check if user already has a paid subscription
+      const userPlan = await storage.getUserPlan(user.id);
+      if (userPlan && userPlan.plan !== 'free') {
+        // User already has a paid plan, mark as reminded and skip
+        await storage.updateUserSubscriptionReminder(user.id);
+        console.log(`[SubscriptionReminder] User ${user.id} already has ${userPlan.plan} plan, skipping`);
+        continue;
+      }
+      
+      console.log(`[SubscriptionReminder] Sending subscription reminder to ${user.email}`);
+      
+      const emailSent = await sendSubscriptionReminderEmail({
+        customerEmail: user.email,
+        customerName: user.fullName || user.firstName || ''
+      });
+      
+      if (emailSent) {
+        await storage.updateUserSubscriptionReminder(user.id);
+      }
+    }
+    
+    console.log('[SubscriptionReminder] Finished processing subscription reminders');
+  } catch (error) {
+    console.error('[SubscriptionReminder] Error processing subscription reminders:', error);
+  }
+}
+
 // Run job every hour
 let jobInterval: NodeJS.Timeout | null = null;
 
@@ -73,10 +114,12 @@ export function startOrderCleanupJob(): void {
   
   // Run immediately on start
   processPendingOrders();
+  processSubscriptionReminders();
   
   // Then run every hour
   jobInterval = setInterval(() => {
     processPendingOrders();
+    processSubscriptionReminders();
   }, 60 * 60 * 1000); // 1 hour
 }
 

@@ -1,17 +1,9 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { ArrowLeft, CreditCard, Loader2, BookOpen, Smartphone, BookMarked, ShieldCheck, Truck, Package, ExternalLink } from "lucide-react";
+import { ArrowLeft, CreditCard, Loader2, BookOpen, Smartphone, BookMarked, ShieldCheck, Truck, Package, ExternalLink, Lock } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 
 type ProductType = "softcover" | "hardcover" | "ebook";
 
@@ -27,7 +19,6 @@ export default function TestCheckout() {
   const [selectedProduct, setSelectedProduct] = useState<ProductType>("softcover");
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   // Fetch user's books
   const { data: booksData, isLoading: booksLoading } = useQuery<{ books: Book[] }>({
@@ -119,11 +110,6 @@ export default function TestCheckout() {
       setError("Veuillez sélectionner un livre");
       return;
     }
-    setShowConfirmDialog(true);
-  };
-
-  const confirmCheckout = () => {
-    setShowConfirmDialog(false);
     setIsProcessing(true);
     setError(null);
     checkoutMutation.mutate();
@@ -340,6 +326,27 @@ export default function TestCheckout() {
             {error}
           </motion.div>
         )}
+
+        {/* Security Notice Banner */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="bg-gradient-to-r from-primary/5 to-emerald-50 border border-primary/20 rounded-2xl p-4 mb-24"
+        >
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+              <Lock size={18} className="text-primary" />
+            </div>
+            <div>
+              <h4 className="font-semibold text-stone-800 text-sm mb-1">Paiement sécurisé</h4>
+              <p className="text-xs text-stone-600 leading-relaxed">
+                En cliquant sur "Payer", vous serez redirigé vers notre page de paiement sécurisée propulsée par <strong>Stripe</strong>. 
+                Vos informations bancaires sont protégées et ne sont jamais stockées sur nos serveurs.
+              </p>
+            </div>
+          </div>
+        </motion.div>
       </div>
 
       {/* Fixed Bottom CTA */}
@@ -363,59 +370,8 @@ export default function TestCheckout() {
               </div>
             )}
           </Button>
-          
-          <p className="text-xs text-stone-400 text-center mt-2">
-            Vous serez redirigé vers notre page de paiement sécurisée
-          </p>
         </div>
       </div>
-
-      {/* Confirmation Dialog */}
-      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-        <DialogContent className="max-w-sm mx-4 rounded-2xl">
-          <DialogHeader className="text-center">
-            <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-              <ExternalLink className="text-primary" size={28} />
-            </div>
-            <DialogTitle className="text-xl font-semibold">Redirection vers le paiement</DialogTitle>
-            <DialogDescription className="text-stone-600 mt-2">
-              Vous allez être redirigé vers notre page de paiement sécurisée propulsée par <strong>Stripe</strong>. 
-              Vos informations de carte sont protégées et ne sont jamais stockées sur nos serveurs.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="bg-stone-50 rounded-xl p-4 my-4">
-            <div className="flex justify-between items-center">
-              <span className="text-stone-600">Montant à payer</span>
-              <span className="text-xl font-bold text-primary">{(pricing.total / 100).toFixed(2)}$ CAD</span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 text-xs text-stone-500 justify-center mb-2">
-            <ShieldCheck size={14} />
-            <span>Paiement 100% sécurisé par Stripe</span>
-          </div>
-
-          <DialogFooter className="flex flex-col gap-2 sm:flex-col">
-            <Button 
-              onClick={confirmCheckout}
-              className="w-full h-12 rounded-xl bg-primary hover:bg-primary/90"
-              data-testid="button-confirm-payment"
-            >
-              <CreditCard size={18} className="mr-2" />
-              Continuer vers le paiement
-            </Button>
-            <Button 
-              variant="ghost" 
-              onClick={() => setShowConfirmDialog(false)}
-              className="w-full text-stone-500"
-              data-testid="button-cancel-payment"
-            >
-              Annuler
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

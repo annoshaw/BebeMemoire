@@ -45,10 +45,10 @@ function Router() {
       <Route path="/reset-password" component={ResetPassword} />
       <Route path="/onboarding" component={Onboarding} />
       <Route path="/book-demo" component={BookDemo} />
-      <Route path="/admin" component={AdminDashboard} />
-      <Route path="/admin/orders" component={AdminOrders} />
-      <Route path="/admin/users" component={AdminUsers} />
-      <Route path="/admin/exports" component={AdminExports} />
+      <Route path="/app/admin" component={AdminDashboard} />
+      <Route path="/app/admin/orders" component={AdminOrders} />
+      <Route path="/app/admin/users" component={AdminUsers} />
+      <Route path="/app/admin/exports" component={AdminExports} />
       <Route component={NotFound} />
     </Switch>
   );

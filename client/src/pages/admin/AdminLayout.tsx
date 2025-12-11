@@ -31,10 +31,10 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
   });
 
   const navItems = [
-    { path: "/admin", label: "Tableau de bord", icon: LayoutDashboard },
-    { path: "/admin/orders", label: "Commandes", icon: ShoppingCart },
-    { path: "/admin/users", label: "Utilisateurs", icon: Users },
-    { path: "/admin/exports", label: "Exports PDF", icon: FileText },
+    { path: "/app/admin", label: "Tableau de bord", icon: LayoutDashboard },
+    { path: "/app/admin/orders", label: "Commandes", icon: ShoppingCart },
+    { path: "/app/admin/users", label: "Utilisateurs", icon: Users },
+    { path: "/app/admin/exports", label: "Exports PDF", icon: FileText },
   ];
 
   if (isLoading) {
@@ -83,7 +83,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
           <nav className="space-y-1">
             {navItems.map((item) => {
               const isActive = location === item.path || 
-                (item.path !== "/admin" && location.startsWith(item.path));
+                (item.path !== "/app/admin" && location.startsWith(item.path));
               return (
                 <Link key={item.path} href={item.path}>
                   <div

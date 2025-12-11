@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { users, books, memories, userPlans, qrCodes, passwordResetTokens, bookPages, notifications, notificationSettings, bookTemplates, templateSections, templateParts, templatePages, userBookPages, mediaFiles, subscriptions, orders, orderEvents, payments, pdfExports, adminActivityLogs, type User, type InsertUser, type UpsertUser, type Book, type InsertBook, type Memory, type InsertMemory, type UserPlan, type InsertUserPlan, type QRCode, type InsertQRCode, type PasswordResetToken, type InsertPasswordResetToken, type BookPage, type InsertBookPage, type Notification, type InsertNotification, type NotificationSettings, type InsertNotificationSettings, type BookTemplate, type InsertBookTemplate, type TemplateSection, type InsertTemplateSection, type TemplatePart, type InsertTemplatePart, type TemplatePage, type InsertTemplatePage, type UserBookPage, type InsertUserBookPage, type MediaFile, type InsertMediaFile, type Subscription, type InsertSubscription, type Order, type InsertOrder, type OrderEvent, type InsertOrderEvent, type Payment, type InsertPayment, type PdfExport, type InsertPdfExport, type AdminActivityLog, type InsertAdminActivityLog } from "@shared/schema";
+import { users, books, memories, userPlans, qrCodes, passwordResetTokens, bookPages, notifications, notificationSettings, bookTemplates, templateSections, templateParts, templatePages, userBookPages, mediaFiles, subscriptions, orders, orderEvents, payments, pdfExports, adminActivityLogs, emailCampaigns, type User, type InsertUser, type UpsertUser, type Book, type InsertBook, type Memory, type InsertMemory, type UserPlan, type InsertUserPlan, type QRCode, type InsertQRCode, type PasswordResetToken, type InsertPasswordResetToken, type BookPage, type InsertBookPage, type Notification, type InsertNotification, type NotificationSettings, type InsertNotificationSettings, type BookTemplate, type InsertBookTemplate, type TemplateSection, type InsertTemplateSection, type TemplatePart, type InsertTemplatePart, type TemplatePage, type InsertTemplatePage, type UserBookPage, type InsertUserBookPage, type MediaFile, type InsertMediaFile, type Subscription, type InsertSubscription, type Order, type InsertOrder, type OrderEvent, type InsertOrderEvent, type Payment, type InsertPayment, type PdfExport, type InsertPdfExport, type AdminActivityLog, type InsertAdminActivityLog, type EmailCampaign, type InsertEmailCampaign } from "@shared/schema";
 import { eq, desc, and, gt, lt, asc, lte, or, isNull, sum, count, sql } from "drizzle-orm";
 
 export interface IStorage {
@@ -151,6 +151,13 @@ export interface IStorage {
   getGenderStats(): Promise<{ labels: string[]; values: number[] }>;
   getRegionStats(): Promise<{ labels: string[]; values: number[] }>;
   getProductStats(): Promise<{ labels: string[]; values: number[] }>;
+  
+  // Email campaigns
+  getEmailCampaigns(limit?: number, offset?: number): Promise<EmailCampaign[]>;
+  getEmailCampaign(id: string): Promise<EmailCampaign | undefined>;
+  createEmailCampaign(campaign: InsertEmailCampaign): Promise<EmailCampaign>;
+  updateEmailCampaign(id: string, data: Partial<InsertEmailCampaign>): Promise<EmailCampaign | undefined>;
+  getUserEmailsByFilter(filter: string): Promise<{ id: string; email: string; fullName: string | null }[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1086,6 +1093,72 @@ export class DatabaseStorage implements IStorage {
     });
     
     return { labels, values };
+  }
+
+  // Email campaigns
+  async getEmailCampaigns(limit: number = 50, offset: number = 0): Promise<EmailCampaign[]> {
+    return await db.select()
+      .from(emailCampaigns)
+      .orderBy(desc(emailCampaigns.createdAt))
+      .limit(limit)
+      .offset(offset);
+  }
+
+  async getEmailCampaign(id: string): Promise<EmailCampaign | undefined> {
+    const result = await db.select().from(emailCampaigns).where(eq(emailCampaigns.id, id)).limit(1);
+    return result[0];
+  }
+
+  async createEmailCampaign(campaign: InsertEmailCampaign): Promise<EmailCampaign> {
+    const result = await db.insert(emailCampaigns).values(campaign).returning();
+    return result[0];
+  }
+
+  async updateEmailCampaign(id: string, data: Partial<InsertEmailCampaign>): Promise<EmailCampaign | undefined> {
+    const result = await db.update(emailCampaigns)
+      .set(data)
+      .where(eq(emailCampaigns.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async getUserEmailsByFilter(filter: string): Promise<{ id: string; email: string; fullName: string | null }[]> {
+    let query = db.select({
+      id: users.id,
+      email: users.email,
+      fullName: users.fullName,
+    }).from(users).where(sql`${users.email} IS NOT NULL AND ${users.email} != ''`);
+
+    if (filter === 'premium') {
+      query = db.select({
+        id: users.id,
+        email: users.email,
+        fullName: users.fullName,
+      }).from(users)
+        .innerJoin(subscriptions, eq(users.id, subscriptions.userId))
+        .where(and(
+          sql`${users.email} IS NOT NULL AND ${users.email} != ''`,
+          eq(subscriptions.plan, 'premium')
+        ));
+    } else if (filter === 'platine') {
+      query = db.select({
+        id: users.id,
+        email: users.email,
+        fullName: users.fullName,
+      }).from(users)
+        .innerJoin(subscriptions, eq(users.id, subscriptions.userId))
+        .where(and(
+          sql`${users.email} IS NOT NULL AND ${users.email} != ''`,
+          eq(subscriptions.plan, 'platine')
+        ));
+    }
+
+    const result = await query;
+    return result.map(r => ({
+      id: r.id,
+      email: r.email || '',
+      fullName: r.fullName
+    }));
   }
 
   // Get users who need subscription reminder (14+ days old, no reminder sent yet, no paid subscription)

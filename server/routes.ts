@@ -2265,6 +2265,84 @@ export async function registerRoutes(
     }
   });
 
+  // ============ ADMIN EMAIL CAMPAIGNS ============
+
+  // Get all email campaigns
+  app.get("/api/admin/emails", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const campaigns = await storage.getEmailCampaigns();
+      res.json(campaigns);
+    } catch (error) {
+      console.error("Get email campaigns error:", error);
+      res.status(500).json({ message: "Erreur lors de la récupération des campagnes" });
+    }
+  });
+
+  // Get recipient count preview
+  app.get("/api/admin/emails/preview-count", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const { filter = "all" } = req.query;
+      const recipients = await storage.getUserEmailsByFilter(filter as string);
+      res.json({ count: recipients.length });
+    } catch (error) {
+      console.error("Preview count error:", error);
+      res.status(500).json({ message: "Erreur lors du calcul des destinataires" });
+    }
+  });
+
+  // Create and send email campaign
+  app.post("/api/admin/emails", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const adminId = (req as any).userId;
+      const { subject, bodyHtml, audienceFilter = "all" } = req.body;
+
+      if (!subject || !bodyHtml) {
+        return res.status(400).json({ message: "Sujet et contenu requis" });
+      }
+
+      // Get recipients
+      const recipients = await storage.getUserEmailsByFilter(audienceFilter);
+      
+      if (recipients.length === 0) {
+        return res.status(400).json({ message: "Aucun destinataire trouvé" });
+      }
+
+      // Create campaign record
+      const campaign = await storage.createEmailCampaign({
+        createdBy: adminId,
+        subject,
+        bodyHtml,
+        audienceFilter,
+        status: "sending",
+        recipientCount: recipients.length,
+      });
+
+      // Send emails
+      const { sendCampaignEmails } = await import("./emailService");
+      const results = await sendCampaignEmails({
+        subject,
+        bodyHtml,
+        recipients: recipients.map(r => ({ email: r.email, fullName: r.fullName })),
+      });
+
+      // Update campaign with results
+      await storage.updateEmailCampaign(campaign.id, {
+        status: "sent",
+        sentCount: results.sent,
+        failedCount: results.failed,
+        sentAt: new Date(),
+      });
+
+      res.json({
+        message: `Campagne envoyée: ${results.sent} succès, ${results.failed} échecs`,
+        campaign: { ...campaign, sentCount: results.sent, failedCount: results.failed },
+      });
+    } catch (error) {
+      console.error("Send campaign error:", error);
+      res.status(500).json({ message: "Erreur lors de l'envoi de la campagne" });
+    }
+  });
+
   // Get all orders (admin)
   app.get("/api/admin/orders", requireAdmin, async (req: Request, res: Response) => {
     try {

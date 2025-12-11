@@ -316,3 +316,98 @@ export async function sendOrderCancellationEmail(data: OrderCancellationData): P
     return false;
   }
 }
+
+// Send bulk campaign email
+interface CampaignRecipient {
+  email: string;
+  fullName: string | null;
+}
+
+interface CampaignEmailData {
+  subject: string;
+  bodyHtml: string;
+  recipients: CampaignRecipient[];
+}
+
+export async function sendCampaignEmails(data: CampaignEmailData): Promise<{ sent: number; failed: number }> {
+  const results = { sent: 0, failed: 0 };
+  
+  try {
+    const { client, fromEmail } = await getResendClient();
+    
+    const emailTemplate = (recipientName: string) => `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #7c9a7a 0%, #5a7d5a 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+    .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+    .btn { display: inline-block; background: #7c9a7a; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; }
+    .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📖 Memoria</h1>
+      <p>Votre album de souvenirs</p>
+    </div>
+    <div class="content">
+      <h2>Bonjour ${recipientName || 'cher parent'},</h2>
+      ${data.bodyHtml}
+      <p style="text-align: center; margin: 30px 0;">
+        <a href="https://memoria.replit.app/app" class="btn">
+          Visitez Memoria
+        </a>
+      </p>
+      <p>L'équipe Memoria</p>
+    </div>
+    <div class="footer">
+      <p>Memoria - Créez des souvenirs qui durent toute une vie</p>
+      <p style="font-size: 11px; color: #999;">Pour vous désabonner, contactez-nous à support@memoria.app</p>
+    </div>
+  </div>
+</body>
+</html>
+    `;
+
+    // Send emails in batches of 10 to avoid rate limiting
+    const batchSize = 10;
+    for (let i = 0; i < data.recipients.length; i += batchSize) {
+      const batch = data.recipients.slice(i, i + batchSize);
+      
+      const sendPromises = batch.map(async (recipient) => {
+        try {
+          await client.emails.send({
+            from: fromEmail || 'Memoria <noreply@memoria.app>',
+            to: recipient.email,
+            subject: data.subject,
+            html: emailTemplate(recipient.fullName || ''),
+          });
+          results.sent++;
+          return true;
+        } catch (error) {
+          console.error(`Failed to send campaign email to ${recipient.email}:`, error);
+          results.failed++;
+          return false;
+        }
+      });
+
+      await Promise.all(sendPromises);
+      
+      // Small delay between batches to avoid rate limiting
+      if (i + batchSize < data.recipients.length) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+    }
+
+    console.log(`Campaign emails sent: ${results.sent} success, ${results.failed} failed`);
+    return results;
+  } catch (error) {
+    console.error('Failed to send campaign emails:', error);
+    return results;
+  }
+}

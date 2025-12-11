@@ -554,9 +554,10 @@ export default function Prototype() {
     }
   };
 
-  const handleSelectProduct = (name: string, price: string) => {
-    // Redirect to Stripe checkout page
-    setLocation("/app/test-checkout");
+  const handleSelectProduct = (productType: "softcover" | "hardcover" | "ebook") => {
+    // Redirect to Stripe checkout page with parameters
+    const pageCount = bookPages.length + memories.length || 50;
+    setLocation(`/app/test-checkout?bookId=${activeBookId}&product=${productType}&pages=${pageCount}`);
   };
 
   const addInvitedUser = () => {
@@ -1034,7 +1035,7 @@ export default function Prototype() {
                   <motion.div 
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    onClick={() => handleSelectProduct("Couverture souple", "43,24 $")}
+                    onClick={() => handleSelectProduct("softcover")}
                     className="bg-white rounded-xl border border-stone-200 p-3 flex items-center justify-between cursor-pointer hover:border-primary hover:shadow-md transition-all"
                   >
                     <div className="flex items-center gap-3">
@@ -1057,7 +1058,7 @@ export default function Prototype() {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.1 }}
-                    onClick={() => handleSelectProduct("Couverture rigide", "54,99 $")}
+                    onClick={() => handleSelectProduct("hardcover")}
                     className="bg-white rounded-xl border border-stone-200 p-3 flex items-center justify-between cursor-pointer hover:border-primary hover:shadow-md transition-all"
                   >
                     <div className="flex items-center gap-3">
@@ -1080,7 +1081,7 @@ export default function Prototype() {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.2 }}
-                    onClick={() => handleSelectProduct("E-Book", "30,00 $")}
+                    onClick={() => handleSelectProduct("ebook")}
                     className="bg-white rounded-xl border border-stone-200 p-3 flex items-center justify-between cursor-pointer hover:border-primary hover:shadow-md transition-all"
                   >
                     <div className="flex items-center gap-3">

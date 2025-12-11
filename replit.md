@@ -248,3 +248,25 @@ UPDATE users SET role = 'user' WHERE email = 'user@example.com';
 - PDFs are uploaded to AWS S3
 - Signed URLs are generated for secure downloads (1 hour expiry)
 - Service file: `server/pdfService.ts`
+
+### Order Management & Automated Reminders
+
+**Payment Pending Orders**
+- When a user starts checkout but doesn't complete payment, the order stays in "pending_payment" status
+- The system automatically tracks these orders and sends email reminders
+
+**Reminder Schedule**
+- Day 7: First reminder email
+- Day 11: Second reminder email  
+- Day 13: Final reminder (urgent warning)
+- Day 14: Order is automatically cancelled
+
+**Email Service**
+- Uses Resend integration for transactional emails
+- Service file: `server/emailService.ts`
+- Templates: Payment reminder and order cancellation
+
+**Cleanup Job**
+- Runs hourly via `server/orderCleanupJob.ts`
+- Started automatically when server boots
+- Logs all actions to console for debugging

@@ -186,11 +186,17 @@ export default function TestCheckout() {
             <>
               <DialogHeader className="text-center">
                 <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                  <ExternalLink className="text-primary" size={28} />
+                  {isLoadingPages ? (
+                    <Loader2 className="text-primary animate-spin" size={28} />
+                  ) : (
+                    <ExternalLink className="text-primary" size={28} />
+                  )}
                 </div>
-                <DialogTitle className="text-xl font-semibold">Commander "{bookName}"</DialogTitle>
+                <DialogTitle className="text-xl font-semibold">
+                  {isLoadingPages ? "Chargement..." : `Commander "${bookName}"`}
+                </DialogTitle>
                 <DialogDescription className="text-stone-600 mt-2">
-                  Choisissez le format de votre livre ({pageCount} pages)
+                  {isLoadingPages ? "Récupération des informations du livre..." : `Choisissez le format de votre livre (${pageCount} pages)`}
                 </DialogDescription>
               </DialogHeader>
 
@@ -200,7 +206,8 @@ export default function TestCheckout() {
                     key={product.id}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => handleSelectProduct(product.id)}
-                    className={`w-full p-4 rounded-xl border-2 text-left transition-all bg-gradient-to-r ${product.color} hover:shadow-md`}
+                    disabled={isLoadingPages}
+                    className={`w-full p-4 rounded-xl border-2 text-left transition-all bg-gradient-to-r ${product.color} hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed`}
                     data-testid={`product-${product.id}`}
                   >
                     <div className="flex items-center justify-between">

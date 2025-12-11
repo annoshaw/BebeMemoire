@@ -42,6 +42,77 @@ async function getResendClient() {
   };
 }
 
+interface PasswordResetData {
+  email: string;
+  fullName: string | null;
+  resetUrl: string;
+}
+
+export async function sendPasswordResetEmail(data: PasswordResetData): Promise<boolean> {
+  try {
+    const { client, fromEmail } = await getResendClient();
+    
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #7c9a7a 0%, #5a7d5a 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+    .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+    .btn { display: inline-block; background: #7c9a7a; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; }
+    .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+    .warning { background: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 8px; margin: 20px 0; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📖 Memoria</h1>
+      <p>Réinitialisation de mot de passe</p>
+    </div>
+    <div class="content">
+      <h2>Bonjour ${data.fullName || 'cher parent'},</h2>
+      
+      <p>Vous avez demandé à réinitialiser votre mot de passe Memoria.</p>
+      
+      <p style="text-align: center; margin: 30px 0;">
+        <a href="${data.resetUrl}" class="btn">
+          Réinitialiser mon mot de passe
+        </a>
+      </p>
+      
+      <div class="warning">
+        <strong>⚠️ Important:</strong> Ce lien expire dans 1 heure. Si vous n'avez pas demandé cette réinitialisation, ignorez cet email.
+      </div>
+      
+      <p>L'équipe Memoria</p>
+    </div>
+    <div class="footer">
+      <p>Memoria - Créez des souvenirs qui durent toute une vie</p>
+    </div>
+  </div>
+</body>
+</html>
+    `;
+
+    await client.emails.send({
+      from: fromEmail || 'Memoria <noreply@memoria.app>',
+      to: data.email,
+      subject: 'Réinitialisation de votre mot de passe Memoria',
+      html,
+    });
+
+    console.log(`Password reset email sent to ${data.email}`);
+    return true;
+  } catch (error) {
+    console.error('Failed to send password reset email:', error);
+    return false;
+  }
+}
+
 interface OrderReminderData {
   customerEmail: string;
   customerName: string;

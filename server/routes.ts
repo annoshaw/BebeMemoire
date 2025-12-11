@@ -274,17 +274,20 @@ export async function registerRoutes(
       // Build the reset URL
       const resetUrl = `${req.protocol}://${req.get('host')}/reset-password?token=${token}`;
       
-      // Log the reset link (in production, this would be sent via email)
-      console.log("=".repeat(60));
-      console.log("PASSWORD RESET LINK (for development):");
-      console.log(`Email: ${email}`);
-      console.log(`Reset URL: ${resetUrl}`);
-      console.log("=".repeat(60));
+      // Send the password reset email
+      const { sendPasswordResetEmail } = await import("./emailService");
+      const emailSent = await sendPasswordResetEmail({
+        email: user.email!,
+        fullName: user.fullName,
+        resetUrl,
+      });
+      
+      if (!emailSent) {
+        console.error(`Failed to send password reset email to ${email}`);
+      }
       
       res.json({ 
-        message: "Si un compte existe avec cet email, vous recevrez un lien de réinitialisation.",
-        // In development mode, include the reset URL in the response
-        ...(process.env.NODE_ENV === 'development' && { resetUrl })
+        message: "Si un compte existe avec cet email, vous recevrez un lien de réinitialisation."
       });
     } catch (error) {
       console.error("Forgot password error:", error);

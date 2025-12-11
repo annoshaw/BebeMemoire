@@ -5,7 +5,9 @@ import {
   Search,
   ChevronDown,
   Eye,
-  MoreHorizontal
+  MoreHorizontal,
+  FileText,
+  Mail
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -112,6 +114,33 @@ export default function AdminOrders() {
     },
   });
 
+  const generatePdfMutation = useMutation({
+    mutationFn: async ({ orderId, sendEmail }: { orderId: string; sendEmail: boolean }) => {
+      const res = await fetch(`/api/admin/orders/${orderId}/generate-pdf`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ sendEmail }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || "Erreur génération PDF");
+      }
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/pdf-exports"] });
+      if (data.emailSent) {
+        toast({ title: "PDF généré et envoyé par email au client" });
+      } else {
+        toast({ title: "PDF généré avec succès" });
+      }
+    },
+    onError: (error: Error) => {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    },
+  });
+
   const filteredOrders = orders?.filter((order) => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
@@ -208,6 +237,22 @@ export default function AdminOrders() {
                             <DropdownMenuItem onClick={() => setSelectedOrder(order)}>
                               <Eye size={14} className="mr-2" />
                               Voir détails
+                            </DropdownMenuItem>
+                            {order.productType === "ebook" && order.status === "paid" && (
+                              <DropdownMenuItem 
+                                onClick={() => generatePdfMutation.mutate({ orderId: order.id, sendEmail: true })}
+                                disabled={generatePdfMutation.isPending}
+                              >
+                                <Mail size={14} className="mr-2" />
+                                Générer PDF et envoyer
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuItem 
+                              onClick={() => generatePdfMutation.mutate({ orderId: order.id, sendEmail: false })}
+                              disabled={generatePdfMutation.isPending}
+                            >
+                              <FileText size={14} className="mr-2" />
+                              Générer PDF (sans email)
                             </DropdownMenuItem>
                             {getNextStatuses(order.status).map((status) => (
                               <DropdownMenuItem 

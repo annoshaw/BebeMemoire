@@ -20,6 +20,10 @@ import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
 import Onboarding from "@/pages/Onboarding";
 import BookDemo from "@/pages/BookDemo";
+import AdminDashboard from "@/pages/admin/AdminDashboard";
+import AdminOrders from "@/pages/admin/AdminOrders";
+import AdminUsers from "@/pages/admin/AdminUsers";
+import AdminExports from "@/pages/admin/AdminExports";
 
 function Router() {
   return (
@@ -41,6 +45,10 @@ function Router() {
       <Route path="/reset-password" component={ResetPassword} />
       <Route path="/onboarding" component={Onboarding} />
       <Route path="/book-demo" component={BookDemo} />
+      <Route path="/admin" component={AdminDashboard} />
+      <Route path="/admin/orders" component={AdminOrders} />
+      <Route path="/admin/users" component={AdminUsers} />
+      <Route path="/admin/exports" component={AdminExports} />
       <Route component={NotFound} />
     </Switch>
   );

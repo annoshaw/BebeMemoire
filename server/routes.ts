@@ -2299,6 +2299,18 @@ export async function registerRoutes(
     }
   });
 
+  // Get all PDF exports (admin)
+  app.get("/api/admin/pdf-exports", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const { limit = 50, offset = 0 } = req.query;
+      const exports = await storage.getAllPdfExports(Number(limit), Number(offset));
+      res.json(exports);
+    } catch (error) {
+      console.error("Admin pdf exports error:", error);
+      res.status(500).json({ message: "Erreur lors de la récupération des exports" });
+    }
+  });
+
   return httpServer;
 }
 

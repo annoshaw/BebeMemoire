@@ -130,6 +130,7 @@ export interface IStorage {
   // PDF Export operations
   getPdfExport(id: string): Promise<PdfExport | undefined>;
   getPdfExportsByBook(bookId: string): Promise<PdfExport[]>;
+  getAllPdfExports(limit?: number, offset?: number): Promise<PdfExport[]>;
   createPdfExport(pdfExport: InsertPdfExport): Promise<PdfExport>;
   updatePdfExport(id: string, data: Partial<InsertPdfExport>): Promise<PdfExport | undefined>;
   
@@ -883,6 +884,10 @@ export class DatabaseStorage implements IStorage {
 
   async getPdfExportsByBook(bookId: string): Promise<PdfExport[]> {
     return db.select().from(pdfExports).where(eq(pdfExports.bookId, bookId)).orderBy(desc(pdfExports.createdAt));
+  }
+
+  async getAllPdfExports(limit: number = 50, offset: number = 0): Promise<PdfExport[]> {
+    return db.select().from(pdfExports).orderBy(desc(pdfExports.createdAt)).limit(limit).offset(offset);
   }
 
   async createPdfExport(pdfExport: InsertPdfExport): Promise<PdfExport> {

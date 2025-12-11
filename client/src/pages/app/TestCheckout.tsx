@@ -42,10 +42,9 @@ export default function TestCheckout() {
     const extraPages = Math.max(0, pages - INCLUDED_PAGES);
     const extraPagesPrice = extraPages * pageRate;
     const subtotal = basePrice + extraPagesPrice;
-    const tax = Math.round(subtotal * 0.15);
     const shipping = type === "ebook" ? 0 : 1200;
-    const total = subtotal + tax + shipping;
-    return { basePrice, extraPages, extraPagesPrice, subtotal, tax, shipping, total };
+    const total = subtotal + shipping;
+    return { basePrice, extraPages, extraPagesPrice, subtotal, shipping, total };
   };
 
   const pricing = calculatePrice(selectedProduct, pageCount);
@@ -278,11 +277,6 @@ export default function TestCheckout() {
                 <span className="font-medium">{(pricing.extraPagesPrice / 100).toFixed(2)}$</span>
               </div>
             )}
-            
-            <div className="flex justify-between text-stone-600">
-              <span>Taxes (TPS/TVQ)</span>
-              <span className="font-medium">{(pricing.tax / 100).toFixed(2)}$</span>
-            </div>
             
             {pricing.shipping > 0 && (
               <div className="flex justify-between text-stone-600">

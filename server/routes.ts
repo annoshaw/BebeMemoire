@@ -1826,9 +1826,9 @@ export async function registerRoutes(
       const extraPages = Math.max(0, pageCount - INCLUDED_PAGES);
       const extraPagesPrice = extraPages * pageRate;
       const subtotal = basePrice + extraPagesPrice;
-      const taxAmount = Math.round(subtotal * 0.15); // 15% tax (approx Canadian)
+      const taxAmount = 0; // No taxes for now
       const shippingAmount = productType === "ebook" ? 0 : 1200; // $12 shipping for print
-      const totalAmount = subtotal + taxAmount + shippingAmount;
+      const totalAmount = subtotal + shippingAmount;
 
       const order = await storage.createOrder({
         userId,

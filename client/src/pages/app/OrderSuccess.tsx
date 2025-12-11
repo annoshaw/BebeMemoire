@@ -191,7 +191,7 @@ export default function OrderSuccess() {
             <div className="flex items-start gap-3 text-sm">
               <Package className="text-primary mt-0.5 flex-shrink-0" size={18} />
               <p className="text-stone-600">
-                Votre livre sera imprimé et expédié dans les 5-7 jours ouvrables.
+                Un courriel vous sera envoyé lorsque votre livre sera sur le point d'être expédié.
               </p>
             </div>
           )}

@@ -447,6 +447,9 @@ export const orders = pgTable("orders", {
   // Notes
   adminNotes: text("admin_notes"),
   customerNotes: text("customer_notes"),
+  // Payment reminders
+  reminderSentAt: timestamp("reminder_sent_at"),
+  reminderCount: integer("reminder_count").default(0),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

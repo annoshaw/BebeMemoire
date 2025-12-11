@@ -5,6 +5,7 @@ import { createServer } from "http";
 import { runMigrations } from 'stripe-replit-sync';
 import { getStripeSync } from './stripeClient';
 import { WebhookHandlers } from './webhookHandlers';
+import { startOrderCleanupJob } from './orderCleanupJob';
 
 const app = express();
 const httpServer = createServer(app);
@@ -172,6 +173,9 @@ app.use((req, res, next) => {
     },
     () => {
       log(`serving on port ${port}`);
+      
+      // Start order cleanup job (reminders and auto-cancellation)
+      startOrderCleanupJob();
     },
   );
 })();

@@ -253,18 +253,13 @@ UPDATE users SET role = 'user' WHERE email = 'user@example.com';
 
 **Payment Pending Orders**
 - When a user starts checkout but doesn't complete payment, the order stays in "pending_payment" status
-- The system automatically tracks these orders and sends email reminders
-
-**Reminder Schedule**
-- Day 7: First reminder email
-- Day 11: Second reminder email  
-- Day 13: Final reminder (urgent warning)
-- Day 14: Order is automatically cancelled
+- After 14 days without payment, orders are automatically cancelled
+- Only ONE email is sent: when the order is cancelled (to minimize email volume)
 
 **Email Service**
 - Uses Resend integration for transactional emails
 - Service file: `server/emailService.ts`
-- Templates: Payment reminder and order cancellation
+- Templates: Order cancellation notification
 
 **Cleanup Job**
 - Runs hourly via `server/orderCleanupJob.ts`

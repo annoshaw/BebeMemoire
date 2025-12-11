@@ -1915,6 +1915,30 @@ export async function registerRoutes(
     }
   });
 
+  // Get order by Stripe session ID (for success page)
+  app.get("/api/orders/by-session/:sessionId", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const { sessionId } = req.params;
+      
+      const ordersList = await storage.getOrdersByStripeSessionId(sessionId);
+      const order = ordersList[0];
+      if (!order) {
+        return res.status(404).json({ message: "Commande non trouvée" });
+      }
+      
+      // Users can only see their own orders
+      if (order.userId !== userId) {
+        return res.status(403).json({ message: "Accès refusé" });
+      }
+      
+      res.json(order);
+    } catch (error) {
+      console.error("Get order by session error:", error);
+      res.status(500).json({ message: "Erreur lors de la récupération de la commande" });
+    }
+  });
+
   // Get user's subscription
   app.get("/api/subscription", requireAuth, async (req: Request, res: Response) => {
     try {
@@ -2011,8 +2035,8 @@ export async function registerRoutes(
             quantity: 1,
           },
         ],
-        successUrl: `${baseUrl}/app/order/${order.id}/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancelUrl: `${baseUrl}/app/order/${order.id}/cancel`,
+        successUrl: `${baseUrl}/app/order-success?session_id={CHECKOUT_SESSION_ID}`,
+        cancelUrl: `${baseUrl}/app/order-cancel`,
         metadata: {
           orderNumber: order.orderNumber,
           productType: order.productType,

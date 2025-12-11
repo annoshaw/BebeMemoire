@@ -12,6 +12,8 @@ import PrebuiltBookEditor from "@/pages/app/PrebuiltBookEditor";
 import EditProfile from "@/pages/app/EditProfile";
 import NotificationSettings from "@/pages/app/NotificationSettings";
 import TestCheckout from "@/pages/app/TestCheckout";
+import OrderSuccess from "@/pages/app/OrderSuccess";
+import OrderCancel from "@/pages/app/OrderCancel";
 import Register from "@/pages/Register";
 import Login from "@/pages/Login";
 import ForgotPassword from "@/pages/ForgotPassword";
@@ -31,6 +33,8 @@ function Router() {
       <Route path="/app/profile" component={EditProfile} />
       <Route path="/app/notifications" component={NotificationSettings} />
       <Route path="/app/test-checkout" component={TestCheckout} />
+      <Route path="/app/order-success" component={OrderSuccess} />
+      <Route path="/app/order-cancel" component={OrderCancel} />
       <Route path="/register" component={Register} />
       <Route path="/login" component={Login} />
       <Route path="/forgot-password" component={ForgotPassword} />

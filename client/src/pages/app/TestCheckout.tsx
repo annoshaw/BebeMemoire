@@ -137,8 +137,30 @@ export default function TestCheckout() {
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-stone-500">Pages</span>
-              <span className="font-medium">{pageCount} pages</span>
+              <span className="font-medium">{pageCount} pages (50 incluses)</span>
             </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-stone-500">Prix de base</span>
+              <span className="font-medium">{(basePrice / 100).toFixed(2)}$</span>
+            </div>
+            {extraPages > 0 && (
+              <div className="flex justify-between text-sm">
+                <span className="text-stone-500">{extraPages} page{extraPages > 1 ? 's' : ''} suppl.</span>
+                <span className="font-medium">{(extraPagesPrice / 100).toFixed(2)}$</span>
+              </div>
+            )}
+            {shipping > 0 && (
+              <div className="flex justify-between text-sm">
+                <span className="text-stone-500">Livraison</span>
+                <span className="font-medium">{(shipping / 100).toFixed(2)}$</span>
+              </div>
+            )}
+            {productType === "ebook" && (
+              <div className="flex justify-between text-sm">
+                <span className="text-stone-500">Livraison</span>
+                <span className="font-medium text-green-600">Gratuit (digital)</span>
+              </div>
+            )}
             <div className="border-t border-stone-200 pt-2 flex justify-between">
               <span className="font-semibold">Total</span>
               <span className="text-lg font-bold text-primary">{(total / 100).toFixed(2)}$ CAD</span>

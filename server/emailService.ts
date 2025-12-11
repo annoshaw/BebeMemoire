@@ -388,6 +388,92 @@ export async function sendOrderCancellationEmail(data: OrderCancellationData): P
   }
 }
 
+// Send PDF delivery email to customer
+interface PdfDeliveryData {
+  customerEmail: string;
+  customerName: string;
+  bookName: string;
+  orderNumber: string;
+  downloadUrl: string;
+  expiresInDays: number;
+}
+
+export async function sendPdfDeliveryEmail(data: PdfDeliveryData): Promise<boolean> {
+  try {
+    const { client, fromEmail } = await getResendClient();
+    
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #7c9a7a 0%, #5a7d5a 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+    .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+    .order-box { background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; margin: 20px 0; }
+    .btn { display: inline-block; background: #7c9a7a; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; }
+    .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+    .highlight { background: #e8f5e9; border-left: 4px solid #7c9a7a; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📖 Memoria</h1>
+      <p>Votre livre de souvenirs est prêt!</p>
+    </div>
+    <div class="content">
+      <h2>Bonjour ${data.customerName || 'cher parent'},</h2>
+      
+      <p>🎉 Bonne nouvelle! Votre livre de souvenirs <strong>"${data.bookName}"</strong> est maintenant prêt à être téléchargé.</p>
+      
+      <div class="order-box">
+        <p><strong>📚 Livre:</strong> ${data.bookName}</p>
+        <p><strong>🔢 Commande:</strong> ${data.orderNumber}</p>
+        <p><strong>📄 Format:</strong> PDF numérique</p>
+      </div>
+      
+      <div class="highlight">
+        <strong>⏰ Important:</strong> Ce lien de téléchargement expire dans ${data.expiresInDays} jours. Assurez-vous de télécharger votre livre avant cette date.
+      </div>
+      
+      <p style="text-align: center; margin: 30px 0;">
+        <a href="${data.downloadUrl}" class="btn">
+          📥 Télécharger mon livre PDF
+        </a>
+      </p>
+      
+      <p>Si vous avez des questions ou rencontrez des difficultés, n'hésitez pas à nous contacter.</p>
+      
+      <p>Merci d'avoir choisi Memoria pour préserver vos précieux souvenirs!</p>
+      
+      <p>L'équipe Memoria</p>
+    </div>
+    <div class="footer">
+      <p>Memoria - Créez des souvenirs qui durent toute une vie</p>
+    </div>
+  </div>
+</body>
+</html>
+    `;
+
+    await client.emails.send({
+      from: fromEmail || 'Memoria <noreply@memoria.app>',
+      to: data.customerEmail,
+      subject: `📖 Votre livre "${data.bookName}" est prêt à télécharger!`,
+      html,
+    });
+
+    console.log(`PDF delivery email sent to ${data.customerEmail} for book ${data.bookName}`);
+    return true;
+  } catch (error) {
+    console.error('Failed to send PDF delivery email:', error);
+    return false;
+  }
+}
+
 // Send bulk campaign email
 interface CampaignRecipient {
   email: string;

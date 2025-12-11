@@ -2583,6 +2583,133 @@ export async function registerRoutes(
     }
   });
 
+  // Admin generate PDF for an order and send to customer
+  app.post("/api/admin/orders/:orderId/generate-pdf", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const { orderId } = req.params;
+      const { sendEmail = true } = req.body;
+      
+      const order = await storage.getOrder(orderId);
+      if (!order) {
+        return res.status(404).json({ message: "Commande non trouvée" });
+      }
+      
+      if (!order.bookId) {
+        return res.status(400).json({ message: "Commande sans livre associé" });
+      }
+      
+      const book = await storage.getBook(order.bookId);
+      if (!book) {
+        return res.status(404).json({ message: "Livre non trouvé" });
+      }
+      
+      const user = await storage.getUser(order.userId);
+      if (!user) {
+        return res.status(404).json({ message: "Utilisateur non trouvé" });
+      }
+
+      const bookId = order.bookId;
+      
+      if (sendEmail) {
+        const { generateAndSendPdfToCustomer } = await import('./pdfService');
+        const result = await generateAndSendPdfToCustomer({
+          bookId,
+          orderId: order.id,
+          format: 'letter',
+          customerEmail: user.email || '',
+          customerName: user.fullName || user.firstName || 'Cher parent',
+          orderNumber: order.orderNumber,
+        });
+        
+        res.json({
+          success: true,
+          pdfExport: {
+            id: result.pdfExport.id,
+            status: result.pdfExport.status,
+            filename: result.pdfExport.filename,
+          },
+          emailSent: result.emailSent,
+        });
+      } else {
+        const { generateBookPdf } = await import('./pdfService');
+        const pdfExport = await generateBookPdf({
+          bookId,
+          orderId: order.id,
+          format: 'letter',
+        });
+        
+        res.json({
+          success: true,
+          pdfExport: {
+            id: pdfExport.id,
+            status: pdfExport.status,
+            filename: pdfExport.filename,
+          },
+          emailSent: false,
+        });
+      }
+    } catch (error) {
+      console.error("Admin generate PDF error:", error);
+      res.status(500).json({ message: "Erreur lors de la génération du PDF" });
+    }
+  });
+
+  // Admin resend PDF email for an existing export
+  app.post("/api/admin/pdf-exports/:exportId/send-email", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const { exportId } = req.params;
+      
+      const pdfExport = await storage.getPdfExport(exportId);
+      if (!pdfExport) {
+        return res.status(404).json({ message: "Export non trouvé" });
+      }
+      
+      if (pdfExport.status !== 'completed') {
+        return res.status(400).json({ message: "Le PDF n'est pas encore prêt" });
+      }
+      
+      const book = await storage.getBook(pdfExport.bookId);
+      if (!book) {
+        return res.status(404).json({ message: "Livre non trouvé" });
+      }
+      
+      const user = await storage.getUser(book.userId);
+      if (!user || !user.email) {
+        return res.status(400).json({ message: "Email utilisateur non trouvé" });
+      }
+      
+      let orderNumber = 'N/A';
+      if (pdfExport.orderId) {
+        const order = await storage.getOrder(pdfExport.orderId);
+        if (order) {
+          orderNumber = order.orderNumber;
+        }
+      }
+      
+      const { getSignedDownloadUrl } = await import('./pdfService');
+      const downloadUrl = await getSignedDownloadUrl(pdfExport.s3Key, 7 * 24 * 60 * 60);
+      
+      const { sendPdfDeliveryEmail } = await import('./emailService');
+      const emailSent = await sendPdfDeliveryEmail({
+        customerEmail: user.email,
+        customerName: user.fullName || user.firstName || 'Cher parent',
+        bookName: book.childName || 'Mon album Memoria',
+        orderNumber,
+        downloadUrl,
+        expiresInDays: 7,
+      });
+      
+      if (emailSent) {
+        res.json({ success: true, message: "Email envoyé avec succès" });
+      } else {
+        res.status(500).json({ success: false, message: "Échec de l'envoi de l'email" });
+      }
+    } catch (error: any) {
+      console.error("Admin send PDF email error:", error);
+      res.status(500).json({ message: error?.message || "Erreur lors de l'envoi de l'email" });
+    }
+  });
+
   return httpServer;
 }
 

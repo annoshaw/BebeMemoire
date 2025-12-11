@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, FileText, Download, Clock, CheckCircle, XCircle } from "lucide-react";
+import { Loader2, FileText, Download, Clock, CheckCircle, XCircle, Mail, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AdminLayout from "./AdminLayout";
 import { toast } from "sonner";
@@ -29,6 +29,7 @@ const statusConfig: Record<string, { label: string; color: string; icon: any }> 
 
 export default function AdminExports() {
   const [downloading, setDownloading] = useState<string | null>(null);
+  const [sendingEmail, setSendingEmail] = useState<string | null>(null);
   
   const { data: exports, isLoading } = useQuery<PdfExport[]>({
     queryKey: ["/api/admin/pdf-exports"],
@@ -74,6 +75,31 @@ export default function AdminExports() {
       toast.error("Erreur réseau lors du téléchargement");
     } finally {
       setDownloading(null);
+    }
+  };
+
+  const handleSendEmail = async (exportId: string) => {
+    try {
+      setSendingEmail(exportId);
+      const res = await fetch(`/api/admin/pdf-exports/${exportId}/send-email`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+      });
+      
+      const data = await res.json();
+      
+      if (!res.ok) {
+        toast.error(data.message || "Erreur lors de l'envoi de l'email");
+        return;
+      }
+      
+      toast.success("Email envoyé au client avec le lien de téléchargement");
+    } catch (error) {
+      console.error("Send email error:", error);
+      toast.error("Erreur réseau lors de l'envoi de l'email");
+    } finally {
+      setSendingEmail(null);
     }
   };
 
@@ -135,26 +161,43 @@ export default function AdminExports() {
                         {new Date(exp.createdAt).toLocaleString("fr-CA")}
                       </td>
                       <td className="px-4 py-3 text-right">
-                        {exp.status === "completed" && exp.s3Key && (
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => handleDownload(exp.id, exp.filename)}
-                            disabled={downloading === exp.id}
-                          >
-                            {downloading === exp.id ? (
-                              <Loader2 size={14} className="mr-1 animate-spin" />
-                            ) : (
-                              <Download size={14} className="mr-1" />
-                            )}
-                            Télécharger
-                          </Button>
-                        )}
-                        {exp.errorMessage && (
-                          <span className="text-xs text-red-600" title={exp.errorMessage}>
-                            Erreur
-                          </span>
-                        )}
+                        <div className="flex items-center justify-end gap-2">
+                          {exp.status === "completed" && exp.s3Key && (
+                            <>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleDownload(exp.id, exp.filename)}
+                                disabled={downloading === exp.id}
+                                title="Télécharger le PDF"
+                              >
+                                {downloading === exp.id ? (
+                                  <Loader2 size={14} className="animate-spin" />
+                                ) : (
+                                  <Download size={14} />
+                                )}
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleSendEmail(exp.id)}
+                                disabled={sendingEmail === exp.id}
+                                title="Envoyer par email au client"
+                              >
+                                {sendingEmail === exp.id ? (
+                                  <Loader2 size={14} className="animate-spin" />
+                                ) : (
+                                  <Mail size={14} />
+                                )}
+                              </Button>
+                            </>
+                          )}
+                          {exp.errorMessage && (
+                            <span className="text-xs text-red-600" title={exp.errorMessage}>
+                              Erreur
+                            </span>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );

@@ -364,3 +364,37 @@ export async function getPdfExportWithSignedUrl(exportId: string): Promise<{ exp
   const downloadUrl = await getSignedDownloadUrl(pdfExport.s3Key);
   return { export: pdfExport, downloadUrl };
 }
+
+// Generate PDF and send to customer via email
+interface GenerateAndSendOptions extends GeneratePdfOptions {
+  customerEmail: string;
+  customerName: string;
+  orderNumber: string;
+}
+
+export async function generateAndSendPdfToCustomer(options: GenerateAndSendOptions): Promise<{ pdfExport: PdfExport; emailSent: boolean }> {
+  const { customerEmail, customerName, orderNumber, ...pdfOptions } = options;
+  
+  const pdfExport = await generateBookPdf(pdfOptions);
+  
+  if (pdfExport.status !== 'completed') {
+    return { pdfExport, emailSent: false };
+  }
+  
+  const book = await storage.getBook(pdfOptions.bookId);
+  const bookName = book?.childName || 'Mon album Memoria';
+  
+  const downloadUrl = await getSignedDownloadUrl(pdfExport.s3Key, 7 * 24 * 60 * 60);
+  
+  const { sendPdfDeliveryEmail } = await import('./emailService');
+  const emailSent = await sendPdfDeliveryEmail({
+    customerEmail,
+    customerName,
+    bookName,
+    orderNumber,
+    downloadUrl,
+    expiresInDays: 7,
+  });
+  
+  return { pdfExport, emailSent };
+}

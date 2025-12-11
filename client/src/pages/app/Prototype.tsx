@@ -554,11 +554,9 @@ export default function Prototype() {
     }
   };
 
-  const handleSelectProduct = (productType: "softcover" | "hardcover" | "ebook") => {
-    // Redirect to Stripe checkout page with parameters
-    // Use template page count based on book type: expecting=51, born=29, adoption=53
-    const pageCount = 51; // Default for expecting template
-    setLocation(`/app/test-checkout?bookId=${activeBookId}&product=${productType}&pages=${pageCount}`);
+  const handleSelectProduct = () => {
+    // Redirect to checkout page - product selection happens in the popup
+    setLocation(`/app/test-checkout?bookId=${activeBookId}`);
   };
 
   const addInvitedUser = () => {
@@ -1036,7 +1034,7 @@ export default function Prototype() {
                   <motion.div 
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    onClick={() => handleSelectProduct("softcover")}
+                    onClick={() => handleSelectProduct()}
                     className="bg-white rounded-xl border border-stone-200 p-3 flex items-center justify-between cursor-pointer hover:border-primary hover:shadow-md transition-all"
                   >
                     <div className="flex items-center gap-3">
@@ -1059,7 +1057,7 @@ export default function Prototype() {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.1 }}
-                    onClick={() => handleSelectProduct("hardcover")}
+                    onClick={() => handleSelectProduct()}
                     className="bg-white rounded-xl border border-stone-200 p-3 flex items-center justify-between cursor-pointer hover:border-primary hover:shadow-md transition-all"
                   >
                     <div className="flex items-center gap-3">
@@ -1082,7 +1080,7 @@ export default function Prototype() {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.2 }}
-                    onClick={() => handleSelectProduct("ebook")}
+                    onClick={() => handleSelectProduct()}
                     className="bg-white rounded-xl border border-stone-200 p-3 flex items-center justify-between cursor-pointer hover:border-primary hover:shadow-md transition-all"
                   >
                     <div className="flex items-center gap-3">

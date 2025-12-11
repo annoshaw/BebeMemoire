@@ -247,7 +247,7 @@ export default function PrebuiltBookEditor() {
                 size="sm"
                 className="bg-[#6a8c79] text-white"
                 data-testid="button-order"
-                onClick={() => setLocation(`/app/test-checkout?bookId=${bookId}&product=softcover&pages=51`)}
+                onClick={() => setLocation(`/app/test-checkout?bookId=${bookId}`)}
               >
                 <ShoppingCart className="w-4 h-4 mr-1" />
                 {language === "fr" ? "Commander" : "Order"}

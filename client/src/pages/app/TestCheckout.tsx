@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { CreditCard, Loader2, ShieldCheck, ExternalLink } from "lucide-react";
+import { CreditCard, Loader2, ShieldCheck, ExternalLink, BookOpen, BookMarked, Smartphone, ChevronRight } from "lucide-react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { motion } from "framer-motion";
 
 type ProductType = "softcover" | "hardcover" | "ebook";
 
@@ -19,18 +20,19 @@ export default function TestCheckout() {
   const [showDialog, setShowDialog] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [step, setStep] = useState<"select" | "confirm">("select");
+  const [selectedProduct, setSelectedProduct] = useState<ProductType | null>(null);
 
   // Get params from URL
   const params = new URLSearchParams(window.location.search);
   const bookId = params.get("bookId");
-  const productType = (params.get("product") as ProductType) || "softcover";
 
   // Fetch book page count from API
   const { data: bookData, isLoading: isLoadingPages } = useQuery({
     queryKey: [`/api/books/${bookId}/pages`],
     queryFn: async () => {
       const res = await fetch(`/api/books/${bookId}/pages`, { credentials: "include" });
-      if (!res.ok) return { templatePages: [] };
+      if (!res.ok) return { templatePages: [], book: null };
       return res.json();
     },
     enabled: !!bookId,
@@ -38,14 +40,19 @@ export default function TestCheckout() {
 
   // Calculate page count from templatePages array
   const pageCount = bookData?.templatePages?.length || 50;
+  const bookName = bookData?.book?.childName || "Mon livre";
 
   // Calculate total for display
   const INCLUDED_PAGES = 50;
-  const basePrice = productType === "ebook" ? 3000 : productType === "hardcover" ? 5499 : 4324;
-  const pageRate = productType === "ebook" ? 50 : 98;
+  const getBasePrice = (type: ProductType) => type === "ebook" ? 3000 : type === "hardcover" ? 5499 : 4324;
+  const getPageRate = (type: ProductType) => type === "ebook" ? 50 : 98;
+  const getShipping = (type: ProductType) => type === "ebook" ? 0 : 1200;
+  
+  const basePrice = selectedProduct ? getBasePrice(selectedProduct) : 0;
+  const pageRate = selectedProduct ? getPageRate(selectedProduct) : 0;
   const extraPages = Math.max(0, pageCount - INCLUDED_PAGES);
   const extraPagesPrice = extraPages * pageRate;
-  const shipping = productType === "ebook" ? 0 : 1200;
+  const shipping = selectedProduct ? getShipping(selectedProduct) : 0;
   const total = basePrice + extraPagesPrice + shipping;
 
   const productNames: Record<ProductType, string> = {
@@ -54,10 +61,37 @@ export default function TestCheckout() {
     ebook: "E-Book PDF"
   };
 
+  const products = [
+    { 
+      id: "softcover" as ProductType, 
+      name: "Couverture Souple", 
+      icon: BookOpen, 
+      price: "43,24$",
+      desc: "Reliure légère et pratique",
+      color: "from-amber-50 to-orange-50 border-amber-200"
+    },
+    { 
+      id: "hardcover" as ProductType, 
+      name: "Couverture Rigide", 
+      icon: BookMarked, 
+      price: "54,99$",
+      desc: "Qualité premium durable",
+      color: "from-primary/10 to-emerald-50 border-primary/30"
+    },
+    { 
+      id: "ebook" as ProductType, 
+      name: "E-Book PDF", 
+      icon: Smartphone, 
+      price: "30,00$",
+      desc: "Téléchargement instantané",
+      color: "from-blue-50 to-indigo-50 border-blue-200"
+    },
+  ];
+
   // Create order and checkout
   const checkoutMutation = useMutation({
     mutationFn: async () => {
-      if (!bookId) throw new Error("Livre non spécifié");
+      if (!bookId || !selectedProduct) throw new Error("Informations manquantes");
 
       // 1. Create order
       const orderRes = await fetch("/api/orders", {
@@ -66,7 +100,7 @@ export default function TestCheckout() {
         credentials: "include",
         body: JSON.stringify({
           bookId,
-          productType,
+          productType: selectedProduct,
           pageCount,
           shippingAddress: {
             name: "Test User",
@@ -109,6 +143,11 @@ export default function TestCheckout() {
     },
   });
 
+  const handleSelectProduct = (type: ProductType) => {
+    setSelectedProduct(type);
+    setStep("confirm");
+  };
+
   const handleConfirm = () => {
     setIsProcessing(true);
     setError(null);
@@ -118,6 +157,11 @@ export default function TestCheckout() {
   const handleCancel = () => {
     setShowDialog(false);
     navigate("/app");
+  };
+
+  const handleBack = () => {
+    setStep("select");
+    setSelectedProduct(null);
   };
 
   // If no bookId, redirect back
@@ -132,94 +176,160 @@ export default function TestCheckout() {
   return (
     <div className="min-h-screen bg-stone-100 flex items-center justify-center p-4">
       <Dialog open={showDialog} onOpenChange={(open) => !open && handleCancel()}>
-        <DialogContent className="max-w-sm rounded-2xl">
-          <DialogHeader className="text-center">
-            <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-              <ExternalLink className="text-primary" size={28} />
-            </div>
-            <DialogTitle className="text-xl font-semibold">Finaliser votre commande</DialogTitle>
-            <DialogDescription className="text-stone-600 mt-2">
-              Vous allez être redirigé vers notre page de paiement sécurisée.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="bg-stone-50 rounded-xl p-4 my-4 space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-stone-500">Produit</span>
-              <span className="font-medium">{productNames[productType]}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-stone-500">Pages</span>
-              <span className="font-medium">{pageCount} pages (50 incluses)</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-stone-500">Prix de base</span>
-              <span className="font-medium">{(basePrice / 100).toFixed(2)}$</span>
-            </div>
-            {extraPages > 0 && (
-              <div className="flex justify-between text-sm">
-                <span className="text-stone-500">{extraPages} page{extraPages > 1 ? 's' : ''} suppl.</span>
-                <span className="font-medium">{(extraPagesPrice / 100).toFixed(2)}$</span>
-              </div>
-            )}
-            {shipping > 0 && (
-              <div className="flex justify-between text-sm">
-                <span className="text-stone-500">Livraison</span>
-                <span className="font-medium">{(shipping / 100).toFixed(2)}$</span>
-              </div>
-            )}
-            {productType === "ebook" && (
-              <div className="flex justify-between text-sm">
-                <span className="text-stone-500">Livraison</span>
-                <span className="font-medium text-green-600">Gratuit (digital)</span>
-              </div>
-            )}
-            <div className="border-t border-stone-200 pt-2 flex justify-between">
-              <span className="font-semibold">Total</span>
-              <span className="text-lg font-bold text-primary">{(total / 100).toFixed(2)}$ CAD</span>
-            </div>
-          </div>
-
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-xl text-sm mb-2">
-              {error}
-            </div>
-          )}
-
-          <div className="flex items-center gap-2 text-xs text-stone-500 justify-center mb-2">
-            <ShieldCheck size={14} />
-            <span>Paiement sécurisé par Stripe</span>
-          </div>
-
-          <DialogFooter className="flex flex-col gap-2 sm:flex-col">
-            <Button 
-              onClick={handleConfirm}
-              disabled={isProcessing}
-              className="w-full h-12 rounded-xl bg-primary hover:bg-primary/90"
-              data-testid="button-confirm-payment"
-            >
-              {isProcessing ? (
-                <div className="flex items-center gap-2">
-                  <Loader2 className="animate-spin" size={18} />
-                  <span>Redirection...</span>
+        <DialogContent className="max-w-md rounded-2xl">
+          {step === "select" ? (
+            <>
+              <DialogHeader className="text-center">
+                <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                  <ExternalLink className="text-primary" size={28} />
                 </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <CreditCard size={18} />
-                  <span>Payer {(total / 100).toFixed(2)}$</span>
+                <DialogTitle className="text-xl font-semibold">Commander "{bookName}"</DialogTitle>
+                <DialogDescription className="text-stone-600 mt-2">
+                  Choisissez le format de votre livre ({pageCount} pages)
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-3 my-4">
+                {products.map((product) => (
+                  <motion.button
+                    key={product.id}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => handleSelectProduct(product.id)}
+                    className={`w-full p-4 rounded-xl border-2 text-left transition-all bg-gradient-to-r ${product.color} hover:shadow-md`}
+                    data-testid={`product-${product.id}`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-xl bg-white/80 flex items-center justify-center">
+                          <product.icon size={22} className="text-stone-600" />
+                        </div>
+                        <div>
+                          <div className="font-semibold text-stone-800">{product.name}</div>
+                          <div className="text-xs text-stone-500">{product.desc}</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="text-right">
+                          <div className="font-bold text-stone-800">{product.price}</div>
+                          <div className="text-[10px] text-stone-400">+ livraison</div>
+                        </div>
+                        <ChevronRight size={18} className="text-stone-400" />
+                      </div>
+                    </div>
+                  </motion.button>
+                ))}
+              </div>
+
+              <div className="flex items-center gap-2 text-xs text-stone-500 justify-center">
+                <ShieldCheck size={14} />
+                <span>Vous serez redirigé vers un paiement sécurisé</span>
+              </div>
+
+              <DialogFooter>
+                <Button 
+                  variant="ghost" 
+                  onClick={handleCancel}
+                  className="w-full text-stone-500"
+                >
+                  Annuler
+                </Button>
+              </DialogFooter>
+            </>
+          ) : (
+            <>
+              <DialogHeader className="text-center">
+                <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                  <CreditCard className="text-primary" size={28} />
+                </div>
+                <DialogTitle className="text-xl font-semibold">Récapitulatif</DialogTitle>
+                <DialogDescription className="text-stone-600 mt-2">
+                  Vérifiez votre commande avant de payer
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="bg-stone-50 rounded-xl p-4 my-4 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-stone-500">Livre</span>
+                  <span className="font-medium">{bookName}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-stone-500">Format</span>
+                  <span className="font-medium">{selectedProduct && productNames[selectedProduct]}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-stone-500">Pages</span>
+                  <span className="font-medium">{pageCount} pages (50 incluses)</span>
+                </div>
+                <div className="border-t border-stone-200 pt-2 mt-2"></div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-stone-500">Prix de base</span>
+                  <span className="font-medium">{(basePrice / 100).toFixed(2)}$</span>
+                </div>
+                {extraPages > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-stone-500">{extraPages} page{extraPages > 1 ? 's' : ''} suppl.</span>
+                    <span className="font-medium">{(extraPagesPrice / 100).toFixed(2)}$</span>
+                  </div>
+                )}
+                {shipping > 0 ? (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-stone-500">Livraison</span>
+                    <span className="font-medium">{(shipping / 100).toFixed(2)}$</span>
+                  </div>
+                ) : (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-stone-500">Livraison</span>
+                    <span className="font-medium text-green-600">Gratuit</span>
+                  </div>
+                )}
+                <div className="border-t border-stone-200 pt-2 flex justify-between">
+                  <span className="font-semibold">Total</span>
+                  <span className="text-lg font-bold text-primary">{(total / 100).toFixed(2)}$ CAD</span>
+                </div>
+              </div>
+
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-xl text-sm mb-2">
+                  {error}
                 </div>
               )}
-            </Button>
-            <Button 
-              variant="ghost" 
-              onClick={handleCancel}
-              disabled={isProcessing}
-              className="w-full text-stone-500"
-              data-testid="button-cancel-payment"
-            >
-              Annuler
-            </Button>
-          </DialogFooter>
+
+              <div className="flex items-center gap-2 text-xs text-stone-500 justify-center mb-2">
+                <ShieldCheck size={14} />
+                <span>Paiement sécurisé par Stripe</span>
+              </div>
+
+              <DialogFooter className="flex flex-col gap-2 sm:flex-col">
+                <Button 
+                  onClick={handleConfirm}
+                  disabled={isProcessing}
+                  className="w-full h-12 rounded-xl bg-primary hover:bg-primary/90"
+                  data-testid="button-confirm-payment"
+                >
+                  {isProcessing ? (
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="animate-spin" size={18} />
+                      <span>Redirection...</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <CreditCard size={18} />
+                      <span>Payer {(total / 100).toFixed(2)}$</span>
+                    </div>
+                  )}
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  onClick={handleBack}
+                  disabled={isProcessing}
+                  className="w-full text-stone-500"
+                  data-testid="button-back"
+                >
+                  Retour au choix du format
+                </Button>
+              </DialogFooter>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </div>

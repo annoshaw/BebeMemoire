@@ -1123,14 +1123,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserEmailsByFilter(filter: string): Promise<{ id: string; email: string; fullName: string | null }[]> {
-    let query = db.select({
-      id: users.id,
-      email: users.email,
-      fullName: users.fullName,
-    }).from(users).where(sql`${users.email} IS NOT NULL AND ${users.email} != ''`);
+    let result: { id: string; email: string | null; fullName: string | null }[];
 
     if (filter === 'premium') {
-      query = db.select({
+      result = await db.selectDistinct({
         id: users.id,
         email: users.email,
         fullName: users.fullName,
@@ -1141,7 +1137,7 @@ export class DatabaseStorage implements IStorage {
           eq(subscriptions.plan, 'premium')
         ));
     } else if (filter === 'platine') {
-      query = db.select({
+      result = await db.selectDistinct({
         id: users.id,
         email: users.email,
         fullName: users.fullName,
@@ -1151,14 +1147,27 @@ export class DatabaseStorage implements IStorage {
           sql`${users.email} IS NOT NULL AND ${users.email} != ''`,
           eq(subscriptions.plan, 'platine')
         ));
+    } else {
+      result = await db.select({
+        id: users.id,
+        email: users.email,
+        fullName: users.fullName,
+      }).from(users).where(sql`${users.email} IS NOT NULL AND ${users.email} != ''`);
     }
 
-    const result = await query;
-    return result.map(r => ({
-      id: r.id,
-      email: r.email || '',
-      fullName: r.fullName
-    }));
+    // Deduplicate by email to avoid sending duplicates
+    const seenEmails = new Set<string>();
+    return result
+      .filter(r => {
+        if (!r.email || seenEmails.has(r.email.toLowerCase())) return false;
+        seenEmails.add(r.email.toLowerCase());
+        return true;
+      })
+      .map(r => ({
+        id: r.id,
+        email: r.email || '',
+        fullName: r.fullName
+      }));
   }
 
   // Get users who need subscription reminder (14+ days old, no reminder sent yet, no paid subscription)

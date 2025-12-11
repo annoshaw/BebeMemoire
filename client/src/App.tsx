@@ -24,6 +24,7 @@ import AdminDashboard from "@/pages/admin/AdminDashboard";
 import AdminOrders from "@/pages/admin/AdminOrders";
 import AdminUsers from "@/pages/admin/AdminUsers";
 import AdminExports from "@/pages/admin/AdminExports";
+import AdminEmails from "@/pages/admin/AdminEmails";
 
 function Router() {
   return (
@@ -49,6 +50,7 @@ function Router() {
       <Route path="/app/admin/orders" component={AdminOrders} />
       <Route path="/app/admin/users" component={AdminUsers} />
       <Route path="/app/admin/exports" component={AdminExports} />
+      <Route path="/app/admin/emails" component={AdminEmails} />
       <Route component={NotFound} />
     </Switch>
   );

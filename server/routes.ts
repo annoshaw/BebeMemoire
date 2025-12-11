@@ -2119,6 +2119,117 @@ export async function registerRoutes(
     }
   });
 
+  // ============ PDF GENERATION ROUTES ============
+
+  // Generate PDF for a book
+  app.post("/api/books/:bookId/generate-pdf", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req.user as any)?.id;
+      const { bookId } = req.params;
+      const { orderId, format = 'letter' } = req.body;
+
+      const book = await storage.getBook(bookId);
+      if (!book) {
+        return res.status(404).json({ message: "Livre non trouvé" });
+      }
+      if (book.userId !== userId) {
+        return res.status(403).json({ message: "Accès refusé" });
+      }
+
+      const { generateBookPdf } = await import('./pdfService');
+      const pdfExport = await generateBookPdf({
+        bookId,
+        orderId,
+        format,
+      });
+
+      res.json({
+        id: pdfExport.id,
+        status: pdfExport.status,
+        filename: pdfExport.filename,
+        pageCount: pdfExport.pageCount,
+      });
+    } catch (error) {
+      console.error("Generate PDF error:", error);
+      res.status(500).json({ message: "Erreur lors de la génération du PDF" });
+    }
+  });
+
+  // Get PDF export status
+  app.get("/api/pdf-exports/:exportId", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req.user as any)?.id;
+      const { exportId } = req.params;
+
+      const pdfExport = await storage.getPdfExport(exportId);
+      if (!pdfExport) {
+        return res.status(404).json({ message: "Export non trouvé" });
+      }
+
+      const book = await storage.getBook(pdfExport.bookId);
+      if (!book || book.userId !== userId) {
+        return res.status(403).json({ message: "Accès refusé" });
+      }
+
+      res.json(pdfExport);
+    } catch (error) {
+      console.error("Get PDF export error:", error);
+      res.status(500).json({ message: "Erreur lors de la récupération de l'export" });
+    }
+  });
+
+  // Get signed download URL for a PDF
+  app.get("/api/pdf-exports/:exportId/download", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req.user as any)?.id;
+      const { exportId } = req.params;
+
+      const pdfExport = await storage.getPdfExport(exportId);
+      if (!pdfExport) {
+        return res.status(404).json({ message: "Export non trouvé" });
+      }
+
+      const book = await storage.getBook(pdfExport.bookId);
+      if (!book || book.userId !== userId) {
+        return res.status(403).json({ message: "Accès refusé" });
+      }
+
+      if (pdfExport.status !== 'completed') {
+        return res.status(400).json({ message: "Le PDF n'est pas encore prêt" });
+      }
+
+      const { getSignedDownloadUrl } = await import('./pdfService');
+      const downloadUrl = await getSignedDownloadUrl(pdfExport.s3Key);
+
+      res.json({ downloadUrl, filename: pdfExport.filename });
+    } catch (error) {
+      console.error("Get download URL error:", error);
+      res.status(500).json({ message: "Erreur lors de la génération de l'URL de téléchargement" });
+    }
+  });
+
+  // Get all PDF exports for a book
+  app.get("/api/books/:bookId/pdf-exports", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req.user as any)?.id;
+      const { bookId } = req.params;
+
+      const book = await storage.getBook(bookId);
+      if (!book) {
+        return res.status(404).json({ message: "Livre non trouvé" });
+      }
+      if (book.userId !== userId) {
+        return res.status(403).json({ message: "Accès refusé" });
+      }
+
+      const exports = await storage.getPdfExportsByBook(bookId);
+      res.json(exports);
+    } catch (error) {
+      console.error("Get book PDF exports error:", error);
+      res.status(500).json({ message: "Erreur lors de la récupération des exports" });
+    }
+  });
+
   // ============ ADMIN ROUTES ============
 
   // Get admin dashboard stats

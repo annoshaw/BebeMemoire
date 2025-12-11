@@ -2,7 +2,7 @@
 
 ## Overview
 
-Memoria is a modern mobile-first web application for parents to create, store, and print personalized baby memory books. The platform allows users to document their pregnancy journey and child's milestones through photos, videos, and text entries, with the ability to generate QR codes for video content in printed editions. The application supports diverse family structures including traditional births, adoptions, IVF journeys, and perinatal loss.
+Memoria is a mobile-first web application designed for parents to create, store, and print personalized baby memory books. It allows users to document pregnancy and childhood milestones with photos, videos, and text, including QR code generation for video content in printed books. The platform supports diverse family structures and aims to provide a comprehensive and inclusive memory-keeping solution.
 
 ## User Preferences
 
@@ -10,281 +10,45 @@ Preferred communication style: Simple, everyday language.
 
 ## System Architecture
 
-### Frontend Architecture
+### Frontend
 
-**Framework & Build System**
-- **React 18** with TypeScript for type-safe component development
-- **Vite** as the build tool and development server for fast HMR and optimized production builds
-- **Wouter** for lightweight client-side routing (replacing React Router)
-- **TanStack Query** (React Query) for server state management, caching, and data synchronization
+The frontend is built with **React 18** and **TypeScript**, using **Vite** for fast development and optimized builds. **Wouter** handles routing, and **TanStack Query** manages server state. The UI is styled with **Tailwind CSS v4** and **Shadcn/ui** components, featuring a custom design system with a warm, earthy color palette. **Framer Motion** provides animations. State management is handled by **Zustand**, storing book editor data like language preferences, current selections, and page content. Utility functions include `paletteExtractor` for color analysis, `contrastChecker` for accessibility, and `pdfExporter` for generating PDF outputs. A parallel **Flutter Web** frontend is under development in `/flutter_app/`, providing an alternative mobile-first experience with `provider` for state management and an onboarding wizard.
 
-**UI & Styling**
-- **Tailwind CSS v4** (via @tailwindcss/vite plugin) for utility-first styling
-- **Shadcn/ui** component library (Radix UI primitives) providing accessible, customizable components in "new-york" style
-- **Framer Motion** for animations and page transitions
-- **Lucide Icons** as the icon library
-- Custom design system with warm, earthy color palette (sage green primary, terracotta secondary)
-- Responsive mobile-first design philosophy
+### Backend
 
-**Component Organization**
-- `/client/src/components/ui/` - Shadcn UI components (buttons, forms, dialogs, etc.)
-- `/client/src/components/layout/` - Layout components (Navbar, Footer)
-- `/client/src/components/book/` - Book editor components (PageEditor, PageBlocks, FontSelector, ThemeSwitcher, ColorPicker)
-- `/client/src/pages/` - Route-level page components
-- `/client/src/store/` - Zustand state management (useMemoStore)
-- `/client/src/utils/` - Utility functions (paletteExtractor, contrastChecker, pdfExporter)
-- `/client/src/layouts/` - Layout components (PageLayout, AutoGrid)
-- `/client/src/styles/` - CSS modules (fonts.css, themes.css)
-- Path aliases configured: `@/` → client/src, `@shared/` → shared, `@assets/` → attached_assets
-
-**State Management**
-- **Zustand** store (useMemoStore) for book editor state:
-  - Language preference (fr/en)
-  - Current book/page selection
-  - Page data (text, photos, video, styles)
-  - Default title/text styles
-
-**Utility Functions**
-- **paletteExtractor** - Extract dominant colors from photos using ColorThief
-- **contrastChecker** - WCAG contrast ratio calculations for accessible text
-- **pdfExporter** - Export pages/books to PDF using jsPDF and html2canvas
-
-**Font System**
-- 12 fonts in 4 categories: Tendance, Classique, Féminin, Masculin
-- Font classes available: .font-poppins, .font-raleway, .font-georgia, etc.
-- Typography scale: .text-title-xl through .text-caption
-
-**Theme System**
-- 5 color themes: default (sage), pink, blue, green, sunset
-- Theme classes: .theme-default, .theme-pink, etc.
-- Print preview: .page-preview-8x11 for 8.5x11" format
-
-### Flutter Web Frontend (Parallel Development)
-
-**Location**: `/flutter_app/` - Alternative mobile-first Flutter web frontend accessible at `/flutter/`
-
-**Framework & Build**
-- **Flutter 3.22+** with Dart for cross-platform development
-- **Flutter Web** compiled output served from `/flutter/` route
-- Uses `provider` package for state management
-
-**Key Components**
-- `/flutter_app/lib/screens/` - Screen components (LoginScreen, HomeScreen, OnboardingWizardScreen)
-- `/flutter_app/lib/providers/` - State providers (AuthProvider, BooksProvider, OnboardingProvider, LocaleProvider)
-- `/flutter_app/lib/services/` - API service for backend communication
-- `/flutter_app/lib/theme/` - Custom theme with AppColors
-
-**Onboarding Flow**
-- Multi-step wizard for new users after registration
-- Step 1: Book type selection (born/expecting/adoption)
-- Step 2: Child name and optional gender
-- Step 3: Relevant date (birth/due/adoption date)
-- Step 4: Notification frequency preference
-- Creates first book and notification settings on completion
-
-**Build Command**: `cd flutter_app && flutter build web --base-href="/flutter/"`
-
-### Backend Architecture
-
-**Server Framework**
-- **Express.js** REST API server running on Node.js
-- **TypeScript** with ES modules for modern JavaScript features
-- Custom HTTP request logging middleware tracking request duration and responses
-
-**Development vs Production**
-- Development: Vite middleware integrated with Express for HMR
-- Production: Static file serving from pre-built `dist/public` directory
-- Build process bundles server code with esbuild, selectively bundling dependencies to reduce cold starts
-
-**Authentication & Session Management**
-- **Replit Auth** (OpenID Connect) as the primary authentication provider
-- **Passport.js** with OpenID Client strategy for authentication flow
-- **Express Session** with PostgreSQL session store (connect-pg-simple)
-- Session-based authentication with 1-week cookie lifetime
-- Secure cookies (httpOnly, secure flags enabled)
-- Custom middleware (`requireAuth`, `isAuthenticated`) for route protection
+The backend is an **Express.js** REST API server built with **Node.js** and **TypeScript**. It supports both development (Vite integration) and production environments. Authentication is handled via **Replit Auth** (OpenID Connect) and **Passport.js**, with session management using **Express Session** and a PostgreSQL store. Secure, HTTP-only cookies are used for session persistence. Middleware enforces authentication (`requireAuth`) for protected routes.
 
 ### Data Storage
 
-**Database**
-- **PostgreSQL** (Neon serverless) as the primary database
-- **Drizzle ORM** for type-safe database queries and schema management
-- Database connection via `@neondatabase/serverless` HTTP driver
-- Schema location: `shared/schema.ts`
-- Migration output directory: `./migrations`
-
-**Database Schema Design**
-- **sessions** - Passport session storage with expiry index
-- **users** - User profiles supporting both email and OAuth (Replit) authentication
-  - Fields: id, email, password (hashed), fullName, firstName, lastName, profileImageUrl, address, gender, phone, country, authProvider, onboardingCompleted, timestamps
-- **books** - Baby book/album records linked to users
-  - Fields: id, userId (foreign key), childName, coverImage, birthDate, babyStatus (born/expecting/adoption), timestamps
-- **notificationSettings** - User notification preferences
-  - Fields: userId, emailNotifications, pushNotifications, milestoneReminders, notificationFrequency (daily/weekly/monthly/none), timestamps
-- **memories** - Individual memory entries within books
-  - Fields: id, bookId (foreign key), content, media references, timestamps
-- **userPlans** - Subscription tier management (Free, Premium, Platine)
-  - Storage limits: Free (1GB photos), Premium (2GB video + unlimited photos), Platine (5GB video + unlimited photos)
-- **qrCodes** - QR code generation tracking for video content in printed books
-  - Fields: memoryId (foreign key), QR code URL/data
-
-**Storage Layer Abstraction**
-- `IStorage` interface defining all data operations
-- `DatabaseStorage` class implementing the interface with Drizzle ORM
-- Repository pattern separating business logic from data access
+**PostgreSQL** (Neon serverless) is the primary database, accessed via **Drizzle ORM** for type-safe queries. The schema defines tables for `sessions`, `users`, `books`, `notificationSettings`, `memories`, `userPlans` (for subscription tiers), and `qrCodes`. A repository pattern separates business logic from data access.
 
 ### API Structure
 
-**Authentication Endpoints**
-- `GET /api/auth/user` - Get current authenticated user (Replit Auth)
-- OAuth flow managed by Replit Auth setup (login, logout, callback routes)
+The API includes authentication endpoints (e.g., `GET /api/auth/user`) and RESTful resource endpoints for CRUD operations on books, memories, user plans, and QR codes. A key feature is "Inspiration Pages," allowing users to add custom template pages to their books. API routes are authenticated via session-based middleware.
 
-**Resource Endpoints** (Pattern: RESTful design)
-- Books CRUD operations
-- Memories CRUD operations
-- User plan management
-- QR code generation and retrieval
-- Inspiration pages management (add/delete custom pages to prebuilt books)
+### Admin Dashboard
 
-**Inspiration Pages Feature**
-- Users can add custom "inspiration" pages from a gallery of templates
-- Inspiration pages are stored as UserBookPage with `isInspirationPage: true` in customData
-- Pages are numbered sequentially after template pages (e.g., page 52+ for a 51-page template)
-- Displayed in a special "Bonus" section in the BookViewer
-- `POST /api/books/:bookId/add-inspiration-page` - Add inspiration page
-- `DELETE /api/books/:bookId/pages/:pageId` - Delete/reset page content
+An administration dashboard is accessible at `/app/admin` for users with `role = 'admin'`. It includes sections for `Overview` (KPIs, stats), `Orders` (management), `Users` (management), and `PDF Exports` (tracking). It features analytics charts for user demographics, order regions, and product types. Admins can also manage email campaigns with audience filtering and history tracking. Server-side PDF generation uses Puppeteer, with PDFs uploaded to AWS S3 and accessed via signed URLs.
 
-**Page Delete/Reset Feature**
-- Template pages (1-51): Delete button resets page to initial empty state
-- Inspiration pages: Delete button completely removes the page from the book
-- Confirmation dialog prevents accidental deletions
+### Automated Processes
 
-All API routes require authentication via session-based middleware.
+The system includes automated order management for "payment pending" orders, which are cancelled after 14 days without payment. Subscription reminders are sent once to users without paid plans 14 days after registration. An hourly cleanup job handles these processes.
 
-### External Dependencies
+## External Dependencies
 
-**Third-Party Services**
-- **Replit Auth (OpenID Connect)** - Primary authentication provider
-- **Neon Database** - Serverless PostgreSQL hosting
-- **Google Fonts** - Fraunces (serif) and DM Sans (sans-serif) typography
+### Third-Party Services
 
-**Note: AI Features Removed**
-- OpenAI integration was configured but has been removed per user request to conserve Replit credits
-- Removed features: AI-generated family tree backgrounds, spell-checker and grammar corrector
-- Family tree backgrounds now use pre-made static images only
+-   **Replit Auth (OpenID Connect)**: Primary authentication provider.
+-   **Neon Database**: Serverless PostgreSQL hosting.
+-   **Google Fonts**: Provides Fraunces and DM Sans typography.
+-   **Resend**: For transactional email sending (e.g., order cancellations, subscription reminders).
+-   **AWS S3**: For storing generated PDFs.
 
-**Key npm Packages**
-- **bcryptjs** - Password hashing (for email auth fallback)
-- **date-fns** - Date manipulation and formatting
-- **nanoid** - Unique ID generation for cache busting and identifiers
-- **zod** - Runtime schema validation
-- **drizzle-zod** - Zod schema generation from Drizzle tables
+### Key npm Packages
 
-**Development Tools**
-- **@replit/vite-plugin-cartographer** - Development navigation (Replit env only)
-- **@replit/vite-plugin-dev-banner** - Development banner (Replit env only)
-- **@replit/vite-plugin-runtime-error-modal** - Runtime error overlay
-- Custom meta images plugin for OpenGraph/Twitter card image injection
-
-**Build Dependencies**
-- **esbuild** - Server-side bundling with selective dependency inclusion
-- **tsx** - TypeScript execution for development and build scripts
-- **drizzle-kit** - Database migration management (`npm run db:push`)
-
-### Deployment Considerations
-
-**Environment Variables Required**
-- `DATABASE_URL` - PostgreSQL connection string (Neon)
-- `SESSION_SECRET` - Express session encryption key
-- `ISSUER_URL` - OpenID Connect issuer (defaults to replit.com/oidc)
-- `REPL_ID` - Replit application identifier
-- `NODE_ENV` - Environment flag (development/production)
-
-**Password Reset**
-- Password reset functionality implemented without external email service
-- In development mode, reset links are displayed in UI after requesting reset
-- Reset tokens expire after 1 hour and can only be used once
-- Note: For production, connect an email service (Resend, SendGrid) for sending reset emails
-
-**Multi-Language Support**
-- Application UI supports French (primary) and English
-- Language toggle functionality in Navbar component
-- Content prepared for Canadian and European markets
-
-**Print Integration Strategy**
-- QR code generation for embedding video links in physical books
-- Print customization options: cover type (soft/hard), finish (matte/glossy), paper quality
-- Print-on-demand model to minimize waste
-- Design supports multiple copies for separated families or gifts
-
-### Administration Dashboard
-
-**Access URL**: `/app/admin`
-
-**Admin Access**
-- Only users with `role = 'admin'` can access the admin dashboard
-- The "Espace Administrateur" link appears in the app menu (⋯) only for admins
-- All admin API routes are protected by `requireAdmin` middleware
-
-**Admin Pages**
-- **Vue d'ensemble** (`/app/admin`) - KPIs, charts, revenue statistics
-- **Commandes** (`/app/admin/orders`) - Order management with status updates
-- **Utilisateurs** (`/app/admin/users`) - User management and role changes
-- **Exports PDF** (`/app/admin/exports`) - PDF generation tracking and downloads
-
-**Promoting a User to Admin**
-Run this SQL query to make a user an administrator:
-```sql
-UPDATE users SET role = 'admin' WHERE email = 'user@example.com';
-```
-
-**Removing Admin Access**
-```sql
-UPDATE users SET role = 'user' WHERE email = 'user@example.com';
-```
-
-**PDF Generation (Server-side)**
-- Uses Puppeteer for high-quality PDF rendering
-- PDFs are uploaded to AWS S3
-- Signed URLs are generated for secure downloads (1 hour expiry)
-- Service file: `server/pdfService.ts`
-
-### Order Management & Automated Reminders
-
-**Payment Pending Orders**
-- When a user starts checkout but doesn't complete payment, the order stays in "pending_payment" status
-- After 14 days without payment, orders are automatically cancelled
-- Email is sent ONLY if payment actually failed (card declined, insufficient funds, etc.)
-- No email for abandoned checkouts (user just closed the page without trying to pay)
-
-**Subscription Reminders**
-- 14 days after registration, users without a paid subscription receive ONE reminder email
-- Email explains that the free plan will be assigned by default and that videos are not included
-- Only sent once per user (tracked via `subscriptionReminderSentAt` field)
-
-**Email Service**
-- Uses Resend integration for transactional emails
-- Service file: `server/emailService.ts`
-- Templates: Order cancellation notification, Subscription reminder
-
-**Cleanup Job**
-- Runs hourly via `server/orderCleanupJob.ts`
-- Started automatically when server boots
-- Logs all actions to console for debugging
-
-### Admin Dashboard Analytics Charts
-
-**Charts Available at `/app/admin`**
-- **Genre des utilisateurs** - Pie chart showing user gender distribution
-- **Régions** - Bar chart showing orders by city/country (top 10)
-- **Types de produits** - Doughnut chart showing product type distribution (softcover, hardcover, e-book)
-
-**API Endpoint**: `GET /api/admin/stats` returns `charts` object with:
-- `charts.gender`: { labels: string[], values: number[] }
-- `charts.region`: { labels: string[], values: number[] }
-- `charts.products`: { labels: string[], values: number[] }
-
-**Data Sources**:
-- Gender: `users.gender` field
-- Region: `orders.shippingCity` (fallback to `users.country`)
-- Products: `orders.productType` field
+-   **bcryptjs**: Password hashing.
+-   **date-fns**: Date manipulation.
+-   **nanoid**: Unique ID generation.
+-   **zod**: Runtime schema validation.
+-   **drizzle-zod**: Zod schema generation from Drizzle.
+-   **Puppeteer**: Server-side PDF rendering.

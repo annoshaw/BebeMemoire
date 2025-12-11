@@ -254,7 +254,8 @@ UPDATE users SET role = 'user' WHERE email = 'user@example.com';
 **Payment Pending Orders**
 - When a user starts checkout but doesn't complete payment, the order stays in "pending_payment" status
 - After 14 days without payment, orders are automatically cancelled
-- Only ONE email is sent: when the order is cancelled (to minimize email volume)
+- Email is sent ONLY if payment actually failed (card declined, insufficient funds, etc.)
+- No email for abandoned checkouts (user just closed the page without trying to pay)
 
 **Subscription Reminders**
 - 14 days after registration, users without a paid subscription receive ONE reminder email

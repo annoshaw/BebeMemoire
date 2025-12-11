@@ -25,8 +25,11 @@ export async function processPendingOrders(): Promise<void> {
       
       console.log(`[OrderCleanup] Cancelling order ${order.orderNumber} (${orderAge} days old)`);
       
-      // Get user info for email
-      const user = await storage.getUser(order.userId);
+      // Check if payment actually failed (not just abandoned)
+      const paymentFailed = order.paymentStatus === 'failed';
+      
+      // Get user info for email (only if payment failed)
+      const user = paymentFailed ? await storage.getUser(order.userId) : null;
       
       // Get book info for email
       const book = order.bookId ? await storage.getBook(order.bookId) : null;
@@ -35,7 +38,9 @@ export async function processPendingOrders(): Promise<void> {
       // Cancel the order
       await storage.updateOrder(order.id, { 
         status: 'cancelled',
-        adminNotes: `Auto-cancelled after ${EXPIRATION_DAYS} days without payment`
+        adminNotes: paymentFailed 
+          ? `Auto-cancelled after ${EXPIRATION_DAYS} days - payment failed`
+          : `Auto-cancelled after ${EXPIRATION_DAYS} days - abandoned checkout`
       });
       
       // Log the event
@@ -45,17 +50,20 @@ export async function processPendingOrders(): Promise<void> {
         previousStatus: 'pending_payment',
         newStatus: 'cancelled',
         description: `Commande auto-annulée après ${EXPIRATION_DAYS} jours sans paiement`,
-        metadata: { reason: 'auto_expiration', daysOld: orderAge }
+        metadata: { reason: paymentFailed ? 'payment_failed' : 'abandoned', daysOld: orderAge }
       });
       
-      // Send cancellation email (only email sent)
-      if (user?.email) {
+      // Send cancellation email ONLY if payment actually failed
+      if (paymentFailed && user?.email) {
+        console.log(`[OrderCleanup] Sending cancellation email for failed payment: ${order.orderNumber}`);
         await sendOrderCancellationEmail({
           customerEmail: user.email,
           customerName: user.fullName || user.firstName || '',
           orderNumber: order.orderNumber,
           bookName
         });
+      } else {
+        console.log(`[OrderCleanup] No email sent - order was abandoned (not failed payment)`);
       }
     }
     

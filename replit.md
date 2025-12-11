@@ -216,3 +216,35 @@ All API routes require authentication via session-based middleware.
 - Print customization options: cover type (soft/hard), finish (matte/glossy), paper quality
 - Print-on-demand model to minimize waste
 - Design supports multiple copies for separated families or gifts
+
+### Administration Dashboard
+
+**Access URL**: `/app/admin`
+
+**Admin Access**
+- Only users with `role = 'admin'` can access the admin dashboard
+- The "Espace Administrateur" link appears in the app menu (⋯) only for admins
+- All admin API routes are protected by `requireAdmin` middleware
+
+**Admin Pages**
+- **Vue d'ensemble** (`/app/admin`) - KPIs, charts, revenue statistics
+- **Commandes** (`/app/admin/orders`) - Order management with status updates
+- **Utilisateurs** (`/app/admin/users`) - User management and role changes
+- **Exports PDF** (`/app/admin/exports`) - PDF generation tracking and downloads
+
+**Promoting a User to Admin**
+Run this SQL query to make a user an administrator:
+```sql
+UPDATE users SET role = 'admin' WHERE email = 'user@example.com';
+```
+
+**Removing Admin Access**
+```sql
+UPDATE users SET role = 'user' WHERE email = 'user@example.com';
+```
+
+**PDF Generation (Server-side)**
+- Uses Puppeteer for high-quality PDF rendering
+- PDFs are uploaded to AWS S3
+- Signed URLs are generated for secure downloads (1 hour expiry)
+- Service file: `server/pdfService.ts`

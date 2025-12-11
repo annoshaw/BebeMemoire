@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Plus, Minus, Image as ImageIcon, Mic, Video, MoreHorizontal, Calendar, Share2, BookOpen, Printer, CheckCircle, Bell, QrCode, Baby, LogOut, Settings, User, Sparkles, ShoppingBag, FolderHeart, Trash2, Crown, Mail, Phone, MapPin, UserPlus, Users, Edit2, CreditCard, X, Lock, Search, Clock, AlertTriangle, Gift, Loader2, Camera, ArrowUp, ArrowDown } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Minus, Image as ImageIcon, Mic, Video, MoreHorizontal, Calendar, Share2, BookOpen, Printer, CheckCircle, Bell, QrCode, Baby, LogOut, Settings, User, Sparkles, ShoppingBag, FolderHeart, Trash2, Crown, Mail, Phone, MapPin, UserPlus, Users, Edit2, CreditCard, X, Lock, Search, Clock, AlertTriangle, Gift, Loader2, Camera, ArrowUp, ArrowDown, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/useAuth";
 import type { Book, TemplatePage, UserBookPage, TemplatePart, BookTemplate } from "@shared/schema";
 import {
   DropdownMenu,
@@ -16,6 +17,8 @@ import NotificationBell from "@/components/NotificationBell";
 import { PageThumbnail, PageThumbnailSkeleton } from "@/components/book";
 
 export default function Prototype() {
+  const { user } = useAuth();
+  const isAdmin = (user as any)?.role === "admin";
   const [activeTab, setActiveTab] = useState("creations");
   const [showNotification, setShowNotification] = useState(true);
   const [, setLocation] = useLocation();
@@ -752,6 +755,19 @@ export default function Prototype() {
                 <Bell size={16} className="mr-2" />
                 <span>Notifications</span>
               </DropdownMenuItem>
+              {isAdmin && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    className="cursor-pointer text-primary"
+                    onClick={() => setLocation("/app/admin")}
+                    data-testid="menu-admin"
+                  >
+                    <Shield size={16} className="mr-2" />
+                    <span>Espace Administrateur</span>
+                  </DropdownMenuItem>
+                </>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem 
                 className="cursor-pointer text-red-600"

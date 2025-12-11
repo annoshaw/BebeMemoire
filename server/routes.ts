@@ -2422,6 +2422,38 @@ export async function registerRoutes(
     }
   });
 
+  // Admin download PDF export
+  app.get("/api/admin/pdf-exports/:exportId/download", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const { exportId } = req.params;
+
+      const pdfExport = await storage.getPdfExport(exportId);
+      if (!pdfExport) {
+        return res.status(404).json({ message: "Export non trouvé" });
+      }
+
+      if (pdfExport.status !== 'completed') {
+        return res.status(400).json({ message: "Le PDF n'est pas encore prêt" });
+      }
+
+      const { getSignedDownloadUrl } = await import('./pdfService');
+      const downloadUrl = await getSignedDownloadUrl(pdfExport.s3Key);
+
+      res.json({ downloadUrl, filename: pdfExport.filename });
+    } catch (error: any) {
+      console.error("Admin download PDF error:", error);
+      const message = error?.message || "Erreur inconnue";
+      
+      if (message.includes('not found') || message.includes('NotFound')) {
+        return res.status(404).json({ message: "Fichier PDF introuvable dans le stockage" });
+      }
+      if (message.includes('not configured')) {
+        return res.status(503).json({ message: "Service de stockage non configuré" });
+      }
+      res.status(500).json({ message: "Erreur lors de la génération de l'URL de téléchargement" });
+    }
+  });
+
   return httpServer;
 }
 

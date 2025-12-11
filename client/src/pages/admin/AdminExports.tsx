@@ -1,28 +1,35 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, FileText, Download, Clock, CheckCircle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AdminLayout from "./AdminLayout";
+import { toast } from "sonner";
 
 interface PdfExport {
   id: string;
   bookId: string;
   orderId: string | null;
   status: string;
-  s3Key: string | null;
+  s3Key: string;
+  filename: string;
   fileSize: number | null;
+  pageCount: number | null;
   createdAt: string;
-  completedAt: string | null;
-  error: string | null;
+  generatedAt: string | null;
+  expiresAt: string | null;
+  errorMessage: string | null;
 }
 
 const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
   pending: { label: "En attente", color: "bg-yellow-100 text-yellow-700", icon: Clock },
-  processing: { label: "En cours", color: "bg-blue-100 text-blue-700", icon: Loader2 },
+  generating: { label: "En cours", color: "bg-blue-100 text-blue-700", icon: Loader2 },
   completed: { label: "Terminé", color: "bg-green-100 text-green-700", icon: CheckCircle },
   failed: { label: "Échec", color: "bg-red-100 text-red-700", icon: XCircle },
 };
 
 export default function AdminExports() {
+  const [downloading, setDownloading] = useState<string | null>(null);
+  
   const { data: exports, isLoading } = useQuery<PdfExport[]>({
     queryKey: ["/api/admin/pdf-exports"],
     queryFn: async () => {
@@ -34,6 +41,41 @@ export default function AdminExports() {
       return res.json();
     },
   });
+
+  const handleDownload = async (exportId: string, filename: string) => {
+    try {
+      setDownloading(exportId);
+      const res = await fetch(`/api/admin/pdf-exports/${exportId}/download`, {
+        credentials: "include",
+      });
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ message: "Erreur inconnue" }));
+        if (res.status === 404) {
+          toast.error("Le fichier PDF n'existe plus. Une nouvelle génération est peut-être nécessaire.");
+        } else if (res.status === 503) {
+          toast.error("Service de stockage non disponible. Réessayez plus tard.");
+        } else {
+          toast.error(errorData.message || "Erreur lors du téléchargement");
+        }
+        return;
+      }
+      
+      const data = await res.json();
+      const link = document.createElement("a");
+      link.href = data.downloadUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success("Téléchargement démarré");
+    } catch (error) {
+      console.error("Download error:", error);
+      toast.error("Erreur réseau lors du téléchargement");
+    } finally {
+      setDownloading(null);
+    }
+  };
 
   const formatFileSize = (bytes: number | null) => {
     if (!bytes) return "-";
@@ -84,7 +126,7 @@ export default function AdminExports() {
                       </td>
                       <td className="px-4 py-3">
                         <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium ${config.color}`}>
-                          <StatusIcon size={12} className={exp.status === "processing" ? "animate-spin" : ""} />
+                          <StatusIcon size={12} className={exp.status === "generating" ? "animate-spin" : ""} />
                           {config.label}
                         </span>
                       </td>
@@ -94,13 +136,22 @@ export default function AdminExports() {
                       </td>
                       <td className="px-4 py-3 text-right">
                         {exp.status === "completed" && exp.s3Key && (
-                          <Button variant="ghost" size="sm">
-                            <Download size={14} className="mr-1" />
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => handleDownload(exp.id, exp.filename)}
+                            disabled={downloading === exp.id}
+                          >
+                            {downloading === exp.id ? (
+                              <Loader2 size={14} className="mr-1 animate-spin" />
+                            ) : (
+                              <Download size={14} className="mr-1" />
+                            )}
                             Télécharger
                           </Button>
                         )}
-                        {exp.error && (
-                          <span className="text-xs text-red-600" title={exp.error}>
+                        {exp.errorMessage && (
+                          <span className="text-xs text-red-600" title={exp.errorMessage}>
                             Erreur
                           </span>
                         )}

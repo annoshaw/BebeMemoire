@@ -1,5 +1,5 @@
 import puppeteer from 'puppeteer';
-import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { storage } from './storage';
 import type { PdfExport } from '@shared/schema';
@@ -318,7 +318,35 @@ export async function generateBookPdf(options: GeneratePdfOptions): Promise<PdfE
   }
 }
 
+export async function checkS3ObjectExists(s3Key: string): Promise<boolean> {
+  if (!S3_BUCKET) {
+    throw new Error('S3 bucket not configured');
+  }
+  
+  try {
+    await s3Client.send(new HeadObjectCommand({
+      Bucket: S3_BUCKET,
+      Key: s3Key,
+    }));
+    return true;
+  } catch (error: any) {
+    if (error.name === 'NotFound' || error.$metadata?.httpStatusCode === 404) {
+      return false;
+    }
+    throw error;
+  }
+}
+
 export async function getSignedDownloadUrl(s3Key: string, expiresIn: number = 3600): Promise<string> {
+  if (!S3_BUCKET) {
+    throw new Error('S3 bucket not configured');
+  }
+  
+  const exists = await checkS3ObjectExists(s3Key);
+  if (!exists) {
+    throw new Error('PDF file not found in storage');
+  }
+  
   const command = new GetObjectCommand({
     Bucket: S3_BUCKET,
     Key: s3Key,

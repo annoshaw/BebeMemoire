@@ -5,7 +5,8 @@ import {
   Search,
   Shield,
   User,
-  MoreHorizontal
+  MoreHorizontal,
+  KeyRound
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +16,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import AdminLayout from "./AdminLayout";
 
@@ -31,6 +41,8 @@ interface UserData {
 
 export default function AdminUsers() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [resetPasswordDialog, setResetPasswordDialog] = useState<{ open: boolean; user: UserData | null }>({ open: false, user: null });
+  const [newPassword, setNewPassword] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -60,6 +72,30 @@ export default function AdminUsers() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       toast({ title: "Rôle mis à jour" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const resetPasswordMutation = useMutation({
+    mutationFn: async ({ userId, newPassword }: { userId: string; newPassword: string }) => {
+      const res = await fetch(`/api/admin/users/${userId}/reset-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ newPassword }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || "Erreur réinitialisation");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      setResetPasswordDialog({ open: false, user: null });
+      setNewPassword("");
+      toast({ title: "Mot de passe réinitialisé", description: "L'utilisateur peut maintenant se connecter avec le nouveau mot de passe." });
     },
     onError: (error: Error) => {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
@@ -175,6 +211,16 @@ export default function AdminUsers() {
                                 Promouvoir admin
                               </DropdownMenuItem>
                             )}
+                            <DropdownMenuItem 
+                              onClick={() => {
+                                setNewPassword("");
+                                setResetPasswordDialog({ open: true, user });
+                              }}
+                              data-testid={`reset-password-${user.id}`}
+                            >
+                              <KeyRound size={14} className="mr-2" />
+                              Réinitialiser mot de passe
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </td>
@@ -191,6 +237,47 @@ export default function AdminUsers() {
             </table>
           </div>
         )}
+
+        <Dialog open={resetPasswordDialog.open} onOpenChange={(open) => setResetPasswordDialog({ open, user: open ? resetPasswordDialog.user : null })}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Réinitialiser le mot de passe</DialogTitle>
+              <DialogDescription>
+                Définissez un nouveau mot de passe pour {resetPasswordDialog.user?.email}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="newPassword">Nouveau mot de passe</Label>
+                <Input
+                  id="newPassword"
+                  type="text"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Minimum 6 caractères"
+                  data-testid="input-new-password"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setResetPasswordDialog({ open: false, user: null })}>
+                Annuler
+              </Button>
+              <Button
+                onClick={() => {
+                  if (resetPasswordDialog.user) {
+                    resetPasswordMutation.mutate({ userId: resetPasswordDialog.user.id, newPassword });
+                  }
+                }}
+                disabled={newPassword.length < 6 || resetPasswordMutation.isPending}
+                data-testid="button-confirm-reset"
+              >
+                {resetPasswordMutation.isPending ? <Loader2 size={16} className="animate-spin mr-2" /> : null}
+                Réinitialiser
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminLayout>
   );

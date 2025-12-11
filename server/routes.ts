@@ -2487,6 +2487,46 @@ export async function registerRoutes(
     }
   });
 
+  // Admin reset user password
+  app.post("/api/admin/users/:userId/reset-password", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const adminId = (req as any).userId;
+      const { userId } = req.params;
+      const { newPassword } = req.body;
+
+      if (!newPassword || newPassword.length < 6) {
+        return res.status(400).json({ message: "Le mot de passe doit contenir au moins 6 caractères" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "Utilisateur non trouvé" });
+      }
+
+      if (user.authProvider !== 'email') {
+        return res.status(400).json({ message: "Cet utilisateur utilise une connexion externe (Google, etc.)" });
+      }
+
+      const bcrypt = await import('bcryptjs');
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      await storage.updateUserPassword(userId, hashedPassword);
+
+      await storage.createAdminActivityLog({
+        adminId,
+        action: "password_reset",
+        targetType: "user",
+        targetId: userId,
+        details: { email: user.email },
+      });
+
+      console.log(`Admin ${adminId} reset password for user ${user.email}`);
+      res.json({ message: "Mot de passe réinitialisé avec succès" });
+    } catch (error) {
+      console.error("Admin reset password error:", error);
+      res.status(500).json({ message: "Erreur lors de la réinitialisation du mot de passe" });
+    }
+  });
+
   // Get admin activity logs
   app.get("/api/admin/activity-logs", requireAdmin, async (req: Request, res: Response) => {
     try {

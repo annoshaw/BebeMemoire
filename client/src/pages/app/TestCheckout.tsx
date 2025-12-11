@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { CreditCard, Loader2, ShieldCheck, ExternalLink } from "lucide-react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -20,11 +20,24 @@ export default function TestCheckout() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Get params from URL: /app/test-checkout?bookId=xxx&product=softcover&pages=50
+  // Get params from URL
   const params = new URLSearchParams(window.location.search);
   const bookId = params.get("bookId");
   const productType = (params.get("product") as ProductType) || "softcover";
-  const pageCount = parseInt(params.get("pages") || "50");
+
+  // Fetch book page count from API
+  const { data: bookData, isLoading: isLoadingPages } = useQuery({
+    queryKey: [`/api/books/${bookId}/pages`],
+    queryFn: async () => {
+      const res = await fetch(`/api/books/${bookId}/pages`, { credentials: "include" });
+      if (!res.ok) return { templatePages: [] };
+      return res.json();
+    },
+    enabled: !!bookId,
+  });
+
+  // Calculate page count from templatePages array
+  const pageCount = bookData?.templatePages?.length || 50;
 
   // Calculate total for display
   const INCLUDED_PAGES = 50;

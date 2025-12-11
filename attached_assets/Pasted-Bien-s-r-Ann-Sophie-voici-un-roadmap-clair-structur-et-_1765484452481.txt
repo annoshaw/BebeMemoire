@@ -1,0 +1,97 @@
+Bien sûr Ann‑Sophie — voici un roadmap clair, structuré et actionnable que tu peux remettre tel quel à ton développeur sur Replit pour qu’il implémente des graphiques dans ton tableau de bord admin (genre, région, type de produit acheté).
+Je l’ai conçu pour être compréhensible, séquentiel et directement exploitable dans un environnement Replit.
+
+✅ ROADMAP : Ajouter des graphiques dans le tableau de bord admin de Mémo
+1. Mettre en place la collecte des données
+Avant d’afficher des graphiques, Replit doit s’assurer que les données sont bien enregistrées.
+✅ Données à stocker pour chaque utilisateur
+- gender (ex. femme, homme, non-binaire, préfère ne pas répondre)
+- address ou region (ville, province, pays)
+- product_type (ex. livre papier, e-book, premium, platine)
+✅ Actions Replit
+- Vérifier que ces champs existent dans la base de données.
+- Si non, les ajouter dans le modèle utilisateur et dans le modèle d’achat.
+- S’assurer que les formulaires d’inscription et d’achat enregistrent bien ces informations.
+
+2. Créer une API interne pour récupérer les statistiques
+Le tableau de bord admin doit pouvoir appeler une route qui renvoie les données agrégées.
+✅ Routes à créer
+- /admin/stats/gender
+- /admin/stats/region
+- /admin/stats/products
+✅ Format de réponse attendu (exemple)
+{
+  "labels": ["Femme", "Homme", "Non-binaire"],
+  "values": [120, 80, 15]
+}
+
+
+✅ Actions Replit
+- Écrire des requêtes qui comptent les utilisateurs par genre.
+- Regrouper les régions (ex. Saguenay, Québec, Montréal…).
+- Compter les types de produits achetés.
+
+3. Ajouter une librairie de graphiques dans le tableau de bord
+Le plus simple pour Replit : Chart.js (léger, moderne, facile).
+✅ Actions Replit
+- Ajouter Chart.js dans le template admin.
+- Créer trois <canvas> dans la page admin :
+- #chartGender
+- #chartRegion
+- #chartProducts
+
+4. Connecter les graphiques aux données
+Chaque graphique doit appeler l’API créée à l’étape 2.
+✅ Exemple de code (Chart.js)
+fetch('/admin/stats/gender')
+  .then(res => res.json())
+  .then(data => {
+    new Chart(document.getElementById('chartGender'), {
+      type: 'pie',
+      data: {
+        labels: data.labels,
+        datasets: [{
+          data: data.values,
+          backgroundColor: ['#6A9FB5', '#F4A261', '#E76F51']
+        }]
+      }
+    });
+  });
+
+
+✅ Actions Replit
+- Répéter pour les régions (graphique en barres).
+- Répéter pour les produits (graphique en doughnut ou barres).
+
+5. Sécuriser l’accès au tableau de bord
+Seuls les administrateurs doivent voir les graphiques.
+✅ Actions Replit
+- Vérifier que la route /admin/dashboard est protégée par un middleware admin_only.
+- Masquer les graphiques pour les utilisateurs non-admin.
+
+6. Tester avec des données réelles
+✅ Actions Replit
+- Créer quelques utilisateurs fictifs avec différents genres.
+- Ajouter des adresses variées (Saguenay, Québec, Montréal…).
+- Simuler des achats de différents produits.
+- Vérifier que les graphiques se mettent à jour automatiquement.
+
+7. Documenter l’accès pour toi
+Replit doit te fournir :
+- L’URL exacte du tableau de bord admin
+- Comment ajouter un nouvel admin
+- Comment modifier les graphiques ou ajouter de nouvelles statistiques
+
+✅ Résultat final attendu
+Dans ton tableau de bord admin, tu verras :
+📊 1. Un graphique du genre des utilisateurs
+- Pie chart ou doughnut
+- Données en temps réel
+🗺️ 2. Un graphique des régions
+- Bar chart
+- Basé sur l’adresse entrée par l’utilisateur
+🛒 3. Un graphique des types de produits achetés
+- Bar chart ou doughnut
+- Très utile pour analyser les ventes
+
+Si tu veux, je peux aussi te préparer le message exact à envoyer à ton développeur Replit, ou même le code complet du tableau de bord admin.

@@ -146,6 +146,11 @@ export interface IStorage {
   getSubscriptionStats(): Promise<{ plan: string; count: number }[]>;
   getOrderStats(): Promise<{ status: string; count: number; totalAmount: number }[]>;
   getRevenueStats(days: number): Promise<{ date: string; amount: number }[]>;
+  
+  // Analytics charts
+  getGenderStats(): Promise<{ labels: string[]; values: number[] }>;
+  getRegionStats(): Promise<{ labels: string[]; values: number[] }>;
+  getProductStats(): Promise<{ labels: string[]; values: number[] }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -988,6 +993,99 @@ export class DatabaseStorage implements IStorage {
       date: r.date,
       amount: parseInt(r.amount || "0", 10)
     }));
+  }
+
+  // Analytics: Gender statistics
+  async getGenderStats(): Promise<{ labels: string[]; values: number[] }> {
+    const result = await db.select({
+      gender: users.gender,
+      count: count()
+    })
+      .from(users)
+      .groupBy(users.gender);
+    
+    const genderLabels: Record<string, string> = {
+      "female": "Femme",
+      "male": "Homme",
+      "non-binary": "Non-binaire",
+      "prefer_not_to_say": "Préfère ne pas répondre",
+      "other": "Autre"
+    };
+    
+    const labels: string[] = [];
+    const values: number[] = [];
+    
+    result.forEach(r => {
+      const label = r.gender ? (genderLabels[r.gender] || r.gender) : "Non spécifié";
+      labels.push(label);
+      values.push(r.count);
+    });
+    
+    return { labels, values };
+  }
+
+  // Analytics: Region statistics (based on country and shipping city)
+  async getRegionStats(): Promise<{ labels: string[]; values: number[] }> {
+    // First try to get stats from order shipping cities, then fall back to user countries
+    const shippingResult = await db.select({
+      city: orders.shippingCity,
+      count: count()
+    })
+      .from(orders)
+      .where(sql`${orders.shippingCity} IS NOT NULL AND ${orders.shippingCity} != ''`)
+      .groupBy(orders.shippingCity)
+      .orderBy(sql`count(*) DESC`)
+      .limit(10);
+    
+    if (shippingResult.length > 0) {
+      return {
+        labels: shippingResult.map(r => r.city || "Inconnu"),
+        values: shippingResult.map(r => r.count)
+      };
+    }
+    
+    // Fall back to user countries
+    const countryResult = await db.select({
+      country: users.country,
+      count: count()
+    })
+      .from(users)
+      .where(sql`${users.country} IS NOT NULL AND ${users.country} != ''`)
+      .groupBy(users.country)
+      .orderBy(sql`count(*) DESC`)
+      .limit(10);
+    
+    return {
+      labels: countryResult.map(r => r.country || "Non spécifié"),
+      values: countryResult.map(r => r.count)
+    };
+  }
+
+  // Analytics: Product type statistics
+  async getProductStats(): Promise<{ labels: string[]; values: number[] }> {
+    const result = await db.select({
+      productType: orders.productType,
+      count: count()
+    })
+      .from(orders)
+      .groupBy(orders.productType);
+    
+    const productLabels: Record<string, string> = {
+      "softcover": "Couverture souple",
+      "hardcover": "Couverture rigide",
+      "ebook": "E-book"
+    };
+    
+    const labels: string[] = [];
+    const values: number[] = [];
+    
+    result.forEach(r => {
+      const label = r.productType ? (productLabels[r.productType] || r.productType) : "Non spécifié";
+      labels.push(label);
+      values.push(r.count);
+    });
+    
+    return { labels, values };
   }
 
   // Get users who need subscription reminder (14+ days old, no reminder sent yet, no paid subscription)

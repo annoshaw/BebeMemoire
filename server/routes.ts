@@ -2235,13 +2235,16 @@ export async function registerRoutes(
   // Get admin dashboard stats
   app.get("/api/admin/stats", requireAdmin, async (req: Request, res: Response) => {
     try {
-      const [usersCount, ordersCount, ordersByStatus, subscriptionStats, orderStats, revenueStats] = await Promise.all([
+      const [usersCount, ordersCount, ordersByStatus, subscriptionStats, orderStats, revenueStats, genderStats, regionStats, productStats] = await Promise.all([
         storage.getUsersCount(),
         storage.getOrdersCount(),
         storage.getOrdersCountByStatus(),
         storage.getSubscriptionStats(),
         storage.getOrderStats(),
         storage.getRevenueStats(30),
+        storage.getGenderStats(),
+        storage.getRegionStats(),
+        storage.getProductStats(),
       ]);
 
       res.json({
@@ -2250,6 +2253,11 @@ export async function registerRoutes(
         subscriptions: subscriptionStats,
         orderStats,
         revenue: { last30Days: revenueStats },
+        charts: {
+          gender: genderStats,
+          region: regionStats,
+          products: productStats,
+        },
       });
     } catch (error) {
       console.error("Admin stats error:", error);

@@ -556,7 +556,8 @@ export default function Prototype() {
 
   const handleSelectProduct = (productType: "softcover" | "hardcover" | "ebook") => {
     // Redirect to Stripe checkout page with parameters
-    const pageCount = bookPages.length + memories.length || 50;
+    // Use template page count based on book type: expecting=51, born=29, adoption=53
+    const pageCount = 51; // Default for expecting template
     setLocation(`/app/test-checkout?bookId=${activeBookId}&product=${productType}&pages=${pageCount}`);
   };
 

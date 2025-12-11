@@ -181,7 +181,7 @@ export default function TestCheckout() {
   return (
     <div className="min-h-screen bg-stone-100 flex items-center justify-center p-4">
       <Dialog open={showDialog} onOpenChange={(open) => !open && handleCancel()}>
-        <DialogContent className="max-w-md rounded-2xl">
+        <DialogContent className="max-w-md rounded-2xl max-h-[85vh] overflow-y-auto">
           {step === "select" ? (
             <>
               <DialogHeader className="text-center">

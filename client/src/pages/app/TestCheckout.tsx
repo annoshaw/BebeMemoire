@@ -135,7 +135,12 @@ export default function TestCheckout() {
       return checkoutUrl;
     },
     onSuccess: (checkoutUrl) => {
-      window.location.href = checkoutUrl;
+      // Use window.open for better cross-origin redirect handling
+      const newWindow = window.open(checkoutUrl, '_blank');
+      if (!newWindow) {
+        // Fallback if popup is blocked
+        window.location.href = checkoutUrl;
+      }
     },
     onError: (err: Error) => {
       setError(err.message);

@@ -271,3 +271,20 @@ UPDATE users SET role = 'user' WHERE email = 'user@example.com';
 - Runs hourly via `server/orderCleanupJob.ts`
 - Started automatically when server boots
 - Logs all actions to console for debugging
+
+### Admin Dashboard Analytics Charts
+
+**Charts Available at `/app/admin`**
+- **Genre des utilisateurs** - Pie chart showing user gender distribution
+- **Régions** - Bar chart showing orders by city/country (top 10)
+- **Types de produits** - Doughnut chart showing product type distribution (softcover, hardcover, e-book)
+
+**API Endpoint**: `GET /api/admin/stats` returns `charts` object with:
+- `charts.gender`: { labels: string[], values: number[] }
+- `charts.region`: { labels: string[], values: number[] }
+- `charts.products`: { labels: string[], values: number[] }
+
+**Data Sources**:
+- Gender: `users.gender` field
+- Region: `orders.shippingCity` (fallback to `users.country`)
+- Products: `orders.productType` field

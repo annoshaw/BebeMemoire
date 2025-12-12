@@ -1,0 +1,56 @@
+📋 Plan d'implémentation - Backend Memoria
+Phase 0 : Fondations (Complexité: Faible)
+Configuration des secrets (clés Stripe, webhook, SMTP)
+Installation des SDK (Stripe, service email)
+Middleware d'authentification par rôle (admin vs utilisateur)
+Système de jobs en arrière-plan
+Phase 1 : Modèle de données (Complexité: Moyenne)
+Nouvelles tables à créer :
+
+Table	Description
+subscriptions	stripeCustomerId, plan, status, currentPeriodEnd
+payments	stripePaymentIntentId, amount, currency, type
+orders	status (à faire/en cours/exécuté), totalAmount, adresse
+order_items	bookId, pageCount, basePrice, extraPagePrice
+order_events	historique des changements de statut
+pdf_exports	bookId, storageKey, generatedAt
+email_notifications	type, payload, deliveredAt
+Modifications utilisateurs : Ajouter rôle (user/admin), adresse de facturation
+
+Phase 2 : Paiements Stripe (Complexité: Élevée)
+Endpoints API :
+
+POST /api/billing/customer - Créer client Stripe
+GET /api/billing/portal - Portail de gestion
+POST /api/billing/subscriptions - Session checkout abonnement
+POST /api/orders/checkout - Paiement commande
+POST /api/webhooks/stripe - Réception webhooks
+Frontend : Connecter les boutons de paiement existants à Stripe Checkout
+
+Phase 3 : Gestion des commandes & PDF (Complexité: Élevée)
+Fonctionnalités :
+
+CRUD commandes avec statuts
+Génération PDF en arrière-plan (Puppeteer/headless Chrome)
+Upload PDF vers S3
+Notifications email automatiques
+Historique des modifications
+Phase 4 : Dashboard Admin (Complexité: Moyenne)
+Endpoints :
+
+/api/admin/metrics - Statistiques (abonnements, revenus, commandes)
+/api/admin/users - Liste utilisateurs
+/api/admin/orders - Gestion commandes
+Interface :
+
+Page admin sécurisée (/admin)
+Graphiques avec Recharts
+Tableau kanban des commandes
+Téléchargement PDF
+Export CSV
+Phase 5 : Sécurité & Monitoring (Complexité: Moyenne)
+Rate limiting sur routes sensibles
+Protection CSRF/XSS (Helmet)
+Logs d'audit actions admin
+Health check & monitoring
+Vérification signature webhooks Stripe

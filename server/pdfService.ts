@@ -246,30 +246,57 @@ export async function generateBookPdf(options: GeneratePdfOptions): Promise<PdfE
   });
 
   try {
-    const response = await fetch(`${process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : 'http://localhost:5000'}/api/books/${bookId}/pages`);
-    if (!response.ok) {
-      throw new Error('Failed to fetch book pages');
+    // Directly query the database instead of making an HTTP request
+    const userPages = await storage.getUserBookPages(bookId);
+    
+    // Get template pages if it's a prebuilt book
+    let allTemplatePages: any[] = [];
+    if (book.templateSlug) {
+      const template = await storage.getBookTemplateBySlug(book.templateSlug);
+      if (template) {
+        allTemplatePages = await storage.getTemplatePages(template.id);
+      }
     }
-    const bookData = await response.json();
     
     const pages: BookPageData[] = [];
-    const userPagesMap = new Map(bookData.pages.map((p: any) => [p.pageNumber, p]));
+    const userPagesMap = new Map(userPages.map((p: any) => [p.pageNumber, p]));
 
-    for (const templatePage of bookData.templatePages || []) {
-      const userPage = userPagesMap.get(templatePage.pageNumber) as any;
-      
-      pages.push({
-        pageNumber: templatePage.pageNumber,
-        title: templatePage.titleFr || templatePage.title,
-        subtitle: templatePage.subtitleFr || templatePage.subtitle,
-        photos: userPage?.photos || [],
-        textBlocks: userPage?.textBlocks || [],
-        titleStyle: userPage?.titleStyle || {},
-        collageStyle: userPage?.collageStyle || 'grid',
-        textPlacement: userPage?.textPlacement || 'top',
-        videoUrl: userPage?.videoUrl,
-        qrCodeData: userPage?.qrCodeData,
-      });
+    // Use template pages if available, otherwise use user pages directly
+    if (allTemplatePages.length > 0) {
+      for (const templatePage of allTemplatePages) {
+        const userPage = userPagesMap.get(templatePage.pageNumber) as any;
+        
+        pages.push({
+          pageNumber: templatePage.pageNumber,
+          title: templatePage.titleFr || templatePage.titleEn,
+          subtitle: templatePage.subtitleFr || templatePage.subtitleEn,
+          photos: userPage?.photos || [],
+          textBlocks: userPage?.textBlocks || [],
+          titleStyle: userPage?.titleStyle || {},
+          collageStyle: userPage?.collageStyle || 'grid',
+          textPlacement: userPage?.textPlacement || 'top',
+          videoUrl: userPage?.videoUrl,
+          qrCodeData: userPage?.qrCodeData,
+        });
+      }
+    } else {
+      // Fallback for non-template books
+      for (const userPage of userPages) {
+        const customData = (userPage.customData || {}) as any;
+        const photos = Array.isArray(userPage.photos) ? userPage.photos : [];
+        pages.push({
+          pageNumber: userPage.pageNumber,
+          title: userPage.titleOverride || `Page ${userPage.pageNumber}`,
+          subtitle: undefined,
+          photos: photos as string[],
+          textBlocks: customData.textBlocks || [],
+          titleStyle: customData.titleStyle || {},
+          collageStyle: customData.collageStyle || 'grid',
+          textPlacement: customData.textPlacement || 'top',
+          videoUrl: userPage.videoUrl || undefined,
+          qrCodeData: customData.qrCodeData || undefined,
+        });
+      }
     }
 
     const html = generateFullHtml(pages, format);

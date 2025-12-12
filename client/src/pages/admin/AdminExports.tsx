@@ -119,10 +119,11 @@ export default function AdminExports() {
           </div>
         ) : exports && exports.length > 0 ? (
           <div className="bg-white rounded-xl border border-stone-200 overflow-x-auto">
-            <table className="w-full min-w-[800px]">
+            <table className="w-full min-w-[900px]">
               <thead className="bg-stone-50 border-b border-stone-200">
                 <tr>
                   <th className="text-left px-4 py-3 text-sm font-medium text-stone-600">ID</th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-stone-600">Client</th>
                   <th className="text-left px-4 py-3 text-sm font-medium text-stone-600">Livre</th>
                   <th className="text-left px-4 py-3 text-sm font-medium text-stone-600">Commande</th>
                   <th className="text-left px-4 py-3 text-sm font-medium text-stone-600">Statut</th>
@@ -139,6 +140,14 @@ export default function AdminExports() {
                     <tr key={exp.id} className="hover:bg-stone-50">
                       <td className="px-4 py-3">
                         <span className="font-mono text-xs">{exp.id.slice(0, 8)}...</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium text-stone-800">{(exp as any).customerName || "-"}</span>
+                          {(exp as any).customerEmail && (
+                            <span className="text-xs text-stone-500">{(exp as any).customerEmail}</span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-4 py-3">
                         <span className="font-mono text-xs">{exp.bookId.slice(0, 8)}...</span>

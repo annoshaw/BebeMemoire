@@ -2539,12 +2539,45 @@ export async function registerRoutes(
     }
   });
 
-  // Get all PDF exports (admin)
+  // Get all PDF exports (admin) with customer names
   app.get("/api/admin/pdf-exports", requireAdmin, async (req: Request, res: Response) => {
     try {
       const { limit = 50, offset = 0 } = req.query;
       const exports = await storage.getAllPdfExports(Number(limit), Number(offset));
-      res.json(exports);
+      
+      // Enrich exports with customer names from orders
+      const enrichedExports = await Promise.all(exports.map(async (exp) => {
+        let customerName = null;
+        let customerEmail = null;
+        
+        if (exp.orderId) {
+          const order = await storage.getOrder(exp.orderId);
+          if (order) {
+            customerName = order.customerName;
+            customerEmail = order.customerEmail;
+          }
+        }
+        
+        // If no order, try to get user from book
+        if (!customerName) {
+          const book = await storage.getBook(exp.bookId);
+          if (book) {
+            const user = await storage.getUser(book.userId);
+            if (user) {
+              customerName = user.fullName;
+              customerEmail = user.email;
+            }
+          }
+        }
+        
+        return {
+          ...exp,
+          customerName,
+          customerEmail,
+        };
+      }));
+      
+      res.json(enrichedExports);
     } catch (error) {
       console.error("Admin pdf exports error:", error);
       res.status(500).json({ message: "Erreur lors de la récupération des exports" });

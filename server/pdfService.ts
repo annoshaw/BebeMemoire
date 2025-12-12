@@ -51,15 +51,28 @@ interface GeneratePdfOptions {
 }
 
 const FORMAT_DIMENSIONS = {
-  letter: { width: 8.5, height: 11 },
+  letter: { width: 8, height: 11 },  // 8x11 book format
   a4: { width: 8.27, height: 11.69 },
 };
 
-function generatePageHtml(page: BookPageData, format: 'letter' | 'a4' = 'letter'): string {
+// Book printing margins (in inches)
+const BOOK_MARGINS = {
+  top: 0.75,
+  bottom: 0.75,
+  inside: 0.875,  // Gutter margin for binding
+  outside: 0.625,
+};
+
+function generatePageHtml(page: BookPageData, format: 'letter' | 'a4' = 'letter', pageIndex: number = 0): string {
   const dims = FORMAT_DIMENSIONS[format];
   const hasText = page.textBlocks?.some(block => block.content?.trim());
   const hasPhotos = page.photos?.length > 0;
   const textPlacement = hasText ? (page.textPlacement || 'top') : 'none';
+  
+  // Alternating margins for book binding (odd pages = right side, even pages = left side)
+  const isRightPage = pageIndex % 2 === 0; // First page (index 0) is right page
+  const marginLeft = isRightPage ? BOOK_MARGINS.inside : BOOK_MARGINS.outside;
+  const marginRight = isRightPage ? BOOK_MARGINS.outside : BOOK_MARGINS.inside;
 
   const titleHtml = page.title ? `
     <header style="
@@ -170,7 +183,7 @@ function generatePageHtml(page: BookPageData, format: 'letter' | 'a4' = 'letter'
     <div style="
       width: ${dims.width}in;
       height: ${dims.height}in;
-      padding: 0.5in;
+      padding: ${BOOK_MARGINS.top}in ${marginRight}in ${BOOK_MARGINS.bottom}in ${marginLeft}in;
       box-sizing: border-box;
       display: flex;
       flex-direction: column;
@@ -224,7 +237,7 @@ function generateFullHtml(pages: BookPageData[], format: 'letter' | 'a4' = 'lett
       </style>
     </head>
     <body>
-      ${pages.map(page => generatePageHtml(page, format)).join('')}
+      ${pages.map((page, index) => generatePageHtml(page, format, index)).join('')}
     </body>
     </html>
   `;

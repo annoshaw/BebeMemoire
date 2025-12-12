@@ -34,6 +34,25 @@ An administration dashboard is accessible at `/app/admin` for users with `role =
 
 The system includes automated order management for "payment pending" orders, which are cancelled after 14 days without payment. Subscription reminders are sent once to users without paid plans 14 days after registration. An hourly cleanup job handles these processes.
 
+### PDF/Order Status Synchronization
+
+PDF export status and order status are synchronized with manual override priority:
+- **Status values**: pending, generating, completed, downloaded, sent, failed
+- **Automatic sync**: PDF 'downloaded' → Order 'processing', PDF 'sent' → Order 'shipped'
+- **Manual override**: Admin status changes set `manualOverride=true`, preventing automatic updates
+- **Reset**: Optional `resetManualOverride` flag to re-enable automatic sync
+- Failures always update status regardless of override (safety measure)
+
+### Security Features
+
+- **Helmet**: CSP headers with stricter policy in production (no unsafe-eval/inline)
+- **Rate limiting**: Applied before body parsing to prevent DoS attacks
+  - Auth routes: 20 requests / 15 min
+  - Password reset: 10 requests / hour
+  - API/Admin: 100 requests / min
+- **Webhook verification**: Stripe signature validation with proper error propagation
+- **Health check**: GET /api/health monitors database, Stripe, S3, email services
+
 ## External Dependencies
 
 ### Third-Party Services

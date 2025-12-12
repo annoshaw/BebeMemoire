@@ -2727,7 +2727,7 @@ export async function registerRoutes(
     }
   });
 
-  // Admin update PDF export status
+  // Admin update PDF export status (with order sync)
   app.patch("/api/admin/pdf-exports/:exportId/status", requireAdmin, async (req: Request, res: Response) => {
     try {
       const { exportId } = req.params;
@@ -2744,6 +2744,29 @@ export async function registerRoutes(
       }
       
       const updatedExport = await storage.updatePdfExport(exportId, { status });
+      
+      // Sync order status based on PDF export status
+      if (pdfExport.orderId) {
+        const order = await storage.getOrder(pdfExport.orderId);
+        if (order) {
+          let newOrderStatus: string | null = null;
+          
+          // PDF "downloaded" (En traitement) → Order "processing"
+          if (status === 'downloaded' && order.status === 'paid') {
+            newOrderStatus = 'processing';
+          }
+          // PDF "sent" (Expédiée) → Order "shipped"
+          else if (status === 'sent' && ['paid', 'processing'].includes(order.status)) {
+            newOrderStatus = 'shipped';
+          }
+          
+          if (newOrderStatus) {
+            await storage.updateOrder(pdfExport.orderId, { status: newOrderStatus });
+            console.log(`Order ${pdfExport.orderId} synced to ${newOrderStatus} (PDF status: ${status})`);
+          }
+        }
+      }
+      
       res.json(updatedExport);
     } catch (error) {
       console.error("Admin update PDF status error:", error);

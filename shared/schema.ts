@@ -514,6 +514,7 @@ export type InsertPayment = z.infer<typeof insertPaymentSchema>;
 export type Payment = typeof payments.$inferSelect;
 
 // PDF Exports table - Track generated PDFs
+// Shared status values: pending, generating, completed, downloaded, sent, failed
 export const pdfExports = pgTable("pdf_exports", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   bookId: varchar("book_id").notNull().references(() => books.id, { onDelete: "cascade" }),
@@ -522,7 +523,8 @@ export const pdfExports = pgTable("pdf_exports", {
   filename: text("filename").notNull(),
   fileSize: integer("file_size"), // in bytes
   pageCount: integer("page_count"),
-  status: text("status").notNull().default("pending"), // pending, generating, completed, failed
+  status: text("status").notNull().default("pending"), // pending, generating, completed, downloaded, sent, failed
+  manualOverride: boolean("manual_override").default(false), // true if status was manually set by admin
   generatedAt: timestamp("generated_at"),
   expiresAt: timestamp("expires_at"), // For temporary download links
   errorMessage: text("error_message"),

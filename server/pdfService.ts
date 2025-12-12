@@ -367,17 +367,26 @@ export async function generateBookPdf(options: GeneratePdfOptions): Promise<PdfE
       console.log(`PDF without videos stored locally: ${localPath}`);
     }
 
+    // Check if this export has a manual override - if so, don't change status automatically
+    const currentExport = await storage.getPdfExport(pdfExport.id);
+    const shouldUpdateStatus = !currentExport?.manualOverride;
+    
     const updatedExport = await storage.updatePdfExport(pdfExport.id, {
-      status: 'completed',
+      ...(shouldUpdateStatus ? { status: 'completed' } : {}),
       fileSize: pdfBuffer.length,
       pageCount: pages.length,
       generatedAt: new Date(),
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       s3Key: finalS3Key,
     });
+    
+    if (!shouldUpdateStatus) {
+      console.log(`PDF ${pdfExport.id} has manual override, keeping status: ${currentExport?.status}`);
+    }
 
     return updatedExport!;
   } catch (error) {
+    // For failures, we should still update status even with manual override (safety measure)
     await storage.updatePdfExport(pdfExport.id, {
       status: 'failed',
       errorMessage: error instanceof Error ? error.message : 'Unknown error',

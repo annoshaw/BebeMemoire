@@ -2621,8 +2621,8 @@ export async function registerRoutes(
       const { getSignedDownloadUrl } = await import('./pdfService');
       const downloadUrl = await getSignedDownloadUrl(pdfExport.s3Key);
 
-      // Update status to "downloaded" if it was "completed"
-      if (pdfExport.status === 'completed') {
+      // Update status to "downloaded" if it was "completed" and not manually overridden
+      if (pdfExport.status === 'completed' && !pdfExport.manualOverride) {
         await storage.updatePdfExport(exportId, { status: 'downloaded' });
         
         // Sync order status: PDF downloaded → Order "processing"
@@ -2633,6 +2633,8 @@ export async function registerRoutes(
             console.log(`Order ${pdfExport.orderId} updated to processing (PDF downloaded)`);
           }
         }
+      } else if (pdfExport.manualOverride) {
+        console.log(`PDF ${exportId} has manual override, keeping status: ${pdfExport.status}`);
       }
 
       res.json({ downloadUrl, filename: pdfExport.filename });
@@ -2728,11 +2730,12 @@ export async function registerRoutes(
   });
 
   // Admin update PDF export status (with order sync and audit log)
+  // Manual status changes take priority over automatic sync
   app.patch("/api/admin/pdf-exports/:exportId/status", requireAdmin, async (req: Request, res: Response) => {
     try {
       const adminId = (req as any).userId;
       const { exportId } = req.params;
-      const { status } = req.body;
+      const { status, resetManualOverride } = req.body;
       
       const validStatuses = ['pending', 'generating', 'completed', 'downloaded', 'sent', 'failed'];
       if (!validStatuses.includes(status)) {
@@ -2744,7 +2747,12 @@ export async function registerRoutes(
         return res.status(404).json({ message: "Export non trouvé" });
       }
       
-      const updatedExport = await storage.updatePdfExport(exportId, { status });
+      // Admin manual change: set manualOverride to true (unless explicitly resetting)
+      const manualOverride = resetManualOverride === true ? false : true;
+      const updatedExport = await storage.updatePdfExport(exportId, { 
+        status,
+        manualOverride 
+      });
       
       // Sync order status based on PDF export status
       if (pdfExport.orderId) {
@@ -2774,7 +2782,12 @@ export async function registerRoutes(
         action: "pdf_status_update",
         targetType: "pdf_export",
         targetId: exportId,
-        details: { previousStatus: pdfExport.status, newStatus: status },
+        details: { 
+          previousStatus: pdfExport.status, 
+          newStatus: status,
+          manualOverride,
+          source: "admin_manual"
+        },
       });
       
       res.json(updatedExport);

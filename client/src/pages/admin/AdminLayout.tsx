@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { useLocation, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { 
@@ -8,6 +8,9 @@ import {
   FileText, 
   Settings,
   ChevronLeft,
+  ChevronRight,
+  Menu,
+  X,
   Loader2,
   ShieldAlert,
   Mail
@@ -21,6 +24,7 @@ interface AdminLayoutProps {
 
 export default function AdminLayout({ children, title }: AdminLayoutProps) {
   const [location, navigate] = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const { data: user, isLoading } = useQuery({
     queryKey: ["/api/auth/user"],
@@ -68,20 +72,35 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
 
   return (
     <div className="min-h-screen bg-stone-100 flex">
-      <aside className="w-64 bg-white border-r border-stone-200 flex flex-col">
-        <div className="p-4 border-b border-stone-200">
-          <Link href="/app">
-            <Button variant="ghost" size="sm" className="text-stone-600">
-              <ChevronLeft size={16} className="mr-1" />
-              Retour à l'app
-            </Button>
-          </Link>
+      {/* Sidebar */}
+      <aside 
+        className={`bg-white border-r border-stone-200 flex flex-col transition-all duration-300 ${
+          sidebarOpen ? "w-64" : "w-16"
+        }`}
+      >
+        <div className="p-4 border-b border-stone-200 flex items-center justify-between">
+          {sidebarOpen ? (
+            <Link href="/app">
+              <Button variant="ghost" size="sm" className="text-stone-600">
+                <ChevronLeft size={16} className="mr-1" />
+                Retour à l'app
+              </Button>
+            </Link>
+          ) : (
+            <Link href="/app">
+              <Button variant="ghost" size="icon" className="text-stone-600" title="Retour à l'app">
+                <ChevronLeft size={18} />
+              </Button>
+            </Link>
+          )}
         </div>
         
-        <div className="p-4">
-          <h2 className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-3">
-            Administration
-          </h2>
+        <div className="p-4 flex-1">
+          {sidebarOpen && (
+            <h2 className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-3">
+              Administration
+            </h2>
+          )}
           <nav className="space-y-1">
             {navItems.map((item) => {
               const isActive = location === item.path || 
@@ -93,20 +112,50 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
                       isActive 
                         ? "bg-primary/10 text-primary font-medium" 
                         : "text-stone-600 hover:bg-stone-50"
-                    }`}
+                    } ${!sidebarOpen ? "justify-center" : ""}`}
+                    title={!sidebarOpen ? item.label : undefined}
                   >
                     <item.icon size={18} />
-                    <span>{item.label}</span>
+                    {sidebarOpen && <span>{item.label}</span>}
                   </div>
                 </Link>
               );
             })}
           </nav>
         </div>
+
+        {/* Toggle button */}
+        <div className="p-4 border-t border-stone-200">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className={`w-full text-stone-600 ${!sidebarOpen ? "justify-center px-0" : ""}`}
+            title={sidebarOpen ? "Réduire le menu" : "Ouvrir le menu"}
+          >
+            {sidebarOpen ? (
+              <>
+                <ChevronLeft size={16} className="mr-2" />
+                Réduire
+              </>
+            ) : (
+              <ChevronRight size={16} />
+            )}
+          </Button>
+        </div>
       </aside>
 
       <main className="flex-1 overflow-auto">
-        <header className="bg-white border-b border-stone-200 px-6 py-4">
+        <header className="bg-white border-b border-stone-200 px-6 py-4 flex items-center gap-4">
+          {/* Mobile menu button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="md:hidden text-stone-600"
+          >
+            <Menu size={20} />
+          </Button>
           <h1 className="text-xl font-bold text-stone-800">{title}</h1>
         </header>
         <div className="p-6">

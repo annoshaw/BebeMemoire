@@ -2687,6 +2687,30 @@ export async function registerRoutes(
     }
   });
 
+  // Admin update PDF export status
+  app.patch("/api/admin/pdf-exports/:exportId/status", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const { exportId } = req.params;
+      const { status } = req.body;
+      
+      const validStatuses = ['pending', 'generating', 'completed', 'failed', 'sent', 'delivered'];
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({ message: "Statut invalide" });
+      }
+      
+      const pdfExport = await storage.getPdfExport(exportId);
+      if (!pdfExport) {
+        return res.status(404).json({ message: "Export non trouvé" });
+      }
+      
+      const updatedExport = await storage.updatePdfExport(exportId, { status });
+      res.json(updatedExport);
+    } catch (error) {
+      console.error("Admin update PDF status error:", error);
+      res.status(500).json({ message: "Erreur lors de la mise à jour du statut" });
+    }
+  });
+
   // Admin resend PDF email for an existing export
   app.post("/api/admin/pdf-exports/:exportId/send-email", requireAdmin, async (req: Request, res: Response) => {
     try {

@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Loader2, FileText, Download, Clock, CheckCircle, XCircle, Mail, Send } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Loader2, FileText, Download, Clock, CheckCircle, XCircle, Mail, Send, PackageCheck, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import AdminLayout from "./AdminLayout";
 import { toast } from "sonner";
 
@@ -25,11 +26,24 @@ const statusConfig: Record<string, { label: string; color: string; icon: any }> 
   generating: { label: "En cours", color: "bg-blue-100 text-blue-700", icon: Loader2 },
   completed: { label: "Terminé", color: "bg-green-100 text-green-700", icon: CheckCircle },
   failed: { label: "Échec", color: "bg-red-100 text-red-700", icon: XCircle },
+  sent: { label: "Envoyé", color: "bg-purple-100 text-purple-700", icon: Send },
+  delivered: { label: "Livré", color: "bg-emerald-100 text-emerald-700", icon: PackageCheck },
 };
+
+const statusOptions = [
+  { value: "pending", label: "En attente" },
+  { value: "generating", label: "En cours" },
+  { value: "completed", label: "Terminé" },
+  { value: "failed", label: "Échec" },
+  { value: "sent", label: "Envoyé" },
+  { value: "delivered", label: "Livré" },
+];
 
 export default function AdminExports() {
   const [downloading, setDownloading] = useState<string | null>(null);
   const [sendingEmail, setSendingEmail] = useState<string | null>(null);
+  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
+  const queryClient = useQueryClient();
   
   const { data: exports, isLoading } = useQuery<PdfExport[]>({
     queryKey: ["/api/admin/pdf-exports"],
@@ -103,6 +117,32 @@ export default function AdminExports() {
     }
   };
 
+  const handleStatusChange = async (exportId: string, newStatus: string) => {
+    try {
+      setUpdatingStatus(exportId);
+      const res = await fetch(`/api/admin/pdf-exports/${exportId}/status`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      
+      if (!res.ok) {
+        const data = await res.json();
+        toast.error(data.message || "Erreur lors de la mise à jour du statut");
+        return;
+      }
+      
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/pdf-exports"] });
+      toast.success("Statut mis à jour");
+    } catch (error) {
+      console.error("Update status error:", error);
+      toast.error("Erreur réseau lors de la mise à jour");
+    } finally {
+      setUpdatingStatus(null);
+    }
+  };
+
   const formatFileSize = (bytes: number | null) => {
     if (!bytes) return "-";
     if (bytes < 1024) return `${bytes} B`;
@@ -160,10 +200,27 @@ export default function AdminExports() {
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium ${config.color}`}>
-                          <StatusIcon size={12} className={exp.status === "generating" ? "animate-spin" : ""} />
-                          {config.label}
-                        </span>
+                        <Select
+                          value={exp.status}
+                          onValueChange={(value) => handleStatusChange(exp.id, value)}
+                          disabled={updatingStatus === exp.id}
+                        >
+                          <SelectTrigger className={`w-32 h-8 text-xs ${config.color} border-0`}>
+                            <SelectValue>
+                              <span className="flex items-center gap-1.5">
+                                <StatusIcon size={12} className={exp.status === "generating" ? "animate-spin" : ""} />
+                                {config.label}
+                              </span>
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {statusOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </td>
                       <td className="px-4 py-3 text-sm">{formatFileSize(exp.fileSize)}</td>
                       <td className="px-4 py-3 text-sm text-stone-500">

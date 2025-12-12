@@ -28,16 +28,23 @@ export class WebhookHandlers {
       const stripe = await getUncachableStripeClient();
       const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
       
-      // If no webhook secret, we can't verify - just parse the event
       let event;
       if (webhookSecret) {
-        event = stripe.webhooks.constructEvent(payload, signature, webhookSecret);
+        // Verify webhook signature for security
+        try {
+          event = stripe.webhooks.constructEvent(payload, signature, webhookSecret);
+          console.log(`[Webhook] Signature verified for event ${event.id}`);
+        } catch (signatureError: any) {
+          console.error(`[Webhook] Signature verification failed:`, signatureError.message);
+          throw new Error(`Webhook signature verification failed: ${signatureError.message}`);
+        }
       } else {
-        // Parse without verification (dev mode)
+        // Parse without verification (dev mode only - log warning)
+        console.warn('[Webhook] STRIPE_WEBHOOK_SECRET not configured - skipping signature verification');
         event = JSON.parse(payload.toString());
       }
 
-      console.log(`Processing custom logic for ${event.type}`);
+      console.log(`[Webhook] Processing custom logic for ${event.type}`);
 
       switch (event.type) {
         case 'checkout.session.completed':
@@ -50,9 +57,13 @@ export class WebhookHandlers {
           await this.handlePaymentFailed(event.data.object);
           break;
       }
-    } catch (error) {
-      console.error('Error in custom webhook logic:', error);
-      // Don't throw - the sync already processed, this is additional logic
+    } catch (error: any) {
+      // Re-throw signature verification errors to prevent processing invalid webhooks
+      if (error.message?.includes('signature verification failed')) {
+        throw error;
+      }
+      console.error('[Webhook] Error in custom logic (sync completed, this is additional):', error);
+      // Don't throw for non-signature errors - the sync already processed
     }
   }
 

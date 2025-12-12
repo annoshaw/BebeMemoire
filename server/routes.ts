@@ -2727,9 +2727,10 @@ export async function registerRoutes(
     }
   });
 
-  // Admin update PDF export status (with order sync)
+  // Admin update PDF export status (with order sync and audit log)
   app.patch("/api/admin/pdf-exports/:exportId/status", requireAdmin, async (req: Request, res: Response) => {
     try {
+      const adminId = (req as any).userId;
       const { exportId } = req.params;
       const { status } = req.body;
       
@@ -2767,6 +2768,15 @@ export async function registerRoutes(
         }
       }
       
+      // Log admin activity
+      await storage.createAdminActivityLog({
+        adminId,
+        action: "pdf_status_update",
+        targetType: "pdf_export",
+        targetId: exportId,
+        details: { previousStatus: pdfExport.status, newStatus: status },
+      });
+      
       res.json(updatedExport);
     } catch (error) {
       console.error("Admin update PDF status error:", error);
@@ -2774,9 +2784,10 @@ export async function registerRoutes(
     }
   });
 
-  // Admin resend PDF email for an existing export
+  // Admin resend PDF email for an existing export (with audit log)
   app.post("/api/admin/pdf-exports/:exportId/send-email", requireAdmin, async (req: Request, res: Response) => {
     try {
+      const adminId = (req as any).userId;
       const { exportId } = req.params;
       
       const pdfExport = await storage.getPdfExport(exportId);
@@ -2832,6 +2843,15 @@ export async function registerRoutes(
           }
         }
         
+        // Log admin activity
+        await storage.createAdminActivityLog({
+          adminId,
+          action: "pdf_email_sent",
+          targetType: "pdf_export",
+          targetId: exportId,
+          details: { recipientEmail: user.email, orderNumber },
+        });
+        
         res.json({ success: true, message: "Email envoyé avec succès" });
       } else {
         res.status(500).json({ success: false, message: "Échec de l'envoi de l'email" });
@@ -2840,6 +2860,55 @@ export async function registerRoutes(
       console.error("Admin send PDF email error:", error);
       res.status(500).json({ message: error?.message || "Erreur lors de l'envoi de l'email" });
     }
+  });
+
+  // Health check endpoint for monitoring
+  app.get("/api/health", async (req: Request, res: Response) => {
+    const startTime = Date.now();
+    const checks: Record<string, { status: string; latency?: number; error?: string }> = {};
+    
+    // Check database connection
+    try {
+      const dbStart = Date.now();
+      await storage.getUser("health-check-probe"); // Will return null but tests connection
+      checks.database = { status: "healthy", latency: Date.now() - dbStart };
+    } catch (error: any) {
+      checks.database = { status: "unhealthy", error: error?.message || "Connection failed" };
+    }
+    
+    // Check Stripe connection
+    try {
+      const stripeStart = Date.now();
+      const { getStripePublishableKey } = await import('./stripeClient');
+      const key = getStripePublishableKey();
+      checks.stripe = { 
+        status: key ? "healthy" : "degraded", 
+        latency: Date.now() - stripeStart 
+      };
+    } catch (error: any) {
+      checks.stripe = { status: "unhealthy", error: error?.message };
+    }
+    
+    // Check AWS S3 configuration
+    const s3Configured = !!(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_S3_BUCKET);
+    checks.s3 = { status: s3Configured ? "healthy" : "not_configured" };
+    
+    // Check email service (Resend)
+    const resendConfigured = !!process.env.RESEND_API_KEY;
+    checks.email = { status: resendConfigured ? "healthy" : "not_configured" };
+    
+    const overallStatus = Object.values(checks).every(c => 
+      c.status === "healthy" || c.status === "not_configured"
+    ) ? "healthy" : "degraded";
+    
+    res.status(overallStatus === "healthy" ? 200 : 503).json({
+      status: overallStatus,
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      responseTime: Date.now() - startTime,
+      checks,
+      version: "1.0.0",
+    });
   });
 
   // Serve local PDFs (for PDFs without videos)

@@ -2624,6 +2624,15 @@ export async function registerRoutes(
       // Update status to "downloaded" if it was "completed"
       if (pdfExport.status === 'completed') {
         await storage.updatePdfExport(exportId, { status: 'downloaded' });
+        
+        // Sync order status: PDF downloaded → Order "processing"
+        if (pdfExport.orderId) {
+          const order = await storage.getOrder(pdfExport.orderId);
+          if (order && order.status === 'paid') {
+            await storage.updateOrder(pdfExport.orderId, { status: 'processing' });
+            console.log(`Order ${pdfExport.orderId} updated to processing (PDF downloaded)`);
+          }
+        }
       }
 
       res.json({ downloadUrl, filename: pdfExport.filename });
@@ -2678,6 +2687,12 @@ export async function registerRoutes(
           customerName: user.fullName || user.firstName || 'Cher parent',
           orderNumber: order.orderNumber,
         });
+        
+        // Sync order status: PDF sent → Order "shipped"
+        if (result.emailSent && ['paid', 'processing'].includes(order.status)) {
+          await storage.updateOrder(order.id, { status: 'shipped' });
+          console.log(`Order ${order.id} updated to shipped (PDF generated and email sent)`);
+        }
         
         res.json({
           success: true,
@@ -2782,8 +2797,18 @@ export async function registerRoutes(
       });
       
       if (emailSent) {
-        // Update status to "sent" (Terminé)
+        // Update PDF status to "sent"
         await storage.updatePdfExport(exportId, { status: 'sent' });
+        
+        // Sync order status: PDF sent → Order "shipped"
+        if (pdfExport.orderId) {
+          const order = await storage.getOrder(pdfExport.orderId);
+          if (order && ['paid', 'processing'].includes(order.status)) {
+            await storage.updateOrder(pdfExport.orderId, { status: 'shipped' });
+            console.log(`Order ${pdfExport.orderId} updated to shipped (PDF email sent)`);
+          }
+        }
+        
         res.json({ success: true, message: "Email envoyé avec succès" });
       } else {
         res.status(500).json({ success: false, message: "Échec de l'envoi de l'email" });

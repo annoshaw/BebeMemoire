@@ -1,0 +1,47 @@
+Voici une version claire, technique et directement exploitable pour ton développeur sur Replit. Elle exprime exactement ce que tu veux, sans ambiguïté.
+
+✅ Instruction reformulée pour Replit
+Synchroniser le statut de l’export PDF avec le statut des commandes.
+Les deux systèmes doivent utiliser les mêmes termes de statut (ex. : pending, processing, completed, failed).
+Lorsque les deux mécanismes existent (sélection automatique et sélection manuelle),
+la sélection manuelle doit toujours avoir priorité sur la sélection automatique.
+
+✅ Version technique (Python / backend‑friendly)
+# Exigences fonctionnelles
+
+1. Le statut de l’export PDF doit toujours être synchronisé avec le statut de la commande.
+   - Exemple : si la commande passe à "completed", l’export PDF doit aussi passer à "completed".
+   - Les statuts doivent être identiques et utiliser les mêmes valeurs.
+
+2. Les statuts autorisés doivent être partagés entre les deux modules :
+   STATUSES = ["pending", "processing", "completed", "failed"]
+
+3. Si une sélection manuelle du statut est effectuée par un administrateur :
+   - Cette valeur doit écraser la valeur générée automatiquement.
+   - La logique automatique ne doit jamais modifier un statut défini manuellement.
+
+4. La logique automatique ne doit s’exécuter que si :
+   - aucun statut manuel n’a été défini
+   - ou si le statut manuel est explicitement réinitialisé
+
+
+
+✅ Exemple de logique à implémenter
+def update_pdf_status(order, manual_status=None):
+    # Priorité à la sélection manuelle
+    if manual_status is not None:
+        order.pdf_status = manual_status
+        return order.pdf_status
+
+    # Sinon, synchronisation automatique avec la commande
+    order.pdf_status = order.status
+    return order.pdf_status
+
+
+
+✅ Résultat attendu
+- Les statuts des PDF et des commandes sont toujours alignés.
+- Les deux utilisent exactement les mêmes termes.
+- Si un admin change manuellement le statut PDF, aucune logique automatique ne doit le modifier.
+
+Si tu veux, je peux aussi rédiger la structure de base de données recommandée pour gérer ces statuts proprement.

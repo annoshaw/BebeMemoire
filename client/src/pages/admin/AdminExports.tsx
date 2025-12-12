@@ -23,20 +23,20 @@ interface PdfExport {
 
 const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
   pending: { label: "En attente", color: "bg-yellow-100 text-yellow-700", icon: Clock },
-  generating: { label: "En cours", color: "bg-blue-100 text-blue-700", icon: Loader2 },
-  completed: { label: "Terminé", color: "bg-green-100 text-green-700", icon: CheckCircle },
+  generating: { label: "Génération...", color: "bg-blue-100 text-blue-700", icon: Loader2 },
+  completed: { label: "Prêt", color: "bg-blue-100 text-blue-700", icon: CheckCircle },
+  downloaded: { label: "En cours", color: "bg-purple-100 text-purple-700", icon: Download },
+  sent: { label: "Terminé", color: "bg-green-100 text-green-700", icon: CheckCircle },
   failed: { label: "Échec", color: "bg-red-100 text-red-700", icon: XCircle },
-  sent: { label: "Envoyé", color: "bg-purple-100 text-purple-700", icon: Send },
-  delivered: { label: "Livré", color: "bg-emerald-100 text-emerald-700", icon: PackageCheck },
 };
 
 const statusOptions = [
   { value: "pending", label: "En attente" },
-  { value: "generating", label: "En cours" },
-  { value: "completed", label: "Terminé" },
+  { value: "generating", label: "Génération..." },
+  { value: "completed", label: "Prêt" },
+  { value: "downloaded", label: "En cours" },
+  { value: "sent", label: "Terminé" },
   { value: "failed", label: "Échec" },
-  { value: "sent", label: "Envoyé" },
-  { value: "delivered", label: "Livré" },
 ];
 
 export default function AdminExports() {
@@ -85,6 +85,8 @@ export default function AdminExports() {
       link.click();
       document.body.removeChild(link);
       toast.success("Téléchargement démarré");
+      // Refresh to update status
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/pdf-exports"] });
     } catch (error) {
       console.error("Download error:", error);
       toast.error("Erreur réseau lors du téléchargement");
@@ -110,6 +112,8 @@ export default function AdminExports() {
       }
       
       toast.success("Email envoyé au client avec le lien de téléchargement");
+      // Refresh to update status
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/pdf-exports"] });
     } catch (error) {
       console.error("Send email error:", error);
       toast.error("Erreur réseau lors de l'envoi de l'email");
@@ -257,7 +261,7 @@ export default function AdminExports() {
                       </td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          {exp.status === "completed" && exp.s3Key && (
+                          {["completed", "downloaded", "sent"].includes(exp.status) && exp.s3Key && (
                             <>
                               <Button 
                                 variant="ghost" 
@@ -272,19 +276,21 @@ export default function AdminExports() {
                                   <Download size={14} />
                                 )}
                               </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => handleSendEmail(exp.id)}
-                                disabled={sendingEmail === exp.id}
-                                title="Envoyer par email au client"
-                              >
-                                {sendingEmail === exp.id ? (
-                                  <Loader2 size={14} className="animate-spin" />
-                                ) : (
-                                  <Mail size={14} />
-                                )}
-                              </Button>
+                              {exp.status !== "sent" && (
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => handleSendEmail(exp.id)}
+                                  disabled={sendingEmail === exp.id}
+                                  title="Envoyer par email au client"
+                                >
+                                  {sendingEmail === exp.id ? (
+                                    <Loader2 size={14} className="animate-spin" />
+                                  ) : (
+                                    <Mail size={14} />
+                                  )}
+                                </Button>
+                              )}
                             </>
                           )}
                           {exp.errorMessage && (

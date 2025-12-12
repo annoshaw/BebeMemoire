@@ -2594,12 +2594,17 @@ export async function registerRoutes(
         return res.status(404).json({ message: "Export non trouvé" });
       }
 
-      if (pdfExport.status !== 'completed') {
+      if (!['completed', 'downloaded', 'sent'].includes(pdfExport.status)) {
         return res.status(400).json({ message: "Le PDF n'est pas encore prêt" });
       }
 
       const { getSignedDownloadUrl } = await import('./pdfService');
       const downloadUrl = await getSignedDownloadUrl(pdfExport.s3Key);
+
+      // Update status to "downloaded" if it was "completed"
+      if (pdfExport.status === 'completed') {
+        await storage.updatePdfExport(exportId, { status: 'downloaded' });
+      }
 
       res.json({ downloadUrl, filename: pdfExport.filename });
     } catch (error: any) {
@@ -2693,7 +2698,7 @@ export async function registerRoutes(
       const { exportId } = req.params;
       const { status } = req.body;
       
-      const validStatuses = ['pending', 'generating', 'completed', 'failed', 'sent', 'delivered'];
+      const validStatuses = ['pending', 'generating', 'completed', 'downloaded', 'sent', 'failed'];
       if (!validStatuses.includes(status)) {
         return res.status(400).json({ message: "Statut invalide" });
       }
@@ -2721,7 +2726,7 @@ export async function registerRoutes(
         return res.status(404).json({ message: "Export non trouvé" });
       }
       
-      if (pdfExport.status !== 'completed') {
+      if (!['completed', 'downloaded', 'sent'].includes(pdfExport.status)) {
         return res.status(400).json({ message: "Le PDF n'est pas encore prêt" });
       }
       
@@ -2757,6 +2762,8 @@ export async function registerRoutes(
       });
       
       if (emailSent) {
+        // Update status to "sent" (Terminé)
+        await storage.updatePdfExport(exportId, { status: 'sent' });
         res.json({ success: true, message: "Email envoyé avec succès" });
       } else {
         res.status(500).json({ success: false, message: "Échec de l'envoi de l'email" });

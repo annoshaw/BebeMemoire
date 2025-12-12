@@ -6,7 +6,8 @@ import {
   Shield,
   User,
   MoreHorizontal,
-  KeyRound
+  KeyRound,
+  Download
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -120,6 +121,35 @@ export default function AdminUsers() {
     return user.email || "Utilisateur";
   };
 
+  const exportToCSV = () => {
+    if (!users || users.length === 0) {
+      toast({ title: "Aucune donnée à exporter", variant: "destructive" });
+      return;
+    }
+
+    const headers = ["Nom", "Email", "Rôle", "Onboarding", "Inscription"];
+    const rows = users.map(user => [
+      getDisplayName(user),
+      user.email || "-",
+      user.role === "admin" ? "Admin" : "Utilisateur",
+      user.onboardingCompleted ? "Complété" : "En cours",
+      new Date(user.createdAt).toLocaleDateString("fr-CA")
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(","))
+    ].join("\n");
+
+    const blob = new Blob(["\ufeff" + csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `utilisateurs_${new Date().toISOString().split("T")[0]}.csv`;
+    link.click();
+    
+    toast({ title: "Export CSV téléchargé" });
+  };
+
   return (
     <AdminLayout title="Gestion des utilisateurs">
       <div className="space-y-4">
@@ -133,6 +163,10 @@ export default function AdminUsers() {
               className="pl-10"
             />
           </div>
+          <Button variant="outline" size="sm" onClick={exportToCSV} data-testid="button-export-users-csv">
+            <Download size={16} className="mr-2" />
+            Export CSV
+          </Button>
         </div>
 
         {isLoading ? (

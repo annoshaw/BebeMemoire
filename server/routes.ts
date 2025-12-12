@@ -2346,19 +2346,31 @@ export async function registerRoutes(
     }
   });
 
-  // Get all orders (admin)
+  // Get all orders (admin) - with customer info
   app.get("/api/admin/orders", requireAdmin, async (req: Request, res: Response) => {
     try {
       const { status, limit = 50, offset = 0 } = req.query;
       
-      let orders;
+      let ordersList;
       if (status && typeof status === "string") {
-        orders = await storage.getOrdersByStatus(status);
+        ordersList = await storage.getOrdersByStatus(status);
       } else {
-        orders = await storage.getAllOrders(Number(limit), Number(offset));
+        ordersList = await storage.getAllOrders(Number(limit), Number(offset));
       }
       
-      res.json(orders);
+      // Enrich orders with customer info
+      const ordersWithCustomer = await Promise.all(
+        ordersList.map(async (order) => {
+          const user = await storage.getUser(order.userId);
+          return {
+            ...order,
+            customerName: user?.fullName || user?.firstName || null,
+            customerEmail: user?.email || null,
+          };
+        })
+      );
+      
+      res.json(ordersWithCustomer);
     } catch (error) {
       console.error("Admin get orders error:", error);
       res.status(500).json({ message: "Erreur lors de la récupération des commandes" });
@@ -2545,29 +2557,37 @@ export async function registerRoutes(
       const { limit = 50, offset = 0 } = req.query;
       const exports = await storage.getAllPdfExports(Number(limit), Number(offset));
       
-      // Enrich exports with customer names from orders
+      // Enrich exports with customer names from orders (with defensive error handling)
       const enrichedExports = await Promise.all(exports.map(async (exp) => {
-        let customerName = null;
-        let customerEmail = null;
+        let customerName: string | null = null;
+        let customerEmail: string | null = null;
         
-        if (exp.orderId) {
-          const order = await storage.getOrder(exp.orderId);
-          if (order) {
-            customerName = order.customerName;
-            customerEmail = order.customerEmail;
-          }
-        }
-        
-        // If no order, try to get user from book
-        if (!customerName) {
-          const book = await storage.getBook(exp.bookId);
-          if (book) {
-            const user = await storage.getUser(book.userId);
-            if (user) {
-              customerName = user.fullName;
-              customerEmail = user.email;
+        try {
+          // Try to get customer from order first
+          if (exp.orderId) {
+            const order = await storage.getOrder(exp.orderId);
+            if (order && order.userId) {
+              const user = await storage.getUser(order.userId);
+              if (user) {
+                customerName = user.fullName || user.firstName || null;
+                customerEmail = user.email || null;
+              }
             }
           }
+          
+          // Fallback: try to get user from book if no customer info yet
+          if (!customerName && exp.bookId) {
+            const book = await storage.getBook(exp.bookId);
+            if (book && book.userId) {
+              const user = await storage.getUser(book.userId);
+              if (user) {
+                customerName = user.fullName || user.firstName || null;
+                customerEmail = user.email || null;
+              }
+            }
+          }
+        } catch (enrichError) {
+          console.error(`Error enriching export ${exp.id}:`, enrichError);
         }
         
         return {

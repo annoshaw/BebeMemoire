@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, FileText, Download, Clock, CheckCircle, XCircle, Mail, Send, PackageCheck, Truck } from "lucide-react";
+import { Loader2, FileText, Download, Clock, CheckCircle, XCircle, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import AdminLayout from "./AdminLayout";
@@ -19,6 +19,8 @@ interface PdfExport {
   generatedAt: string | null;
   expiresAt: string | null;
   errorMessage: string | null;
+  customerName?: string | null;
+  customerEmail?: string | null;
 }
 
 const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
@@ -160,11 +162,44 @@ export default function AdminExports() {
     statusFilter === "all" || exp.status === statusFilter
   ) || [];
 
+  const exportToCSV = () => {
+    const dataToExport = filteredExports;
+    if (!dataToExport || dataToExport.length === 0) {
+      toast.error("Aucune donnée à exporter");
+      return;
+    }
+
+    const headers = ["ID", "Client", "Email", "Livre ID", "Commande ID", "Statut", "Taille", "Créé"];
+    const rows = dataToExport.map(exp => [
+      exp.id.slice(0, 8),
+      exp.customerName || "-",
+      exp.customerEmail || "-",
+      exp.bookId.slice(0, 8),
+      exp.orderId?.slice(0, 8) || "-",
+      statusConfig[exp.status]?.label || exp.status,
+      formatFileSize(exp.fileSize),
+      new Date(exp.createdAt).toLocaleString("fr-CA")
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(","))
+    ].join("\n");
+
+    const blob = new Blob(["\ufeff" + csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `exports_pdf_${new Date().toISOString().split("T")[0]}.csv`;
+    link.click();
+    
+    toast.success("Export CSV téléchargé");
+  };
+
   return (
     <AdminLayout title="Exports PDF">
       <div className="space-y-4">
         {/* Status Filter */}
-        <div className="flex items-center gap-4 bg-white p-4 rounded-xl border border-stone-200">
+        <div className="flex items-center gap-4 flex-wrap bg-white p-4 rounded-xl border border-stone-200">
           <span className="text-sm font-medium text-stone-600">Filtrer par statut :</span>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-48">
@@ -184,6 +219,11 @@ export default function AdminExports() {
               {filteredExports.length} résultat{filteredExports.length > 1 ? "s" : ""}
             </span>
           )}
+          <div className="flex-1" />
+          <Button variant="outline" size="sm" onClick={exportToCSV} data-testid="button-export-pdf-csv">
+            <Download size={16} className="mr-2" />
+            Export CSV
+          </Button>
         </div>
 
         {isLoading ? (
@@ -216,9 +256,9 @@ export default function AdminExports() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex flex-col">
-                          <span className="text-sm font-medium text-stone-800">{(exp as any).customerName || "-"}</span>
-                          {(exp as any).customerEmail && (
-                            <span className="text-xs text-stone-500">{(exp as any).customerEmail}</span>
+                          <span className="text-sm font-medium text-stone-800">{exp.customerName || "-"}</span>
+                          {exp.customerEmail && (
+                            <span className="text-xs text-stone-500">{exp.customerEmail}</span>
                           )}
                         </div>
                       </td>

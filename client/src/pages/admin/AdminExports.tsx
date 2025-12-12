@@ -43,6 +43,7 @@ export default function AdminExports() {
   const [downloading, setDownloading] = useState<string | null>(null);
   const [sendingEmail, setSendingEmail] = useState<string | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const queryClient = useQueryClient();
   
   const { data: exports, isLoading } = useQuery<PdfExport[]>({
@@ -150,14 +151,42 @@ export default function AdminExports() {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
+  // Filter exports by status
+  const filteredExports = exports?.filter(exp => 
+    statusFilter === "all" || exp.status === statusFilter
+  ) || [];
+
   return (
     <AdminLayout title="Exports PDF">
       <div className="space-y-4">
+        {/* Status Filter */}
+        <div className="flex items-center gap-4 bg-white p-4 rounded-xl border border-stone-200">
+          <span className="text-sm font-medium text-stone-600">Filtrer par statut :</span>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Tous les statuts" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous les statuts</SelectItem>
+              {statusOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {statusFilter !== "all" && (
+            <span className="text-sm text-stone-500">
+              {filteredExports.length} résultat{filteredExports.length > 1 ? "s" : ""}
+            </span>
+          )}
+        </div>
+
         {isLoading ? (
           <div className="flex items-center justify-center h-64">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
-        ) : exports && exports.length > 0 ? (
+        ) : filteredExports && filteredExports.length > 0 ? (
           <div className="bg-white rounded-xl border border-stone-200 overflow-x-auto">
             <table className="w-full min-w-[900px]">
               <thead className="bg-stone-50 border-b border-stone-200">
@@ -173,7 +202,7 @@ export default function AdminExports() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-100">
-                {exports.map((exp) => {
+                {filteredExports.map((exp) => {
                   const config = statusConfig[exp.status] || statusConfig.pending;
                   const StatusIcon = config.icon;
                   return (
@@ -274,9 +303,13 @@ export default function AdminExports() {
         ) : (
           <div className="bg-white rounded-xl border border-stone-200 p-12 text-center">
             <FileText className="w-12 h-12 text-stone-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-stone-800 mb-2">Aucun export PDF</h3>
+            <h3 className="text-lg font-medium text-stone-800 mb-2">
+              {statusFilter !== "all" ? "Aucun résultat pour ce filtre" : "Aucun export PDF"}
+            </h3>
             <p className="text-stone-500">
-              Les exports PDF apparaîtront ici lorsque des commandes seront traitées.
+              {statusFilter !== "all" 
+                ? "Essayez de modifier votre filtre ou sélectionnez 'Tous les statuts'."
+                : "Les exports PDF apparaîtront ici lorsque des commandes seront traitées."}
             </p>
           </div>
         )}

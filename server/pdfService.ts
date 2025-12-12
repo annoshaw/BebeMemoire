@@ -3,6 +3,10 @@ import { S3Client, PutObjectCommand, GetObjectCommand, HeadObjectCommand } from 
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { storage } from './storage';
 import type { PdfExport } from '@shared/schema';
+import * as fs from 'fs';
+import * as path from 'path';
+
+const LOCAL_PDF_DIR = path.join(process.cwd(), 'storage', 'pdfs');
 
 const s3Client = new S3Client({
   region: process.env.AWS_REGION || 'us-east-1',
@@ -320,13 +324,35 @@ export async function generateBookPdf(options: GeneratePdfOptions): Promise<PdfE
 
     await browser.close();
 
-    await s3Client.send(new PutObjectCommand({
-      Bucket: S3_BUCKET,
-      Key: s3Key,
-      Body: pdfBuffer,
-      ContentType: 'application/pdf',
-      ContentDisposition: `attachment; filename="${filename}"`,
-    }));
+    // Detect if any page has videos or QR codes
+    const hasVideos = pages.some(p => p.videoUrl || p.qrCodeData);
+    
+    let finalS3Key = s3Key;
+    let storageType: 'local' | 's3' = 'local';
+    
+    if (hasVideos && S3_BUCKET) {
+      // Upload to S3 for PDFs with videos
+      storageType = 's3';
+      await s3Client.send(new PutObjectCommand({
+        Bucket: S3_BUCKET,
+        Key: s3Key,
+        Body: pdfBuffer,
+        ContentType: 'application/pdf',
+        ContentDisposition: `attachment; filename="${filename}"`,
+      }));
+      console.log(`PDF with videos stored in S3: ${s3Key}`);
+    } else {
+      // Store locally for PDFs without videos
+      storageType = 'local';
+      const localDir = path.join(LOCAL_PDF_DIR, bookId);
+      if (!fs.existsSync(localDir)) {
+        fs.mkdirSync(localDir, { recursive: true });
+      }
+      const localPath = path.join(localDir, filename);
+      fs.writeFileSync(localPath, pdfBuffer);
+      finalS3Key = `local:${bookId}/${filename}`;
+      console.log(`PDF without videos stored locally: ${localPath}`);
+    }
 
     const updatedExport = await storage.updatePdfExport(pdfExport.id, {
       status: 'completed',
@@ -334,6 +360,7 @@ export async function generateBookPdf(options: GeneratePdfOptions): Promise<PdfE
       pageCount: pages.length,
       generatedAt: new Date(),
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      s3Key: finalS3Key,
     });
 
     return updatedExport!;
@@ -346,7 +373,24 @@ export async function generateBookPdf(options: GeneratePdfOptions): Promise<PdfE
   }
 }
 
-export async function checkS3ObjectExists(s3Key: string): Promise<boolean> {
+// Check if storage key points to local or S3
+function isLocalStorage(storageKey: string): boolean {
+  return storageKey.startsWith('local:');
+}
+
+// Get local file path from storage key
+function getLocalFilePath(storageKey: string): string {
+  const relativePath = storageKey.replace('local:', '');
+  return path.join(LOCAL_PDF_DIR, relativePath);
+}
+
+export async function checkStorageExists(storageKey: string): Promise<boolean> {
+  if (isLocalStorage(storageKey)) {
+    const localPath = getLocalFilePath(storageKey);
+    return fs.existsSync(localPath);
+  }
+  
+  // S3 storage
   if (!S3_BUCKET) {
     throw new Error('S3 bucket not configured');
   }
@@ -354,7 +398,7 @@ export async function checkS3ObjectExists(s3Key: string): Promise<boolean> {
   try {
     await s3Client.send(new HeadObjectCommand({
       Bucket: S3_BUCKET,
-      Key: s3Key,
+      Key: storageKey,
     }));
     return true;
   } catch (error: any) {
@@ -365,22 +409,46 @@ export async function checkS3ObjectExists(s3Key: string): Promise<boolean> {
   }
 }
 
-export async function getSignedDownloadUrl(s3Key: string, expiresIn: number = 3600): Promise<string> {
+// Keep for backward compatibility
+export async function checkS3ObjectExists(s3Key: string): Promise<boolean> {
+  return checkStorageExists(s3Key);
+}
+
+export async function getSignedDownloadUrl(storageKey: string, expiresIn: number = 3600): Promise<string> {
+  if (isLocalStorage(storageKey)) {
+    // For local storage, return a local API endpoint URL
+    const relativePath = storageKey.replace('local:', '');
+    const baseUrl = process.env.REPLIT_DEV_DOMAIN 
+      ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
+      : 'http://localhost:5000';
+    return `${baseUrl}/api/pdf-download/${encodeURIComponent(relativePath)}`;
+  }
+  
+  // S3 storage
   if (!S3_BUCKET) {
     throw new Error('S3 bucket not configured');
   }
   
-  const exists = await checkS3ObjectExists(s3Key);
+  const exists = await checkStorageExists(storageKey);
   if (!exists) {
     throw new Error('PDF file not found in storage');
   }
   
   const command = new GetObjectCommand({
     Bucket: S3_BUCKET,
-    Key: s3Key,
+    Key: storageKey,
   });
   
   return getSignedUrl(s3Client, command, { expiresIn });
+}
+
+// Get local PDF buffer for serving
+export function getLocalPdfBuffer(relativePath: string): Buffer | null {
+  const localPath = path.join(LOCAL_PDF_DIR, relativePath);
+  if (fs.existsSync(localPath)) {
+    return fs.readFileSync(localPath);
+  }
+  return null;
 }
 
 export async function getPdfExportWithSignedUrl(exportId: string): Promise<{ export: PdfExport; downloadUrl: string } | null> {

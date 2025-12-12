@@ -2710,6 +2710,34 @@ export async function registerRoutes(
     }
   });
 
+  // Serve local PDFs (for PDFs without videos)
+  app.get("/api/pdf-download/:path(*)", async (req: Request, res: Response) => {
+    try {
+      const relativePath = decodeURIComponent(req.params.path);
+      
+      // Security: prevent directory traversal
+      if (relativePath.includes('..')) {
+        return res.status(400).json({ message: "Chemin invalide" });
+      }
+      
+      const { getLocalPdfBuffer } = await import('./pdfService');
+      const pdfBuffer = getLocalPdfBuffer(relativePath);
+      
+      if (!pdfBuffer) {
+        return res.status(404).json({ message: "PDF non trouvé" });
+      }
+      
+      const filename = relativePath.split('/').pop() || 'document.pdf';
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.setHeader('Content-Length', pdfBuffer.length);
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error("PDF download error:", error);
+      res.status(500).json({ message: "Erreur lors du téléchargement du PDF" });
+    }
+  });
+
   return httpServer;
 }
 

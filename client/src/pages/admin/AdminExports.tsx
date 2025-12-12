@@ -118,8 +118,8 @@ export default function AdminExports() {
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
         ) : exports && exports.length > 0 ? (
-          <div className="bg-white rounded-xl border border-stone-200 overflow-hidden">
-            <table className="w-full">
+          <div className="bg-white rounded-xl border border-stone-200 overflow-x-auto">
+            <table className="w-full min-w-[800px]">
               <thead className="bg-stone-50 border-b border-stone-200">
                 <tr>
                   <th className="text-left px-4 py-3 text-sm font-medium text-stone-600">ID</th>

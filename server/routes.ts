@@ -2754,22 +2754,24 @@ export async function registerRoutes(
         manualOverride 
       });
       
-      // Sync order status based on PDF export status
+      // Sync order status based on PDF export status (manual admin action = always sync)
       if (pdfExport.orderId) {
         const order = await storage.getOrder(pdfExport.orderId);
         if (order) {
-          let newOrderStatus: string | null = null;
+          // Map PDF status to corresponding order status
+          const pdfToOrderStatusMap: Record<string, string> = {
+            'pending': 'paid',
+            'generating': 'paid',
+            'completed': 'paid',
+            'downloaded': 'processing',
+            'sent': 'shipped',
+            'failed': order.status, // Keep current status on failure
+          };
           
-          // PDF "downloaded" (En traitement) → Order "processing"
-          if (status === 'downloaded' && order.status === 'paid') {
-            newOrderStatus = 'processing';
-          }
-          // PDF "sent" (Expédiée) → Order "shipped"
-          else if (status === 'sent' && ['paid', 'processing'].includes(order.status)) {
-            newOrderStatus = 'shipped';
-          }
+          const newOrderStatus = pdfToOrderStatusMap[status];
           
-          if (newOrderStatus) {
+          // Only update if the new status is different and not keeping current
+          if (newOrderStatus && newOrderStatus !== order.status) {
             await storage.updateOrder(pdfExport.orderId, { status: newOrderStatus });
             console.log(`Order ${pdfExport.orderId} synced to ${newOrderStatus} (PDF status: ${status})`);
           }

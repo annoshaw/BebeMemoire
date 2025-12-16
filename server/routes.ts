@@ -2545,6 +2545,7 @@ export async function registerRoutes(
     endsAt: z.string().datetime().optional(),
     maxRedemptions: z.number().int().min(1).optional(),
     appliesRetroactively: z.boolean().optional().default(false),
+    durationMonths: z.number().int().min(0).max(12).optional().default(0), // 0 = forever, 1-12 = months
   });
 
   const applyDiscountSchema = z.object({
@@ -2682,7 +2683,7 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Données invalides", errors: parseResult.error.errors });
       }
       
-      const { name, type, value, scope, targetPlan, code, startsAt, endsAt, maxRedemptions, appliesRetroactively } = parseResult.data;
+      const { name, type, value, scope, targetPlan, code, startsAt, endsAt, maxRedemptions, appliesRetroactively, durationMonths } = parseResult.data;
 
       // Create Stripe coupon for automatic billing integration
       const { stripeService } = await import('./stripeService');
@@ -2696,6 +2697,7 @@ export async function registerRoutes(
           code,
           maxRedemptions,
           expiresAt: endsAt ? new Date(endsAt) : undefined,
+          durationMonths: durationMonths || 0,
         });
         stripeCouponId = stripeCoupon.id;
       } catch (stripeError) {
@@ -2716,6 +2718,7 @@ export async function registerRoutes(
         appliesRetroactively,
         isActive: true,
         stripeCouponId,
+        durationMonths: durationMonths || 0,
         createdBy: adminId,
       });
 

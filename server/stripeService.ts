@@ -92,6 +92,7 @@ export class StripeService {
     code?: string;
     maxRedemptions?: number;
     expiresAt?: Date;
+    durationMonths?: number; // 0 = forever, 1-12 = repeating for N months
   }) {
     const stripe = await getUncachableStripeClient();
     
@@ -104,6 +105,14 @@ export class StripeService {
       couponParams.percent_off = params.value;
     } else {
       couponParams.amount_off = params.value;
+    }
+
+    // Set duration based on durationMonths
+    if (params.durationMonths && params.durationMonths > 0) {
+      couponParams.duration = 'repeating';
+      couponParams.duration_in_months = params.durationMonths;
+    } else {
+      couponParams.duration = 'forever';
     }
 
     if (params.maxRedemptions) {

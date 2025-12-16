@@ -118,6 +118,7 @@ export default function AdminSubscriptions() {
     code: "",
     scope: "user",
     expiresAt: "",
+    durationMonths: "0", // 0 = indefinite, 1-12 = months
   });
 
   const { data: users = [], isLoading } = useQuery<UserWithSubscription[]>({
@@ -174,13 +175,14 @@ export default function AdminSubscriptions() {
         value: data.type === "fixed" 
           ? Math.round(parseFloat(data.value) * 100)
           : parseInt(data.value),
+        durationMonths: parseInt(data.durationMonths) || 0,
       };
       return apiRequest("POST", "/api/admin/discounts", payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/discounts"] });
       setShowCreateDiscount(false);
-      setDiscountForm({ name: "", type: "percentage", value: "", code: "", scope: "user", expiresAt: "" });
+      setDiscountForm({ name: "", type: "percentage", value: "", code: "", scope: "user", expiresAt: "", durationMonths: "0" });
     },
   });
 
@@ -687,14 +689,42 @@ export default function AdminSubscriptions() {
                 </p>
               </div>
             </div>
-            <div>
-              <Label>Code promo (optionnel)</Label>
-              <Input 
-                value={discountForm.code}
-                onChange={(e) => setDiscountForm(f => ({ ...f, code: e.target.value.toUpperCase() }))}
-                placeholder="PROMO20"
-                data-testid="input-discount-code"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Durée *</Label>
+                <Select 
+                  value={discountForm.durationMonths} 
+                  onValueChange={(v) => setDiscountForm(f => ({ ...f, durationMonths: v }))}
+                >
+                  <SelectTrigger data-testid="select-discount-duration">
+                    <SelectValue placeholder="Durée" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">Indéfiniment</SelectItem>
+                    <SelectItem value="1">1 mois</SelectItem>
+                    <SelectItem value="2">2 mois</SelectItem>
+                    <SelectItem value="3">3 mois</SelectItem>
+                    <SelectItem value="4">4 mois</SelectItem>
+                    <SelectItem value="5">5 mois</SelectItem>
+                    <SelectItem value="6">6 mois</SelectItem>
+                    <SelectItem value="7">7 mois</SelectItem>
+                    <SelectItem value="8">8 mois</SelectItem>
+                    <SelectItem value="9">9 mois</SelectItem>
+                    <SelectItem value="10">10 mois</SelectItem>
+                    <SelectItem value="11">11 mois</SelectItem>
+                    <SelectItem value="12">12 mois</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Code promo (optionnel)</Label>
+                <Input 
+                  value={discountForm.code}
+                  onChange={(e) => setDiscountForm(f => ({ ...f, code: e.target.value.toUpperCase() }))}
+                  placeholder="PROMO20"
+                  data-testid="input-discount-code"
+                />
+              </div>
             </div>
           </div>
 

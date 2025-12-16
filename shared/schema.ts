@@ -599,6 +599,7 @@ export const subscriptionDiscounts = pgTable("subscription_discounts", {
   appliesRetroactively: boolean("applies_retroactively").default(false),
   isActive: boolean("is_active").default(true),
   stripeCouponId: varchar("stripe_coupon_id"), // Stripe coupon ID for automatic billing
+  durationMonths: integer("duration_months").default(0), // 0 = forever, 1-12 = repeating for N months
   createdBy: varchar("created_by").notNull().references(() => users.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),

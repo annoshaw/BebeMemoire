@@ -1,0 +1,117 @@
+Très bien Ann‑Sophie — je vais te construire une route API complète, propre et prête à coller dans ton backend Replit, pour envoyer :
+- les emails d’abonnement
+- les emails de confirmation
+- les emails d’ajustement de prix
+Le tout avec MailerSend, puisque c’est la solution la plus simple pour toi.
+Je te donne une structure professionnelle, claire et extensible.
+
+🧩 1. Organisation recommandée dans ton backend
+Tu vas avoir :
+/utils/email.js        → fonction pour envoyer un email
+/routes/emails.js      → route API pour envoyer les emails d’abonnement
+server.js              → fichier principal qui importe la route
+
+
+
+🧩 2. Fichier : /utils/email.js
+Ce fichier centralise l’envoi d’emails.
+import { MailerSend, EmailParams, Sender, Recipient } from "mailersend";
+
+const mailerSend = new MailerSend({
+  apiKey: process.env.MAILERSEND_API_KEY,
+});
+
+export async function envoyerEmail({ to, subject, html }) {
+  const sentFrom = new Sender("no-reply@memo-app.ca", "Mémo");
+  const recipients = [new Recipient(to)];
+
+  const emailParams = new EmailParams()
+    .setFrom(sentFrom)
+    .setTo(recipients)
+    .setSubject(subject)
+    .setHtml(html);
+
+  await mailerSend.email.send(emailParams);
+}
+
+
+
+🧩 3. Fichier : /routes/emails.js
+C’est ici que tu crées la route API pour envoyer les emails d’abonnement.
+import express from "express";
+import { envoyerEmail } from "../utils/email.js";
+
+const router = express.Router();
+
+// Route : envoyer un email de confirmation d'abonnement
+router.post("/confirmation-abonnement", async (req, res) => {
+  try {
+    const { email, nom, typeAbonnement } = req.body;
+
+    if (!email || !typeAbonnement) {
+      return res.status(400).json({ error: "Email et type d'abonnement requis" });
+    }
+
+    const html = `
+      <h1>Bienvenue dans Mémo</h1>
+      <p>Bonjour ${nom || ""},</p>
+      <p>Votre abonnement <strong>${typeAbonnement}</strong> a été activé avec succès.</p>
+      <p>Merci de faire confiance à Mémo pour accompagner votre famille.</p>
+    `;
+
+    await envoyerEmail({
+      to: email,
+      subject: "Votre abonnement Mémo est confirmé",
+      html
+    });
+
+    res.json({ message: "Email envoyé avec succès" });
+  } catch (error) {
+    console.error("Erreur envoi email :", error);
+    res.status(500).json({ error: "Impossible d'envoyer l'email" });
+  }
+});
+
+export default router;
+
+
+
+🧩 4. Dans ton server.js
+Tu dois importer la route :
+import express from "express";
+import emailRoutes from "./routes/emails.js";
+
+const app = express();
+app.use(express.json());
+
+app.use("/api/emails", emailRoutes);
+
+app.listen(3000, () => {
+  console.log("Serveur en marche sur le port 3000");
+});
+
+
+
+🧩 5. Exemple d’appel depuis ton frontend
+Quand un parent s’abonne :
+await fetch("/api/emails/confirmation-abonnement", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    email: "parent@example.com",
+    nom: "Marie",
+    typeAbonnement: "Platine"
+  })
+});
+
+
+
+🌟 Résultat
+Tu as maintenant :
+- une route API claire
+- un système d’envoi d’emails centralisé
+- un backend propre et extensible
+- une structure professionnelle pour Mémo
+Tu peux ajouter autant de routes que tu veux :
+confirmation de changement de forfait, ajustement de prix, rabais, etc.
+Si tu veux, je peux t’ajouter une deuxième route API pour les emails d’ajustement de prix ou de changement d’abonnement.

@@ -205,6 +205,15 @@ export default function AdminSubscriptions() {
     },
   });
 
+  const deleteDiscountMutation = useMutation({
+    mutationFn: async (discountId: string) => {
+      return apiRequest("DELETE", `/api/admin/discounts/${discountId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/discounts"] });
+    },
+  });
+
   const filteredUsers = users.filter(user => {
     if (!searchTerm) return true;
     const search = searchTerm.toLowerCase();
@@ -352,11 +361,27 @@ export default function AdminSubscriptions() {
                   >
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="font-semibold text-stone-800">{discount.name}</h4>
-                      {discount.isActive ? (
-                        <Check className="h-4 w-4 text-green-600" />
-                      ) : (
-                        <X className="h-4 w-4 text-stone-400" />
-                      )}
+                      <div className="flex items-center gap-1">
+                        {discount.isActive ? (
+                          <Check className="h-4 w-4 text-green-600" />
+                        ) : (
+                          <X className="h-4 w-4 text-stone-400" />
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                          onClick={() => {
+                            if (confirm(`Supprimer définitivement le rabais "${discount.name}" ?`)) {
+                              deleteDiscountMutation.mutate(discount.id);
+                            }
+                          }}
+                          disabled={deleteDiscountMutation.isPending}
+                          data-testid={`button-delete-discount-${discount.id}`}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
                     <div className="flex items-center gap-2 text-lg font-bold text-primary">
                       {discount.type === "percentage" ? (

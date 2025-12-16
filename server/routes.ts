@@ -2737,6 +2737,45 @@ export async function registerRoutes(
     }
   });
 
+  // Delete a discount
+  app.delete("/api/admin/discounts/:discountId", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const adminId = (req as any).userId;
+      const { discountId } = req.params;
+
+      const discount = await storage.getSubscriptionDiscount(discountId);
+      if (!discount) {
+        return res.status(404).json({ message: "Rabais non trouvé" });
+      }
+
+      // Delete from Stripe if coupon exists
+      if (discount.stripeCouponId) {
+        try {
+          const { stripeService } = await import('./stripeService');
+          await stripeService.deleteCoupon(discount.stripeCouponId);
+        } catch (stripeError) {
+          console.error("Failed to delete Stripe coupon:", stripeError);
+          // Continue with local deletion even if Stripe fails
+        }
+      }
+
+      await storage.deleteSubscriptionDiscount(discountId);
+
+      await storage.createAdminActivityLog({
+        adminId,
+        action: "delete_discount",
+        targetType: "discount",
+        targetId: discountId,
+        details: { name: discount.name },
+      });
+
+      res.json({ message: "Rabais supprimé" });
+    } catch (error) {
+      console.error("Delete discount error:", error);
+      res.status(500).json({ message: "Erreur lors de la suppression du rabais" });
+    }
+  });
+
   // Apply discount to user
   app.post("/api/admin/users/:userId/discounts", requireAdmin, async (req: Request, res: Response) => {
     try {

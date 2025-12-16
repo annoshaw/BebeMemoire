@@ -2983,6 +2983,10 @@ export default function Prototype() {
                   </div>
                 )}
 
+                <p className="text-[10px] text-stone-400 text-center">
+                  Vous pouvez changer de forfait à tout moment — seule la différence sera calculée au prorata.
+                </p>
+
                 {/* Actions */}
                 <div className="pt-2 space-y-2">
                   <Button 
@@ -3315,7 +3319,8 @@ export default function Prototype() {
                 </div>
 
                 <p className="text-[10px] text-stone-400 text-center">
-                  Annulez à tout moment. Vos données sont sauvegardées.
+                  Annulez à tout moment. Vos données sont sauvegardées.<br />
+                  Vous pouvez changer de forfait à tout moment — seule la différence sera calculée au prorata.
                 </p>
               </div>
             </motion.div>

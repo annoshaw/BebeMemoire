@@ -474,6 +474,407 @@ export async function sendPdfDeliveryEmail(data: PdfDeliveryData): Promise<boole
   }
 }
 
+// Send subscription confirmation email
+interface SubscriptionConfirmationData {
+  customerEmail: string;
+  customerName: string;
+  planName: string; // free, premium, platine
+  planPrice: number; // in cents
+  features: string[];
+}
+
+const planDisplayNames: Record<string, string> = {
+  free: "De base (Gratuit)",
+  premium: "Premium",
+  platine: "Platine",
+};
+
+export async function sendSubscriptionConfirmationEmail(data: SubscriptionConfirmationData): Promise<boolean> {
+  try {
+    const { client, fromEmail } = await getResendClient();
+    
+    const planDisplayName = planDisplayNames[data.planName] || data.planName;
+    const priceDisplay = data.planPrice > 0 ? `${(data.planPrice / 100).toFixed(2)}$/mois` : "Gratuit";
+    
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #7c9a7a 0%, #5a7d5a 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+    .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+    .plan-box { background: white; border: 2px solid #7c9a7a; border-radius: 12px; padding: 25px; margin: 20px 0; text-align: center; }
+    .plan-name { font-size: 24px; font-weight: bold; color: #7c9a7a; margin-bottom: 10px; }
+    .plan-price { font-size: 18px; color: #666; margin-bottom: 15px; }
+    .features { text-align: left; padding: 0; list-style: none; }
+    .features li { padding: 8px 0; border-bottom: 1px solid #eee; }
+    .features li:last-child { border-bottom: none; }
+    .features li::before { content: "✓ "; color: #7c9a7a; font-weight: bold; }
+    .btn { display: inline-block; background: #7c9a7a; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; }
+    .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📖 Memoria</h1>
+      <p>Bienvenue dans votre abonnement!</p>
+    </div>
+    <div class="content">
+      <h2>Bonjour ${data.customerName || 'cher parent'},</h2>
+      
+      <p>🎉 Félicitations! Votre abonnement <strong>${planDisplayName}</strong> a été activé avec succès.</p>
+      
+      <div class="plan-box">
+        <div class="plan-name">${planDisplayName}</div>
+        <div class="plan-price">${priceDisplay}</div>
+        ${data.features.length > 0 ? `
+        <ul class="features">
+          ${data.features.map(f => `<li>${f}</li>`).join('')}
+        </ul>
+        ` : ''}
+      </div>
+      
+      <p>Vous pouvez maintenant profiter de toutes les fonctionnalités incluses dans votre abonnement.</p>
+      
+      <p style="text-align: center; margin: 30px 0;">
+        <a href="https://memoria.replit.app/app" class="btn">
+          Accéder à mon compte
+        </a>
+      </p>
+      
+      <p>Merci de faire confiance à Memoria pour accompagner votre famille!</p>
+      
+      <p>L'équipe Memoria</p>
+    </div>
+    <div class="footer">
+      <p>Memoria - Créez des souvenirs qui durent toute une vie</p>
+    </div>
+  </div>
+</body>
+</html>
+    `;
+
+    await client.emails.send({
+      from: fromEmail || 'Memoria <noreply@memoria.app>',
+      to: data.customerEmail,
+      subject: `Votre abonnement ${planDisplayName} est confirmé!`,
+      html,
+    });
+
+    console.log(`Subscription confirmation email sent to ${data.customerEmail} for plan ${data.planName}`);
+    return true;
+  } catch (error) {
+    console.error('Failed to send subscription confirmation email:', error);
+    return false;
+  }
+}
+
+// Send plan change confirmation email
+interface PlanChangeData {
+  customerEmail: string;
+  customerName: string;
+  previousPlan: string;
+  newPlan: string;
+  newPrice: number; // in cents
+  effectiveDate?: Date;
+}
+
+export async function sendPlanChangeEmail(data: PlanChangeData): Promise<boolean> {
+  try {
+    const { client, fromEmail } = await getResendClient();
+    
+    const previousPlanName = planDisplayNames[data.previousPlan] || data.previousPlan;
+    const newPlanName = planDisplayNames[data.newPlan] || data.newPlan;
+    const priceDisplay = data.newPrice > 0 ? `${(data.newPrice / 100).toFixed(2)}$/mois` : "Gratuit";
+    const dateDisplay = data.effectiveDate 
+      ? data.effectiveDate.toLocaleDateString('fr-CA')
+      : new Date().toLocaleDateString('fr-CA');
+    
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #7c9a7a 0%, #5a7d5a 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+    .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+    .change-box { background: white; border: 1px solid #e0e0e0; border-radius: 12px; padding: 25px; margin: 20px 0; }
+    .plan-change { display: flex; align-items: center; justify-content: center; gap: 20px; flex-wrap: wrap; }
+    .plan-item { text-align: center; padding: 15px; }
+    .plan-item.old { color: #999; }
+    .plan-item.new { color: #7c9a7a; font-weight: bold; }
+    .arrow { font-size: 24px; color: #7c9a7a; }
+    .btn { display: inline-block; background: #7c9a7a; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; }
+    .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+    .info { background: #e8f5e9; border-left: 4px solid #7c9a7a; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📖 Memoria</h1>
+      <p>Changement d'abonnement</p>
+    </div>
+    <div class="content">
+      <h2>Bonjour ${data.customerName || 'cher parent'},</h2>
+      
+      <p>Votre changement d'abonnement a été effectué avec succès.</p>
+      
+      <div class="change-box">
+        <div class="plan-change">
+          <div class="plan-item old">
+            <div style="font-size: 12px; text-transform: uppercase;">Ancien plan</div>
+            <div style="font-size: 18px;">${previousPlanName}</div>
+          </div>
+          <div class="arrow">→</div>
+          <div class="plan-item new">
+            <div style="font-size: 12px; text-transform: uppercase;">Nouveau plan</div>
+            <div style="font-size: 18px;">${newPlanName}</div>
+            <div style="font-size: 14px;">${priceDisplay}</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="info">
+        <strong>📅 Date d'effet:</strong> ${dateDisplay}
+      </div>
+      
+      <p style="text-align: center; margin: 30px 0;">
+        <a href="https://memoria.replit.app/app" class="btn">
+          Accéder à mon compte
+        </a>
+      </p>
+      
+      <p>Si vous avez des questions concernant ce changement, n'hésitez pas à nous contacter.</p>
+      
+      <p>L'équipe Memoria</p>
+    </div>
+    <div class="footer">
+      <p>Memoria - Créez des souvenirs qui durent toute une vie</p>
+    </div>
+  </div>
+</body>
+</html>
+    `;
+
+    await client.emails.send({
+      from: fromEmail || 'Memoria <noreply@memoria.app>',
+      to: data.customerEmail,
+      subject: `Votre abonnement a été modifié: ${newPlanName}`,
+      html,
+    });
+
+    console.log(`Plan change email sent to ${data.customerEmail}: ${data.previousPlan} → ${data.newPlan}`);
+    return true;
+  } catch (error) {
+    console.error('Failed to send plan change email:', error);
+    return false;
+  }
+}
+
+// Send price adjustment notification email
+interface PriceAdjustmentData {
+  customerEmail: string;
+  customerName: string;
+  planName: string;
+  oldPrice: number; // in cents
+  newPrice: number; // in cents
+  effectiveDate: Date;
+  reason?: string;
+}
+
+export async function sendPriceAdjustmentEmail(data: PriceAdjustmentData): Promise<boolean> {
+  try {
+    const { client, fromEmail } = await getResendClient();
+    
+    const planDisplayName = planDisplayNames[data.planName] || data.planName;
+    const oldPriceDisplay = `${(data.oldPrice / 100).toFixed(2)}$/mois`;
+    const newPriceDisplay = `${(data.newPrice / 100).toFixed(2)}$/mois`;
+    const dateDisplay = data.effectiveDate.toLocaleDateString('fr-CA');
+    const isIncrease = data.newPrice > data.oldPrice;
+    
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #7c9a7a 0%, #5a7d5a 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+    .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+    .price-box { background: white; border: 1px solid #e0e0e0; border-radius: 12px; padding: 25px; margin: 20px 0; text-align: center; }
+    .price-change { display: flex; align-items: center; justify-content: center; gap: 20px; flex-wrap: wrap; }
+    .price-item { padding: 15px; }
+    .price-item.old { color: #999; text-decoration: line-through; }
+    .price-item.new { color: ${isIncrease ? '#e53935' : '#43a047'}; font-weight: bold; font-size: 24px; }
+    .arrow { font-size: 24px; color: #666; }
+    .btn { display: inline-block; background: #7c9a7a; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; }
+    .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+    .info { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📖 Memoria</h1>
+      <p>Ajustement de prix</p>
+    </div>
+    <div class="content">
+      <h2>Bonjour ${data.customerName || 'cher parent'},</h2>
+      
+      <p>Nous vous informons d'un ajustement de prix pour votre abonnement <strong>${planDisplayName}</strong>.</p>
+      
+      <div class="price-box">
+        <div class="price-change">
+          <div class="price-item old">
+            <div style="font-size: 12px; text-transform: uppercase;">Ancien prix</div>
+            <div style="font-size: 18px;">${oldPriceDisplay}</div>
+          </div>
+          <div class="arrow">→</div>
+          <div class="price-item new">
+            <div style="font-size: 12px; text-transform: uppercase;">Nouveau prix</div>
+            <div>${newPriceDisplay}</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="info">
+        <strong>📅 Date d'effet:</strong> ${dateDisplay}
+        ${data.reason ? `<br><strong>Raison:</strong> ${data.reason}` : ''}
+      </div>
+      
+      <p>Ce changement sera appliqué automatiquement à votre prochain cycle de facturation.</p>
+      
+      <p style="text-align: center; margin: 30px 0;">
+        <a href="https://memoria.replit.app/app/settings" class="btn">
+          Gérer mon abonnement
+        </a>
+      </p>
+      
+      <p>Si vous avez des questions, n'hésitez pas à nous contacter.</p>
+      
+      <p>L'équipe Memoria</p>
+    </div>
+    <div class="footer">
+      <p>Memoria - Créez des souvenirs qui durent toute une vie</p>
+    </div>
+  </div>
+</body>
+</html>
+    `;
+
+    await client.emails.send({
+      from: fromEmail || 'Memoria <noreply@memoria.app>',
+      to: data.customerEmail,
+      subject: `Ajustement de prix pour votre abonnement ${planDisplayName}`,
+      html,
+    });
+
+    console.log(`Price adjustment email sent to ${data.customerEmail} for plan ${data.planName}`);
+    return true;
+  } catch (error) {
+    console.error('Failed to send price adjustment email:', error);
+    return false;
+  }
+}
+
+// Send discount applied notification email
+interface DiscountAppliedData {
+  customerEmail: string;
+  customerName: string;
+  discountName: string;
+  discountValue: string; // e.g., "20%" or "5.00$"
+  durationMonths?: number; // 0 = forever, or number of months
+}
+
+export async function sendDiscountAppliedEmail(data: DiscountAppliedData): Promise<boolean> {
+  try {
+    const { client, fromEmail } = await getResendClient();
+    
+    const durationText = !data.durationMonths || data.durationMonths === 0 
+      ? "indéfiniment" 
+      : `pendant ${data.durationMonths} mois`;
+    
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #7c9a7a 0%, #5a7d5a 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+    .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+    .discount-box { background: linear-gradient(135deg, #43a047 0%, #2e7d32 100%); color: white; border-radius: 12px; padding: 30px; margin: 20px 0; text-align: center; }
+    .discount-value { font-size: 48px; font-weight: bold; margin: 10px 0; }
+    .discount-name { font-size: 18px; opacity: 0.9; }
+    .btn { display: inline-block; background: #7c9a7a; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; }
+    .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+    .info { background: #e8f5e9; border-left: 4px solid #7c9a7a; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📖 Memoria</h1>
+      <p>Vous avez reçu un rabais!</p>
+    </div>
+    <div class="content">
+      <h2>Bonjour ${data.customerName || 'cher parent'},</h2>
+      
+      <p>🎉 Bonne nouvelle! Un rabais a été appliqué à votre compte.</p>
+      
+      <div class="discount-box">
+        <div class="discount-name">${data.discountName}</div>
+        <div class="discount-value">-${data.discountValue}</div>
+      </div>
+      
+      <div class="info">
+        <strong>⏱️ Durée:</strong> Ce rabais s'applique ${durationText} sur vos prochaines factures.
+      </div>
+      
+      <p>Le rabais sera automatiquement appliqué lors de votre prochaine facturation.</p>
+      
+      <p style="text-align: center; margin: 30px 0;">
+        <a href="https://memoria.replit.app/app" class="btn">
+          Accéder à mon compte
+        </a>
+      </p>
+      
+      <p>Merci de votre fidélité!</p>
+      
+      <p>L'équipe Memoria</p>
+    </div>
+    <div class="footer">
+      <p>Memoria - Créez des souvenirs qui durent toute une vie</p>
+    </div>
+  </div>
+</body>
+</html>
+    `;
+
+    await client.emails.send({
+      from: fromEmail || 'Memoria <noreply@memoria.app>',
+      to: data.customerEmail,
+      subject: `🎉 Rabais appliqué: ${data.discountName}`,
+      html,
+    });
+
+    console.log(`Discount applied email sent to ${data.customerEmail} for discount ${data.discountName}`);
+    return true;
+  } catch (error) {
+    console.error('Failed to send discount applied email:', error);
+    return false;
+  }
+}
+
 // Send bulk campaign email
 interface CampaignRecipient {
   email: string;

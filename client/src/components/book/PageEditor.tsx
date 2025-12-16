@@ -25,7 +25,9 @@ import {
   Type,
   ALargeSmall,
   Palette,
-  Grid
+  Grid,
+  HelpCircle,
+  MousePointer2
 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { 
@@ -111,6 +113,59 @@ interface PageEditorProps {
   hasPrev: boolean;
 }
 
+const PAGE_EDITOR_TUTORIAL_KEY = "memoria_page_editor_tutorial_seen";
+
+interface EditorTutorialStep {
+  id: string;
+  titleFr: string;
+  titleEn: string;
+  descriptionFr: string;
+  descriptionEn: string;
+  highlightArea?: "title-style" | "text-style" | "photos" | "save";
+}
+
+const editorTutorialSteps: EditorTutorialStep[] = [
+  {
+    id: "welcome",
+    titleFr: "Personnalisez votre page !",
+    titleEn: "Customize your page!",
+    descriptionFr: "Vous pouvez modifier le style du titre, du texte et ajouter des photos. Voici comment faire !",
+    descriptionEn: "You can customize the title style, text, and add photos. Here's how!",
+  },
+  {
+    id: "title-style",
+    titleFr: "Style du titre",
+    titleEn: "Title Style",
+    descriptionFr: "Cliquez sur les icônes à côté du titre pour changer la police (Aa) et la taille (A↕) du titre de votre page.",
+    descriptionEn: "Click the icons next to the title to change the font (Aa) and size (A↕) of your page title.",
+    highlightArea: "title-style",
+  },
+  {
+    id: "text-style",
+    titleFr: "Style du texte",
+    titleEn: "Text Style",
+    descriptionFr: "Dans la zone de texte, cliquez sur les icônes pour changer la couleur du fond, la couleur du texte, la police et la taille.",
+    descriptionEn: "In the text area, click the icons to change background color, text color, font, and size.",
+    highlightArea: "text-style",
+  },
+  {
+    id: "photos",
+    titleFr: "Ajoutez vos photos",
+    titleEn: "Add your photos",
+    descriptionFr: "Cliquez sur la zone photo pour ajouter vos images. Vous pouvez en ajouter plusieurs et choisir différentes dispositions !",
+    descriptionEn: "Click on the photo area to add your images. You can add multiple photos and choose different layouts!",
+    highlightArea: "photos",
+  },
+  {
+    id: "save",
+    titleFr: "N'oubliez pas de sauvegarder !",
+    titleEn: "Don't forget to save!",
+    descriptionFr: "Quand vous avez terminé, cliquez sur le bouton vert 'Sauvegarder' pour enregistrer vos modifications.",
+    descriptionEn: "When you're done, click the green 'Save' button to save your changes.",
+    highlightArea: "save",
+  },
+];
+
 export function PageEditor({
   bookId,
   pageNumber,
@@ -126,6 +181,44 @@ export function PageEditor({
   // Use displayPageNumber for UI, fallback to pageNumber if not provided
   const shownPageNumber = displayPageNumber ?? pageNumber;
   const queryClient = useQueryClient();
+
+  // Editor tutorial state
+  const [showEditorTutorial, setShowEditorTutorial] = useState(false);
+  const [editorTutorialStep, setEditorTutorialStep] = useState(0);
+
+  useEffect(() => {
+    const hasSeenTutorial = localStorage.getItem(PAGE_EDITOR_TUTORIAL_KEY);
+    if (!hasSeenTutorial) {
+      const timer = setTimeout(() => setShowEditorTutorial(true), 800);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  const closeEditorTutorial = () => {
+    setShowEditorTutorial(false);
+    localStorage.setItem(PAGE_EDITOR_TUTORIAL_KEY, "true");
+  };
+
+  const nextEditorTutorialStep = () => {
+    if (editorTutorialStep < editorTutorialSteps.length - 1) {
+      setEditorTutorialStep(editorTutorialStep + 1);
+    } else {
+      closeEditorTutorial();
+    }
+  };
+
+  const prevEditorTutorialStep = () => {
+    if (editorTutorialStep > 0) {
+      setEditorTutorialStep(editorTutorialStep - 1);
+    }
+  };
+
+  const resetEditorTutorial = () => {
+    setEditorTutorialStep(0);
+    setShowEditorTutorial(true);
+  };
+
+  const currentEditorStep = editorTutorialSteps[editorTutorialStep];
 
   const [textContent, setTextContent] = useState<string[]>(
     (userPage?.textContent as string[]) || []
@@ -770,16 +863,122 @@ export function PageEditor({
   const isSaving = saveMutation.isPending || completeMutation.isPending;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
+      {/* Editor Tutorial Overlay */}
+      {showEditorTutorial && (
+        <div className="fixed inset-0 z-50 pointer-events-none">
+          <div className="absolute inset-0 bg-black/40 pointer-events-auto" onClick={closeEditorTutorial} />
+          
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto z-10">
+            <div className="bg-white rounded-2xl shadow-2xl p-5 sm:p-6 max-w-[320px] sm:max-w-sm relative animate-in fade-in zoom-in-95 duration-300">
+              <button 
+                onClick={closeEditorTutorial}
+                className="absolute top-3 right-3 p-1 hover:bg-gray-100 rounded-full transition-colors"
+                data-testid="editor-tutorial-close"
+              >
+                <X className="w-5 h-5 text-gray-400" />
+              </button>
+
+              {currentEditorStep.highlightArea && (
+                <div className="absolute -top-12 left-1/2 -translate-x-1/2">
+                  <div className="bg-green-500 text-white p-2 rounded-full animate-bounce">
+                    <MousePointer2 className="w-5 h-5" />
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-1.5 mb-4">
+                {editorTutorialSteps.map((_, idx) => (
+                  <div 
+                    key={idx}
+                    className={`h-1.5 rounded-full transition-all ${
+                      idx === editorTutorialStep 
+                        ? "w-6 bg-green-500" 
+                        : idx < editorTutorialStep 
+                          ? "w-3 bg-green-300" 
+                          : "w-3 bg-gray-200"
+                    }`}
+                  />
+                ))}
+              </div>
+
+              <h3 className="text-lg font-bold text-sage-900 mb-2 pr-6">
+                {language === "fr" ? currentEditorStep.titleFr : currentEditorStep.titleEn}
+              </h3>
+              <p className="text-sage-600 text-sm leading-relaxed mb-5">
+                {language === "fr" ? currentEditorStep.descriptionFr : currentEditorStep.descriptionEn}
+              </p>
+
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={closeEditorTutorial}
+                  className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                  data-testid="editor-tutorial-skip"
+                >
+                  {language === "fr" ? "Passer" : "Skip"}
+                </button>
+                <div className="flex gap-2">
+                  {editorTutorialStep > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={prevEditorTutorialStep}
+                      data-testid="editor-tutorial-prev"
+                    >
+                      {language === "fr" ? "Précédent" : "Previous"}
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    onClick={nextEditorTutorialStep}
+                    className="bg-green-500 hover:bg-green-600 text-white"
+                    data-testid="editor-tutorial-next"
+                  >
+                    {editorTutorialStep === editorTutorialSteps.length - 1 
+                      ? (language === "fr" ? "C'est parti !" : "Let's go!")
+                      : (language === "fr" ? "Suivant" : "Next")
+                    }
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Highlight specific areas based on current step */}
+          {currentEditorStep.highlightArea === "title-style" && (
+            <div className="absolute top-[180px] left-[50%] -translate-x-1/2 w-[200px] h-[50px] border-4 border-green-400 rounded-xl pointer-events-none animate-pulse" />
+          )}
+          {currentEditorStep.highlightArea === "text-style" && (
+            <div className="absolute top-[350px] left-[10%] w-[80%] max-w-[400px] h-[150px] border-4 border-green-400 rounded-xl pointer-events-none animate-pulse" />
+          )}
+          {currentEditorStep.highlightArea === "photos" && (
+            <div className="absolute top-[250px] right-[10%] w-[200px] h-[200px] border-4 border-green-400 rounded-xl pointer-events-none animate-pulse" />
+          )}
+          {currentEditorStep.highlightArea === "save" && (
+            <div className="absolute top-[120px] right-[20px] w-[120px] h-[40px] border-4 border-green-400 rounded-xl pointer-events-none animate-pulse" />
+          )}
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
-        <Button 
-          variant="ghost" 
-          onClick={onBack}
-          data-testid="back-to-parts"
-        >
-          <ChevronLeft className="w-4 h-4 mr-2" />
-          {language === "fr" ? "Retour" : "Back"}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="ghost" 
+            onClick={onBack}
+            data-testid="back-to-parts"
+          >
+            <ChevronLeft className="w-4 h-4 mr-2" />
+            {language === "fr" ? "Retour" : "Back"}
+          </Button>
+          <button
+            onClick={resetEditorTutorial}
+            className="p-2 hover:bg-green-50 rounded-full transition-colors group"
+            title={language === "fr" ? "Voir le guide" : "View guide"}
+            data-testid="button-show-editor-tutorial"
+          >
+            <HelpCircle className="w-5 h-5 text-green-500 group-hover:text-green-600" />
+          </button>
+        </div>
 
         <div className="flex items-center gap-2">
           <Button

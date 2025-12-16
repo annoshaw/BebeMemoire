@@ -125,7 +125,11 @@ export default function AdminSubscriptions() {
     queryFn: async () => {
       const filter = filterPlan !== "all" ? `?filter=${filterPlan}` : "";
       const res = await fetch(`/api/admin/subscriptions/users${filter}`, { credentials: "include" });
-      return res.json();
+      if (!res.ok) {
+        throw new Error("Failed to fetch users");
+      }
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
     },
   });
 
@@ -143,7 +147,11 @@ export default function AdminSubscriptions() {
     queryKey: ["/api/admin/discounts"],
     queryFn: async () => {
       const res = await fetch("/api/admin/discounts", { credentials: "include" });
-      return res.json();
+      if (!res.ok) {
+        throw new Error("Failed to fetch discounts");
+      }
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
     },
   });
 

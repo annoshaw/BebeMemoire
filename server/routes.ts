@@ -2264,8 +2264,18 @@ export async function registerRoutes(
 
       const baseUrl = `https://${process.env.REPLIT_DOMAINS?.split(',')[0]}`;
 
-      // Create checkout session
-      const session = await stripeService.createCheckoutSession({
+      // Check for active user discounts with Stripe coupons
+      const userDiscounts = await storage.getUserActiveDiscounts(userId);
+      const stripeDiscounts: Array<{ coupon: string }> = [];
+      
+      for (const ud of userDiscounts) {
+        if (ud.discount?.stripeCouponId) {
+          stripeDiscounts.push({ coupon: ud.discount.stripeCouponId });
+        }
+      }
+
+      // Create checkout session with discounts if available
+      const session = await stripeService.createCheckoutSessionWithDiscount({
         customerId: stripeCustomerId,
         orderId: order.id,
         items: [
@@ -2280,7 +2290,9 @@ export async function registerRoutes(
         metadata: {
           orderNumber: order.orderNumber,
           productType: order.productType,
+          appliedDiscounts: stripeDiscounts.length > 0 ? stripeDiscounts.map(d => d.coupon).join(',') : undefined,
         },
+        discounts: stripeDiscounts.length > 0 ? stripeDiscounts : undefined,
       });
 
       // Update order with Stripe session ID
@@ -2672,6 +2684,25 @@ export async function registerRoutes(
       
       const { name, type, value, scope, targetPlan, code, startsAt, endsAt, maxRedemptions, appliesRetroactively } = parseResult.data;
 
+      // Create Stripe coupon for automatic billing integration
+      const { stripeService } = await import('./stripeService');
+      let stripeCouponId: string | undefined;
+      
+      try {
+        const stripeCoupon = await stripeService.createCoupon({
+          name,
+          type: type as 'percentage' | 'fixed',
+          value,
+          code,
+          maxRedemptions,
+          expiresAt: endsAt ? new Date(endsAt) : undefined,
+        });
+        stripeCouponId = stripeCoupon.id;
+      } catch (stripeError) {
+        console.error("Stripe coupon creation error:", stripeError);
+        // Continue without Stripe coupon if creation fails
+      }
+
       const discount = await storage.createSubscriptionDiscount({
         name,
         type,
@@ -2684,6 +2715,7 @@ export async function registerRoutes(
         maxRedemptions,
         appliesRetroactively,
         isActive: true,
+        stripeCouponId,
         createdBy: adminId,
       });
 
@@ -2692,7 +2724,7 @@ export async function registerRoutes(
         action: "create_discount",
         targetType: "discount",
         targetId: discount.id,
-        details: { name, type, value },
+        details: { name, type, value, stripeCouponId },
       });
 
       res.json(discount);

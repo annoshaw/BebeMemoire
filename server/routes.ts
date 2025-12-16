@@ -2507,6 +2507,282 @@ export async function registerRoutes(
     }
   });
 
+  // ============ ADMIN SUBSCRIPTION MANAGEMENT ============
+
+  // Get all users with subscription details
+  app.get("/api/admin/subscriptions/users", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const { limit = "50", offset = "0", filter } = req.query;
+      const users = await storage.getUsersWithSubscriptionDetails(
+        parseInt(limit as string),
+        parseInt(offset as string),
+        filter as string
+      );
+      res.json(users);
+    } catch (error) {
+      console.error("Get users with subscriptions error:", error);
+      res.status(500).json({ message: "Erreur lors de la récupération des utilisateurs" });
+    }
+  });
+
+  // Get single user subscription details
+  app.get("/api/admin/subscriptions/users/:userId", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const { userId } = req.params;
+      const details = await storage.getUserSubscriptionDetails(userId);
+      if (!details) {
+        return res.status(404).json({ message: "Utilisateur non trouvé" });
+      }
+      res.json(details);
+    } catch (error) {
+      console.error("Get user subscription details error:", error);
+      res.status(500).json({ message: "Erreur lors de la récupération des détails" });
+    }
+  });
+
+  // Change user plan (admin action)
+  app.post("/api/admin/users/:userId/change-plan", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const adminId = (req as any).userId;
+      const { userId } = req.params;
+      const { newPlan, notes, chargeImmediately } = req.body;
+
+      if (!newPlan || !["free", "premium", "platine"].includes(newPlan)) {
+        return res.status(400).json({ message: "Plan invalide" });
+      }
+
+      const userPlan = await storage.getUserPlan(userId);
+      const previousPlan = userPlan?.plan || "free";
+
+      // Update user plan
+      if (userPlan) {
+        await storage.updateUserPlan(userId, { plan: newPlan });
+      } else {
+        await storage.createUserPlan({ userId, plan: newPlan, storageUsed: 0 });
+      }
+
+      // Create plan history record
+      await storage.createPlanHistory({
+        userId,
+        previousPlan,
+        newPlan,
+        changeSource: "admin",
+        adminId,
+        notes,
+        effectiveAt: new Date(),
+      });
+
+      // Log admin action
+      await storage.createAdminActivityLog({
+        adminId,
+        action: "change_plan",
+        targetType: "subscription",
+        targetId: userId,
+        details: { previousPlan, newPlan, notes },
+      });
+
+      res.json({ 
+        message: `Plan changé de ${previousPlan} à ${newPlan}`,
+        previousPlan,
+        newPlan 
+      });
+    } catch (error) {
+      console.error("Change plan error:", error);
+      res.status(500).json({ message: "Erreur lors du changement de plan" });
+    }
+  });
+
+  // Get all discounts
+  app.get("/api/admin/discounts", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const { activeOnly } = req.query;
+      const discounts = await storage.getSubscriptionDiscounts(activeOnly === "true");
+      res.json(discounts);
+    } catch (error) {
+      console.error("Get discounts error:", error);
+      res.status(500).json({ message: "Erreur lors de la récupération des rabais" });
+    }
+  });
+
+  // Create a new discount
+  app.post("/api/admin/discounts", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const adminId = (req as any).userId;
+      const { name, type, value, scope, targetPlan, code, startsAt, endsAt, maxRedemptions, appliesRetroactively } = req.body;
+
+      if (!name || !type || value === undefined) {
+        return res.status(400).json({ message: "Nom, type et valeur requis" });
+      }
+
+      if (!["percentage", "fixed"].includes(type)) {
+        return res.status(400).json({ message: "Type doit être 'percentage' ou 'fixed'" });
+      }
+
+      const discount = await storage.createSubscriptionDiscount({
+        name,
+        type,
+        value: parseInt(value),
+        scope: scope || "user",
+        targetPlan,
+        code,
+        startsAt: startsAt ? new Date(startsAt) : undefined,
+        endsAt: endsAt ? new Date(endsAt) : undefined,
+        maxRedemptions: maxRedemptions ? parseInt(maxRedemptions) : undefined,
+        appliesRetroactively: appliesRetroactively || false,
+        isActive: true,
+        createdBy: adminId,
+      });
+
+      await storage.createAdminActivityLog({
+        adminId,
+        action: "create_discount",
+        targetType: "discount",
+        targetId: discount.id,
+        details: { name, type, value },
+      });
+
+      res.json(discount);
+    } catch (error) {
+      console.error("Create discount error:", error);
+      res.status(500).json({ message: "Erreur lors de la création du rabais" });
+    }
+  });
+
+  // Apply discount to user
+  app.post("/api/admin/users/:userId/discounts", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const adminId = (req as any).userId;
+      const { userId } = req.params;
+      const { discountId, expiresAt, notes } = req.body;
+
+      if (!discountId) {
+        return res.status(400).json({ message: "ID du rabais requis" });
+      }
+
+      const discount = await storage.getSubscriptionDiscount(discountId);
+      if (!discount) {
+        return res.status(404).json({ message: "Rabais non trouvé" });
+      }
+
+      const userDiscount = await storage.applyDiscountToUser({
+        userId,
+        discountId,
+        appliedBy: adminId,
+        expiresAt: expiresAt ? new Date(expiresAt) : undefined,
+        notes,
+        isActive: true,
+      });
+
+      await storage.createAdminActivityLog({
+        adminId,
+        action: "apply_discount",
+        targetType: "user_discount",
+        targetId: userDiscount.id,
+        details: { userId, discountId, discountName: discount.name },
+      });
+
+      res.json({ 
+        message: `Rabais "${discount.name}" appliqué à l'utilisateur`,
+        userDiscount 
+      });
+    } catch (error) {
+      console.error("Apply discount error:", error);
+      res.status(500).json({ message: "Erreur lors de l'application du rabais" });
+    }
+  });
+
+  // Remove discount from user
+  app.delete("/api/admin/users/:userId/discounts/:discountId", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const adminId = (req as any).userId;
+      const { userId, discountId } = req.params;
+
+      const removed = await storage.removeUserDiscount(discountId);
+      if (!removed) {
+        return res.status(404).json({ message: "Rabais utilisateur non trouvé" });
+      }
+
+      await storage.createAdminActivityLog({
+        adminId,
+        action: "remove_discount",
+        targetType: "user_discount",
+        targetId: discountId,
+        details: { userId },
+      });
+
+      res.json({ message: "Rabais retiré" });
+    } catch (error) {
+      console.error("Remove discount error:", error);
+      res.status(500).json({ message: "Erreur lors du retrait du rabais" });
+    }
+  });
+
+  // Get user discounts
+  app.get("/api/admin/users/:userId/discounts", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const { userId } = req.params;
+      const discounts = await storage.getUserActiveDiscounts(userId);
+      res.json(discounts);
+    } catch (error) {
+      console.error("Get user discounts error:", error);
+      res.status(500).json({ message: "Erreur lors de la récupération des rabais" });
+    }
+  });
+
+  // Get user plan history
+  app.get("/api/admin/users/:userId/plan-history", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const { userId } = req.params;
+      const history = await storage.getUserPlanHistory(userId);
+      res.json(history);
+    } catch (error) {
+      console.error("Get plan history error:", error);
+      res.status(500).json({ message: "Erreur lors de la récupération de l'historique" });
+    }
+  });
+
+  // Update user subscription status
+  app.post("/api/admin/users/:userId/update-status", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const adminId = (req as any).userId;
+      const { userId } = req.params;
+      const { status, notes } = req.body;
+
+      if (!status || !["active", "suspended", "canceled"].includes(status)) {
+        return res.status(400).json({ message: "Statut invalide" });
+      }
+
+      const subscription = await storage.getSubscription(userId);
+      if (subscription) {
+        await storage.updateSubscription(userId, { status });
+      }
+
+      await storage.createAdminActivityLog({
+        adminId,
+        action: "update_status",
+        targetType: "subscription",
+        targetId: userId,
+        details: { status, notes },
+      });
+
+      res.json({ message: `Statut mis à jour: ${status}` });
+    } catch (error) {
+      console.error("Update status error:", error);
+      res.status(500).json({ message: "Erreur lors de la mise à jour du statut" });
+    }
+  });
+
+  // Admin activity logs
+  app.get("/api/admin/logs", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const logs = await storage.getAdminActivityLogs(100);
+      res.json(logs);
+    } catch (error) {
+      console.error("Get admin logs error:", error);
+      res.status(500).json({ message: "Erreur lors de la récupération des logs" });
+    }
+  });
+
   // ============ ADMIN EMAIL CAMPAIGNS ============
 
   // Get all email campaigns

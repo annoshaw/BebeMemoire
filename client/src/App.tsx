@@ -25,6 +25,7 @@ import AdminOrders from "@/pages/admin/AdminOrders";
 import AdminUsers from "@/pages/admin/AdminUsers";
 import AdminExports from "@/pages/admin/AdminExports";
 import AdminEmails from "@/pages/admin/AdminEmails";
+import AdminSubscriptions from "@/pages/admin/AdminSubscriptions";
 
 function Router() {
   return (
@@ -51,6 +52,7 @@ function Router() {
       <Route path="/app/admin/users" component={AdminUsers} />
       <Route path="/app/admin/exports" component={AdminExports} />
       <Route path="/app/admin/emails" component={AdminEmails} />
+      <Route path="/app/admin/subscriptions" component={AdminSubscriptions} />
       <Route component={NotFound} />
     </Switch>
   );

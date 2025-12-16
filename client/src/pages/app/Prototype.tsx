@@ -243,23 +243,24 @@ export default function Prototype() {
 
   const [userPlan, setUserPlan] = useState<"base" | "premium" | "platine">("base");
   
-  const [trialDaysLeft, setTrialDaysLeft] = useState(() => {
-    if (typeof window !== "undefined") {
-      const trialStart = localStorage.getItem("trialStartDate");
-      if (!trialStart) {
-        localStorage.setItem("trialStartDate", new Date().toISOString());
-        return 14;
-      }
-      const startDate = new Date(trialStart);
-      const now = new Date();
-      const diffTime = now.getTime() - startDate.getTime();
-      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-      return Math.max(0, 14 - diffDays);
-    }
-    return 14;
-  });
-  const isTrialActive = trialDaysLeft > 0;
+  const typedUser = user as {
+    requiresSubscription?: boolean;
+    trialExpired?: boolean;
+    trialDaysLeft?: number;
+    hasSubscription?: boolean;
+    currentPlan?: string;
+  } | null;
+  
+  const trialDaysLeft = typedUser?.trialDaysLeft ?? 14;
+  const requiresSubscription = typedUser?.requiresSubscription ?? false;
+  const isTrialActive = trialDaysLeft > 0 && !requiresSubscription;
   const [showTrialExpiredModal, setShowTrialExpiredModal] = useState(false);
+  
+  useEffect(() => {
+    if (requiresSubscription) {
+      setShowTrialExpiredModal(true);
+    }
+  }, [requiresSubscription]);
   const [showBookSelectorModal, setShowBookSelectorModal] = useState(false);
   const [pendingInspirationPage, setPendingInspirationPage] = useState<{title: string, icon: string, color: string} | null>(null);
   const [showPositionModal, setShowPositionModal] = useState(false);
@@ -3044,9 +3045,22 @@ export default function Prototype() {
                   {/* Base Plan */}
                   <div 
                     className="border-2 border-stone-200 rounded-xl p-4 cursor-pointer hover:border-stone-300 transition-all"
-                    onClick={() => {
-                      setUserPlan("base");
-                      setShowTrialExpiredModal(false);
+                    onClick={async () => {
+                      try {
+                        const response = await fetch("/api/subscription/select-plan", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          credentials: "include",
+                          body: JSON.stringify({ plan: "free" }),
+                        });
+                        if (response.ok) {
+                          setUserPlan("base");
+                          setShowTrialExpiredModal(false);
+                          queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+                        }
+                      } catch (error) {
+                        console.error("Error selecting plan:", error);
+                      }
                     }}
                     data-testid="trial-expired-base"
                   >

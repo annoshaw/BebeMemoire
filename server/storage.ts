@@ -30,6 +30,7 @@ export interface IStorage {
   createUserPlan(plan: InsertUserPlan): Promise<UserPlan>;
   updateUserPlan(userId: string, plan: Partial<InsertUserPlan>): Promise<UserPlan | undefined>;
   getStorageLimit(plan: string): number;
+  getSubscriptionPlanCounts(): Promise<{ plan: string; count: number }[]>;
   
   // QR Code operations
   getQRCode(memoryId: string): Promise<QRCode | undefined>;
@@ -283,6 +284,17 @@ export class DatabaseStorage implements IStorage {
       platine: 5120, // 5 GB
     };
     return limits[plan] || 1024;
+  }
+
+  async getSubscriptionPlanCounts(): Promise<{ plan: string; count: number }[]> {
+    const result = await db
+      .select({
+        plan: userPlans.plan,
+        count: count(),
+      })
+      .from(userPlans)
+      .groupBy(userPlans.plan);
+    return result.map(r => ({ plan: r.plan || 'unknown', count: Number(r.count) }));
   }
 
   // QR Code operations

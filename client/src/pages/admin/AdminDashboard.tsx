@@ -4,7 +4,9 @@ import {
   ShoppingCart, 
   Users, 
   TrendingUp,
-  Loader2
+  Loader2,
+  Crown,
+  Sparkles
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import AdminLayout from "./AdminLayout";
@@ -27,11 +29,17 @@ interface ChartData {
   values: number[];
 }
 
+interface SubscriptionPlan {
+  plan: string;
+  count: number;
+}
+
 interface Stats {
   users: { total: number };
   orders: { total: number; byStatus: Record<string, number> };
   orderStats: { status: string; count: number; totalAmount: number }[];
   revenue: { last30Days: { date: string; amount: number }[] };
+  subscriptionPlans?: SubscriptionPlan[];
   charts?: {
     gender: ChartData;
     region: ChartData;
@@ -88,6 +96,27 @@ export default function AdminDashboard() {
   const genderData = transformChartData(stats?.charts?.gender);
   const regionData = transformChartData(stats?.charts?.region);
   const productData = transformChartData(stats?.charts?.products);
+  const subscriptionPlans = stats?.subscriptionPlans || [];
+
+  const planLabels: Record<string, string> = {
+    free: "De base (Gratuit)",
+    premium: "Premium",
+    platine: "Platine",
+  };
+
+  const planColors: Record<string, string> = {
+    free: "bg-stone-100 text-stone-700",
+    premium: "bg-blue-100 text-blue-700",
+    platine: "bg-amber-100 text-amber-700",
+  };
+
+  const planPrices: Record<string, string> = {
+    free: "0,00 $",
+    premium: "1,99 $/mois",
+    platine: "4,99 $/mois",
+  };
+
+  const totalSubscribers = subscriptionPlans.reduce((sum, p) => sum + p.count, 0);
 
   return (
     <AdminLayout title="Tableau de bord">
@@ -287,6 +316,65 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
           </div>
+
+          <Card data-testid="table-subscriptions">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Crown className="h-5 w-5 text-amber-500" />
+                Types d'abonnement
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {subscriptionPlans.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-stone-200">
+                        <th className="text-left py-3 px-4 font-medium text-stone-600">Plan</th>
+                        <th className="text-center py-3 px-4 font-medium text-stone-600">Prix</th>
+                        <th className="text-center py-3 px-4 font-medium text-stone-600">Abonnés</th>
+                        <th className="text-right py-3 px-4 font-medium text-stone-600">% du total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {subscriptionPlans.map((item) => (
+                        <tr key={item.plan} className="border-b border-stone-100 hover:bg-stone-50" data-testid={`row-plan-${item.plan}`}>
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-2">
+                              {item.plan === 'platine' && <Sparkles className="h-4 w-4 text-amber-500" />}
+                              {item.plan === 'premium' && <Crown className="h-4 w-4 text-blue-500" />}
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${planColors[item.plan] || 'bg-stone-100'}`}>
+                                {planLabels[item.plan] || item.plan}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 text-center text-stone-600" data-testid={`text-price-${item.plan}`}>
+                            {planPrices[item.plan] || '-'}
+                          </td>
+                          <td className="py-3 px-4 text-center font-semibold" data-testid={`text-count-${item.plan}`}>
+                            {item.count}
+                          </td>
+                          <td className="py-3 px-4 text-right text-stone-600">
+                            {totalSubscribers > 0 ? ((item.count / totalSubscribers) * 100).toFixed(1) : 0}%
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr className="bg-stone-50 font-medium">
+                        <td className="py-3 px-4">Total</td>
+                        <td className="py-3 px-4"></td>
+                        <td className="py-3 px-4 text-center" data-testid="text-total-subscribers">{totalSubscribers}</td>
+                        <td className="py-3 px-4 text-right">100%</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              ) : (
+                <p className="text-stone-500 text-center py-8">Aucun abonnement</p>
+              )}
+            </CardContent>
+          </Card>
         </div>
       )}
     </AdminLayout>

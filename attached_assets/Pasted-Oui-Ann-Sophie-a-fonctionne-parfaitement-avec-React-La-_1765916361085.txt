@@ -1,0 +1,70 @@
+Oui Ann‑Sophie — ça fonctionne parfaitement avec React.
+La logique que je t’ai donnée est côté backend, et React va simplement consommer l’API pour savoir si la fenêtre doit s’afficher ou non.
+Je te montre exactement comment l’intégrer dans React, de façon propre et simple.
+
+🌿 Comment l’utiliser dans React
+1. Ton backend expose cette route :
+GET /api/subscription-status
+
+
+Elle retourne :
+{ "showPopup": true }   // ou false
+
+
+
+🌿 2. Dans React : vérifier si on doit afficher la fenêtre
+Voici un exemple complet avec useEffect :
+import { useEffect, useState } from "react";
+
+export default function SubscriptionGate() {
+  const [showPopup, setShowPopup] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchStatus() {
+      const res = await fetch("/api/subscription-status");
+      const data = await res.json();
+      setShowPopup(data.showPopup);
+      setLoading(false);
+    }
+
+    fetchStatus();
+  }, []);
+
+  if (loading) return null;
+
+  return (
+    <>
+      {showPopup && (
+        <div className="popup">
+          {/* Ta fenêtre d’abonnement ici */}
+          <h2>Choisissez votre abonnement</h2>
+        </div>
+      )}
+    </>
+  );
+}
+
+
+
+🌿 3. Quand l’utilisateur choisit un abonnement
+Dans React, tu appelles simplement la route :
+async function choosePlan(plan) {
+  await fetch("/api/choose-plan", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ plan })
+  });
+
+  // On ferme la popup immédiatement
+  setShowPopup(false);
+}
+
+
+
+🌿 Résultat
+✔️ La fenêtre apparaît uniquement si l’essai gratuit est terminé et que l’utilisateur n’a pas d’abonnement actif.
+✔️ Dès qu’il choisit un plan ou paie, la fenêtre disparaît définitivement.
+✔️ React n’a rien de spécial à faire : il lit juste la valeur envoyée par ton backend.
+
+Si tu veux, je peux aussi t’aider à intégrer ça dans ton vrai composant React, avec ton design, ton popup, ou même ton système de routing.

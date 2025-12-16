@@ -211,20 +211,20 @@ export default function PrebuiltBookEditor() {
   return (
     <div className="min-h-screen bg-cream-50">
       <header className="sticky top-0 z-50 bg-white border-b border-sage-200 shadow-sm">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
               <Link href="/app">
-                <Button variant="ghost" size="sm" data-testid="back-to-home">
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  {language === "fr" ? "Accueil" : "Home"}
+                <Button variant="ghost" size="sm" data-testid="back-to-home" className="px-2 sm:px-3">
+                  <ArrowLeft className="w-4 h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">{language === "fr" ? "Accueil" : "Home"}</span>
                 </Button>
               </Link>
-              <div>
-                <h1 className="text-xl font-bold text-sage-900 font-fraunces">
+              <div className="min-w-0 flex-1">
+                <h1 className="text-base sm:text-xl font-bold text-sage-900 font-fraunces truncate">
                   {book.childName}
                 </h1>
-                <p className="text-sm text-sage-500">
+                <p className="text-xs sm:text-sm text-sage-500 hidden sm:block">
                   {language === "fr" 
                     ? "Livre de grossesse et première année" 
                     : "Pregnancy and First Year Book"}
@@ -232,37 +232,38 @@ export default function PrebuiltBookEditor() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setShowInspirationModal(true)}
-                className="bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200 hover:from-amber-100 hover:to-orange-100 text-amber-700"
+                className="bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200 hover:from-amber-100 hover:to-orange-100 text-amber-700 px-2 sm:px-3"
                 data-testid="button-inspiration"
               >
-                <Sparkles className="w-4 h-4 mr-1" />
-                {language === "fr" ? "Inspiration" : "Inspiration"}
+                <Sparkles className="w-4 h-4 sm:mr-1" />
+                <span className="hidden sm:inline">{language === "fr" ? "Inspiration" : "Inspiration"}</span>
               </Button>
               <Button
                 size="sm"
-                className="bg-[#6a8c79] text-white"
+                className="bg-[#6a8c79] text-white px-2 sm:px-3"
                 data-testid="button-order"
                 onClick={() => setLocation(`/app/test-checkout?bookId=${bookId}`)}
               >
-                <ShoppingCart className="w-4 h-4 mr-1" />
-                {language === "fr" ? "Commander" : "Order"}
+                <ShoppingCart className="w-4 h-4 sm:mr-1" />
+                <span className="hidden sm:inline">{language === "fr" ? "Commander" : "Order"}</span>
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setLanguage(language === "fr" ? "en" : "fr")}
                 data-testid="toggle-language"
+                className="px-2 sm:px-3"
               >
                 {language === "fr" ? "EN" : "FR"}
               </Button>
               <Link href={`/app/book/${bookId}/settings`}>
-                <Button variant="ghost" size="icon">
-                  <Settings className="w-5 h-5" />
+                <Button variant="ghost" size="icon" className="w-8 h-8 sm:w-9 sm:h-9">
+                  <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
                 </Button>
               </Link>
             </div>

@@ -227,9 +227,9 @@ export function BookViewer({ bookId, language, onGoToInspiration, initialPage }:
       <Separator />
 
       {templateParts && templateParts.length > 0 ? (
-        <div className="flex gap-6">
-          <div className="w-1/3 min-w-[250px] max-w-[350px] flex-shrink-0">
-            <ScrollArea className="h-[500px] pr-4">
+        <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
+          <div className="w-full lg:w-1/3 lg:min-w-[250px] lg:max-w-[350px] lg:flex-shrink-0">
+            <ScrollArea className="h-auto max-h-[300px] lg:max-h-[500px] lg:h-[500px] pr-4">
               <div className="space-y-2">
                 {templateParts.map((part, index) => {
                   const partPages = getPagesByPart(part.id);
@@ -284,7 +284,7 @@ export function BookViewer({ bookId, language, onGoToInspiration, initialPage }:
             </ScrollArea>
           </div>
 
-          <div className="flex-1 min-h-[200px]">
+          <div className="flex-1 w-full min-h-[200px]">
             {/* Show inspiration pages section */}
             {isInspirationSelected ? (
               <Card className="border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50">
@@ -300,7 +300,7 @@ export function BookViewer({ bookId, language, onGoToInspiration, initialPage }:
                   </p>
                 </CardHeader>
                 <CardContent>
-                  <ScrollArea className="h-[400px]">
+                  <ScrollArea className="h-auto max-h-[60vh] lg:h-[400px]">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {inspirationPages.map((page: any) => {
                         const completed = isPageCompleted(page.pageNumber);
@@ -405,7 +405,7 @@ export function BookViewer({ bookId, language, onGoToInspiration, initialPage }:
                   )}
                 </CardHeader>
                 <CardContent>
-                  <ScrollArea className="h-[400px]">
+                  <ScrollArea className="h-auto max-h-[60vh] lg:h-[400px]">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {getPagesByPart(templateParts[selectedPartIndex].id).map((page) => {
                         const completed = isPageCompleted(page.pageNumber);

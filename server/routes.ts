@@ -475,6 +475,7 @@ export async function registerRoutes(
       const requiresSubscription = trialExpired && !hasSubscription && dbUser.role !== "admin";
       
       res.json({
+        showPopup: requiresSubscription, // Pour React: afficher la popup d'abonnement
         trialDaysLeft,
         trialExpired,
         hasSubscription,
@@ -485,6 +486,60 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error checking subscription status:", error);
       res.status(500).json({ message: "Erreur lors de la vérification du statut" });
+    }
+  });
+
+  // Simplified subscription status endpoint (alias for React components)
+  app.get("/api/subscription-status", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const dbUser = await storage.getUser(userId);
+      
+      if (!dbUser) {
+        return res.json({ showPopup: false });
+      }
+      
+      const createdAt = dbUser.createdAt ? new Date(dbUser.createdAt) : new Date();
+      const now = new Date();
+      const daysSinceRegistration = Math.floor((now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
+      const trialDaysLeft = Math.max(0, 14 - daysSinceRegistration);
+      const trialExpired = trialDaysLeft <= 0;
+      
+      const userPlan = await storage.getUserPlan(userId);
+      const hasSubscription = !!userPlan;
+      
+      // Afficher la popup si essai terminé ET pas d'abonnement ET pas admin
+      const showPopup = trialExpired && !hasSubscription && dbUser.role !== "admin";
+      
+      res.json({ showPopup });
+    } catch (error) {
+      console.error("Error checking subscription status:", error);
+      res.json({ showPopup: false });
+    }
+  });
+
+  // Simplified choose-plan endpoint (alias for React components)
+  app.post("/api/choose-plan", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const { plan } = req.body;
+      
+      const validPlans = ["free", "premium", "platine"];
+      if (!plan || !validPlans.includes(plan)) {
+        return res.status(400).json({ success: false, message: "Plan invalide" });
+      }
+      
+      const existingPlan = await storage.getUserPlan(userId);
+      if (existingPlan) {
+        await storage.updateUserPlan(userId, { plan });
+      } else {
+        await storage.createUserPlan({ userId, plan, storageUsed: 0 });
+      }
+      
+      res.json({ success: true, plan });
+    } catch (error) {
+      console.error("Error choosing plan:", error);
+      res.status(500).json({ success: false, message: "Erreur lors du choix du plan" });
     }
   });
 

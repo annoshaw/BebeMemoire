@@ -1007,115 +1007,100 @@ export function PageEditor({
 
       <Card className="border-sage-200">
         <CardHeader className="pb-3 px-3 sm:px-6">
-          {/* Mobile: Compact single-line header with title + icons */}
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex-1 min-w-0">
-              {/* Title row with style icons inline */}
-              <div className="flex items-center gap-1 flex-wrap">
-                <CardTitle 
-                  className="text-base sm:text-xl leading-tight truncate" 
-                  style={{ fontFamily: titleStyle.fontFamily, fontSize: `${Math.min(titleStyle.fontSize, 18)}px` }}
-                >
-                  {language === "fr" 
-                    ? templatePage?.titleFr 
-                    : templatePage?.titleEn}
-                </CardTitle>
-                
-                {/* Title Style Pickers - inline with title */}
-                <div className="flex items-center gap-0.5 flex-shrink-0">
-                  {/* Title Font Picker */}
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                        <Type className="w-3.5 h-3.5" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-64 p-3 bg-white shadow-lg border border-stone-200" align="start">
-                      <div className="space-y-2">
-                        <p className="text-xs font-medium text-stone-600">
-                          {language === "fr" ? "Police du titre" : "Title font"}
-                        </p>
-                        <div className="space-y-1 max-h-48 overflow-y-auto">
-                          {TITLE_FONTS.map((font) => (
-                            <button
-                              key={font.name}
-                              onClick={() => handleTitleStyleChange({ fontFamily: font.family })}
-                              className={`w-full text-left px-3 py-2 rounded-lg border transition-all ${
-                                titleStyle.fontFamily === font.family
-                                  ? "border-sage-500 bg-sage-50"
-                                  : "border-stone-200 hover:border-stone-400 hover:bg-stone-50"
-                              }`}
-                              style={{ fontFamily: font.family }}
-                            >
-                              <span className="text-sm">{font.name}</span>
-                              <span className="text-xs text-stone-400 ml-2">({font.category})</span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-
-                  {/* Title Size Picker */}
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                        <ALargeSmall className="w-3.5 h-3.5" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-48 p-3 bg-white shadow-lg border border-stone-200" align="start">
-                      <div className="space-y-2">
-                        <p className="text-xs font-medium text-stone-600">
-                          {language === "fr" ? "Taille du titre" : "Title size"}
-                        </p>
-                        <div className="space-y-1">
-                          {TITLE_SIZES.map((size) => (
-                            <button
-                              key={size.value}
-                              onClick={() => handleTitleStyleChange({ fontSize: size.value })}
-                              className={`w-full text-left px-3 py-2 rounded-lg border transition-all flex items-center justify-between ${
-                                titleStyle.fontSize === size.value
-                                  ? "border-sage-500 bg-sage-50"
-                                  : "border-stone-200 hover:border-stone-400 hover:bg-stone-50"
-                              }`}
-                            >
-                              <span style={{ fontSize: `${Math.min(size.value, 18)}px` }}>{size.label}</span>
-                              <span className="text-xs text-stone-400">{size.value}px</span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              </div>
-              
-              {/* Subtitle/inspiration text */}
-              {templatePage?.subtitleFr && (
-                <p className="text-xs sm:text-sm text-stone-500 mt-1 line-clamp-2">
-                  {language === "fr" 
-                    ? templatePage?.subtitleFr 
-                    : templatePage?.subtitleEn}
-                </p>
-              )}
-            </div>
+          {/* Single horizontal row: Title + icons + badges */}
+          <div className="flex items-center gap-2 overflow-x-auto">
+            {/* Page badge */}
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0 flex-shrink-0">
+              P{shownPageNumber}
+            </Badge>
+            {userPage?.isCompleted && (
+              <Badge className="bg-green-500 text-[10px] px-1.5 py-0 flex-shrink-0">
+                <Check className="w-2.5 h-2.5" />
+              </Badge>
+            )}
             
-            {/* Right side: badges + apply button */}
-            <div className="flex flex-col items-end gap-1 flex-shrink-0">
-              <div className="flex items-center gap-1">
-                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                  P{shownPageNumber}
-                </Badge>
-                {userPage?.isCompleted && (
-                  <Badge className="bg-green-500 text-[10px] px-1.5 py-0">
-                    <Check className="w-2.5 h-2.5" />
-                  </Badge>
-                )}
-              </div>
+            {/* Title - allow to shrink/wrap */}
+            <CardTitle 
+              className="text-sm sm:text-lg leading-tight flex-1 min-w-0" 
+              style={{ fontFamily: titleStyle.fontFamily }}
+            >
+              {language === "fr" 
+                ? templatePage?.titleFr 
+                : templatePage?.titleEn}
+            </CardTitle>
+            
+            {/* Controls group - stay on same line */}
+            <div className="flex items-center gap-1 flex-shrink-0">
+              {/* Title Font Picker */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                    <Type className="w-4 h-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64 p-3 bg-white shadow-lg border border-stone-200" align="end">
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-stone-600">
+                      {language === "fr" ? "Police du titre" : "Title font"}
+                    </p>
+                    <div className="space-y-1 max-h-48 overflow-y-auto">
+                      {TITLE_FONTS.map((font) => (
+                        <button
+                          key={font.name}
+                          onClick={() => handleTitleStyleChange({ fontFamily: font.family })}
+                          className={`w-full text-left px-3 py-2 rounded-lg border transition-all ${
+                            titleStyle.fontFamily === font.family
+                              ? "border-sage-500 bg-sage-50"
+                              : "border-stone-200 hover:border-stone-400 hover:bg-stone-50"
+                          }`}
+                          style={{ fontFamily: font.family }}
+                        >
+                          <span className="text-sm">{font.name}</span>
+                          <span className="text-xs text-stone-400 ml-2">({font.category})</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+
+              {/* Title Size Picker */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                    <ALargeSmall className="w-4 h-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-48 p-3 bg-white shadow-lg border border-stone-200" align="end">
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-stone-600">
+                      {language === "fr" ? "Taille du titre" : "Title size"}
+                    </p>
+                    <div className="space-y-1">
+                      {TITLE_SIZES.map((size) => (
+                        <button
+                          key={size.value}
+                          onClick={() => handleTitleStyleChange({ fontSize: size.value })}
+                          className={`w-full text-left px-3 py-2 rounded-lg border transition-all flex items-center justify-between ${
+                            titleStyle.fontSize === size.value
+                              ? "border-sage-500 bg-sage-50"
+                              : "border-stone-200 hover:border-stone-400 hover:bg-stone-50"
+                          }`}
+                        >
+                          <span style={{ fontSize: `${Math.min(size.value, 18)}px` }}>{size.label}</span>
+                          <span className="text-xs text-stone-400">{size.value}px</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+              
+              {/* Apply to all button */}
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="h-6 text-[10px] px-2"
+                className="h-7 text-[10px] px-2 whitespace-nowrap"
                 onClick={() => applyStyleToAllPages('title')}
                 disabled={applyingStyle}
               >
@@ -1123,6 +1108,15 @@ export function PageEditor({
               </Button>
             </div>
           </div>
+          
+          {/* Subtitle/inspiration - second row if exists */}
+          {templatePage?.subtitleFr && (
+            <p className="text-xs text-stone-500 mt-2">
+              {language === "fr" 
+                ? templatePage?.subtitleFr 
+                : templatePage?.subtitleEn}
+            </p>
+          )}
         </CardHeader>
 
         <Separator />

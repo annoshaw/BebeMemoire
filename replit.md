@@ -60,7 +60,7 @@ PDF export status and order status are synchronized with manual override priorit
 -   **Replit Auth (OpenID Connect)**: Primary authentication provider.
 -   **Neon Database**: Serverless PostgreSQL hosting.
 -   **Google Fonts**: Provides Fraunces and DM Sans typography.
--   **Resend**: For transactional email sending (e.g., order cancellations, subscription reminders).
+-   **MailerSend**: For transactional email sending (e.g., password reset, order cancellations, subscription confirmations, plan changes, price adjustments, discount notifications).
 -   **AWS S3**: For storing generated PDFs.
 
 ### Key npm Packages

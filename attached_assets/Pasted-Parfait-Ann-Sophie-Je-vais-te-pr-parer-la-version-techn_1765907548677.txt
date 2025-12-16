@@ -1,0 +1,114 @@
+Parfait Ann‑Sophie. Je vais te préparer la version technique complète que tu peux directement remettre dans Replit ou à ton développeur pour implémenter un panneau d’administration avec contrôle total des abonnements, incluant la possibilité d’accorder des rabais personnalisés.
+Je te propose une formulation structurée, claire et immédiatement exploitable.
+
+🧩 Spécification technique — Contrôle administratif des abonnements
+🎯 Objectif général
+Mettre en place un module d’administration permettant de gérer entièrement les abonnements des utilisateurs, incluant la possibilité d’accorder des rabais individuels, de modifier un abonnement, et de déclencher des ajustements de prix.
+
+1. Fonctionnalités requises dans l’espace administrateur
+A. Gestion des utilisateurs
+L’interface admin doit permettre de :
+- Voir la liste complète des utilisateurs
+- Voir pour chaque utilisateur :
+- type d’abonnement actuel
+- date de début d’abonnement
+- nombre de mois écoulés
+- historique des paiements
+- rabais actifs ou passés
+- statut (actif, suspendu, annulé)
+
+2. Modification manuelle des abonnements
+L’administrateur doit pouvoir :
+- changer le type d’abonnement d’un utilisateur (Premium → Platine, etc.)
+- appliquer immédiatement la logique de recalcul (différence à payer maintenant)
+- déclencher une facturation immédiate
+- corriger un abonnement en cas d’erreur
+- appliquer un abonnement gratuit ou spécial si nécessaire
+
+3. Système de rabais personnalisés
+L’administrateur doit pouvoir accorder des rabais :
+A. Types de rabais
+- Pourcentage (ex. : −20 %)
+- Montant fixe (ex. : −2,00 CAD)
+- Rabais temporaire (ex. : valable 3 mois)
+- Rabais permanent (ex. : tarif spécial pour un utilisateur précis)
+- Rabais rétroactif (ex. : corriger un problème de facturation)
+B. Application
+Le rabais doit pouvoir être appliqué :
+- sur le prochain paiement
+- sur un paiement immédiat
+- sur une période définie
+- sur un abonnement complet
+C. Effets attendus
+- recalcul automatique du montant à payer
+- mise à jour de l’historique de facturation
+- affichage clair dans le profil utilisateur
+
+4. Facturation immédiate
+Lorsqu’un changement d’abonnement ou un rabais rétroactif est appliqué :
+- le système doit calculer la différence immédiatement
+- déclencher une facturation instantanée via le fournisseur (Stripe, Paddle, RevenuCat, etc.)
+- enregistrer la transaction dans l’historique
+- mettre à jour le statut de l’abonnement
+
+5. Journalisation des actions administratives
+Chaque action effectuée dans l’espace admin doit être enregistrée :
+- type d’action (rabais, changement d’abonnement, correction)
+- montant facturé ou crédité
+- date et heure
+- administrateur responsable
+- utilisateur affecté
+Cela garantit transparence et traçabilité.
+
+6. API nécessaires (exemple)
+Voici les endpoints que ton développeur peut créer :
+GET    /admin/users
+GET    /admin/users/:id
+POST   /admin/users/:id/change-plan
+POST   /admin/users/:id/apply-discount
+POST   /admin/users/:id/charge-difference
+POST   /admin/users/:id/update-status
+GET    /admin/logs
+
+
+Chaque endpoint doit :
+- vérifier les permissions admin
+- valider les données
+- mettre à jour la base
+- retourner un JSON clair
+
+7. Base de données — champs à prévoir
+Table users
+- id
+- email
+- abonnement_actuel
+- date_debut_abonnement
+- rabais_actif (bool)
+- rabais_type
+- rabais_valeur
+- rabais_expiration
+- statut
+Table payments
+- id
+- user_id
+- montant
+- devise (CAD)
+- type (mensuel, ajustement, rabais, correction)
+- date
+Table admin_logs
+- id
+- admin_id
+- user_id
+- action
+- details
+- date
+
+🌟 Résultat
+Tu obtiens un système admin :
+- puissant
+- flexible
+- transparent
+- parfaitement adapté à Mémo
+- qui te donne un contrôle total sur les abonnements et les rabais
+
+Si tu veux, je peux maintenant te préparer la maquette visuelle de l’interface admin (sections, boutons, libellés, organisation).

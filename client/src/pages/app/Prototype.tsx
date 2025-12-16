@@ -3242,16 +3242,29 @@ export default function Prototype() {
 
                   {/* Premium Plan */}
                   <div 
-                    className="border-2 border-primary rounded-xl p-4 cursor-pointer bg-primary/5 hover:bg-primary/10 transition-all relative"
+                    className={`border-2 rounded-xl p-4 cursor-pointer transition-all relative ${
+                      userPlan === 'premium' 
+                        ? 'border-green-400 bg-green-50' 
+                        : 'border-primary bg-primary/5 hover:bg-primary/10'
+                    }`}
                     onClick={() => {
-                      setSelectedProduct({ name: "Abonnement Premium", price: "1,99 $" });
-                      setShowCheckout(true);
+                      if (userPlan !== 'premium') {
+                        setSelectedProduct({ name: "Abonnement Premium", price: "1,99 $" });
+                        setShowCheckout(true);
+                      }
                     }}
                     data-testid="trial-expired-premium"
                   >
-                    <div className="absolute -top-2 -right-2 bg-primary text-white text-[10px] px-2 py-0.5 rounded-full font-medium">
-                      Populaire
-                    </div>
+                    {userPlan !== 'premium' && (
+                      <div className="absolute -top-2 -right-2 bg-primary text-white text-[10px] px-2 py-0.5 rounded-full font-medium">
+                        Populaire
+                      </div>
+                    )}
+                    {userPlan === 'premium' && (
+                      <div className="absolute -top-2 -right-2 bg-green-500 text-white text-[10px] px-2 py-0.5 rounded-full font-medium">
+                        Plan actuel
+                      </div>
+                    )}
                     <div className="flex items-center justify-between">
                       <div>
                         <h3 className="font-bold text-stone-800 flex items-center gap-2">
@@ -3270,8 +3283,13 @@ export default function Prototype() {
                   <div 
                     className="border-2 border-amber-400 rounded-xl p-4 cursor-pointer bg-amber-50 hover:bg-amber-100 transition-all"
                     onClick={() => {
-                      setSelectedProduct({ name: "Abonnement Platine", price: "4,99 $" });
-                      setShowCheckout(true);
+                      if (userPlan === 'premium') {
+                        handleCalculateUpgrade('premium', 'platine');
+                        setShowTrialExpiredModal(false);
+                      } else {
+                        setSelectedProduct({ name: "Abonnement Platine", price: "4,99 $" });
+                        setShowCheckout(true);
+                      }
                     }}
                     data-testid="trial-expired-platine"
                   >
@@ -3287,6 +3305,12 @@ export default function Prototype() {
                         <span className="text-xs text-stone-500">/mois jusqu'à l'impression</span>
                       </div>
                     </div>
+                    {userPlan === 'premium' && (
+                      <div className="mt-2 text-xs text-amber-700 flex items-center gap-1">
+                        <TrendingUp size={12} />
+                        <span>Mise à niveau avec ajustement calculé</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 

@@ -2509,14 +2509,51 @@ export async function registerRoutes(
 
   // ============ ADMIN SUBSCRIPTION MANAGEMENT ============
 
+  // Validation schemas for admin subscription endpoints
+  const adminSubscriptionQuerySchema = z.object({
+    limit: z.string().regex(/^\d+$/).optional().default("50"),
+    offset: z.string().regex(/^\d+$/).optional().default("0"),
+    filter: z.enum(["all", "free", "premium", "platine", "active", "canceled"]).optional(),
+  });
+
+  const changePlanSchema = z.object({
+    newPlan: z.enum(["free", "premium", "platine"]),
+    notes: z.string().max(500).optional(),
+    chargeImmediately: z.boolean().optional().default(false),
+  });
+
+  const createDiscountSchema = z.object({
+    name: z.string().min(1).max(100),
+    type: z.enum(["percentage", "fixed"]),
+    value: z.union([z.number().int().min(0), z.string().regex(/^\d+$/)]).transform(v => typeof v === "string" ? parseInt(v) : v),
+    scope: z.enum(["user", "global"]).optional().default("user"),
+    targetPlan: z.enum(["premium", "platine"]).optional(),
+    code: z.string().max(50).optional(),
+    startsAt: z.string().datetime().optional(),
+    endsAt: z.string().datetime().optional(),
+    maxRedemptions: z.number().int().min(1).optional(),
+    appliesRetroactively: z.boolean().optional().default(false),
+  });
+
+  const applyDiscountSchema = z.object({
+    discountId: z.string().min(1),
+    expiresAt: z.string().datetime().optional(),
+    notes: z.string().max(500).optional(),
+  });
+
   // Get all users with subscription details
   app.get("/api/admin/subscriptions/users", requireAdmin, async (req: Request, res: Response) => {
     try {
-      const { limit = "50", offset = "0", filter } = req.query;
+      const parseResult = adminSubscriptionQuerySchema.safeParse(req.query);
+      if (!parseResult.success) {
+        return res.status(400).json({ message: "Paramètres de requête invalides", errors: parseResult.error.errors });
+      }
+      
+      const { limit, offset, filter } = parseResult.data;
       const users = await storage.getUsersWithSubscriptionDetails(
-        parseInt(limit as string),
-        parseInt(offset as string),
-        filter as string
+        parseInt(limit),
+        parseInt(offset),
+        filter
       );
       res.json(users);
     } catch (error) {
@@ -2529,6 +2566,10 @@ export async function registerRoutes(
   app.get("/api/admin/subscriptions/users/:userId", requireAdmin, async (req: Request, res: Response) => {
     try {
       const { userId } = req.params;
+      if (!userId || userId.length < 1) {
+        return res.status(400).json({ message: "ID utilisateur requis" });
+      }
+      
       const details = await storage.getUserSubscriptionDetails(userId);
       if (!details) {
         return res.status(404).json({ message: "Utilisateur non trouvé" });
@@ -2545,16 +2586,30 @@ export async function registerRoutes(
     try {
       const adminId = (req as any).userId;
       const { userId } = req.params;
-      const { newPlan, notes, chargeImmediately } = req.body;
+      
+      // Validate request body
+      const parseResult = changePlanSchema.safeParse(req.body);
+      if (!parseResult.success) {
+        return res.status(400).json({ message: "Données invalides", errors: parseResult.error.errors });
+      }
+      
+      const { newPlan, notes, chargeImmediately } = parseResult.data;
 
-      if (!newPlan || !["free", "premium", "platine"].includes(newPlan)) {
-        return res.status(400).json({ message: "Plan invalide" });
+      // Verify user exists
+      const targetUser = await storage.getUser(userId);
+      if (!targetUser) {
+        return res.status(404).json({ message: "Utilisateur non trouvé" });
       }
 
       const userPlan = await storage.getUserPlan(userId);
       const previousPlan = userPlan?.plan || "free";
+      
+      // Prevent no-op changes
+      if (previousPlan === newPlan) {
+        return res.status(400).json({ message: "L'utilisateur a déjà ce plan" });
+      }
 
-      // Update user plan
+      // Update user plan in database
       if (userPlan) {
         await storage.updateUserPlan(userId, { plan: newPlan });
       } else {
@@ -2578,7 +2633,7 @@ export async function registerRoutes(
         action: "change_plan",
         targetType: "subscription",
         targetId: userId,
-        details: { previousPlan, newPlan, notes },
+        details: { previousPlan, newPlan, notes, chargeImmediately },
       });
 
       res.json({ 
@@ -2608,27 +2663,26 @@ export async function registerRoutes(
   app.post("/api/admin/discounts", requireAdmin, async (req: Request, res: Response) => {
     try {
       const adminId = (req as any).userId;
-      const { name, type, value, scope, targetPlan, code, startsAt, endsAt, maxRedemptions, appliesRetroactively } = req.body;
-
-      if (!name || !type || value === undefined) {
-        return res.status(400).json({ message: "Nom, type et valeur requis" });
+      
+      // Validate request body
+      const parseResult = createDiscountSchema.safeParse(req.body);
+      if (!parseResult.success) {
+        return res.status(400).json({ message: "Données invalides", errors: parseResult.error.errors });
       }
-
-      if (!["percentage", "fixed"].includes(type)) {
-        return res.status(400).json({ message: "Type doit être 'percentage' ou 'fixed'" });
-      }
+      
+      const { name, type, value, scope, targetPlan, code, startsAt, endsAt, maxRedemptions, appliesRetroactively } = parseResult.data;
 
       const discount = await storage.createSubscriptionDiscount({
         name,
         type,
-        value: parseInt(value),
-        scope: scope || "user",
+        value,
+        scope,
         targetPlan,
         code,
         startsAt: startsAt ? new Date(startsAt) : undefined,
         endsAt: endsAt ? new Date(endsAt) : undefined,
-        maxRedemptions: maxRedemptions ? parseInt(maxRedemptions) : undefined,
-        appliesRetroactively: appliesRetroactively || false,
+        maxRedemptions,
+        appliesRetroactively,
         isActive: true,
         createdBy: adminId,
       });
@@ -2653,10 +2707,19 @@ export async function registerRoutes(
     try {
       const adminId = (req as any).userId;
       const { userId } = req.params;
-      const { discountId, expiresAt, notes } = req.body;
-
-      if (!discountId) {
-        return res.status(400).json({ message: "ID du rabais requis" });
+      
+      // Validate request body
+      const parseResult = applyDiscountSchema.safeParse(req.body);
+      if (!parseResult.success) {
+        return res.status(400).json({ message: "Données invalides", errors: parseResult.error.errors });
+      }
+      
+      const { discountId, expiresAt, notes } = parseResult.data;
+      
+      // Verify user exists
+      const targetUser = await storage.getUser(userId);
+      if (!targetUser) {
+        return res.status(404).json({ message: "Utilisateur non trouvé" });
       }
 
       const discount = await storage.getSubscriptionDiscount(discountId);

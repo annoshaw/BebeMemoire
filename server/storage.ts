@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { users, books, memories, userPlans, qrCodes, passwordResetTokens, bookPages, notifications, notificationSettings, bookTemplates, templateSections, templateParts, templatePages, userBookPages, mediaFiles, subscriptions, orders, orderEvents, payments, pdfExports, adminActivityLogs, emailCampaigns, type User, type InsertUser, type UpsertUser, type Book, type InsertBook, type Memory, type InsertMemory, type UserPlan, type InsertUserPlan, type QRCode, type InsertQRCode, type PasswordResetToken, type InsertPasswordResetToken, type BookPage, type InsertBookPage, type Notification, type InsertNotification, type NotificationSettings, type InsertNotificationSettings, type BookTemplate, type InsertBookTemplate, type TemplateSection, type InsertTemplateSection, type TemplatePart, type InsertTemplatePart, type TemplatePage, type InsertTemplatePage, type UserBookPage, type InsertUserBookPage, type MediaFile, type InsertMediaFile, type Subscription, type InsertSubscription, type Order, type InsertOrder, type OrderEvent, type InsertOrderEvent, type Payment, type InsertPayment, type PdfExport, type InsertPdfExport, type AdminActivityLog, type InsertAdminActivityLog, type EmailCampaign, type InsertEmailCampaign } from "@shared/schema";
+import { users, books, memories, userPlans, qrCodes, passwordResetTokens, bookPages, notifications, notificationSettings, bookTemplates, templateSections, templateParts, templatePages, userBookPages, mediaFiles, subscriptions, orders, orderEvents, payments, pdfExports, adminActivityLogs, emailCampaigns, subscriptionDiscounts, userSubscriptionDiscounts, subscriptionPlanHistory, type User, type InsertUser, type UpsertUser, type Book, type InsertBook, type Memory, type InsertMemory, type UserPlan, type InsertUserPlan, type QRCode, type InsertQRCode, type PasswordResetToken, type InsertPasswordResetToken, type BookPage, type InsertBookPage, type Notification, type InsertNotification, type NotificationSettings, type InsertNotificationSettings, type BookTemplate, type InsertBookTemplate, type TemplateSection, type InsertTemplateSection, type TemplatePart, type InsertTemplatePart, type TemplatePage, type InsertTemplatePage, type UserBookPage, type InsertUserBookPage, type MediaFile, type InsertMediaFile, type Subscription, type InsertSubscription, type Order, type InsertOrder, type OrderEvent, type InsertOrderEvent, type Payment, type InsertPayment, type PdfExport, type InsertPdfExport, type AdminActivityLog, type InsertAdminActivityLog, type EmailCampaign, type InsertEmailCampaign, type SubscriptionDiscount, type InsertSubscriptionDiscount, type UserSubscriptionDiscount, type InsertUserSubscriptionDiscount, type SubscriptionPlanHistory, type InsertSubscriptionPlanHistory } from "@shared/schema";
 import { eq, desc, and, gt, lt, asc, lte, or, isNull, sum, count, sql } from "drizzle-orm";
 
 export interface IStorage {
@@ -159,6 +159,27 @@ export interface IStorage {
   createEmailCampaign(campaign: InsertEmailCampaign): Promise<EmailCampaign>;
   updateEmailCampaign(id: string, data: Partial<InsertEmailCampaign>): Promise<EmailCampaign | undefined>;
   getUserEmailsByFilter(filter: string): Promise<{ id: string; email: string; fullName: string | null }[]>;
+  
+  // Subscription Discount operations
+  createSubscriptionDiscount(discount: InsertSubscriptionDiscount): Promise<SubscriptionDiscount>;
+  getSubscriptionDiscount(id: string): Promise<SubscriptionDiscount | undefined>;
+  getSubscriptionDiscounts(activeOnly?: boolean): Promise<SubscriptionDiscount[]>;
+  updateSubscriptionDiscount(id: string, data: Partial<InsertSubscriptionDiscount>): Promise<SubscriptionDiscount | undefined>;
+  deleteSubscriptionDiscount(id: string): Promise<boolean>;
+  
+  // User Subscription Discount operations
+  applyDiscountToUser(data: InsertUserSubscriptionDiscount): Promise<UserSubscriptionDiscount>;
+  getUserDiscounts(userId: string): Promise<UserSubscriptionDiscount[]>;
+  getUserActiveDiscounts(userId: string): Promise<(UserSubscriptionDiscount & { discount: SubscriptionDiscount })[]>;
+  removeUserDiscount(id: string): Promise<boolean>;
+  
+  // Subscription Plan History operations
+  createPlanHistory(history: InsertSubscriptionPlanHistory): Promise<SubscriptionPlanHistory>;
+  getUserPlanHistory(userId: string): Promise<SubscriptionPlanHistory[]>;
+  
+  // Admin subscription management
+  getUsersWithSubscriptionDetails(limit?: number, offset?: number, filter?: string): Promise<any[]>;
+  getUserSubscriptionDetails(userId: string): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1204,6 +1225,180 @@ export class DatabaseStorage implements IStorage {
     await db.update(users)
       .set({ subscriptionReminderSentAt: new Date() })
       .where(eq(users.id, userId));
+  }
+
+  // Subscription Discount operations
+  async createSubscriptionDiscount(discount: InsertSubscriptionDiscount): Promise<SubscriptionDiscount> {
+    const result = await db.insert(subscriptionDiscounts).values(discount).returning();
+    return result[0];
+  }
+
+  async getSubscriptionDiscount(id: string): Promise<SubscriptionDiscount | undefined> {
+    const result = await db.select().from(subscriptionDiscounts).where(eq(subscriptionDiscounts.id, id)).limit(1);
+    return result[0];
+  }
+
+  async getSubscriptionDiscounts(activeOnly: boolean = false): Promise<SubscriptionDiscount[]> {
+    if (activeOnly) {
+      return await db.select()
+        .from(subscriptionDiscounts)
+        .where(eq(subscriptionDiscounts.isActive, true))
+        .orderBy(desc(subscriptionDiscounts.createdAt));
+    }
+    return await db.select()
+      .from(subscriptionDiscounts)
+      .orderBy(desc(subscriptionDiscounts.createdAt));
+  }
+
+  async updateSubscriptionDiscount(id: string, data: Partial<InsertSubscriptionDiscount>): Promise<SubscriptionDiscount | undefined> {
+    const result = await db.update(subscriptionDiscounts)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(subscriptionDiscounts.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteSubscriptionDiscount(id: string): Promise<boolean> {
+    const result = await db.delete(subscriptionDiscounts)
+      .where(eq(subscriptionDiscounts.id, id))
+      .returning();
+    return result.length > 0;
+  }
+
+  // User Subscription Discount operations
+  async applyDiscountToUser(data: InsertUserSubscriptionDiscount): Promise<UserSubscriptionDiscount> {
+    const result = await db.insert(userSubscriptionDiscounts).values(data).returning();
+    await db.update(subscriptionDiscounts)
+      .set({ redemptionCount: sql`redemption_count + 1` })
+      .where(eq(subscriptionDiscounts.id, data.discountId));
+    return result[0];
+  }
+
+  async getUserDiscounts(userId: string): Promise<UserSubscriptionDiscount[]> {
+    return await db.select()
+      .from(userSubscriptionDiscounts)
+      .where(eq(userSubscriptionDiscounts.userId, userId))
+      .orderBy(desc(userSubscriptionDiscounts.appliedAt));
+  }
+
+  async getUserActiveDiscounts(userId: string): Promise<(UserSubscriptionDiscount & { discount: SubscriptionDiscount })[]> {
+    const result = await db.select({
+      userDiscount: userSubscriptionDiscounts,
+      discount: subscriptionDiscounts,
+    })
+      .from(userSubscriptionDiscounts)
+      .innerJoin(subscriptionDiscounts, eq(userSubscriptionDiscounts.discountId, subscriptionDiscounts.id))
+      .where(
+        and(
+          eq(userSubscriptionDiscounts.userId, userId),
+          eq(userSubscriptionDiscounts.isActive, true),
+          or(
+            isNull(userSubscriptionDiscounts.expiresAt),
+            gt(userSubscriptionDiscounts.expiresAt, new Date())
+          )
+        )
+      );
+    return result.map(r => ({ ...r.userDiscount, discount: r.discount }));
+  }
+
+  async removeUserDiscount(id: string): Promise<boolean> {
+    const result = await db.update(userSubscriptionDiscounts)
+      .set({ isActive: false })
+      .where(eq(userSubscriptionDiscounts.id, id))
+      .returning();
+    return result.length > 0;
+  }
+
+  // Subscription Plan History operations
+  async createPlanHistory(history: InsertSubscriptionPlanHistory): Promise<SubscriptionPlanHistory> {
+    const result = await db.insert(subscriptionPlanHistory).values(history).returning();
+    return result[0];
+  }
+
+  async getUserPlanHistory(userId: string): Promise<SubscriptionPlanHistory[]> {
+    return await db.select()
+      .from(subscriptionPlanHistory)
+      .where(eq(subscriptionPlanHistory.userId, userId))
+      .orderBy(desc(subscriptionPlanHistory.createdAt));
+  }
+
+  // Admin subscription management
+  async getUsersWithSubscriptionDetails(limit: number = 50, offset: number = 0, filter?: string): Promise<any[]> {
+    let query = db.select({
+      user: users,
+      subscription: subscriptions,
+      userPlan: userPlans,
+    })
+      .from(users)
+      .leftJoin(subscriptions, eq(users.id, subscriptions.userId))
+      .leftJoin(userPlans, eq(users.id, userPlans.userId))
+      .orderBy(desc(users.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    const result = await query;
+    
+    const usersWithDetails = await Promise.all(result.map(async (r) => {
+      const activeDiscounts = await this.getUserActiveDiscounts(r.user.id);
+      const paymentsResult = await db.select()
+        .from(payments)
+        .where(eq(payments.userId, r.user.id))
+        .orderBy(desc(payments.createdAt))
+        .limit(5);
+      
+      return {
+        ...r.user,
+        subscription: r.subscription,
+        userPlan: r.userPlan,
+        activeDiscounts,
+        recentPayments: paymentsResult,
+      };
+    }));
+
+    if (filter) {
+      return usersWithDetails.filter(u => {
+        if (filter === 'premium') return u.userPlan?.plan === 'premium';
+        if (filter === 'platine') return u.userPlan?.plan === 'platine';
+        if (filter === 'free') return u.userPlan?.plan === 'free' || !u.userPlan;
+        if (filter === 'active') return u.subscription?.status === 'active';
+        if (filter === 'canceled') return u.subscription?.status === 'canceled';
+        return true;
+      });
+    }
+
+    return usersWithDetails;
+  }
+
+  async getUserSubscriptionDetails(userId: string): Promise<any> {
+    const user = await this.getUser(userId);
+    if (!user) return null;
+
+    const [subscription, userPlan, planHistory, activeDiscounts, allDiscounts, userPayments] = await Promise.all([
+      this.getSubscription(userId),
+      this.getUserPlan(userId),
+      this.getUserPlanHistory(userId),
+      this.getUserActiveDiscounts(userId),
+      this.getUserDiscounts(userId),
+      db.select().from(payments).where(eq(payments.userId, userId)).orderBy(desc(payments.createdAt)),
+    ]);
+
+    const subscriptionStartDate = subscription?.currentPeriodStart || userPlan?.createdAt;
+    const monthsElapsed = subscriptionStartDate 
+      ? Math.floor((Date.now() - new Date(subscriptionStartDate).getTime()) / (30 * 24 * 60 * 60 * 1000))
+      : 0;
+
+    return {
+      user,
+      subscription,
+      userPlan,
+      planHistory,
+      activeDiscounts,
+      allDiscounts,
+      payments: userPayments,
+      subscriptionStartDate,
+      monthsElapsed,
+      status: subscription?.status || (userPlan ? 'active' : 'none'),
+    };
   }
 }
 

@@ -582,3 +582,77 @@ export const insertEmailCampaignSchema = createInsertSchema(emailCampaigns).omit
 
 export type InsertEmailCampaign = z.infer<typeof insertEmailCampaignSchema>;
 export type EmailCampaign = typeof emailCampaigns.$inferSelect;
+
+// Subscription discounts table - For admin-created discounts
+export const subscriptionDiscounts = pgTable("subscription_discounts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  code: varchar("code").unique(),
+  name: text("name").notNull(),
+  type: text("type").notNull(), // percentage, fixed
+  value: integer("value").notNull(), // percentage (0-100) or cents
+  scope: text("scope").notNull().default("user"), // user, plan, global
+  targetPlan: text("target_plan"), // null = all plans, or specific plan
+  startsAt: timestamp("starts_at"),
+  endsAt: timestamp("ends_at"),
+  maxRedemptions: integer("max_redemptions"),
+  redemptionCount: integer("redemption_count").default(0),
+  appliesRetroactively: boolean("applies_retroactively").default(false),
+  isActive: boolean("is_active").default(true),
+  createdBy: varchar("created_by").notNull().references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertSubscriptionDiscountSchema = createInsertSchema(subscriptionDiscounts).omit({
+  id: true,
+  redemptionCount: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertSubscriptionDiscount = z.infer<typeof insertSubscriptionDiscountSchema>;
+export type SubscriptionDiscount = typeof subscriptionDiscounts.$inferSelect;
+
+// User subscription discounts - Junction table for applied discounts
+export const userSubscriptionDiscounts = pgTable("user_subscription_discounts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  discountId: varchar("discount_id").notNull().references(() => subscriptionDiscounts.id, { onDelete: "cascade" }),
+  appliedBy: varchar("applied_by").notNull().references(() => users.id, { onDelete: "cascade" }),
+  appliedAt: timestamp("applied_at").defaultNow().notNull(),
+  expiresAt: timestamp("expires_at"),
+  isActive: boolean("is_active").default(true),
+  retroactiveChargeId: varchar("retroactive_charge_id"),
+  notes: text("notes"),
+});
+
+export const insertUserSubscriptionDiscountSchema = createInsertSchema(userSubscriptionDiscounts).omit({
+  id: true,
+  appliedAt: true,
+});
+
+export type InsertUserSubscriptionDiscount = z.infer<typeof insertUserSubscriptionDiscountSchema>;
+export type UserSubscriptionDiscount = typeof userSubscriptionDiscounts.$inferSelect;
+
+// Subscription plan history - Audit trail for plan changes
+export const subscriptionPlanHistory = pgTable("subscription_plan_history", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  previousPlan: text("previous_plan"),
+  newPlan: text("new_plan").notNull(),
+  changeSource: text("change_source").notNull(), // user, admin, system, stripe
+  adminId: varchar("admin_id").references(() => users.id, { onDelete: "set null" }),
+  stripeSubscriptionId: varchar("stripe_subscription_id"),
+  prorationAmount: integer("proration_amount"), // in cents
+  effectiveAt: timestamp("effective_at").defaultNow().notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertSubscriptionPlanHistorySchema = createInsertSchema(subscriptionPlanHistory).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertSubscriptionPlanHistory = z.infer<typeof insertSubscriptionPlanHistorySchema>;
+export type SubscriptionPlanHistory = typeof subscriptionPlanHistory.$inferSelect;

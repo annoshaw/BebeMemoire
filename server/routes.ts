@@ -65,6 +65,59 @@ async function requireAdmin(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
+// Check if user's trial has expired and they need a subscription
+async function requireActiveSubscription(req: Request, res: Response, next: NextFunction) {
+  if (!req.isAuthenticated() || !req.user) {
+    return res.status(401).json({ message: "Non autorisé" });
+  }
+  const user = req.user as any;
+  const userId = user.claims?.sub || user.id;
+  if (!userId) {
+    return res.status(401).json({ message: "Non autorisé" });
+  }
+  
+  const dbUser = await storage.getUser(userId);
+  if (!dbUser) {
+    return res.status(401).json({ message: "Utilisateur non trouvé" });
+  }
+  
+  // Admins always have access
+  if (dbUser.role === "admin") {
+    (req as any).userId = userId;
+    return next();
+  }
+  
+  // Check user's plan
+  const userPlan = await storage.getUserPlan(userId);
+  
+  // If user has any plan (including free), they have access
+  if (userPlan) {
+    (req as any).userId = userId;
+    (req as any).userPlan = userPlan.plan;
+    return next();
+  }
+  
+  // Check if trial has expired (14 days from registration)
+  const createdAt = dbUser.createdAt ? new Date(dbUser.createdAt) : new Date();
+  const now = new Date();
+  const daysSinceRegistration = Math.floor((now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
+  const trialDaysLeft = Math.max(0, 14 - daysSinceRegistration);
+  
+  if (trialDaysLeft <= 0) {
+    // Trial expired and no subscription - block access
+    return res.status(403).json({ 
+      message: "Votre période d'essai est terminée. Veuillez choisir un abonnement pour continuer.",
+      trialExpired: true,
+      requiresSubscription: true
+    });
+  }
+  
+  // Trial still active
+  (req as any).userId = userId;
+  (req as any).trialDaysLeft = trialDaysLeft;
+  next();
+}
+
 // Generate unique order number
 function generateOrderNumber(): string {
   const date = new Date();
@@ -371,10 +424,109 @@ export async function registerRoutes(
         return res.status(401).json({ message: "Utilisateur non trouvé" });
       }
       
-      res.json(dbUser);
+      // Calculate trial status
+      const createdAt = dbUser.createdAt ? new Date(dbUser.createdAt) : new Date();
+      const now = new Date();
+      const daysSinceRegistration = Math.floor((now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
+      const trialDaysLeft = Math.max(0, 14 - daysSinceRegistration);
+      const trialExpired = trialDaysLeft <= 0;
+      
+      // Get user's plan
+      const userPlan = await storage.getUserPlan(userId);
+      const hasSubscription = !!userPlan;
+      const currentPlan = userPlan?.plan || null;
+      
+      // User needs to choose a plan if trial expired and no subscription
+      const requiresSubscription = trialExpired && !hasSubscription && dbUser.role !== "admin";
+      
+      res.json({
+        ...dbUser,
+        trialDaysLeft,
+        trialExpired,
+        hasSubscription,
+        currentPlan,
+        requiresSubscription,
+      });
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  // Check subscription status endpoint
+  app.get("/api/subscription/status", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const dbUser = await storage.getUser(userId);
+      
+      if (!dbUser) {
+        return res.status(404).json({ message: "Utilisateur non trouvé" });
+      }
+      
+      const createdAt = dbUser.createdAt ? new Date(dbUser.createdAt) : new Date();
+      const now = new Date();
+      const daysSinceRegistration = Math.floor((now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
+      const trialDaysLeft = Math.max(0, 14 - daysSinceRegistration);
+      const trialExpired = trialDaysLeft <= 0;
+      
+      const userPlan = await storage.getUserPlan(userId);
+      const hasSubscription = !!userPlan;
+      const currentPlan = userPlan?.plan || null;
+      const requiresSubscription = trialExpired && !hasSubscription && dbUser.role !== "admin";
+      
+      res.json({
+        trialDaysLeft,
+        trialExpired,
+        hasSubscription,
+        currentPlan,
+        requiresSubscription,
+        registeredAt: dbUser.createdAt,
+      });
+    } catch (error) {
+      console.error("Error checking subscription status:", error);
+      res.status(500).json({ message: "Erreur lors de la vérification du statut" });
+    }
+  });
+
+  // Select a subscription plan (including free plan)
+  app.post("/api/subscription/select-plan", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const { plan } = req.body;
+      
+      const validPlans = ["free", "premium", "platine"];
+      if (!plan || !validPlans.includes(plan)) {
+        return res.status(400).json({ message: "Plan invalide" });
+      }
+      
+      // For free plan, just create the user plan record
+      if (plan === "free") {
+        const existingPlan = await storage.getUserPlan(userId);
+        if (existingPlan) {
+          // Update existing plan
+          await storage.updateUserPlan(userId, { plan: "free" });
+        } else {
+          // Create new plan
+          await storage.createUserPlan({ userId, plan: "free", storageUsed: 0 });
+        }
+        
+        return res.json({ 
+          success: true, 
+          plan: "free",
+          message: "Plan gratuit activé avec succès" 
+        });
+      }
+      
+      // For paid plans, redirect to Stripe checkout (handled by existing checkout flow)
+      return res.json({
+        success: false,
+        requiresPayment: true,
+        plan,
+        message: "Ce plan nécessite un paiement. Utilisez le processus de paiement.",
+      });
+    } catch (error) {
+      console.error("Error selecting plan:", error);
+      res.status(500).json({ message: "Erreur lors de la sélection du plan" });
     }
   });
 

@@ -1,45 +1,40 @@
-// Email service using Resend integration
-import { Resend } from 'resend';
+// Email service using MailerSend
+import { MailerSend, EmailParams, Sender, Recipient } from 'mailersend';
 
-let connectionSettings: any;
+const FROM_EMAIL = process.env.MAILERSEND_FROM_EMAIL || 'memo.app.25@hotmail.com';
+const FROM_NAME = 'Memoria';
 
-async function getCredentials() {
-  const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
-  const xReplitToken = process.env.REPL_IDENTITY 
-    ? 'repl ' + process.env.REPL_IDENTITY 
-    : process.env.WEB_REPL_RENEWAL 
-    ? 'depl ' + process.env.WEB_REPL_RENEWAL 
-    : null;
+let mailerSendClient: MailerSend | null = null;
 
-  if (!xReplitToken) {
-    throw new Error('X_REPLIT_TOKEN not found for repl/depl');
-  }
-
-  connectionSettings = await fetch(
-    'https://' + hostname + '/api/v2/connection?include_secrets=true&connector_names=resend',
-    {
-      headers: {
-        'Accept': 'application/json',
-        'X_REPLIT_TOKEN': xReplitToken
-      }
+function getMailerSendClient(): MailerSend {
+  if (!mailerSendClient) {
+    const apiKey = process.env.MAILERSEND_API_KEY;
+    if (!apiKey) {
+      throw new Error('MAILERSEND_API_KEY environment variable is not set');
     }
-  ).then(res => res.json()).then(data => data.items?.[0]);
-
-  if (!connectionSettings || (!connectionSettings.settings.api_key)) {
-    throw new Error('Resend not connected');
+    mailerSendClient = new MailerSend({ apiKey });
   }
-  return {
-    apiKey: connectionSettings.settings.api_key, 
-    fromEmail: connectionSettings.settings.from_email
-  };
+  return mailerSendClient;
 }
 
-async function getResendClient() {
-  const { apiKey } = await getCredentials();
-  return {
-    client: new Resend(apiKey),
-    fromEmail: connectionSettings.settings.from_email
-  };
+async function sendEmail({ to, subject, html }: { to: string; subject: string; html: string }): Promise<boolean> {
+  try {
+    const client = getMailerSendClient();
+    const sentFrom = new Sender(FROM_EMAIL, FROM_NAME);
+    const recipients = [new Recipient(to)];
+
+    const emailParams = new EmailParams()
+      .setFrom(sentFrom)
+      .setTo(recipients)
+      .setSubject(subject)
+      .setHtml(html);
+
+    await client.email.send(emailParams);
+    return true;
+  } catch (error) {
+    console.error('Failed to send email:', error);
+    return false;
+  }
 }
 
 interface PasswordResetData {
@@ -50,8 +45,6 @@ interface PasswordResetData {
 
 export async function sendPasswordResetEmail(data: PasswordResetData): Promise<boolean> {
   try {
-    const { client, fromEmail } = await getResendClient();
-    
     const html = `
 <!DOCTYPE html>
 <html>
@@ -98,15 +91,16 @@ export async function sendPasswordResetEmail(data: PasswordResetData): Promise<b
 </html>
     `;
 
-    await client.emails.send({
-      from: fromEmail || 'Memoria <noreply@memoria.app>',
+    const success = await sendEmail({
       to: data.email,
       subject: 'Réinitialisation de votre mot de passe Memoria',
       html,
     });
 
-    console.log(`Password reset email sent to ${data.email}`);
-    return true;
+    if (success) {
+      console.log(`Password reset email sent to ${data.email}`);
+    }
+    return success;
   } catch (error) {
     console.error('Failed to send password reset email:', error);
     return false;
@@ -125,8 +119,6 @@ interface OrderReminderData {
 
 export async function sendPaymentReminderEmail(data: OrderReminderData): Promise<boolean> {
   try {
-    const { client, fromEmail } = await getResendClient();
-    
     const subject = data.daysRemaining <= 3 
       ? `⚠️ Dernier rappel: Votre commande ${data.orderNumber} expire bientôt`
       : `Rappel: Finalisez votre commande Memoria ${data.orderNumber}`;
@@ -191,15 +183,16 @@ export async function sendPaymentReminderEmail(data: OrderReminderData): Promise
 </html>
     `;
 
-    await client.emails.send({
-      from: fromEmail || 'Memoria <noreply@memoria.app>',
+    const success = await sendEmail({
       to: data.customerEmail,
       subject,
       html,
     });
 
-    console.log(`Payment reminder sent to ${data.customerEmail} for order ${data.orderNumber}`);
-    return true;
+    if (success) {
+      console.log(`Payment reminder sent to ${data.customerEmail} for order ${data.orderNumber}`);
+    }
+    return success;
   } catch (error) {
     console.error('Failed to send payment reminder email:', error);
     return false;
@@ -213,7 +206,6 @@ interface SubscriptionReminderData {
 
 export async function sendSubscriptionReminderEmail(data: SubscriptionReminderData): Promise<boolean> {
   try {
-    const { client, fromEmail } = await getResendClient();
     
     const html = `
 <!DOCTYPE html>
@@ -295,15 +287,16 @@ export async function sendSubscriptionReminderEmail(data: SubscriptionReminderDa
 </html>
     `;
 
-    await client.emails.send({
-      from: fromEmail || 'Memoria <noreply@memoria.app>',
+    const success = await sendEmail({
       to: data.customerEmail,
       subject: 'Rappel: Choisissez votre abonnement Memoria',
       html,
     });
 
-    console.log(`Subscription reminder sent to ${data.customerEmail}`);
-    return true;
+    if (success) {
+      console.log(`Subscription reminder sent to ${data.customerEmail}`);
+    }
+    return success;
   } catch (error) {
     console.error('Failed to send subscription reminder email:', error);
     return false;
@@ -319,7 +312,6 @@ interface OrderCancellationData {
 
 export async function sendOrderCancellationEmail(data: OrderCancellationData): Promise<boolean> {
   try {
-    const { client, fromEmail } = await getResendClient();
     
     const html = `
 <!DOCTYPE html>
@@ -373,15 +365,16 @@ export async function sendOrderCancellationEmail(data: OrderCancellationData): P
 </html>
     `;
 
-    await client.emails.send({
-      from: fromEmail || 'Memoria <noreply@memoria.app>',
+    const success = await sendEmail({
       to: data.customerEmail,
       subject: `Commande ${data.orderNumber} annulée`,
       html,
     });
 
-    console.log(`Order cancellation email sent to ${data.customerEmail} for order ${data.orderNumber}`);
-    return true;
+    if (success) {
+      console.log(`Order cancellation email sent to ${data.customerEmail} for order ${data.orderNumber}`);
+    }
+    return success;
   } catch (error) {
     console.error('Failed to send order cancellation email:', error);
     return false;
@@ -400,7 +393,6 @@ interface PdfDeliveryData {
 
 export async function sendPdfDeliveryEmail(data: PdfDeliveryData): Promise<boolean> {
   try {
-    const { client, fromEmail } = await getResendClient();
     
     const html = `
 <!DOCTYPE html>
@@ -459,15 +451,16 @@ export async function sendPdfDeliveryEmail(data: PdfDeliveryData): Promise<boole
 </html>
     `;
 
-    await client.emails.send({
-      from: fromEmail || 'Memoria <noreply@memoria.app>',
+    const success = await sendEmail({
       to: data.customerEmail,
       subject: `📖 Votre livre "${data.bookName}" est prêt à télécharger!`,
       html,
     });
 
-    console.log(`PDF delivery email sent to ${data.customerEmail} for book ${data.bookName}`);
-    return true;
+    if (success) {
+      console.log(`PDF delivery email sent to ${data.customerEmail} for book ${data.bookName}`);
+    }
+    return success;
   } catch (error) {
     console.error('Failed to send PDF delivery email:', error);
     return false;
@@ -491,7 +484,6 @@ const planDisplayNames: Record<string, string> = {
 
 export async function sendSubscriptionConfirmationEmail(data: SubscriptionConfirmationData): Promise<boolean> {
   try {
-    const { client, fromEmail } = await getResendClient();
     
     const planDisplayName = planDisplayNames[data.planName] || data.planName;
     const priceDisplay = data.planPrice > 0 ? `${(data.planPrice / 100).toFixed(2)}$/mois` : "Gratuit";
@@ -558,15 +550,16 @@ export async function sendSubscriptionConfirmationEmail(data: SubscriptionConfir
 </html>
     `;
 
-    await client.emails.send({
-      from: fromEmail || 'Memoria <noreply@memoria.app>',
+    const success = await sendEmail({
       to: data.customerEmail,
       subject: `Votre abonnement ${planDisplayName} est confirmé!`,
       html,
     });
 
-    console.log(`Subscription confirmation email sent to ${data.customerEmail} for plan ${data.planName}`);
-    return true;
+    if (success) {
+      console.log(`Subscription confirmation email sent to ${data.customerEmail} for plan ${data.planName}`);
+    }
+    return success;
   } catch (error) {
     console.error('Failed to send subscription confirmation email:', error);
     return false;
@@ -585,7 +578,6 @@ interface PlanChangeData {
 
 export async function sendPlanChangeEmail(data: PlanChangeData): Promise<boolean> {
   try {
-    const { client, fromEmail } = await getResendClient();
     
     const previousPlanName = planDisplayNames[data.previousPlan] || data.previousPlan;
     const newPlanName = planDisplayNames[data.newPlan] || data.newPlan;
@@ -663,15 +655,16 @@ export async function sendPlanChangeEmail(data: PlanChangeData): Promise<boolean
 </html>
     `;
 
-    await client.emails.send({
-      from: fromEmail || 'Memoria <noreply@memoria.app>',
+    const success = await sendEmail({
       to: data.customerEmail,
       subject: `Votre abonnement a été modifié: ${newPlanName}`,
       html,
     });
 
-    console.log(`Plan change email sent to ${data.customerEmail}: ${data.previousPlan} → ${data.newPlan}`);
-    return true;
+    if (success) {
+      console.log(`Plan change email sent to ${data.customerEmail}: ${data.previousPlan} → ${data.newPlan}`);
+    }
+    return success;
   } catch (error) {
     console.error('Failed to send plan change email:', error);
     return false;
@@ -691,7 +684,6 @@ interface PriceAdjustmentData {
 
 export async function sendPriceAdjustmentEmail(data: PriceAdjustmentData): Promise<boolean> {
   try {
-    const { client, fromEmail } = await getResendClient();
     
     const planDisplayName = planDisplayNames[data.planName] || data.planName;
     const oldPriceDisplay = `${(data.oldPrice / 100).toFixed(2)}$/mois`;
@@ -770,15 +762,16 @@ export async function sendPriceAdjustmentEmail(data: PriceAdjustmentData): Promi
 </html>
     `;
 
-    await client.emails.send({
-      from: fromEmail || 'Memoria <noreply@memoria.app>',
+    const success = await sendEmail({
       to: data.customerEmail,
       subject: `Ajustement de prix pour votre abonnement ${planDisplayName}`,
       html,
     });
 
-    console.log(`Price adjustment email sent to ${data.customerEmail} for plan ${data.planName}`);
-    return true;
+    if (success) {
+      console.log(`Price adjustment email sent to ${data.customerEmail} for plan ${data.planName}`);
+    }
+    return success;
   } catch (error) {
     console.error('Failed to send price adjustment email:', error);
     return false;
@@ -796,7 +789,6 @@ interface DiscountAppliedData {
 
 export async function sendDiscountAppliedEmail(data: DiscountAppliedData): Promise<boolean> {
   try {
-    const { client, fromEmail } = await getResendClient();
     
     const durationText = !data.durationMonths || data.durationMonths === 0 
       ? "indéfiniment" 
@@ -860,15 +852,16 @@ export async function sendDiscountAppliedEmail(data: DiscountAppliedData): Promi
 </html>
     `;
 
-    await client.emails.send({
-      from: fromEmail || 'Memoria <noreply@memoria.app>',
+    const success = await sendEmail({
       to: data.customerEmail,
       subject: `🎉 Rabais appliqué: ${data.discountName}`,
       html,
     });
 
-    console.log(`Discount applied email sent to ${data.customerEmail} for discount ${data.discountName}`);
-    return true;
+    if (success) {
+      console.log(`Discount applied email sent to ${data.customerEmail} for discount ${data.discountName}`);
+    }
+    return success;
   } catch (error) {
     console.error('Failed to send discount applied email:', error);
     return false;
@@ -891,7 +884,6 @@ export async function sendCampaignEmails(data: CampaignEmailData): Promise<{ sen
   const results = { sent: 0, failed: 0 };
   
   try {
-    const { client, fromEmail } = await getResendClient();
     
     const emailTemplate = (recipientName: string) => `
 <!DOCTYPE html>
@@ -939,14 +931,17 @@ export async function sendCampaignEmails(data: CampaignEmailData): Promise<{ sen
       
       const sendPromises = batch.map(async (recipient) => {
         try {
-          await client.emails.send({
-            from: fromEmail || 'Memoria <noreply@memoria.app>',
+          const success = await sendEmail({
             to: recipient.email,
             subject: data.subject,
             html: emailTemplate(recipient.fullName || ''),
           });
-          results.sent++;
-          return true;
+          if (success) {
+            results.sent++;
+          } else {
+            results.failed++;
+          }
+          return success;
         } catch (error) {
           console.error(`Failed to send campaign email to ${recipient.email}:`, error);
           results.failed++;

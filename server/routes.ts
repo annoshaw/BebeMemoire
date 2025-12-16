@@ -530,6 +530,91 @@ export async function registerRoutes(
     }
   });
 
+  // Calculate upgrade adjustment from Premium to Platine
+  app.post("/api/subscription/calculate-upgrade", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const { fromPlan, toPlan } = req.body;
+      
+      const TARIFS: Record<string, number> = {
+        free: 0,
+        premium: 1.99,
+        platine: 4.99,
+      };
+      
+      if (!fromPlan || !toPlan || !TARIFS[fromPlan] || !TARIFS[toPlan]) {
+        return res.status(400).json({ message: "Plans invalides" });
+      }
+      
+      if (TARIFS[toPlan] <= TARIFS[fromPlan]) {
+        return res.status(400).json({ message: "Le nouveau plan doit être supérieur" });
+      }
+      
+      // Get user's subscription start date
+      const userPlan = await storage.getUserPlan(userId);
+      if (!userPlan) {
+        return res.status(400).json({ message: "Aucun abonnement actif" });
+      }
+      
+      // Calculate months elapsed since subscription started
+      const startDate = userPlan.createdAt ? new Date(userPlan.createdAt) : new Date();
+      const now = new Date();
+      const moisEcoules = Math.max(1, Math.ceil((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30)));
+      
+      const tarifAncien = TARIFS[fromPlan];
+      const tarifNouveau = TARIFS[toPlan];
+      
+      const montantDu = moisEcoules * tarifNouveau;
+      const montantPaye = moisEcoules * tarifAncien;
+      const differenceImmediate = montantDu - montantPaye;
+      
+      res.json({
+        moisEcoules,
+        montantDu: montantDu.toFixed(2),
+        montantPaye: montantPaye.toFixed(2),
+        differenceImmediate: differenceImmediate.toFixed(2),
+        tarifNouveau: tarifNouveau.toFixed(2),
+        fromPlan,
+        toPlan,
+      });
+    } catch (error) {
+      console.error("Error calculating upgrade:", error);
+      res.status(500).json({ message: "Erreur lors du calcul de la mise à niveau" });
+    }
+  });
+
+  // Process upgrade payment and update subscription
+  app.post("/api/subscription/upgrade", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const { toPlan, differenceAmount } = req.body;
+      
+      const validPlans = ["premium", "platine"];
+      if (!toPlan || !validPlans.includes(toPlan)) {
+        return res.status(400).json({ message: "Plan invalide" });
+      }
+      
+      // Here you would integrate with Stripe to charge the difference
+      // For now, we'll update the plan directly (payment handled via checkout)
+      
+      const userPlan = await storage.getUserPlan(userId);
+      if (userPlan) {
+        await storage.updateUserPlan(userId, { plan: toPlan });
+      } else {
+        await storage.createUserPlan({ userId, plan: toPlan, storageUsed: 0 });
+      }
+      
+      res.json({
+        success: true,
+        plan: toPlan,
+        message: `Abonnement ${toPlan === "platine" ? "Platine" : "Premium"} activé avec succès`,
+      });
+    } catch (error) {
+      console.error("Error processing upgrade:", error);
+      res.status(500).json({ message: "Erreur lors de la mise à niveau" });
+    }
+  });
+
   // Legacy: Get current user (for backward compatibility)
   app.get("/api/auth/me", (req: Request, res: Response) => {
     if (!req.isAuthenticated()) {

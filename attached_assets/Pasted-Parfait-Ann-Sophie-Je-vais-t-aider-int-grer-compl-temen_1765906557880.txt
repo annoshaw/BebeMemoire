@@ -1,0 +1,99 @@
+Parfait Ann‑Sophie. Je vais t’aider à intégrer complètement cette logique dans ton application — côté interface et côté backend — pour que :
+- la différence soit calculée immédiatement
+- le montant soit facturé tout de suite
+- le nouvel abonnement démarre ensuite normalement
+- le système fonctionne même si l’utilisateur est abonné depuis 18 mois, 3 ans, etc.
+Je te propose une version propre, claire et prête à intégrer dans Replit.
+
+🧩 1. Fonction finale (calcul immédiat de la différence)
+Cette fonction calcule exactement ce que tu veux :
+👉 ce que la personne aurait dû payer jusqu’à maintenant
+👉 ce qu’elle a réellement payé
+👉 la différence à facturer immédiatement
+function calculerDifferenceImmediate({
+  moisEcoules,
+  tarifAncien = 1.99,   // Premium en CAD
+  tarifNouveau = 4.99   // Platine en CAD
+}) {
+  const montantDu = moisEcoules * tarifNouveau;   // Ce qu'il aurait dû payer
+  const montantPaye = moisEcoules * tarifAncien;  // Ce qu'il a payé
+  const difference = montantDu - montantPaye;     // À facturer maintenant
+
+  return {
+    montantDu: montantDu.toFixed(2),
+    montantPaye: montantPaye.toFixed(2),
+    differenceImmediate: difference.toFixed(2)
+  };
+}
+
+
+
+🧩 2. Intégration dans ton backend (exemple Node.js / Express)
+Tu peux créer une route API qui :
+- reçoit le nombre de mois écoulés
+- calcule la différence
+- renvoie le montant à facturer
+- déclenche ensuite la facturation (Stripe, Paddle, RevenuCat, etc.)
+app.post("/upgrade", (req, res) => {
+  const { moisEcoules } = req.body;
+
+  const resultats = calculerDifferenceImmediate({
+    moisEcoules,
+    tarifAncien: 1.99,
+    tarifNouveau: 4.99
+  });
+
+  // Ici tu déclenches la facturation immédiate via ton provider
+  // ex: stripe.paymentIntents.create({ amount: resultats.differenceImmediate * 100, ... })
+
+  res.json({
+    message: "Ajustement calculé",
+    ...resultats
+  });
+});
+
+
+
+🧩 3. Intégration dans ton interface (React)
+Voici un composant prêt à coller dans ton UI :
+function AjustementImmediate({ moisEcoules }) {
+  const tarifAncien = 1.99;
+  const tarifNouveau = 4.99;
+
+  const montantDu = (moisEcoules * tarifNouveau).toFixed(2);
+  const montantPaye = (moisEcoules * tarifAncien).toFixed(2);
+  const difference = (montantDu - montantPaye).toFixed(2);
+
+  return (
+    <div>
+      <h2>Ajustement immédiat</h2>
+      <p>
+        Comme vous changez de forfait, nous ajustons simplement la différence
+        entre ce que vous avez déjà payé et ce que vous auriez payé avec le
+        forfait Platine.
+      </p>
+
+      <ul>
+        <li>Montant dû jusqu’à aujourd’hui : {montantDu} CAD</li>
+        <li>Montant déjà payé : {montantPaye} CAD</li>
+        <li>Différence à régler maintenant : <strong>{difference} CAD</strong></li>
+      </ul>
+
+      <p>Votre abonnement Platine commencera ensuite à 4,99 CAD / mois.</p>
+    </div>
+  );
+}
+
+
+
+🎨 4. Texte final pour l’utilisateur (clair et rassurant)
+Tu peux afficher ceci dans l’écran de confirmation :
+
+Ajustement immédiat du prix
+Pour passer au forfait Platine, nous ajustons simplement la différence entre ce que vous avez déjà payé et ce que vous auriez payé avec ce forfait.
+- Montant dû jusqu’à aujourd’hui : 14,97 CAD
+- Montant déjà payé : 5,97 CAD
+- Différence à régler maintenant : 9,00 CAD
+Votre abonnement Platine commencera ensuite à 4,99 CAD / mois.
+
+Si tu veux, je peux aussi t’aider à connecter ça à Stripe ou Paddle, ou à rédiger le texte pour l’email de confirmation.

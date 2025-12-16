@@ -1,7 +1,7 @@
 // Email service using MailerSend
 import { MailerSend, EmailParams, Sender, Recipient } from 'mailersend';
 
-const FROM_EMAIL = process.env.MAILERSEND_FROM_EMAIL || 'memo.app.25@hotmail.com';
+const FROM_EMAIL = process.env.MAILERSEND_FROM_EMAIL || 'noreply@test-86org8ey200gew13.mlsender.net';
 const FROM_NAME = 'Memoria';
 
 let mailerSendClient: MailerSend | null = null;

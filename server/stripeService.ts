@@ -133,6 +133,38 @@ export class StripeService {
     return await stripe.coupons.del(couponId);
   }
 
+  // Apply coupon to a customer for their next invoice
+  async applyCouponToCustomer(customerId: string, couponId: string) {
+    const stripe = await getUncachableStripeClient();
+    return await stripe.customers.update(customerId, {
+      coupon: couponId,
+    } as any);
+  }
+
+  // Remove coupon from a customer
+  async removeCouponFromCustomer(customerId: string) {
+    const stripe = await getUncachableStripeClient();
+    return await stripe.customers.update(customerId, {
+      coupon: '',
+    } as any);
+  }
+
+  // Apply coupon to an existing subscription
+  async applyCouponToSubscription(subscriptionId: string, couponId: string) {
+    const stripe = await getUncachableStripeClient();
+    return await stripe.subscriptions.update(subscriptionId, {
+      coupon: couponId,
+    } as any);
+  }
+
+  // Remove coupon from a subscription
+  async removeCouponFromSubscription(subscriptionId: string) {
+    const stripe = await getUncachableStripeClient();
+    return await stripe.subscriptions.update(subscriptionId, {
+      coupon: '',
+    } as any);
+  }
+
   // Create checkout session with discount
   async createCheckoutSessionWithDiscount(params: {
     customerId: string;

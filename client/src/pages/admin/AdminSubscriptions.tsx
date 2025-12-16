@@ -194,6 +194,15 @@ export default function AdminSubscriptions() {
     },
   });
 
+  const removeDiscountMutation = useMutation({
+    mutationFn: async ({ userId, discountId }: { userId: string; discountId: string }) => {
+      return apiRequest("DELETE", `/api/admin/users/${userId}/discounts/${discountId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/subscriptions/users"] });
+    },
+  });
+
   const filteredUsers = users.filter(user => {
     if (!searchTerm) return true;
     const search = searchTerm.toLowerCase();
@@ -417,10 +426,26 @@ export default function AdminSubscriptions() {
                   <div className="space-y-2">
                     {selectedUser.activeDiscounts.map((d: any) => (
                       <div key={d.id} className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                        <span className="font-medium">{d.discount?.name}</span>
-                        <span className="text-green-700 font-bold">
-                          {d.discount?.type === "percentage" ? `-${d.discount?.value}%` : `-${(d.discount?.value / 100).toFixed(2)} $`}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{d.discount?.name}</span>
+                          <span className="text-green-700 font-bold">
+                            {d.discount?.type === "percentage" ? `-${d.discount?.value}%` : `-${(d.discount?.value / 100).toFixed(2)} $`}
+                          </span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                          onClick={() => {
+                            if (confirm(`Retirer le rabais "${d.discount?.name}" ?`)) {
+                              removeDiscountMutation.mutate({ userId: selectedUser.id, discountId: d.id });
+                            }
+                          }}
+                          disabled={removeDiscountMutation.isPending}
+                          data-testid={`button-remove-discount-${d.id}`}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
                       </div>
                     ))}
                   </div>

@@ -2768,12 +2768,28 @@ export async function registerRoutes(
         isActive: true,
       });
 
+      // Apply Stripe coupon if discount has one and user has a Stripe customer
+      if (discount.stripeCouponId) {
+        try {
+          const { stripeService } = await import('./stripeService');
+          // Get user's Stripe customer ID
+          const userStripeData = await storage.getStripeCustomer(userId);
+          if (userStripeData?.stripeCustomerId) {
+            await stripeService.applyCouponToCustomer(userStripeData.stripeCustomerId, discount.stripeCouponId);
+            console.log(`Applied Stripe coupon ${discount.stripeCouponId} to customer ${userStripeData.stripeCustomerId}`);
+          }
+        } catch (stripeError) {
+          console.error("Failed to apply Stripe coupon:", stripeError);
+          // Continue without failing - discount is still applied locally
+        }
+      }
+
       await storage.createAdminActivityLog({
         adminId,
         action: "apply_discount",
         targetType: "user_discount",
         targetId: userDiscount.id,
-        details: { userId, discountId, discountName: discount.name },
+        details: { userId, discountId, discountName: discount.name, stripeCouponApplied: !!discount.stripeCouponId },
       });
 
       res.json({ 
@@ -2792,9 +2808,28 @@ export async function registerRoutes(
       const adminId = (req as any).userId;
       const { userId, discountId } = req.params;
 
+      // Get the user discount and its associated discount to check for Stripe coupon
+      const userDiscounts = await storage.getUserActiveDiscounts(userId);
+      const userDiscount = userDiscounts.find((d: any) => d.id === discountId);
+      
       const removed = await storage.removeUserDiscount(discountId);
       if (!removed) {
         return res.status(404).json({ message: "Rabais utilisateur non trouvé" });
+      }
+
+      // Remove Stripe coupon from customer if applicable
+      if (userDiscount?.discount?.stripeCouponId) {
+        try {
+          const { stripeService } = await import('./stripeService');
+          const userStripeData = await storage.getStripeCustomer(userId);
+          if (userStripeData?.stripeCustomerId) {
+            await stripeService.removeCouponFromCustomer(userStripeData.stripeCustomerId);
+            console.log(`Removed Stripe coupon from customer ${userStripeData.stripeCustomerId}`);
+          }
+        } catch (stripeError) {
+          console.error("Failed to remove Stripe coupon:", stripeError);
+          // Continue without failing
+        }
       }
 
       await storage.createAdminActivityLog({
@@ -2802,7 +2837,7 @@ export async function registerRoutes(
         action: "remove_discount",
         targetType: "user_discount",
         targetId: discountId,
-        details: { userId },
+        details: { userId, stripeCouponRemoved: !!userDiscount?.discount?.stripeCouponId },
       });
 
       res.json({ message: "Rabais retiré" });

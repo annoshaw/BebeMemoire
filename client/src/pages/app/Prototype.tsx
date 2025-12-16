@@ -3101,7 +3101,7 @@ export default function Prototype() {
                       </div>
                       <div className="text-right">
                         <span className="text-xl font-bold text-primary">1,99 $</span>
-                        <span className="text-xs text-stone-500">/mois</span>
+                        <span className="text-xs text-stone-500">/mois jusqu'à l'impression</span>
                       </div>
                     </div>
                   </div>
@@ -3125,7 +3125,7 @@ export default function Prototype() {
                       </div>
                       <div className="text-right">
                         <span className="text-xl font-bold text-amber-600">4,99 $</span>
-                        <span className="text-xs text-stone-500">/mois</span>
+                        <span className="text-xs text-stone-500">/mois jusqu'à l'impression</span>
                       </div>
                     </div>
                   </div>

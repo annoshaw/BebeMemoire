@@ -944,18 +944,18 @@ export function PageEditor({
             </div>
           </div>
 
-          {/* Highlight specific areas based on current step */}
+          {/* Highlight specific areas based on current step - responsive positioning */}
           {currentEditorStep.highlightArea === "title-style" && (
-            <div className="absolute top-[180px] left-[50%] -translate-x-1/2 w-[200px] h-[50px] border-4 border-green-400 rounded-xl pointer-events-none animate-pulse" />
+            <div className="absolute top-[140px] sm:top-[160px] left-4 right-4 sm:left-[10%] sm:right-[10%] h-[60px] border-4 border-green-400 rounded-xl pointer-events-none animate-pulse" />
           )}
           {currentEditorStep.highlightArea === "text-style" && (
-            <div className="absolute top-[350px] left-[10%] w-[80%] max-w-[400px] h-[150px] border-4 border-green-400 rounded-xl pointer-events-none animate-pulse" />
+            <div className="absolute top-[220px] sm:top-[280px] left-4 right-4 sm:left-[5%] sm:right-[5%] h-[120px] sm:h-[150px] border-4 border-green-400 rounded-xl pointer-events-none animate-pulse" />
           )}
           {currentEditorStep.highlightArea === "photos" && (
-            <div className="absolute top-[250px] right-[10%] w-[200px] h-[200px] border-4 border-green-400 rounded-xl pointer-events-none animate-pulse" />
+            <div className="absolute top-[350px] sm:top-[450px] left-4 right-4 sm:left-[5%] sm:right-[5%] h-[150px] sm:h-[200px] border-4 border-green-400 rounded-xl pointer-events-none animate-pulse" />
           )}
           {currentEditorStep.highlightArea === "save" && (
-            <div className="absolute top-[120px] right-[20px] w-[120px] h-[40px] border-4 border-green-400 rounded-xl pointer-events-none animate-pulse" />
+            <div className="absolute bottom-[80px] sm:bottom-[100px] left-4 right-4 sm:left-auto sm:right-4 sm:w-[200px] h-[50px] border-4 border-green-400 rounded-xl pointer-events-none animate-pulse" />
           )}
         </div>
       )}

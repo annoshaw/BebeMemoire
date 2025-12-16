@@ -108,6 +108,8 @@ export function BookViewer({ bookId, language, onGoToInspiration, initialPage }:
   const [hasInitialPageOpened, setHasInitialPageOpened] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
   const [tutorialStep, setTutorialStep] = useState(0);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editedName, setEditedName] = useState("");
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -184,6 +186,27 @@ export function BookViewer({ bookId, language, onGoToInspiration, initialPage }:
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/books", bookId, "pages"] });
+    },
+  });
+
+  const updateChildNameMutation = useMutation({
+    mutationFn: async (newName: string) => {
+      const res = await fetch(`/api/books/${bookId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ childName: newName }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || "Failed to update name");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/books", bookId, "pages"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/books"] });
+      setIsEditingName(false);
     },
   });
 
@@ -398,9 +421,59 @@ export function BookViewer({ bookId, language, onGoToInspiration, initialPage }:
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
           <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-sage-900 font-fraunces">
-              {book.childName}
-            </h2>
+            {isEditingName ? (
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={editedName}
+                  onChange={(e) => setEditedName(e.target.value)}
+                  className="text-lg sm:text-xl font-bold text-sage-900 font-fraunces border border-sage-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-sage-400"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && editedName.trim()) {
+                      updateChildNameMutation.mutate(editedName.trim());
+                    } else if (e.key === "Escape") {
+                      setIsEditingName(false);
+                    }
+                  }}
+                  data-testid="input-child-name"
+                />
+                <Button
+                  size="sm"
+                  onClick={() => editedName.trim() && updateChildNameMutation.mutate(editedName.trim())}
+                  disabled={!editedName.trim() || updateChildNameMutation.isPending}
+                  className="bg-sage-600 hover:bg-sage-700"
+                  data-testid="button-save-child-name"
+                >
+                  <Check className="w-4 h-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setIsEditingName(false)}
+                  data-testid="button-cancel-edit-name"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl sm:text-2xl font-bold text-sage-900 font-fraunces">
+                  {book.childName}
+                </h2>
+                <button
+                  onClick={() => {
+                    setEditedName(book.childName);
+                    setIsEditingName(true);
+                  }}
+                  className="p-1.5 hover:bg-sage-100 rounded-full transition-colors"
+                  title={language === "fr" ? "Modifier le nom" : "Edit name"}
+                  data-testid="button-edit-child-name"
+                >
+                  <Pencil className="w-4 h-4 text-sage-500 hover:text-sage-700" />
+                </button>
+              </div>
+            )}
             <p className="text-sm sm:text-base text-sage-600">
               {language === "fr" 
                 ? `${completedCount} / ${totalPages} pages complétées`

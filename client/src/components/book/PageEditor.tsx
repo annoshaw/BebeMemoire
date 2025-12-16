@@ -1181,29 +1181,29 @@ export function PageEditor({
 
       {/* Page Preview Modal - 8x11 Book Format */}
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
-        <DialogContent className="max-w-4xl max-h-[95vh] overflow-hidden p-0">
-          <DialogHeader className="p-4 border-b bg-stone-50">
-            <div className="flex items-center justify-between">
+        <DialogContent className="w-[95vw] max-w-4xl max-h-[95vh] overflow-hidden p-0 sm:w-auto">
+          <DialogHeader className="p-3 sm:p-4 border-b bg-stone-50">
+            <div className="space-y-3">
               <div>
-                <DialogTitle className="text-lg font-fraunces">
+                <DialogTitle className="text-base sm:text-lg font-fraunces">
                   {language === "fr" ? "Aperçu de la page" : "Page Preview"}
                 </DialogTitle>
-                <DialogDescription className="text-sm">
+                <DialogDescription className="text-xs sm:text-sm hidden sm:block">
                   {language === "fr" 
                     ? "Voici comment la page apparaîtra dans votre livre imprimé (format 8×11 pouces)"
                     : "This is how the page will appear in your printed book (8×11 inches format)"}
                 </DialogDescription>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                 {/* Text Layout Selector */}
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className="flex items-center gap-2">
-                      <FileText className="w-4 h-4" />
-                      {language === "fr" ? "Position texte" : "Text position"}
+                    <Button variant="outline" size="sm" className="h-8 px-2 sm:px-3 text-xs">
+                      <FileText className="w-4 h-4 sm:mr-1" />
+                      <span className="hidden sm:inline">{language === "fr" ? "Position" : "Position"}</span>
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-56 p-3 bg-[#ffffff] text-center" align="end">
+                  <PopoverContent className="w-56 p-3 bg-[#ffffff] text-center" align="start">
                     <div className="space-y-2">
                       <p className="text-xs font-medium text-stone-600 mb-2">
                         {language === "fr" ? "Positionnement du texte" : "Text positioning"}
@@ -1238,12 +1238,12 @@ export function PageEditor({
                 {photos.length > 0 && (
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" size="sm" className="flex items-center gap-2">
-                        <Grid className="w-4 h-4" />
-                        {language === "fr" ? "Disposition photos" : "Photo layout"}
+                      <Button variant="outline" size="sm" className="h-8 px-2 sm:px-3 text-xs">
+                        <Grid className="w-4 h-4 sm:mr-1" />
+                        <span className="hidden sm:inline">{language === "fr" ? "Photos" : "Photos"}</span>
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-64 p-3 bg-[#ffffff]" align="end">
+                    <PopoverContent className="w-64 p-3 bg-[#ffffff]" align="start">
                       <LayoutSelector
                         photoCount={photos.length}
                         selectedLayoutId={selectedPhotoLayoutId}
@@ -1258,27 +1258,29 @@ export function PageEditor({
                   variant={editMode ? "default" : "outline"}
                   size="sm"
                   onClick={() => setEditMode(!editMode)}
-                  className="flex items-center gap-2"
+                  className="h-8 px-2 sm:px-3 text-xs"
                 >
-                  <Move className="w-4 h-4" />
-                  {editMode 
-                    ? (language === "fr" ? "Mode aperçu" : "Preview mode")
-                    : (language === "fr" ? "Repositionner" : "Reposition")}
+                  <Move className="w-4 h-4 sm:mr-1" />
+                  <span className="hidden sm:inline">
+                    {editMode 
+                      ? (language === "fr" ? "Aperçu" : "Preview")
+                      : (language === "fr" ? "Déplacer" : "Move")}
+                  </span>
                 </Button>
               </div>
             </div>
           </DialogHeader>
           
-          <div className="p-4 bg-stone-100 flex justify-center items-start overflow-auto max-h-[calc(95vh-180px)]">
-            {/* Book page 8x11 - Simple isolated preview */}
+          <div className="p-2 sm:p-4 bg-stone-100 flex justify-center items-start overflow-auto max-h-[calc(95vh-140px)] sm:max-h-[calc(95vh-180px)]">
+            {/* Book page 8x11 - Simple isolated preview - scales on mobile */}
             <div 
-              className="bg-white shadow-2xl border border-stone-300"
+              className="bg-white shadow-2xl border border-stone-300 origin-top"
               style={{
-                width: '400px',
-                height: '550px',
+                width: 'min(400px, 85vw)',
+                height: 'min(550px, calc(85vw * 1.375))',
                 display: 'flex',
                 flexDirection: 'column',
-                padding: '12px',
+                padding: 'min(12px, 3vw)',
                 boxSizing: 'border-box',
                 position: 'relative'
               }}

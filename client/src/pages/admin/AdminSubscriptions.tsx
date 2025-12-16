@@ -169,7 +169,13 @@ export default function AdminSubscriptions() {
 
   const createDiscountMutation = useMutation({
     mutationFn: async (data: typeof discountForm) => {
-      return apiRequest("POST", "/api/admin/discounts", data);
+      const payload = {
+        ...data,
+        value: data.type === "fixed" 
+          ? Math.round(parseFloat(data.value) * 100)
+          : parseInt(data.value),
+      };
+      return apiRequest("POST", "/api/admin/discounts", payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/discounts"] });
@@ -618,7 +624,7 @@ export default function AdminSubscriptions() {
                 <Label>Type *</Label>
                 <Select 
                   value={discountForm.type} 
-                  onValueChange={(v) => setDiscountForm(f => ({ ...f, type: v }))}
+                  onValueChange={(v) => setDiscountForm(f => ({ ...f, type: v, value: "" }))}
                 >
                   <SelectTrigger data-testid="select-discount-type">
                     <SelectValue />
@@ -630,16 +636,29 @@ export default function AdminSubscriptions() {
                 </Select>
               </div>
               <div>
-                <Label>Valeur *</Label>
-                <Input 
-                  type="number"
-                  value={discountForm.value}
-                  onChange={(e) => setDiscountForm(f => ({ ...f, value: e.target.value }))}
-                  placeholder={discountForm.type === "percentage" ? "20" : "500"}
-                  data-testid="input-discount-value"
-                />
+                <Label>{discountForm.type === "percentage" ? "Pourcentage *" : "Montant *"}</Label>
+                <div className="relative">
+                  <Input 
+                    type="number"
+                    step={discountForm.type === "percentage" ? "1" : "0.01"}
+                    min="0"
+                    max={discountForm.type === "percentage" ? "100" : undefined}
+                    value={discountForm.value}
+                    onChange={(e) => setDiscountForm(f => ({ ...f, value: e.target.value }))}
+                    placeholder={discountForm.type === "percentage" ? "20" : "5.00"}
+                    className={discountForm.type === "percentage" ? "pr-8" : "pl-6"}
+                    data-testid="input-discount-value"
+                  />
+                  {discountForm.type === "percentage" ? (
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-500">%</span>
+                  ) : (
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500">$</span>
+                  )}
+                </div>
                 <p className="text-xs text-stone-500 mt-1">
-                  {discountForm.type === "percentage" ? "En pourcentage (0-100)" : "En cents (500 = 5,00 $)"}
+                  {discountForm.type === "percentage" 
+                    ? "Entrez un pourcentage entre 0 et 100" 
+                    : "Entrez le montant en dollars (ex: 5.00)"}
                 </p>
               </div>
             </div>

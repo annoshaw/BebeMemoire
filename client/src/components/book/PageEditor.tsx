@@ -1181,109 +1181,107 @@ export function PageEditor({
 
       {/* Page Preview Modal - 8x11 Book Format */}
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
-        <DialogContent className="w-[95vw] max-w-4xl max-h-[95vh] overflow-hidden p-0 sm:w-auto">
-          <DialogHeader className="p-3 sm:p-4 border-b bg-stone-50">
-            <div className="space-y-3">
-              <div>
-                <DialogTitle className="text-base sm:text-lg font-fraunces">
-                  {language === "fr" ? "Aperçu de la page" : "Page Preview"}
-                </DialogTitle>
-                <DialogDescription className="text-xs sm:text-sm hidden sm:block">
-                  {language === "fr" 
-                    ? "Voici comment la page apparaîtra dans votre livre imprimé (format 8×11 pouces)"
-                    : "This is how the page will appear in your printed book (8×11 inches format)"}
-                </DialogDescription>
-              </div>
-              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                {/* Text Layout Selector */}
+        <DialogContent className="w-[98vw] max-w-4xl h-[95dvh] sm:h-auto sm:max-h-[95vh] p-0 flex flex-col overflow-hidden">
+          {/* Fixed Header */}
+          <DialogHeader className="p-3 border-b bg-stone-50 flex-shrink-0">
+            <DialogTitle className="text-base font-fraunces mb-2">
+              {language === "fr" ? "Aperçu de la page" : "Page Preview"}
+            </DialogTitle>
+            <DialogDescription className="sr-only">
+              {language === "fr" 
+                ? "Aperçu de votre page de livre"
+                : "Preview of your book page"}
+            </DialogDescription>
+            
+            {/* Control buttons - scrollable horizontally on mobile */}
+            <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+              {/* Text Layout Selector */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-9 px-3 text-xs flex-shrink-0">
+                    <FileText className="w-4 h-4 mr-1.5" />
+                    {language === "fr" ? "Texte" : "Text"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-56 p-3 bg-[#ffffff] text-center" align="start">
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-stone-600 mb-2">
+                      {language === "fr" ? "Positionnement du texte" : "Text positioning"}
+                    </p>
+                    <div className="grid grid-cols-3 gap-2">
+                      {TEXT_LAYOUTS.map((layout) => (
+                        <button
+                          key={layout.id}
+                          onClick={() => {
+                            setTextLayout({ ...textLayout, position: layout.id });
+                            setIsDirty(true);
+                          }}
+                          className={`flex flex-col items-center justify-center p-2 rounded-lg border transition-all ${
+                            textLayout.position === layout.id
+                              ? "border-sage-500 bg-sage-50"
+                              : "border-stone-200 hover:border-stone-400 hover:bg-stone-50"
+                          }`}
+                          title={language === "fr" ? layout.labelFr : layout.labelEn}
+                        >
+                          <span className="text-lg">{layout.icon}</span>
+                          <span className="text-[9px] text-stone-500 mt-1">
+                            {language === "fr" ? layout.labelFr.replace("Texte ", "") : layout.labelEn.replace("Text ", "")}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+
+              {/* Photo Layout Selector */}
+              {photos.length > 0 && (
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-8 px-2 sm:px-3 text-xs">
-                      <FileText className="w-4 h-4 sm:mr-1" />
-                      <span className="hidden sm:inline">{language === "fr" ? "Position" : "Position"}</span>
+                    <Button variant="outline" size="sm" className="h-9 px-3 text-xs flex-shrink-0">
+                      <Grid className="w-4 h-4 mr-1.5" />
+                      {language === "fr" ? "Photos" : "Photos"}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-56 p-3 bg-[#ffffff] text-center" align="start">
-                    <div className="space-y-2">
-                      <p className="text-xs font-medium text-stone-600 mb-2">
-                        {language === "fr" ? "Positionnement du texte" : "Text positioning"}
-                      </p>
-                      <div className="grid grid-cols-3 gap-2">
-                        {TEXT_LAYOUTS.map((layout) => (
-                          <button
-                            key={layout.id}
-                            onClick={() => {
-                              setTextLayout({ ...textLayout, position: layout.id });
-                              setIsDirty(true);
-                            }}
-                            className={`flex flex-col items-center justify-center p-2 rounded-lg border transition-all ${
-                              textLayout.position === layout.id
-                                ? "border-sage-500 bg-sage-50"
-                                : "border-stone-200 hover:border-stone-400 hover:bg-stone-50"
-                            }`}
-                            title={language === "fr" ? layout.labelFr : layout.labelEn}
-                          >
-                            <span className="text-lg">{layout.icon}</span>
-                            <span className="text-[9px] text-stone-500 mt-1">
-                              {language === "fr" ? layout.labelFr.replace("Texte ", "") : layout.labelEn.replace("Text ", "")}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+                  <PopoverContent className="w-64 p-3 bg-[#ffffff]" align="start">
+                    <LayoutSelector
+                      photoCount={photos.length}
+                      selectedLayoutId={selectedPhotoLayoutId}
+                      onLayoutChange={handleLayoutChange}
+                      language={language}
+                    />
                   </PopoverContent>
                 </Popover>
+              )}
 
-                {/* Photo Layout Selector */}
-                {photos.length > 0 && (
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" size="sm" className="h-8 px-2 sm:px-3 text-xs">
-                        <Grid className="w-4 h-4 sm:mr-1" />
-                        <span className="hidden sm:inline">{language === "fr" ? "Photos" : "Photos"}</span>
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-64 p-3 bg-[#ffffff]" align="start">
-                      <LayoutSelector
-                        photoCount={photos.length}
-                        selectedLayoutId={selectedPhotoLayoutId}
-                        onLayoutChange={handleLayoutChange}
-                        language={language}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                )}
-
-                <Button
-                  variant={editMode ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setEditMode(!editMode)}
-                  className="h-8 px-2 sm:px-3 text-xs"
-                >
-                  <Move className="w-4 h-4 sm:mr-1" />
-                  <span className="hidden sm:inline">
-                    {editMode 
-                      ? (language === "fr" ? "Aperçu" : "Preview")
-                      : (language === "fr" ? "Déplacer" : "Move")}
-                  </span>
-                </Button>
-              </div>
+              <Button
+                variant={editMode ? "default" : "outline"}
+                size="sm"
+                onClick={() => setEditMode(!editMode)}
+                className="h-9 px-3 text-xs flex-shrink-0"
+              >
+                <Move className="w-4 h-4 mr-1.5" />
+                {editMode 
+                  ? (language === "fr" ? "Aperçu" : "Preview")
+                  : (language === "fr" ? "Déplacer" : "Move")}
+              </Button>
             </div>
           </DialogHeader>
           
-          <div className="p-2 sm:p-4 bg-stone-100 flex justify-center items-start overflow-auto max-h-[calc(95vh-140px)] sm:max-h-[calc(95vh-180px)]">
-            {/* Book page 8x11 - Simple isolated preview - scales on mobile */}
-            <div 
-              className="bg-white shadow-2xl border border-stone-300 origin-top"
-              style={{
-                width: 'min(400px, 85vw)',
-                height: 'min(550px, calc(85vw * 1.375))',
-                display: 'flex',
-                flexDirection: 'column',
-                padding: 'min(12px, 3vw)',
-                boxSizing: 'border-box',
-                position: 'relative'
-              }}
+          {/* Scrollable preview area */}
+          <div className="flex-1 overflow-auto bg-stone-100 p-3 sm:p-4">
+            <div className="flex justify-center items-start min-h-full">
+              {/* Book page 8x11 - responsive with aspect ratio */}
+              <div 
+                className="bg-white shadow-2xl border border-stone-300 w-full max-w-[400px]"
+                style={{
+                  aspectRatio: '8 / 11',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  padding: 'clamp(8px, 3vw, 16px)',
+                  boxSizing: 'border-box',
+                  position: 'relative'
+                }}
               onMouseMove={handlePhotoMouseMove}
               onMouseUp={handlePhotoMouseUp}
               onMouseLeave={handlePhotoMouseUp}
@@ -1595,6 +1593,7 @@ export function PageEditor({
                   </div>
                 </Draggable>
               )}
+            </div>
             </div>
           </div>
 

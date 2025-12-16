@@ -16,7 +16,12 @@ import {
   Grid,
   Sparkles,
   Pencil,
-  Trash2
+  Trash2,
+  X,
+  HelpCircle,
+  ArrowDown,
+  ArrowRight,
+  MousePointer2
 } from "lucide-react";
 import {
   AlertDialog,
@@ -47,12 +52,95 @@ interface BookPagesResponse {
   book: Book;
 }
 
+const TUTORIAL_STORAGE_KEY = "memoria_book_tutorial_seen";
+
+interface TutorialStep {
+  id: string;
+  titleFr: string;
+  titleEn: string;
+  descriptionFr: string;
+  descriptionEn: string;
+  position: "left" | "right" | "center";
+  arrowDirection?: "down" | "right" | "left";
+}
+
+const tutorialSteps: TutorialStep[] = [
+  {
+    id: "welcome",
+    titleFr: "Bienvenue dans votre livre !",
+    titleEn: "Welcome to your book!",
+    descriptionFr: "Ce guide va vous montrer comment remplir votre livre de souvenirs. C'est très simple !",
+    descriptionEn: "This guide will show you how to fill your memory book. It's very easy!",
+    position: "center",
+  },
+  {
+    id: "parts",
+    titleFr: "1. Choisissez une section",
+    titleEn: "1. Choose a section",
+    descriptionFr: "Cliquez sur une des parties du livre pour voir les pages qu'elle contient. Chaque section correspond à une période (grossesse, naissance, etc.)",
+    descriptionEn: "Click on a book section to see its pages. Each section corresponds to a period (pregnancy, birth, etc.)",
+    position: "left",
+    arrowDirection: "down",
+  },
+  {
+    id: "pages",
+    titleFr: "2. Sélectionnez une page",
+    titleEn: "2. Select a page",
+    descriptionFr: "Cliquez sur une page pour la remplir avec vos photos et textes. Les pages complétées sont marquées en vert.",
+    descriptionEn: "Click on a page to fill it with your photos and text. Completed pages are marked in green.",
+    position: "right",
+    arrowDirection: "down",
+  },
+  {
+    id: "progress",
+    titleFr: "3. Suivez votre progression",
+    titleEn: "3. Track your progress",
+    descriptionFr: "La barre de progression en haut vous montre combien de pages vous avez complétées. Vous pouvez toujours revenir modifier une page !",
+    descriptionEn: "The progress bar at the top shows how many pages you've completed. You can always come back to edit a page!",
+    position: "center",
+  },
+];
+
 export function BookViewer({ bookId, language, onGoToInspiration, initialPage }: BookViewerProps) {
   const [selectedPartIndex, setSelectedPartIndex] = useState(0);
   const [selectedPageNumber, setSelectedPageNumber] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<"parts" | "page">("parts");
   const [hasInitialPageOpened, setHasInitialPageOpened] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
+  const [tutorialStep, setTutorialStep] = useState(0);
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const hasSeenTutorial = localStorage.getItem(TUTORIAL_STORAGE_KEY);
+    if (!hasSeenTutorial) {
+      const timer = setTimeout(() => setShowTutorial(true), 500);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  const closeTutorial = () => {
+    setShowTutorial(false);
+    localStorage.setItem(TUTORIAL_STORAGE_KEY, "true");
+  };
+
+  const nextTutorialStep = () => {
+    if (tutorialStep < tutorialSteps.length - 1) {
+      setTutorialStep(tutorialStep + 1);
+    } else {
+      closeTutorial();
+    }
+  };
+
+  const prevTutorialStep = () => {
+    if (tutorialStep > 0) {
+      setTutorialStep(tutorialStep - 1);
+    }
+  };
+
+  const resetTutorial = () => {
+    setTutorialStep(0);
+    setShowTutorial(true);
+  };
 
   const { data, isLoading, error } = useQuery<BookPagesResponse>({
     queryKey: ["/api/books", bookId, "pages"],
@@ -194,20 +282,142 @@ export function BookViewer({ bookId, language, onGoToInspiration, initialPage }:
     return pages.find(p => p.pageNumber === pageNumber)?.isCompleted || false;
   };
 
+  const currentStep = tutorialSteps[tutorialStep];
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-sage-900 font-fraunces">
-            {book.childName}
-          </h2>
-          <p className="text-sage-600">
-            {language === "fr" 
-              ? `${completedCount} / ${totalPages} pages complétées`
-              : `${completedCount} / ${totalPages} pages completed`}
-          </p>
+    <div className="space-y-6 relative">
+      {/* Tutorial Overlay */}
+      {showTutorial && (
+        <div className="fixed inset-0 z-50 pointer-events-none">
+          {/* Semi-transparent backdrop */}
+          <div className="absolute inset-0 bg-black/40 pointer-events-auto" onClick={closeTutorial} />
+          
+          {/* Tutorial bubble */}
+          <div 
+            className={`absolute pointer-events-auto z-10 ${
+              currentStep.position === "center" 
+                ? "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" 
+                : currentStep.position === "left"
+                  ? "top-[40%] left-4 sm:left-8 lg:left-[10%]"
+                  : "top-[40%] right-4 sm:right-8 lg:right-[10%]"
+            }`}
+          >
+            <div className="bg-white rounded-2xl shadow-2xl p-5 sm:p-6 max-w-[320px] sm:max-w-sm relative animate-in fade-in zoom-in-95 duration-300">
+              {/* Close button */}
+              <button 
+                onClick={closeTutorial}
+                className="absolute top-3 right-3 p-1 hover:bg-gray-100 rounded-full transition-colors"
+                data-testid="tutorial-close"
+              >
+                <X className="w-5 h-5 text-gray-400" />
+              </button>
+
+              {/* Arrow indicator */}
+              {currentStep.arrowDirection && (
+                <div className={`absolute ${
+                  currentStep.position === "left" 
+                    ? "bottom-full left-1/2 -translate-x-1/2 mb-2" 
+                    : "bottom-full right-1/4 mb-2"
+                }`}>
+                  <div className="bg-amber-400 text-white p-2 rounded-full animate-bounce">
+                    <MousePointer2 className="w-5 h-5" />
+                  </div>
+                </div>
+              )}
+
+              {/* Step indicator */}
+              <div className="flex gap-1.5 mb-4">
+                {tutorialSteps.map((_, idx) => (
+                  <div 
+                    key={idx}
+                    className={`h-1.5 rounded-full transition-all ${
+                      idx === tutorialStep 
+                        ? "w-6 bg-amber-500" 
+                        : idx < tutorialStep 
+                          ? "w-3 bg-amber-300" 
+                          : "w-3 bg-gray-200"
+                    }`}
+                  />
+                ))}
+              </div>
+
+              {/* Content */}
+              <h3 className="text-lg font-bold text-sage-900 mb-2 pr-6">
+                {language === "fr" ? currentStep.titleFr : currentStep.titleEn}
+              </h3>
+              <p className="text-sage-600 text-sm leading-relaxed mb-5">
+                {language === "fr" ? currentStep.descriptionFr : currentStep.descriptionEn}
+              </p>
+
+              {/* Navigation buttons */}
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={closeTutorial}
+                  className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                  data-testid="tutorial-skip"
+                >
+                  {language === "fr" ? "Passer" : "Skip"}
+                </button>
+                <div className="flex gap-2">
+                  {tutorialStep > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={prevTutorialStep}
+                      data-testid="tutorial-prev"
+                    >
+                      {language === "fr" ? "Précédent" : "Previous"}
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    onClick={nextTutorialStep}
+                    className="bg-amber-500 hover:bg-amber-600 text-white"
+                    data-testid="tutorial-next"
+                  >
+                    {tutorialStep === tutorialSteps.length - 1 
+                      ? (language === "fr" ? "Commencer !" : "Start!")
+                      : (language === "fr" ? "Suivant" : "Next")
+                    }
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Highlight areas */}
+          {currentStep.id === "parts" && (
+            <div className="absolute top-[200px] left-4 sm:left-8 lg:left-[5%] w-[280px] lg:w-[350px] h-[300px] border-4 border-amber-400 rounded-xl pointer-events-none animate-pulse" />
+          )}
+          {currentStep.id === "pages" && (
+            <div className="absolute top-[200px] right-4 sm:right-8 lg:right-[5%] w-[280px] lg:w-[calc(100%-400px)] max-w-[600px] h-[300px] border-4 border-amber-400 rounded-xl pointer-events-none animate-pulse" />
+          )}
         </div>
-        <div className="flex items-center gap-4">
+      )}
+
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-3">
+          <div>
+            <h2 className="text-xl sm:text-2xl font-bold text-sage-900 font-fraunces">
+              {book.childName}
+            </h2>
+            <p className="text-sm sm:text-base text-sage-600">
+              {language === "fr" 
+                ? `${completedCount} / ${totalPages} pages complétées`
+                : `${completedCount} / ${totalPages} pages completed`}
+            </p>
+          </div>
+          {/* Help button to re-show tutorial */}
+          <button
+            onClick={resetTutorial}
+            className="p-2 hover:bg-amber-50 rounded-full transition-colors group"
+            title={language === "fr" ? "Voir le guide" : "View guide"}
+            data-testid="button-show-tutorial"
+          >
+            <HelpCircle className="w-5 h-5 text-amber-500 group-hover:text-amber-600" />
+          </button>
+        </div>
+        <div className="flex items-center gap-2 sm:gap-4">
           {onGoToInspiration && (
             <Button
               variant="outline"
@@ -216,11 +426,11 @@ export function BookViewer({ bookId, language, onGoToInspiration, initialPage }:
               className="bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200 hover:from-amber-100 hover:to-orange-100 text-amber-700"
               data-testid="button-inspiration-viewer"
             >
-              <Sparkles className="w-4 h-4 mr-1" />
-              {language === "fr" ? "Inspiration" : "Inspiration"}
+              <Sparkles className="w-4 h-4 sm:mr-1" />
+              <span className="hidden sm:inline">{language === "fr" ? "Inspiration" : "Inspiration"}</span>
             </Button>
           )}
-          <Progress value={progressPercent} className="w-32 h-2" />
+          <Progress value={progressPercent} className="w-24 sm:w-32 h-2" />
         </div>
       </div>
 

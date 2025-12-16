@@ -114,8 +114,9 @@ export default function AdminExports() {
       }
       
       toast.success("Email envoyé au client avec le lien de téléchargement");
-      // Refresh to update status
+      // Refresh both PDF exports AND orders (status is synced)
       queryClient.invalidateQueries({ queryKey: ["/api/admin/pdf-exports"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/orders"] });
     } catch (error) {
       console.error("Send email error:", error);
       toast.error("Erreur réseau lors de l'envoi de l'email");
@@ -140,8 +141,10 @@ export default function AdminExports() {
         return;
       }
       
+      // Refresh both PDF exports AND orders (status is synced)
       queryClient.invalidateQueries({ queryKey: ["/api/admin/pdf-exports"] });
-      toast.success("Statut mis à jour");
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/orders"] });
+      toast.success("Statut mis à jour (PDF et commande synchronisés)");
     } catch (error) {
       console.error("Update status error:", error);
       toast.error("Erreur réseau lors de la mise à jour");

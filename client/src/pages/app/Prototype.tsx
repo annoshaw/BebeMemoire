@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Plus, Minus, Image as ImageIcon, Mic, Video, MoreHorizontal, Calendar, Share2, BookOpen, Printer, CheckCircle, Bell, QrCode, Baby, LogOut, Settings, User, Sparkles, ShoppingBag, FolderHeart, Trash2, Crown, Mail, Phone, MapPin, UserPlus, Users, Edit2, CreditCard, X, Lock, Search, Clock, AlertTriangle, Gift, Loader2, Camera, ArrowUp, ArrowDown, Shield } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Minus, Image as ImageIcon, Mic, Video, MoreHorizontal, Calendar, Share2, BookOpen, Printer, CheckCircle, Bell, QrCode, Baby, LogOut, Settings, User, Sparkles, ShoppingBag, FolderHeart, Trash2, Crown, Mail, Phone, MapPin, UserPlus, Users, Edit2, CreditCard, X, Lock, Search, Clock, AlertTriangle, Gift, Loader2, Camera, ArrowUp, ArrowDown, Shield, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -242,6 +242,17 @@ export default function Prototype() {
   });
 
   const [userPlan, setUserPlan] = useState<"base" | "premium" | "platine">("base");
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradeData, setUpgradeData] = useState<{
+    moisEcoules: number;
+    montantDu: string;
+    montantPaye: string;
+    differenceImmediate: string;
+    tarifNouveau: string;
+    fromPlan: string;
+    toPlan: string;
+  } | null>(null);
+  const [isCalculatingUpgrade, setIsCalculatingUpgrade] = useState(false);
   
   const typedUser = user as {
     requiresSubscription?: boolean;
@@ -274,6 +285,46 @@ export default function Prototype() {
   const handleDeleteBook = (book: {id: string, childName: string, isLocal?: boolean}) => {
     setBookToDelete({ id: book.id, childName: book.childName, isLocal: book.isLocal || false });
     setShowDeleteBookModal(true);
+  };
+  
+  const handleCalculateUpgrade = async (fromPlan: string, toPlan: string) => {
+    setIsCalculatingUpgrade(true);
+    try {
+      const res = await fetch("/api/subscription/calculate-upgrade", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ fromPlan, toPlan }),
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        setUpgradeData(data);
+        setShowUpgradeModal(true);
+      } else {
+        console.error("Failed to calculate upgrade");
+        setSelectedProduct({ name: toPlan === "platine" ? "Platine" : "Premium", price: toPlan === "platine" ? "4,99$/mois" : "1,99$/mois" });
+        setShowCheckout(true);
+      }
+    } catch (error) {
+      console.error("Error calculating upgrade:", error);
+      setSelectedProduct({ name: toPlan === "platine" ? "Platine" : "Premium", price: toPlan === "platine" ? "4,99$/mois" : "1,99$/mois" });
+      setShowCheckout(true);
+    } finally {
+      setIsCalculatingUpgrade(false);
+    }
+  };
+
+  const handleConfirmUpgrade = async () => {
+    if (!upgradeData) return;
+    
+    setSelectedProduct({
+      name: upgradeData.toPlan === "platine" ? "Platine" : "Premium",
+      price: `${upgradeData.tarifNouveau}$/mois`,
+      upgradeAdjustment: parseFloat(upgradeData.differenceImmediate),
+    });
+    setShowUpgradeModal(false);
+    setShowCheckout(true);
   };
   
   const [isDeleting, setIsDeleting] = useState(false);
@@ -429,7 +480,7 @@ export default function Prototype() {
   const [showCheckout, setShowCheckout] = useState(false);
   const [showManageSubscription, setShowManageSubscription] = useState(false);
   const [showCancelSubscription, setShowCancelSubscription] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<{name: string, price: string} | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<{name: string, price: string, upgradeAdjustment?: number} | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<"card" | "paypal">("card");
   const [checkoutForm, setCheckoutForm] = useState({
     name: "",
@@ -1030,12 +1081,17 @@ export default function Prototype() {
                       data-testid="button-select-platine"
                       onClick={() => {
                         if (userPlan !== 'platine') {
-                          setSelectedProduct({ name: "Abonnement Platine", price: "4,99$" });
-                          setShowCheckout(true);
+                          if (userPlan === 'premium') {
+                            handleCalculateUpgrade('premium', 'platine');
+                          } else {
+                            setSelectedProduct({ name: "Abonnement Platine", price: "4,99$" });
+                            setShowCheckout(true);
+                          }
                         }
                       }}
+                      disabled={isCalculatingUpgrade}
                     >
-                      {userPlan === 'platine' ? 'Actuel' : 'Choisir'}
+                      {isCalculatingUpgrade ? <Loader2 className="w-3 h-3 animate-spin" /> : (userPlan === 'platine' ? 'Actuel' : (userPlan === 'premium' ? 'Passer à Platine' : 'Choisir'))}
                     </Button>
                   </div>
                 </motion.div>
@@ -2742,6 +2798,15 @@ export default function Prototype() {
 
                 {/* Order Summary */}
                 <div className="bg-stone-50 rounded-xl p-4 space-y-2">
+                  {selectedProduct.upgradeAdjustment && selectedProduct.upgradeAdjustment > 0 && (
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3">
+                      <p className="text-xs text-amber-700 font-medium mb-1">Ajustement de mise à niveau</p>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-amber-700">Différence à régler maintenant</span>
+                        <span className="font-bold text-amber-700">{selectedProduct.upgradeAdjustment.toFixed(2).replace('.', ',')} CAD</span>
+                      </div>
+                    </div>
+                  )}
                   <div className="flex justify-between text-sm">
                     <span className="text-stone-600">{selectedProduct.name}</span>
                     <span className="font-medium text-stone-800">{selectedProduct.price}{selectedProduct.name.includes("Abonnement") ? "/mois" : ""}</span>
@@ -2757,29 +2822,36 @@ export default function Prototype() {
                     const isSubscription = selectedProduct.name.includes("Abonnement");
                     const shipping = isSubscription ? 0 : 12;
                     const subtotal = productPrice + shipping;
-                    const tps = subtotal * 0.05;
-                    const tvq = subtotal * 0.09975;
-                    const total = subtotal + tps + tvq;
+                    const tps = isSubscription ? 0 : subtotal * 0.05;
+                    const tvq = isSubscription ? 0 : subtotal * 0.09975;
+                    const total = subtotal + tps + tvq + (selectedProduct.upgradeAdjustment || 0);
                     return (
                       <>
                         {!isSubscription && (
-                          <div className="flex justify-between text-sm">
-                            <span className="text-stone-600">Sous-total</span>
-                            <span className="font-medium text-stone-800">{subtotal.toFixed(2).replace('.', ',')} $</span>
+                          <>
+                            <div className="flex justify-between text-sm">
+                              <span className="text-stone-600">Sous-total</span>
+                              <span className="font-medium text-stone-800">{subtotal.toFixed(2).replace('.', ',')} $</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                              <span className="text-stone-600">TPS (5%)</span>
+                              <span className="font-medium text-stone-800">{tps.toFixed(2).replace('.', ',')} $</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                              <span className="text-stone-600">TVQ (9,975%)</span>
+                              <span className="font-medium text-stone-800">{tvq.toFixed(2).replace('.', ',')} $</span>
+                            </div>
+                          </>
+                        )}
+                        <div className="border-t border-stone-200 pt-2 flex justify-between">
+                          <span className="font-bold text-stone-800">{selectedProduct.upgradeAdjustment ? "Total à payer maintenant" : (isSubscription ? "Total mensuel" : "Total")}</span>
+                          <span className="font-bold text-stone-800">{total.toFixed(2).replace('.', ',')} ${isSubscription && !selectedProduct.upgradeAdjustment ? "/mois" : ""}</span>
+                        </div>
+                        {selectedProduct.upgradeAdjustment && isSubscription && (
+                          <div className="text-xs text-stone-500 pt-1">
+                            Puis {selectedProduct.price}/mois à partir du mois prochain
                           </div>
                         )}
-                        <div className="flex justify-between text-sm">
-                          <span className="text-stone-600">TPS (5%)</span>
-                          <span className="font-medium text-stone-800">{tps.toFixed(2).replace('.', ',')} $</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-stone-600">TVQ (9,975%)</span>
-                          <span className="font-medium text-stone-800">{tvq.toFixed(2).replace('.', ',')} $</span>
-                        </div>
-                        <div className="border-t border-stone-200 pt-2 flex justify-between">
-                          <span className="font-bold text-stone-800">Total{isSubscription ? " mensuel" : ""}</span>
-                          <span className="font-bold text-stone-800">{total.toFixed(2).replace('.', ',')} ${isSubscription ? "/mois" : ""}</span>
-                        </div>
                       </>
                     );
                   })()}
@@ -3011,6 +3083,85 @@ export default function Prototype() {
                     Confirmer l'annulation
                   </Button>
                 </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Upgrade Adjustment Modal */}
+      <AnimatePresence>
+        {showUpgradeModal && upgradeData && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 z-[75] flex items-center justify-center p-4"
+            onClick={() => setShowUpgradeModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="bg-amber-100 p-3 rounded-full">
+                  <TrendingUp className="w-6 h-6 text-amber-600" />
+                </div>
+                <h2 className="text-xl font-bold text-stone-800">
+                  Ajustement immédiat du prix
+                </h2>
+              </div>
+              
+              <p className="text-stone-600 mb-4">
+                Pour passer au forfait <span className="font-semibold text-amber-700">Platine</span>, 
+                nous ajustons simplement la différence entre ce que vous avez déjà payé et ce 
+                que vous auriez payé avec ce forfait.
+              </p>
+              
+              <div className="bg-stone-50 rounded-xl p-4 mb-4 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-stone-600">Mois d'abonnement</span>
+                  <span className="font-medium">{upgradeData.moisEcoules} mois</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-stone-600">Montant dû jusqu'à aujourd'hui</span>
+                  <span className="font-medium">{upgradeData.montantDu} CAD</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-stone-600">Montant déjà payé</span>
+                  <span className="font-medium">{upgradeData.montantPaye} CAD</span>
+                </div>
+                <div className="border-t border-stone-200 pt-2 mt-2">
+                  <div className="flex justify-between">
+                    <span className="font-semibold text-stone-800">Différence à régler maintenant</span>
+                    <span className="font-bold text-amber-600 text-lg">{upgradeData.differenceImmediate} CAD</span>
+                  </div>
+                </div>
+              </div>
+              
+              <p className="text-sm text-stone-500 mb-6">
+                Votre abonnement Platine commencera ensuite à <span className="font-semibold">{upgradeData.tarifNouveau} CAD / mois</span>.
+              </p>
+              
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setShowUpgradeModal(false)}
+                  data-testid="button-cancel-upgrade"
+                >
+                  Annuler
+                </Button>
+                <Button
+                  className="flex-1 bg-amber-600 hover:bg-amber-700"
+                  onClick={handleConfirmUpgrade}
+                  data-testid="button-confirm-upgrade"
+                >
+                  Confirmer la mise à niveau
+                </Button>
               </div>
             </motion.div>
           </motion.div>

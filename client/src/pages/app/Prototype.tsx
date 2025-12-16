@@ -2567,7 +2567,12 @@ export default function Prototype() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
-            onClick={() => setShowCheckout(false)}
+            onClick={() => {
+              setShowCheckout(false);
+              if (requiresSubscription) {
+                setShowTrialExpiredModal(true);
+              }
+            }}
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
@@ -2583,7 +2588,12 @@ export default function Prototype() {
                   <p className="text-xs text-stone-500">{selectedProduct.name} - {selectedProduct.price}</p>
                 </div>
                 <button 
-                  onClick={() => setShowCheckout(false)}
+                  onClick={() => {
+                    setShowCheckout(false);
+                    if (requiresSubscription) {
+                      setShowTrialExpiredModal(true);
+                    }
+                  }}
                   className="p-2 hover:bg-stone-100 rounded-full"
                 >
                   <X size={20} className="text-stone-500" />
@@ -3084,7 +3094,6 @@ export default function Prototype() {
                     className="border-2 border-primary rounded-xl p-4 cursor-pointer bg-primary/5 hover:bg-primary/10 transition-all relative"
                     onClick={() => {
                       setSelectedProduct({ name: "Abonnement Premium", price: "1,99 $" });
-                      setShowTrialExpiredModal(false);
                       setShowCheckout(true);
                     }}
                     data-testid="trial-expired-premium"
@@ -3111,7 +3120,6 @@ export default function Prototype() {
                     className="border-2 border-amber-400 rounded-xl p-4 cursor-pointer bg-amber-50 hover:bg-amber-100 transition-all"
                     onClick={() => {
                       setSelectedProduct({ name: "Abonnement Platine", price: "4,99 $" });
-                      setShowTrialExpiredModal(false);
                       setShowCheckout(true);
                     }}
                     data-testid="trial-expired-platine"

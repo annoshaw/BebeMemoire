@@ -116,19 +116,42 @@ export default function TestCheckout() {
     },
   ];
 
-  // Calculate total for multi-item orders
+  // Calculate total for multi-item orders (shipping once per order)
   const calculateMultiItemTotal = () => {
     if (!isMultiItemOrder) return total;
-    let multiTotal = 0;
+    let subtotal = 0;
+    let hasPhysicalItem = false;
+    
     for (const item of orderItems) {
       const itemBase = getBasePrice(item.productType as ProductType);
-      const itemShipping = getShipping(item.productType as ProductType);
-      multiTotal += (itemBase + itemShipping) * item.quantity;
+      const itemPageRate = getPageRate(item.productType as ProductType);
+      const itemExtraPages = Math.max(0, pageCount - INCLUDED_PAGES);
+      subtotal += (itemBase + (itemExtraPages * itemPageRate)) * item.quantity;
+      if (item.productType !== "ebook") {
+        hasPhysicalItem = true;
+      }
     }
-    // Add per-page pricing (once, not per item)
-    const pageExtra = Math.max(0, pageCount - INCLUDED_PAGES) * getPageRate(orderItems[0]?.productType as ProductType || "softcover");
-    return multiTotal + pageExtra;
+    
+    // Add flat shipping once if any physical items
+    const flatShipping = hasPhysicalItem ? 1200 : 0;
+    return subtotal + flatShipping;
   };
+  
+  // Get multi-item totals for display
+  const multiItemSubtotal = isMultiItemOrder ? (() => {
+    let sub = 0;
+    for (const item of orderItems) {
+      const itemBase = getBasePrice(item.productType as ProductType);
+      const itemPageRate = getPageRate(item.productType as ProductType);
+      const itemExtraPages = Math.max(0, pageCount - INCLUDED_PAGES);
+      sub += (itemBase + (itemExtraPages * itemPageRate)) * item.quantity;
+    }
+    return sub;
+  })() : 0;
+  
+  const multiItemHasPhysical = isMultiItemOrder && orderItems.some(item => item.productType !== "ebook");
+  const multiItemShipping = multiItemHasPhysical ? 1200 : 0;
+  const multiItemTotal = isMultiItemOrder ? calculateMultiItemTotal() : total;
 
   // Create order and checkout
   const checkoutMutation = useMutation({
@@ -307,44 +330,95 @@ export default function TestCheckout() {
               </DialogHeader>
               
               <div className="bg-stone-50 rounded-xl p-4 my-4 space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-stone-500">Livre</span>
-                  <span className="font-medium">{bookName}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-stone-500">Format</span>
-                  <span className="font-medium">{selectedProduct && productNames[selectedProduct]}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-stone-500">Pages</span>
-                  <span className="font-medium">{pageCount} pages (50 incluses)</span>
-                </div>
-                <div className="border-t border-stone-200 pt-2 mt-2"></div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-stone-500">Prix de base</span>
-                  <span className="font-medium">{(basePrice / 100).toFixed(2)}$</span>
-                </div>
-                {extraPages > 0 && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-stone-500">{extraPages} page{extraPages > 1 ? 's' : ''} suppl.</span>
-                    <span className="font-medium">{(extraPagesPrice / 100).toFixed(2)}$</span>
-                  </div>
-                )}
-                {shipping > 0 ? (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-stone-500">Livraison</span>
-                    <span className="font-medium">{(shipping / 100).toFixed(2)}$</span>
-                  </div>
+                {isMultiItemOrder ? (
+                  <>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-stone-500">Livre</span>
+                      <span className="font-medium">{bookName}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-stone-500">Pages</span>
+                      <span className="font-medium">{pageCount} pages (50 incluses)</span>
+                    </div>
+                    <div className="border-t border-stone-200 pt-2 mt-2"></div>
+                    <div className="text-xs text-stone-500 mb-1">Articles:</div>
+                    {orderItems.map((item, idx) => {
+                      const itemBase = getBasePrice(item.productType as ProductType);
+                      const itemPageRate = getPageRate(item.productType as ProductType);
+                      const itemExtraPages = Math.max(0, pageCount - INCLUDED_PAGES);
+                      const itemTotal = (itemBase + (itemExtraPages * itemPageRate)) * item.quantity;
+                      return (
+                        <div key={idx} className="flex justify-between text-sm">
+                          <span className="text-stone-600">
+                            {productNames[item.productType as ProductType]} × {item.quantity}
+                          </span>
+                          <span className="font-medium">{(itemTotal / 100).toFixed(2)}$</span>
+                        </div>
+                      );
+                    })}
+                    <div className="border-t border-stone-200 pt-2 mt-2"></div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-stone-500">Sous-total</span>
+                      <span className="font-medium">{(multiItemSubtotal / 100).toFixed(2)}$</span>
+                    </div>
+                    {multiItemHasPhysical ? (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-stone-500">Livraison</span>
+                        <span className="font-medium">{(multiItemShipping / 100).toFixed(2)}$</span>
+                      </div>
+                    ) : (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-stone-500">Livraison</span>
+                        <span className="font-medium text-green-600">Gratuit</span>
+                      </div>
+                    )}
+                    <div className="border-t border-stone-200 pt-2 flex justify-between">
+                      <span className="font-semibold">Total</span>
+                      <span className="text-lg font-bold text-primary">{(multiItemTotal / 100).toFixed(2)}$ CAD</span>
+                    </div>
+                  </>
                 ) : (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-stone-500">Livraison</span>
-                    <span className="font-medium text-green-600">Gratuit</span>
-                  </div>
+                  <>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-stone-500">Livre</span>
+                      <span className="font-medium">{bookName}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-stone-500">Format</span>
+                      <span className="font-medium">{selectedProduct && productNames[selectedProduct]}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-stone-500">Pages</span>
+                      <span className="font-medium">{pageCount} pages (50 incluses)</span>
+                    </div>
+                    <div className="border-t border-stone-200 pt-2 mt-2"></div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-stone-500">Prix de base</span>
+                      <span className="font-medium">{(basePrice / 100).toFixed(2)}$</span>
+                    </div>
+                    {extraPages > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-stone-500">{extraPages} page{extraPages > 1 ? 's' : ''} suppl.</span>
+                        <span className="font-medium">{(extraPagesPrice / 100).toFixed(2)}$</span>
+                      </div>
+                    )}
+                    {shipping > 0 ? (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-stone-500">Livraison</span>
+                        <span className="font-medium">{(shipping / 100).toFixed(2)}$</span>
+                      </div>
+                    ) : (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-stone-500">Livraison</span>
+                        <span className="font-medium text-green-600">Gratuit</span>
+                      </div>
+                    )}
+                    <div className="border-t border-stone-200 pt-2 flex justify-between">
+                      <span className="font-semibold">Total</span>
+                      <span className="text-lg font-bold text-primary">{(total / 100).toFixed(2)}$ CAD</span>
+                    </div>
+                  </>
                 )}
-                <div className="border-t border-stone-200 pt-2 flex justify-between">
-                  <span className="font-semibold">Total</span>
-                  <span className="text-lg font-bold text-primary">{(total / 100).toFixed(2)}$ CAD</span>
-                </div>
               </div>
 
               {error && (
@@ -373,7 +447,7 @@ export default function TestCheckout() {
                   ) : (
                     <div className="flex items-center gap-2">
                       <CreditCard size={18} />
-                      <span>Payer {(total / 100).toFixed(2)}$</span>
+                      <span>Payer {((isMultiItemOrder ? multiItemTotal : total) / 100).toFixed(2)}$</span>
                     </div>
                   )}
                 </Button>

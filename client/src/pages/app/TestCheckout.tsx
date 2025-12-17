@@ -216,14 +216,14 @@ export default function TestCheckout() {
     setSelectedProduct(null);
   };
 
-  // If no bookId, redirect back
+  // If no bookId and no items, redirect back
   useEffect(() => {
-    if (!bookId) {
+    if (!bookId && !itemsParam) {
       navigate("/app");
     }
-  }, [bookId, navigate]);
+  }, [bookId, itemsParam, navigate]);
 
-  if (!bookId) return null;
+  if (!bookId && !itemsParam) return null;
 
   return (
     <div className="min-h-screen bg-stone-100 flex items-center justify-center p-4">

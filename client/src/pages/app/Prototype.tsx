@@ -3007,28 +3007,27 @@ export default function Prototype() {
                       { type: "softcover", label: "Souple", price: "43,24$", icon: <BookOpen size={16} className="text-secondary" /> },
                       { type: "hardcover", label: "Rigide", price: "54,99$", icon: <BookOpen size={16} className="text-primary" /> },
                       { type: "ebook", label: "E-Book", price: "30,00$", icon: <QrCode size={16} className="text-blue-600" /> },
-                    ].map((product) => (
-                      <div
-                        key={product.type}
-                        className={`p-2 rounded-xl border-2 cursor-pointer transition-all text-center ${
-                          selectedProductType === product.type ? "border-primary bg-primary/5" : "border-stone-200 hover:border-stone-300"
-                        }`}
-                        onClick={() => {
-                          setSelectedProductType(product.type as any);
-                          // Update existing order items to the new product type
-                          if (orderItems.length > 0) {
-                            setOrderItems(orderItems.map(item => ({
-                              ...item,
-                              productType: product.type
-                            })));
-                          }
-                        }}
-                      >
-                        <div className="flex justify-center mb-1">{product.icon}</div>
-                        <p className="text-xs font-medium text-stone-800">{product.label}</p>
-                        <p className="text-[10px] text-stone-500">{product.price}</p>
-                      </div>
-                    ))}
+                    ].map((product) => {
+                      const typeCount = orderItems.filter(item => item.productType === product.type).reduce((sum, item) => sum + item.quantity, 0);
+                      return (
+                        <div
+                          key={product.type}
+                          className={`p-2 rounded-xl border-2 cursor-pointer transition-all text-center relative ${
+                            selectedProductType === product.type ? "border-primary bg-primary/5" : "border-stone-200 hover:border-stone-300"
+                          }`}
+                          onClick={() => setSelectedProductType(product.type as any)}
+                        >
+                          {typeCount > 0 && (
+                            <div className="absolute -top-2 -right-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                              <span className="text-[10px] font-bold text-white">{typeCount}</span>
+                            </div>
+                          )}
+                          <div className="flex justify-center mb-1">{product.icon}</div>
+                          <p className="text-xs font-medium text-stone-800">{product.label}</p>
+                          <p className="text-[10px] text-stone-500">{product.price}</p>
+                        </div>
+                      );
+                    })}
                   </div>
                   
                   {/* Book Selection for new item */}

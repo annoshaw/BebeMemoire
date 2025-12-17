@@ -871,7 +871,6 @@ export default function Prototype() {
           </Link>
           <div className="flex flex-col items-center">
             <h1 className="text-lg font-serif font-bold text-stone-800">Livre de {babyName}</h1>
-            <span className="text-[10px] text-stone-400 font-medium bg-stone-100 px-2 py-0.5 rounded-full">Famille Dupond-Martin</span>
           </div>
           <div className="flex items-center gap-1">
             <NotificationBell />

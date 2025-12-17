@@ -26,16 +26,38 @@ export default function TestCheckout() {
   // Get params from URL
   const params = new URLSearchParams(window.location.search);
   const bookId = params.get("bookId");
+  const itemsParam = params.get("items");
+  
+  // Parse multi-item orders from URL
+  const [orderItems, setOrderItems] = useState<{productType: string, quantity: number, bookId: string, bookName: string}[]>([]);
+  
+  useEffect(() => {
+    if (itemsParam) {
+      try {
+        const parsed = JSON.parse(decodeURIComponent(itemsParam));
+        setOrderItems(parsed);
+        // Pre-select first product type if available
+        if (parsed.length > 0 && !selectedProduct) {
+          setSelectedProduct(parsed[0].productType as ProductType);
+        }
+      } catch (e) {
+        console.error("Error parsing items:", e);
+      }
+    }
+  }, [itemsParam]);
+  
+  const isMultiItemOrder = orderItems.length > 0;
+  const firstBookId = isMultiItemOrder ? orderItems[0]?.bookId : bookId;
 
   // Fetch book page count from API
   const { data: bookData, isLoading: isLoadingPages } = useQuery({
-    queryKey: [`/api/books/${bookId}/pages`],
+    queryKey: [`/api/books/${firstBookId}/pages`],
     queryFn: async () => {
-      const res = await fetch(`/api/books/${bookId}/pages`, { credentials: "include" });
+      const res = await fetch(`/api/books/${firstBookId}/pages`, { credentials: "include" });
       if (!res.ok) return { templatePages: [], book: null };
       return res.json();
     },
-    enabled: !!bookId,
+    enabled: !!firstBookId,
   });
 
   // Calculate page count from templatePages array
@@ -88,10 +110,27 @@ export default function TestCheckout() {
     },
   ];
 
+  // Calculate total for multi-item orders
+  const calculateMultiItemTotal = () => {
+    if (!isMultiItemOrder) return total;
+    let multiTotal = 0;
+    for (const item of orderItems) {
+      const itemBase = getBasePrice(item.productType as ProductType);
+      const itemShipping = getShipping(item.productType as ProductType);
+      multiTotal += (itemBase + itemShipping) * item.quantity;
+    }
+    // Add per-page pricing (once, not per item)
+    const pageExtra = Math.max(0, pageCount - INCLUDED_PAGES) * getPageRate(orderItems[0]?.productType as ProductType || "softcover");
+    return multiTotal + pageExtra;
+  };
+
   // Create order and checkout
   const checkoutMutation = useMutation({
     mutationFn: async () => {
-      if (!bookId || !selectedProduct) throw new Error("Informations manquantes");
+      const effectiveBookId = isMultiItemOrder ? orderItems[0]?.bookId : bookId;
+      const effectiveProduct = isMultiItemOrder ? orderItems[0]?.productType : selectedProduct;
+      
+      if (!effectiveBookId || !effectiveProduct) throw new Error("Informations manquantes");
 
       // 1. Create order
       const orderRes = await fetch("/api/orders", {
@@ -99,9 +138,11 @@ export default function TestCheckout() {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          bookId,
-          productType: selectedProduct,
+          bookId: effectiveBookId,
+          productType: effectiveProduct,
           pageCount,
+          quantity: isMultiItemOrder ? orderItems.reduce((sum, item) => sum + item.quantity, 0) : 1,
+          orderItems: isMultiItemOrder ? orderItems : undefined,
           shippingAddress: {
             name: "Test User",
             street: "123 Test Street",

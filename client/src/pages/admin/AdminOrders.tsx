@@ -36,18 +36,27 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import AdminLayout from "./AdminLayout";
 
+interface OrderItem {
+  productType: string;
+  quantity: number;
+  bookId: string;
+  bookName: string;
+}
+
 interface Order {
   id: string;
   orderNumber: string;
   userId: string;
   bookId: string;
   productType: string;
+  quantity: number;
   status: string;
   totalAmount: number;
   pageCount: number;
   createdAt: string;
   customerName?: string;
   customerEmail?: string;
+  orderItems?: OrderItem[];
 }
 
 const statusLabels: Record<string, string> = {
@@ -504,7 +513,7 @@ export default function AdminOrders() {
                 </div>
                 <div>
                   <span className="text-stone-500">Format:</span>
-                  <p>{productLabels[selectedOrder.productType]}</p>
+                  <p>{productLabels[selectedOrder.productType]} × {selectedOrder.quantity || 1}</p>
                 </div>
                 <div>
                   <span className="text-stone-500">Pages:</span>
@@ -531,6 +540,24 @@ export default function AdminOrders() {
                   <p className="font-mono text-xs">{selectedOrder.bookId}</p>
                 </div>
               </div>
+              
+              {/* Order Items Detail */}
+              {selectedOrder.orderItems && selectedOrder.orderItems.length > 0 && (
+                <div className="pt-4 border-t border-stone-200">
+                  <h4 className="text-sm font-medium text-stone-700 mb-2">Articles commandés</h4>
+                  <div className="space-y-2">
+                    {(selectedOrder.orderItems as OrderItem[]).map((item, index) => (
+                      <div key={index} className="bg-stone-50 rounded-lg p-3 flex justify-between items-center">
+                        <div>
+                          <p className="font-medium text-sm">{productLabels[item.productType] || item.productType}</p>
+                          <p className="text-xs text-stone-500">{item.bookName}</p>
+                        </div>
+                        <span className="font-bold text-primary">× {item.quantity}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>

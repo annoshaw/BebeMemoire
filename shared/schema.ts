@@ -417,8 +417,9 @@ export const orders = pgTable("orders", {
   bookId: varchar("book_id").references(() => books.id, { onDelete: "set null" }),
   orderNumber: varchar("order_number").notNull().unique(), // Human-readable order number
   status: text("status").notNull().default("pending"), // pending, processing, printing, shipped, delivered, cancelled
-  productType: text("product_type").notNull(), // softcover, hardcover, ebook
+  productType: text("product_type").notNull(), // softcover, hardcover, ebook (primary for single item orders)
   quantity: integer("quantity").notNull().default(1),
+  orderItems: jsonb("order_items").default([]), // Array of {productType, quantity, bookId, bookName} for multi-item orders
   pageCount: integer("page_count").notNull().default(50),
   basePrice: integer("base_price").notNull(), // in cents
   extraPagesPrice: integer("extra_pages_price").notNull().default(0), // in cents

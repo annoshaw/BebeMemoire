@@ -529,6 +529,31 @@ export default function Prototype() {
   const [selectedProductType, setSelectedProductType] = useState<"softcover" | "hardcover" | "ebook" | null>(null);
   const [orderQuantity, setOrderQuantity] = useState(1);
   const [selectedBooksForOrder, setSelectedBooksForOrder] = useState<string[]>([]);
+  
+  // Multi-item order state: { productType, quantity, bookId }[]
+  const [orderItems, setOrderItems] = useState<{productType: string, quantity: number, bookId: string, bookName: string}[]>([]);
+  
+  const addOrderItem = (productType: string, bookId: string, bookName: string) => {
+    const existingIndex = orderItems.findIndex(item => item.productType === productType && item.bookId === bookId);
+    if (existingIndex >= 0) {
+      // Increment quantity if already exists
+      const updated = [...orderItems];
+      updated[existingIndex].quantity += 1;
+      setOrderItems(updated);
+    } else {
+      setOrderItems([...orderItems, { productType, quantity: 1, bookId, bookName }]);
+    }
+  };
+  
+  const updateOrderItemQuantity = (index: number, delta: number) => {
+    const updated = [...orderItems];
+    updated[index].quantity = Math.max(1, Math.min(10, updated[index].quantity + delta));
+    setOrderItems(updated);
+  };
+  
+  const removeOrderItem = (index: number) => {
+    setOrderItems(orderItems.filter((_, i) => i !== index));
+  };
 
   // Baby info editing state
   const [isEditingBabyInfo, setIsEditingBabyInfo] = useState(false);
@@ -700,14 +725,17 @@ export default function Prototype() {
     setOrderQuantity(1);
     // Pre-select the active book if there is one
     setSelectedBooksForOrder(activeBookId ? [activeBookId] : []);
+    // Initialize order items with the selected product
+    const bookName = activeBook?.childName || "Mon livre";
+    setOrderItems(activeBookId ? [{ productType, quantity: 1, bookId: activeBookId, bookName }] : []);
     setShowOrderConfigModal(true);
   };
   
   const handleConfirmOrder = () => {
-    if (selectedBooksForOrder.length === 0) return;
-    // Navigate to checkout with selected books and quantity
-    const bookIds = selectedBooksForOrder.join(",");
-    setLocation(`/app/test-checkout?bookId=${bookIds}&quantity=${orderQuantity}&product=${selectedProductType}`);
+    if (orderItems.length === 0) return;
+    // Navigate to checkout with order items encoded
+    const itemsParam = encodeURIComponent(JSON.stringify(orderItems));
+    setLocation(`/app/test-checkout?items=${itemsParam}`);
     setShowOrderConfigModal(false);
   };
 
@@ -2932,96 +2960,96 @@ export default function Prototype() {
               </div>
 
               <div className="p-4 space-y-5">
-                {/* Quantity Selector */}
-                <div>
-                  <label className="text-sm font-medium text-stone-700 mb-3 block">Nombre de copies</label>
-                  <div className="flex items-center justify-center gap-4 bg-stone-50 rounded-xl p-4">
-                    <button
-                      onClick={() => setOrderQuantity(Math.max(1, orderQuantity - 1))}
-                      className="w-10 h-10 rounded-full bg-white border border-stone-200 flex items-center justify-center hover:border-primary hover:bg-primary/5 transition-colors"
-                      data-testid="button-decrease-quantity"
-                    >
-                      <Minus size={18} className="text-stone-600" />
-                    </button>
-                    <div className="text-center min-w-[60px]">
-                      <span className="text-3xl font-bold text-stone-800">{orderQuantity}</span>
-                      <p className="text-xs text-stone-500">copie{orderQuantity > 1 ? "s" : ""}</p>
-                    </div>
-                    <button
-                      onClick={() => setOrderQuantity(Math.min(10, orderQuantity + 1))}
-                      className="w-10 h-10 rounded-full bg-white border border-stone-200 flex items-center justify-center hover:border-primary hover:bg-primary/5 transition-colors"
-                      data-testid="button-increase-quantity"
-                    >
-                      <Plus size={18} className="text-stone-600" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Book Selection */}
-                <div>
-                  <label className="text-sm font-medium text-stone-700 mb-3 block">
-                    Sélectionner le(s) livre(s) à imprimer
-                  </label>
-                  <div className="space-y-2 max-h-[200px] overflow-y-auto">
-                    {allBooks.map((book) => {
-                      const isSelected = selectedBooksForOrder.includes(book.id);
-                      return (
-                        <div
-                          key={book.id}
-                          onClick={() => {
-                            if (isSelected) {
-                              setSelectedBooksForOrder(selectedBooksForOrder.filter(id => id !== book.id));
-                            } else {
-                              setSelectedBooksForOrder([...selectedBooksForOrder, book.id]);
-                            }
-                          }}
-                          className={`p-3 rounded-xl border-2 cursor-pointer transition-all flex items-center gap-3 ${
-                            isSelected ? "border-primary bg-primary/5" : "border-stone-200 hover:border-stone-300"
-                          }`}
-                          data-testid={`book-select-${book.id}`}
-                        >
-                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                            isSelected ? "border-primary bg-primary" : "border-stone-300"
-                          }`}>
-                            {isSelected && <Check size={12} className="text-white" />}
-                          </div>
+                {/* Current Items in Order */}
+                {orderItems.length > 0 && (
+                  <div>
+                    <label className="text-sm font-medium text-stone-700 mb-3 block">Articles dans votre commande</label>
+                    <div className="space-y-2 max-h-[180px] overflow-y-auto">
+                      {orderItems.map((item, index) => (
+                        <div key={index} className="bg-stone-50 rounded-xl p-3 flex items-center gap-3">
                           <div className="flex-1">
-                            <p className="font-medium text-stone-800 text-sm">{book.childName || "Mon livre"}</p>
-                            <p className="text-[10px] text-stone-500">
-                              {(book as any).templateSlug === "grossesse" ? "Grossesse" : 
-                               (book as any).templateSlug === "adoption" ? "Adoption" : "Naissance"}
+                            <p className="font-medium text-stone-800 text-sm">
+                              {item.productType === "softcover" ? "Couverture souple" : 
+                               item.productType === "hardcover" ? "Couverture rigide" : "E-Book"}
                             </p>
+                            <p className="text-[10px] text-stone-500">{item.bookName}</p>
                           </div>
-                          {book.id === activeBookId && (
-                            <span className="text-[9px] bg-primary/10 text-primary px-2 py-0.5 rounded-full">Actif</span>
-                          )}
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => updateOrderItemQuantity(index, -1)}
+                              className="w-7 h-7 rounded-full bg-white border border-stone-200 flex items-center justify-center hover:border-primary transition-colors"
+                            >
+                              <Minus size={14} className="text-stone-600" />
+                            </button>
+                            <span className="font-bold text-stone-800 w-6 text-center">{item.quantity}</span>
+                            <button
+                              onClick={() => updateOrderItemQuantity(index, 1)}
+                              className="w-7 h-7 rounded-full bg-white border border-stone-200 flex items-center justify-center hover:border-primary transition-colors"
+                            >
+                              <Plus size={14} className="text-stone-600" />
+                            </button>
+                          </div>
+                          <button
+                            onClick={() => removeOrderItem(index)}
+                            className="p-1.5 hover:bg-red-50 rounded-full"
+                          >
+                            <Trash2 size={14} className="text-red-500" />
+                          </button>
                         </div>
-                      );
-                    })}
-                    
-                    {allBooks.length === 0 && (
-                      <div className="text-center py-6 text-stone-500">
-                        <BookOpen size={32} className="mx-auto mb-2 opacity-50" />
-                        <p className="text-sm">Aucun livre disponible</p>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Add More Items */}
+                <div>
+                  <label className="text-sm font-medium text-stone-700 mb-3 block">Ajouter un article</label>
+                  <div className="grid grid-cols-3 gap-2 mb-3">
+                    {[
+                      { type: "softcover", label: "Souple", price: "43,24$", icon: <BookOpen size={16} className="text-secondary" /> },
+                      { type: "hardcover", label: "Rigide", price: "54,99$", icon: <BookOpen size={16} className="text-primary" /> },
+                      { type: "ebook", label: "E-Book", price: "30,00$", icon: <QrCode size={16} className="text-blue-600" /> },
+                    ].map((product) => (
+                      <div
+                        key={product.type}
+                        className={`p-2 rounded-xl border-2 cursor-pointer transition-all text-center ${
+                          selectedProductType === product.type ? "border-primary bg-primary/5" : "border-stone-200 hover:border-stone-300"
+                        }`}
+                        onClick={() => setSelectedProductType(product.type as any)}
+                      >
+                        <div className="flex justify-center mb-1">{product.icon}</div>
+                        <p className="text-xs font-medium text-stone-800">{product.label}</p>
+                        <p className="text-[10px] text-stone-500">{product.price}</p>
                       </div>
-                    )}
+                    ))}
+                  </div>
+                  
+                  {/* Book Selection for new item */}
+                  <div className="space-y-2 max-h-[120px] overflow-y-auto">
+                    {allBooks.map((book) => (
+                      <div
+                        key={book.id}
+                        onClick={() => {
+                          if (selectedProductType) {
+                            addOrderItem(selectedProductType, book.id, book.childName || "Mon livre");
+                          }
+                        }}
+                        className="p-2 rounded-xl border border-stone-200 cursor-pointer hover:border-primary hover:bg-primary/5 transition-all flex items-center gap-2"
+                        data-testid={`add-book-${book.id}`}
+                      >
+                        <Plus size={14} className="text-primary" />
+                        <span className="text-sm text-stone-700">{book.childName || "Mon livre"}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
                 {/* Summary */}
-                {selectedBooksForOrder.length > 0 && (
-                  <div className="bg-stone-50 rounded-xl p-3">
+                {orderItems.length > 0 && (
+                  <div className="bg-primary/5 rounded-xl p-3 border border-primary/20">
                     <div className="flex justify-between text-sm">
-                      <span className="text-stone-600">Livres sélectionnés:</span>
-                      <span className="font-medium text-stone-800">{selectedBooksForOrder.length}</span>
-                    </div>
-                    <div className="flex justify-between text-sm mt-1">
-                      <span className="text-stone-600">Copies par livre:</span>
-                      <span className="font-medium text-stone-800">{orderQuantity}</span>
-                    </div>
-                    <div className="border-t border-stone-200 mt-2 pt-2 flex justify-between text-sm">
-                      <span className="text-stone-700 font-medium">Total livres:</span>
-                      <span className="font-bold text-primary">{selectedBooksForOrder.length * orderQuantity}</span>
+                      <span className="text-stone-600">Total articles:</span>
+                      <span className="font-bold text-primary">{orderItems.reduce((sum, item) => sum + item.quantity, 0)}</span>
                     </div>
                   </div>
                 )}
@@ -3039,7 +3067,7 @@ export default function Prototype() {
                   <Button
                     className="flex-1"
                     onClick={handleConfirmOrder}
-                    disabled={selectedBooksForOrder.length === 0}
+                    disabled={orderItems.length === 0}
                     data-testid="button-confirm-order-config"
                   >
                     Continuer

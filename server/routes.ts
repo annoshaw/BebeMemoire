@@ -144,6 +144,14 @@ const VALID_STATUS_TRANSITIONS: Record<string, string[]> = {
 
 // Zod schema for order creation
 import { z } from "zod";
+
+const orderItemSchema = z.object({
+  productType: z.string(),
+  quantity: z.number().int().positive(),
+  bookId: z.string(),
+  bookName: z.string(),
+});
+
 const createOrderSchema = z.object({
   bookId: z.string().min(1),
   productType: z.enum(VALID_PRODUCT_TYPES),
@@ -153,6 +161,8 @@ const createOrderSchema = z.object({
     paperQuality: z.enum(["standard", "premium"]).optional(),
   }).optional().nullable(),
   pageCount: z.number().int().positive().min(1),
+  quantity: z.number().int().positive().optional().default(1),
+  orderItems: z.array(orderItemSchema).optional().nullable(),
   shippingAddress: z.object({
     name: z.string(),
     street: z.string(),
@@ -2112,18 +2122,41 @@ export async function registerRoutes(
         });
       }
       
-      const { bookId, productType, printOptions, pageCount, shippingAddress, billingAddress } = parseResult.data;
+      const { bookId, productType, printOptions, pageCount, quantity, orderItems, shippingAddress, billingAddress } = parseResult.data;
 
       // Calculate pricing (amounts in cents) - 50 pages included in base price
       const INCLUDED_PAGES = 50;
+      
+      // Calculate total based on whether this is a multi-item order
+      let totalAmount = 0;
+      if (orderItems && orderItems.length > 0) {
+        // Multi-item order: calculate each item
+        for (const item of orderItems) {
+          const itemType = item.productType as "softcover" | "hardcover" | "ebook";
+          const itemBase = itemType === "ebook" ? 3000 : itemType === "hardcover" ? 5499 : 4324;
+          const itemShipping = itemType === "ebook" ? 0 : 1200;
+          totalAmount += (itemBase + itemShipping) * item.quantity;
+        }
+        // Add per-page pricing once
+        const pageRate = productType === "ebook" ? 50 : 98;
+        const extraPages = Math.max(0, pageCount - INCLUDED_PAGES);
+        totalAmount += extraPages * pageRate;
+      } else {
+        // Single item order
+        const basePrice = productType === "ebook" ? 3000 : productType === "hardcover" ? 5499 : 4324;
+        const pageRate = productType === "ebook" ? 50 : 98;
+        const extraPages = Math.max(0, pageCount - INCLUDED_PAGES);
+        const extraPagesPrice = extraPages * pageRate;
+        const shippingAmount = productType === "ebook" ? 0 : 1200;
+        totalAmount = (basePrice + extraPagesPrice + shippingAmount) * quantity;
+      }
+      
       const basePrice = productType === "ebook" ? 3000 : productType === "hardcover" ? 5499 : 4324;
       const pageRate = productType === "ebook" ? 50 : 98;
       const extraPages = Math.max(0, pageCount - INCLUDED_PAGES);
       const extraPagesPrice = extraPages * pageRate;
-      const subtotal = basePrice + extraPagesPrice;
-      const taxAmount = 0; // No taxes for now
-      const shippingAmount = productType === "ebook" ? 0 : 1200; // $12 shipping for print
-      const totalAmount = subtotal + shippingAmount;
+      const taxAmount = 0;
+      const shippingAmount = productType === "ebook" ? 0 : 1200;
 
       const order = await storage.createOrder({
         userId,
@@ -2132,6 +2165,8 @@ export async function registerRoutes(
         status: "pending_payment",
         productType,
         pageCount,
+        quantity,
+        orderItems: orderItems || [],
         basePrice,
         extraPagesPrice,
         shippingPrice: shippingAmount,

@@ -229,13 +229,13 @@ export function TextBlock({
     const currentFontCategory = FONT_CATEGORIES[fontCategory];
     
     return (
-      <div className="flex gap-1">
+      <div className="flex items-center gap-0.5 sm:gap-1 flex-shrink-0">
         {/* Font Picker */}
         {onStyleChange && (
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-7 gap-1 shrink-0">
-                <Type className="w-3.5 h-3.5" />
+              <Button variant="ghost" size="sm" className="h-6 w-6 sm:h-7 sm:w-7 p-0 shrink-0">
+                <Type className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-64 p-3 bg-white shadow-lg border border-stone-200" align="end">
@@ -290,8 +290,8 @@ export function TextBlock({
         {onStyleChange && (
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-7 gap-1 shrink-0">
-                <ALargeSmall className="w-3.5 h-3.5" />
+              <Button variant="ghost" size="sm" className="h-6 w-6 sm:h-7 sm:w-7 p-0 shrink-0">
+                <ALargeSmall className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-48 p-3 bg-white shadow-lg border border-stone-200" align="end">
@@ -324,12 +324,12 @@ export function TextBlock({
         {onStyleChange && (
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-7 gap-1 shrink-0">
+              <Button variant="ghost" size="sm" className="h-6 w-6 sm:h-7 sm:w-auto sm:gap-1 p-0 sm:px-2 shrink-0">
                 <div 
-                  className="w-4 h-4 rounded-full border border-stone-300"
+                  className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full border border-stone-300"
                   style={{ backgroundColor: style.bgColor }}
                 />
-                <Palette className="w-3.5 h-3.5" />
+                <Palette className="w-3 h-3 sm:w-3.5 sm:h-3.5 hidden sm:block" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-72 p-3 bg-white shadow-lg border border-stone-200" align="end">
@@ -413,11 +413,12 @@ export function TextBlock({
           <Button 
             variant="outline" 
             size="sm" 
-            className="h-7 text-xs"
+            className="h-6 sm:h-7 text-[9px] sm:text-xs px-1.5 sm:px-2 whitespace-nowrap"
             onClick={onApplyStyleToAll}
             disabled={applyingStyle}
           >
-            {language === "fr" ? "Appliquer à tous" : "Apply to all"}
+            <span className="hidden sm:inline">{language === "fr" ? "Appliquer à tous" : "Apply to all"}</span>
+            <span className="sm:hidden">{language === "fr" ? "Tous" : "All"}</span>
           </Button>
         )}
       </div>
@@ -432,8 +433,8 @@ export function TextBlock({
           const style = getStyle(index);
           return (
             <div key={index} className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label className="text-sm text-sage-700 font-medium">{prompt}</Label>
+              <div className="flex items-center gap-2 flex-nowrap">
+                <Label className="text-xs sm:text-sm text-sage-700 font-medium flex-1 min-w-0 truncate sm:whitespace-normal">{prompt}</Label>
                 {renderStylePickers(index)}
               </div>
               <Textarea
@@ -466,8 +467,8 @@ export function TextBlock({
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <Label className="text-sm text-sage-700 font-medium leading-relaxed">
+      <div className="flex items-center gap-2 flex-nowrap">
+        <Label className="text-xs sm:text-sm text-sage-700 font-medium leading-relaxed flex-1 min-w-0 truncate sm:whitespace-normal">
           {combinedPrompt}
         </Label>
         {renderStylePickers(0)}

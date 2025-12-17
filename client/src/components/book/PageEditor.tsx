@@ -1006,7 +1006,7 @@ export function PageEditor({
       </div>
 
       <Card className="border-sage-200">
-        <CardHeader className="pb-3 px-3 sm:px-6 bg-[#ead5c8]">
+        <CardHeader className="pb-3 px-3 sm:px-6">
           {/* Single horizontal row: Title + icons + badges */}
           <div className="flex items-center gap-1 sm:gap-2 flex-nowrap">
             {/* Page badge */}

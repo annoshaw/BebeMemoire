@@ -2816,6 +2816,20 @@ export default function Prototype() {
                                 <Button 
                                   size="sm" 
                                   variant="ghost" 
+                                  className="text-xs h-8 px-2 text-primary hover:text-primary hover:bg-primary/10"
+                                  onClick={(e) => { 
+                                    e.stopPropagation(); 
+                                    setActiveBookMutation.mutate(book.id);
+                                    setShowShareModal(true);
+                                  }}
+                                  data-testid={`button-share-book-${book.id}`}
+                                  title="Partager le livre"
+                                >
+                                  <Share2 size={14} />
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="ghost" 
                                   className="text-xs h-8 px-2 text-red-500 hover:text-red-600 hover:bg-red-50"
                                   onClick={(e) => { 
                                     e.stopPropagation(); 

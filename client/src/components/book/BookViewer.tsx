@@ -343,15 +343,15 @@ export function BookViewer({ bookId, language, onGoToInspiration, initialPage }:
                 <X className="w-5 h-5 text-gray-400" />
               </button>
 
-              {/* Arrow indicator */}
-              {currentStep.arrowDirection && (
+              {/* Arrow indicator - pointing down toward the highlighted area */}
+              {currentStep.arrowDirection === "down" && (
                 <div className={`absolute ${
                   currentStep.position === "left" 
-                    ? "bottom-full left-1/2 -translate-x-1/2 mb-2" 
-                    : "bottom-full right-1/4 mb-2"
+                    ? "top-full left-1/4 mt-2" 
+                    : "top-full right-1/4 mt-2"
                 }`}>
                   <div className="bg-amber-400 text-white p-2 rounded-full animate-bounce">
-                    <MousePointer2 className="w-5 h-5" />
+                    <MousePointer2 className="w-5 h-5 rotate-180" />
                   </div>
                 </div>
               )}
@@ -416,12 +416,12 @@ export function BookViewer({ bookId, language, onGoToInspiration, initialPage }:
             </div>
           </div>
 
-          {/* Highlight areas */}
+          {/* Highlight areas - positioned to match the actual UI sections */}
           {currentStep.id === "parts" && (
-            <div className="absolute top-[200px] left-4 sm:left-8 lg:left-[5%] w-[280px] lg:w-[350px] h-[300px] border-4 border-amber-400 rounded-xl pointer-events-none animate-pulse" />
+            <div className="absolute top-[180px] sm:top-[200px] left-4 sm:left-6 lg:left-[2%] w-[calc(100%-2rem)] sm:w-[280px] lg:w-[320px] h-[280px] sm:h-[320px] border-4 border-amber-400 rounded-xl pointer-events-none animate-pulse" />
           )}
           {currentStep.id === "pages" && (
-            <div className="absolute top-[200px] right-4 sm:right-8 lg:right-[5%] w-[280px] lg:w-[calc(100%-400px)] max-w-[600px] h-[300px] border-4 border-amber-400 rounded-xl pointer-events-none animate-pulse" />
+            <div className="absolute top-[180px] sm:top-[200px] left-4 sm:left-auto sm:right-4 lg:right-[2%] w-[calc(100%-2rem)] sm:w-[calc(100%-320px)] lg:w-[calc(100%-380px)] max-w-[700px] h-[280px] sm:h-[320px] border-4 border-amber-400 rounded-xl pointer-events-none animate-pulse" />
           )}
         </div>
       )}

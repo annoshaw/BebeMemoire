@@ -22,8 +22,8 @@ export default function Navbar() {
     <nav className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-stone-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
-          <Link href="/" className="font-serif text-2xl font-bold text-stone-800 tracking-tight flex items-center gap-2">
-            <img src={logoMemo} alt="Mémo" className="h-12 w-auto" />
+          <Link href="/" className="font-serif text-3xl font-bold text-stone-800 tracking-tight flex items-center gap-2">
+            <img src={logoMemo} alt="Mémo" className="h-14 w-auto" />
             <span>Mémo</span>
           </Link>
 

@@ -282,6 +282,89 @@ export default function Prototype() {
   const [showDeleteBookModal, setShowDeleteBookModal] = useState(false);
   const [bookToDelete, setBookToDelete] = useState<{id: string, childName: string, isLocal: boolean} | null>(null);
   
+  // Book sharing state
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareEmail, setShareEmail] = useState("");
+  const [shareRole, setShareRole] = useState<"collaborator" | "observer">("observer");
+  const [isInviting, setIsInviting] = useState(false);
+  const [shareError, setShareError] = useState<string | null>(null);
+  const [shareSuccess, setShareSuccess] = useState<string | null>(null);
+  const [bookInvitations, setBookInvitations] = useState<any[]>([]);
+  const [bookCollaborators, setBookCollaborators] = useState<any[]>([]);
+  const [isLoadingSharing, setIsLoadingSharing] = useState(false);
+  
+  // Fetch sharing data when modal opens
+  const fetchSharingData = async () => {
+    if (!activeBook?.id || (activeBook as any).isLocal) return;
+    setIsLoadingSharing(true);
+    try {
+      const [invitationsRes, collaboratorsRes] = await Promise.all([
+        fetch(`/api/books/${activeBook.id}/invitations`, { credentials: "include" }),
+        fetch(`/api/books/${activeBook.id}/collaborators`, { credentials: "include" }),
+      ]);
+      if (invitationsRes.ok) {
+        const invitations = await invitationsRes.json();
+        setBookInvitations(invitations);
+      }
+      if (collaboratorsRes.ok) {
+        const collaborators = await collaboratorsRes.json();
+        setBookCollaborators(collaborators);
+      }
+    } catch (error) {
+      console.error("Error fetching sharing data:", error);
+    } finally {
+      setIsLoadingSharing(false);
+    }
+  };
+  
+  const handleInviteUser = async () => {
+    if (!activeBook?.id || !shareEmail) return;
+    
+    setIsInviting(true);
+    setShareError(null);
+    setShareSuccess(null);
+    
+    try {
+      const res = await fetch(`/api/books/${activeBook.id}/invite`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email: shareEmail, role: shareRole }),
+      });
+      
+      const data = await res.json();
+      
+      if (res.ok) {
+        setShareSuccess("Invitation envoyée avec succès!");
+        setShareEmail("");
+        fetchSharingData(); // Refresh the list
+      } else {
+        setShareError(data.message || "Erreur lors de l'envoi de l'invitation");
+      }
+    } catch (error) {
+      setShareError("Erreur de connexion. Veuillez réessayer.");
+    } finally {
+      setIsInviting(false);
+    }
+  };
+  
+  const handleRemoveCollaborator = async (collaboratorId: string) => {
+    if (!activeBook?.id) return;
+    
+    try {
+      const res = await fetch(`/api/books/${activeBook.id}/collaborators/${collaboratorId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      
+      if (res.ok) {
+        fetchSharingData(); // Refresh the list
+      }
+    } catch (error) {
+      console.error("Error removing collaborator:", error);
+    }
+  };
+  
   const handleDeleteBook = (book: {id: string, childName: string, isLocal?: boolean}) => {
     setBookToDelete({ id: book.id, childName: book.childName, isLocal: book.isLocal || false });
     setShowDeleteBookModal(true);
@@ -998,6 +1081,19 @@ export default function Prototype() {
                 <Bell size={16} className="mr-2" />
                 <span>Notifications</span>
               </DropdownMenuItem>
+              {activeBook && !(activeBook as any).isLocal && (
+                <DropdownMenuItem 
+                  className="cursor-pointer"
+                  onClick={() => {
+                    setShowShareModal(true);
+                    fetchSharingData();
+                  }}
+                  data-testid="menu-share-book"
+                >
+                  <Share2 size={16} className="mr-2" />
+                  <span>Partager le livre</span>
+                </DropdownMenuItem>
+              )}
               {isAdmin && (
                 <>
                   <DropdownMenuSeparator />
@@ -3925,6 +4021,219 @@ export default function Prototype() {
                     "Supprimer"
                   )}
                 </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Book Sharing Modal */}
+      <AnimatePresence>
+        {showShareModal && activeBook && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4"
+            onClick={() => {
+              setShowShareModal(false);
+              setShareError(null);
+              setShareSuccess(null);
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="p-4 border-b border-stone-100 flex items-center justify-between sticky top-0 bg-white rounded-t-2xl">
+                <div>
+                  <h3 className="font-bold text-stone-800">Partager le livre</h3>
+                  <p className="text-xs text-stone-500">Invitez quelqu'un à collaborer</p>
+                </div>
+                <button 
+                  onClick={() => {
+                    setShowShareModal(false);
+                    setShareError(null);
+                    setShareSuccess(null);
+                  }}
+                  className="p-2 hover:bg-stone-100 rounded-full"
+                  data-testid="button-close-share-modal"
+                >
+                  <X size={20} className="text-stone-500" />
+                </button>
+              </div>
+
+              <div className="p-4 space-y-5 overflow-y-auto max-h-[60vh]">
+                {/* Invite Form */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium text-stone-700 mb-2 block">Adresse email</label>
+                    <input
+                      type="email"
+                      placeholder="exemple@email.com"
+                      value={shareEmail}
+                      onChange={(e) => setShareEmail(e.target.value)}
+                      className="w-full px-3 py-2 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                      data-testid="input-share-email"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm font-medium text-stone-700 mb-2 block">Niveau d'accès</label>
+                    <div className="space-y-2">
+                      <button
+                        onClick={() => setShareRole("observer")}
+                        className={`w-full p-3 rounded-xl border-2 text-left transition-all ${
+                          shareRole === "observer" 
+                            ? "border-primary bg-primary/5" 
+                            : "border-stone-200 hover:border-stone-300"
+                        }`}
+                        data-testid="button-role-observer"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                            shareRole === "observer" ? "bg-primary/20" : "bg-stone-100"
+                          }`}>
+                            <Users size={16} className={shareRole === "observer" ? "text-primary" : "text-stone-500"} />
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-medium text-stone-800">Observateur</p>
+                            <p className="text-xs text-stone-500">Peut voir le livre, mais ne peut pas modifier</p>
+                          </div>
+                          {shareRole === "observer" && (
+                            <Check size={18} className="text-primary" />
+                          )}
+                        </div>
+                      </button>
+                      
+                      <button
+                        onClick={() => setShareRole("collaborator")}
+                        className={`w-full p-3 rounded-xl border-2 text-left transition-all ${
+                          shareRole === "collaborator" 
+                            ? "border-primary bg-primary/5" 
+                            : "border-stone-200 hover:border-stone-300"
+                        }`}
+                        data-testid="button-role-collaborator"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                            shareRole === "collaborator" ? "bg-primary/20" : "bg-stone-100"
+                          }`}>
+                            <Edit2 size={16} className={shareRole === "collaborator" ? "text-primary" : "text-stone-500"} />
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-medium text-stone-800">Collaborateur</p>
+                            <p className="text-xs text-stone-500">Peut modifier le livre et passer des commandes</p>
+                          </div>
+                          {shareRole === "collaborator" && (
+                            <Check size={18} className="text-primary" />
+                          )}
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Error/Success Messages */}
+                  {shareError && (
+                    <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <p className="text-sm text-red-600">{shareError}</p>
+                    </div>
+                  )}
+                  {shareSuccess && (
+                    <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <p className="text-sm text-green-600">{shareSuccess}</p>
+                    </div>
+                  )}
+                  
+                  <Button
+                    onClick={handleInviteUser}
+                    disabled={!shareEmail || isInviting}
+                    className="w-full"
+                    data-testid="button-send-invitation"
+                  >
+                    {isInviting ? (
+                      <>
+                        <Loader2 size={16} className="mr-2 animate-spin" />
+                        Envoi...
+                      </>
+                    ) : (
+                      <>
+                        <Mail size={16} className="mr-2" />
+                        Envoyer l'invitation
+                      </>
+                    )}
+                  </Button>
+                </div>
+
+                {/* Existing Collaborators & Invitations */}
+                {isLoadingSharing ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 size={20} className="animate-spin text-stone-400" />
+                  </div>
+                ) : (
+                  <>
+                    {/* Pending Invitations */}
+                    {bookInvitations.filter(inv => inv.status === 'pending').length > 0 && (
+                      <div>
+                        <h4 className="text-sm font-medium text-stone-700 mb-3">Invitations en attente</h4>
+                        <div className="space-y-2">
+                          {bookInvitations.filter(inv => inv.status === 'pending').map((invitation) => (
+                            <div key={invitation.id} className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center">
+                                  <Clock size={14} className="text-amber-600" />
+                                </div>
+                                <div>
+                                  <p className="text-sm font-medium text-stone-800">{invitation.email}</p>
+                                  <p className="text-xs text-stone-500">
+                                    {invitation.role === "collaborator" ? "Collaborateur" : "Observateur"}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Current Collaborators */}
+                    {bookCollaborators.length > 0 && (
+                      <div>
+                        <h4 className="text-sm font-medium text-stone-700 mb-3">Personnes avec accès</h4>
+                        <div className="space-y-2">
+                          {bookCollaborators.map((collab) => (
+                            <div key={collab.id} className="p-3 bg-stone-50 border border-stone-200 rounded-xl flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                                  <User size={14} className="text-primary" />
+                                </div>
+                                <div>
+                                  <p className="text-sm font-medium text-stone-800">
+                                    {collab.user?.fullName || collab.user?.email || "Utilisateur"}
+                                  </p>
+                                  <p className="text-xs text-stone-500">
+                                    {collab.role === "collaborator" ? "Collaborateur" : "Observateur"}
+                                  </p>
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => handleRemoveCollaborator(collab.id)}
+                                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                data-testid={`button-remove-collaborator-${collab.id}`}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             </motion.div>
           </motion.div>

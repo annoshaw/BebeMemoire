@@ -26,6 +26,7 @@ import AdminUsers from "@/pages/admin/AdminUsers";
 import AdminExports from "@/pages/admin/AdminExports";
 import AdminEmails from "@/pages/admin/AdminEmails";
 import AdminSubscriptions from "@/pages/admin/AdminSubscriptions";
+import InvitationAccept from "@/pages/app/InvitationAccept";
 
 function Router() {
   return (
@@ -41,6 +42,7 @@ function Router() {
       <Route path="/app/test-checkout" component={TestCheckout} />
       <Route path="/app/order-success" component={OrderSuccess} />
       <Route path="/app/order-cancel" component={OrderCancel} />
+      <Route path="/app/invitation/:token" component={InvitationAccept} />
       <Route path="/register" component={Register} />
       <Route path="/login" component={Login} />
       <Route path="/forgot-password" component={ForgotPassword} />

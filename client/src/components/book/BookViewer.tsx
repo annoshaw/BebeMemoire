@@ -99,6 +99,14 @@ const tutorialSteps: TutorialStep[] = [
     descriptionEn: "The progress bar at the top shows how many pages you've completed. You can always come back to edit a page!",
     position: "center",
   },
+  {
+    id: "preview",
+    titleFr: "4. Prévisualisez votre livre",
+    titleEn: "4. Preview your book",
+    descriptionFr: "Cliquez sur le bouton 'Aperçu' en haut pour voir à quoi ressemblera votre livre une fois imprimé. Vous verrez toutes vos pages complétées !",
+    descriptionEn: "Click the 'Preview' button at the top to see what your book will look like when printed. You'll see all your completed pages!",
+    position: "center",
+  },
 ];
 
 export function BookViewer({ bookId, language, onGoToInspiration, initialPage }: BookViewerProps) {

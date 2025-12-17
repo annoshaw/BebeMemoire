@@ -444,11 +444,31 @@ export default function Prototype() {
     setActiveTab("creations");
   };
   
+  // Initialize userPlan from server data
   useEffect(() => {
-    if (!isTrialActive && userPlan === "base") {
+    if (typedUser?.currentPlan) {
+      const planMap: Record<string, "base" | "premium" | "platine"> = {
+        "free": "base",
+        "premium": "premium",
+        "platine": "platine"
+      };
+      const mappedPlan = planMap[typedUser.currentPlan] || "base";
+      setUserPlan(mappedPlan);
+    }
+  }, [typedUser?.currentPlan]);
+  
+  // Only show trial expired modal if user has no subscription AND trial expired
+  useEffect(() => {
+    // Don't show modal if user already has a subscription (hasSubscription = true means they have a plan in the database)
+    if (typedUser?.hasSubscription) {
+      setShowTrialExpiredModal(false);
+      return;
+    }
+    // Show modal only if trial expired and no subscription
+    if (!isTrialActive && !typedUser?.hasSubscription) {
       setShowTrialExpiredModal(true);
     }
-  }, [isTrialActive, userPlan]);
+  }, [isTrialActive, typedUser?.hasSubscription]);
   
   const [userInfo, setUserInfo] = useState(() => {
     if (typeof window !== "undefined") {

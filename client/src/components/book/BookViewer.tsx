@@ -343,19 +343,6 @@ export function BookViewer({ bookId, language, onGoToInspiration, initialPage }:
                 <X className="w-5 h-5 text-gray-400" />
               </button>
 
-              {/* Arrow indicator - pointing down toward the highlighted area */}
-              {currentStep.arrowDirection === "down" && (
-                <div className={`absolute ${
-                  currentStep.position === "left" 
-                    ? "top-full left-1/4 mt-2" 
-                    : "top-full right-1/4 mt-2"
-                }`}>
-                  <div className="bg-amber-400 text-white p-2 rounded-full animate-bounce">
-                    <MousePointer2 className="w-5 h-5 rotate-180" />
-                  </div>
-                </div>
-              )}
-
               {/* Step indicator */}
               <div className="flex gap-1.5 mb-4">
                 {tutorialSteps.map((_, idx) => (
@@ -416,13 +403,6 @@ export function BookViewer({ bookId, language, onGoToInspiration, initialPage }:
             </div>
           </div>
 
-          {/* Highlight areas - positioned to match the actual UI sections */}
-          {currentStep.id === "parts" && (
-            <div className="absolute top-[180px] sm:top-[200px] left-4 sm:left-6 lg:left-[2%] w-[calc(100%-2rem)] sm:w-[280px] lg:w-[320px] h-[280px] sm:h-[320px] border-4 border-amber-400 rounded-xl pointer-events-none animate-pulse" />
-          )}
-          {currentStep.id === "pages" && (
-            <div className="absolute top-[180px] sm:top-[200px] left-4 sm:left-auto sm:right-4 lg:right-[2%] w-[calc(100%-2rem)] sm:w-[calc(100%-320px)] lg:w-[calc(100%-380px)] max-w-[700px] h-[280px] sm:h-[320px] border-4 border-amber-400 rounded-xl pointer-events-none animate-pulse" />
-          )}
         </div>
       )}
 

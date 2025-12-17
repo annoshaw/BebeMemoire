@@ -720,12 +720,12 @@ export default function Prototype() {
   };
 
   const handleSelectProduct = (productType: "softcover" | "hardcover" | "ebook") => {
-    // Show order configuration modal
-    if (!activeBookId) return;
+    // Show order configuration modal - use activeBook.id which is correctly resolved
+    if (!activeBook?.id) return;
     setSelectedProductType(productType);
     setOrderQuantity(1);
     const bookName = activeBook?.childName || "Mon livre";
-    setOrderItems([{ productType, quantity: 1, bookId: activeBookId, bookName }]);
+    setOrderItems([{ productType, quantity: 1, bookId: activeBook.id, bookName }]);
     setShowOrderConfigModal(true);
   };
   
@@ -3018,9 +3018,9 @@ export default function Prototype() {
                           onClick={() => {
                             setSelectedProductType(product.type as any);
                             // Add or increment item of this type for the active book
-                            if (activeBookId) {
+                            if (activeBook?.id) {
                               const bookName = activeBook?.childName || "Mon livre";
-                              const existingIndex = orderItems.findIndex(item => item.productType === product.type && item.bookId === activeBookId);
+                              const existingIndex = orderItems.findIndex(item => item.productType === product.type && item.bookId === activeBook.id);
                               if (existingIndex >= 0) {
                                 // Increment existing item
                                 const updated = [...orderItems];
@@ -3028,7 +3028,7 @@ export default function Prototype() {
                                 setOrderItems(updated);
                               } else {
                                 // Add new item of this type
-                                setOrderItems([...orderItems, { productType: product.type, quantity: 1, bookId: activeBookId, bookName }]);
+                                setOrderItems([...orderItems, { productType: product.type, quantity: 1, bookId: activeBook.id, bookName }]);
                               }
                             }
                           }}

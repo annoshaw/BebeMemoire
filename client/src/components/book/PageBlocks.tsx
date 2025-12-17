@@ -433,9 +433,11 @@ export function TextBlock({
           const style = getStyle(index);
           return (
             <div key={index} className="space-y-2">
-              <div className="flex items-center gap-2 flex-nowrap">
-                <Label className="text-xs sm:text-sm text-sage-700 font-medium flex-1 min-w-0 truncate sm:whitespace-normal">{prompt}</Label>
-                {renderStylePickers(index)}
+              <div className="flex items-start gap-2">
+                <Label className="text-[10px] sm:text-sm text-sage-700 font-medium leading-tight flex-1 min-w-0 line-clamp-3">{prompt}</Label>
+                <div className="flex-shrink-0">
+                  {renderStylePickers(index)}
+                </div>
               </div>
               <Textarea
                 data-testid={`text-block-${index}`}
@@ -468,7 +470,7 @@ export function TextBlock({
   return (
     <div className="space-y-2">
       <div className="flex items-start gap-2">
-        <Label className="text-[10px] sm:text-sm text-sage-700 font-medium leading-tight flex-1 min-w-0 line-clamp-2">
+        <Label className="text-[10px] sm:text-sm text-sage-700 font-medium leading-tight flex-1 min-w-0 line-clamp-3">
           {combinedPrompt}
         </Label>
         <div className="flex-shrink-0">

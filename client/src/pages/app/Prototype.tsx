@@ -3013,7 +3013,16 @@ export default function Prototype() {
                         className={`p-2 rounded-xl border-2 cursor-pointer transition-all text-center ${
                           selectedProductType === product.type ? "border-primary bg-primary/5" : "border-stone-200 hover:border-stone-300"
                         }`}
-                        onClick={() => setSelectedProductType(product.type as any)}
+                        onClick={() => {
+                          setSelectedProductType(product.type as any);
+                          // Update existing order items to the new product type
+                          if (orderItems.length > 0) {
+                            setOrderItems(orderItems.map(item => ({
+                              ...item,
+                              productType: product.type
+                            })));
+                          }
+                        }}
                       >
                         <div className="flex justify-center mb-1">{product.icon}</div>
                         <p className="text-xs font-medium text-stone-800">{product.label}</p>

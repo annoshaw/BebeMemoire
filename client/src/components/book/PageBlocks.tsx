@@ -467,8 +467,8 @@ export function TextBlock({
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center gap-2 flex-nowrap">
-        <Label className="text-xs sm:text-sm text-sage-700 font-medium leading-relaxed flex-1 min-w-0 truncate sm:whitespace-normal">
+      <div className="flex items-center gap-2 flex-nowrap overflow-x-auto pb-1">
+        <Label className="text-[10px] sm:text-sm text-sage-700 font-medium leading-tight whitespace-nowrap flex-shrink-0">
           {combinedPrompt}
         </Label>
         {renderStylePickers(0)}

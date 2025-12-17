@@ -3051,15 +3051,56 @@ export default function Prototype() {
                   </div>
                 </div>
 
-                {/* Summary */}
-                {orderItems.length > 0 && (
-                  <div className="bg-primary/5 rounded-xl p-3 border border-primary/20">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-stone-600">Total articles:</span>
-                      <span className="font-bold text-primary">{orderItems.reduce((sum, item) => sum + item.quantity, 0)}</span>
+                {/* Summary with Pricing */}
+                {orderItems.length > 0 && (() => {
+                  const INCLUDED_PAGES = 50;
+                  const pageCount = bookPages.length || 50;
+                  const extraPages = Math.max(0, pageCount - INCLUDED_PAGES);
+                  
+                  const getBasePrice = (type: string) => type === "ebook" ? 3000 : type === "hardcover" ? 5499 : 4324;
+                  const getPageRate = (type: string) => type === "ebook" ? 50 : 98;
+                  const getShipping = (type: string) => type === "ebook" ? 0 : 1200;
+                  
+                  let subtotal = 0;
+                  let totalShipping = 0;
+                  let totalQuantity = 0;
+                  
+                  for (const item of orderItems) {
+                    const basePrice = getBasePrice(item.productType);
+                    const extraPagesPrice = extraPages * getPageRate(item.productType);
+                    const itemTotal = (basePrice + extraPagesPrice) * item.quantity;
+                    const shipping = getShipping(item.productType) * item.quantity;
+                    subtotal += itemTotal;
+                    totalShipping += shipping;
+                    totalQuantity += item.quantity;
+                  }
+                  
+                  const grandTotal = subtotal + totalShipping;
+                  
+                  return (
+                    <div className="bg-primary/5 rounded-xl p-4 border border-primary/20 space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-stone-600">Articles ({totalQuantity})</span>
+                        <span className="font-medium text-stone-800">{(subtotal / 100).toFixed(2)} $</span>
+                      </div>
+                      {extraPages > 0 && (
+                        <div className="flex justify-between text-xs text-stone-500">
+                          <span>({extraPages} pages suppl. incluses)</span>
+                        </div>
+                      )}
+                      {totalShipping > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-stone-600">Livraison</span>
+                          <span className="font-medium text-stone-800">{(totalShipping / 100).toFixed(2)} $</span>
+                        </div>
+                      )}
+                      <div className="border-t border-primary/20 pt-2 flex justify-between">
+                        <span className="font-semibold text-stone-800">Total</span>
+                        <span className="text-lg font-bold text-primary">{(grandTotal / 100).toFixed(2)} $ CAD</span>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {/* Action Buttons */}
                 <div className="flex gap-3 pt-2">

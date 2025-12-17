@@ -546,15 +546,23 @@ export default function AdminOrders() {
                 <div className="pt-4 border-t border-stone-200">
                   <h4 className="text-sm font-medium text-stone-700 mb-2">Articles commandés</h4>
                   <div className="space-y-2">
-                    {(selectedOrder.orderItems as OrderItem[]).map((item, index) => (
-                      <div key={index} className="bg-stone-50 rounded-lg p-3 flex justify-between items-center">
-                        <div>
-                          <p className="font-medium text-sm">{productLabels[item.productType] || item.productType}</p>
-                          <p className="text-xs text-stone-500">{item.bookName}</p>
+                    {(selectedOrder.orderItems as OrderItem[]).map((item, index) => {
+                      const basePrice = item.productType === "ebook" ? 3000 : item.productType === "hardcover" ? 5499 : 4324;
+                      const shipping = item.productType === "ebook" ? 0 : 1200;
+                      const itemTotal = (basePrice + shipping) * item.quantity;
+                      return (
+                        <div key={index} className="bg-stone-50 rounded-lg p-3 flex justify-between items-center">
+                          <div>
+                            <p className="font-medium text-sm">{productLabels[item.productType] || item.productType}</p>
+                            <p className="text-xs text-stone-500">{item.bookName}</p>
+                          </div>
+                          <div className="text-right">
+                            <span className="font-bold text-primary">× {item.quantity}</span>
+                            <p className="text-xs text-stone-500">{(itemTotal / 100).toFixed(2)}$</p>
+                          </div>
                         </div>
-                        <span className="font-bold text-primary">× {item.quantity}</span>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}

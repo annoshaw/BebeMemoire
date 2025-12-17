@@ -8,7 +8,8 @@ import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
 import { 
   ChevronLeft, 
-  ChevronRight, 
+  ChevronRight,
+  ChevronDown,
   Check, 
   Circle,
   BookOpen,
@@ -498,241 +499,103 @@ export function BookViewer({ bookId, language, onGoToInspiration, initialPage }:
       <Separator />
 
       {templateParts && templateParts.length > 0 ? (
-        <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
-          <div className="w-full lg:w-1/3 lg:min-w-[250px] lg:max-w-[350px] lg:flex-shrink-0">
-            <ScrollArea className="h-auto max-h-[300px] lg:max-h-[500px] lg:h-[500px] pr-4">
-              <div className="space-y-2">
-                {templateParts.map((part, index) => {
-                  const partPages = getPagesByPart(part.id);
-                  const partCompletedCount = partPages.filter(p => isPageCompleted(p.pageNumber)).length;
-                  const isSelected = selectedPartIndex === index;
-                  const isInspirationPart = (part as any).isInspirationSection === true;
+        <div className="space-y-3">
+          {templateParts.map((part, index) => {
+            const partPages = getPagesByPart(part.id);
+            const partCompletedCount = partPages.filter(p => isPageCompleted(p.pageNumber)).length;
+            const isSelected = selectedPartIndex === index;
+            const isInspirationPart = (part as any).isInspirationSection === true;
 
-                  return (
-                    <button
-                      key={part.id}
-                      onClick={() => setSelectedPartIndex(index)}
-                      className={`w-full text-left p-4 rounded-lg transition-all ${
-                        isInspirationPart
-                          ? isSelected
-                            ? "bg-gradient-to-r from-amber-100 to-orange-100 border-amber-300 border-2"
-                            : "bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 hover:from-amber-100 hover:to-orange-100"
-                          : isSelected 
-                            ? "bg-sage-100 border-sage-300 border-2" 
-                            : "bg-white border border-sage-200 hover:bg-sage-50"
-                      }`}
-                      data-testid={isInspirationPart ? "part-button-inspiration" : `part-button-${index}`}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            {isInspirationPart ? (
-                              <Badge variant="outline" className="text-xs bg-amber-100 border-amber-300 text-amber-700">
-                                <Sparkles className="w-3 h-3 mr-1" />
-                                {language === "fr" ? "Bonus" : "Bonus"}
-                              </Badge>
-                            ) : (
-                              <Badge variant="outline" className="text-xs">
-                                {language === "fr" ? "Partie" : "Part"} {part.partNumber}
-                              </Badge>
-                            )}
-                            {partCompletedCount === partPages.length && partPages.length > 0 && (
-                              <Check className="w-4 h-4 text-green-500" />
-                            )}
-                          </div>
-                          <h3 className={`font-medium mt-1 ${isInspirationPart ? "text-amber-800" : "text-sage-900"}`}>
-                            {language === "fr" ? part.titleFr : part.titleEn}
-                          </h3>
-                          <p className={`text-sm mt-1 ${isInspirationPart ? "text-amber-600" : "text-sage-500"}`}>
-                            {partCompletedCount}/{partPages.length} {language === "fr" ? "pages" : "pages"}
-                          </p>
-                        </div>
+            return (
+              <div key={part.id} className="space-y-2">
+                {/* Part header - clickable */}
+                <button
+                  onClick={() => setSelectedPartIndex(isSelected ? -1 : index)}
+                  className={`w-full text-left p-4 rounded-lg transition-all ${
+                    isInspirationPart
+                      ? isSelected
+                        ? "bg-gradient-to-r from-amber-100 to-orange-100 border-amber-300 border-2"
+                        : "bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 hover:from-amber-100 hover:to-orange-100"
+                      : isSelected 
+                        ? "bg-sage-100 border-sage-300 border-2" 
+                        : "bg-white border border-sage-200 hover:bg-sage-50"
+                  }`}
+                  data-testid={isInspirationPart ? "part-button-inspiration" : `part-button-${index}`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        {isInspirationPart ? (
+                          <Badge variant="outline" className="text-xs bg-amber-100 border-amber-300 text-amber-700">
+                            <Sparkles className="w-3 h-3 mr-1" />
+                            {language === "fr" ? "Bonus" : "Bonus"}
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-xs">
+                            {language === "fr" ? "Partie" : "Part"} {part.partNumber}
+                          </Badge>
+                        )}
+                        {partCompletedCount === partPages.length && partPages.length > 0 && (
+                          <Check className="w-4 h-4 text-green-500" />
+                        )}
                       </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </ScrollArea>
-          </div>
+                      <h3 className={`font-medium mt-1 ${isInspirationPart ? "text-amber-800" : "text-sage-900"}`}>
+                        {language === "fr" ? part.titleFr : part.titleEn}
+                      </h3>
+                      <p className={`text-sm mt-1 ${isInspirationPart ? "text-amber-600" : "text-sage-500"}`}>
+                        {partCompletedCount}/{partPages.length} {language === "fr" ? "pages" : "pages"}
+                      </p>
+                    </div>
+                    <ChevronDown className={`w-5 h-5 transition-transform ${isSelected ? "rotate-180" : ""} ${isInspirationPart ? "text-amber-600" : "text-sage-500"}`} />
+                  </div>
+                </button>
 
-          <div className="flex-1 w-full min-h-[200px]">
-            {/* Show inspiration pages section */}
-            {isInspirationSelected ? (
-              <Card className="border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50">
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-lg font-fraunces text-amber-800 flex items-center gap-2">
-                    <Sparkles className="w-5 h-5" />
-                    {language === "fr" ? "Pages d'inspiration" : "Inspiration Pages"}
-                  </CardTitle>
-                  <p className="text-sm text-amber-600">
-                    {language === "fr" 
-                      ? "Pages personnalisées ajoutées à votre livre" 
-                      : "Custom pages added to your book"}
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  <ScrollArea className="h-auto max-h-[60vh] lg:h-[400px]">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {inspirationPages.map((page: any) => {
-                        const completed = isPageCompleted(page.pageNumber);
-                        return (
-                          <div
-                            key={page.id}
-                            className={`p-4 rounded-lg border text-left transition-all hover:shadow-md group relative ${
-                              completed 
-                                ? "bg-green-50 border-green-200 hover:bg-green-100" 
-                                : "bg-white border-amber-200 hover:border-amber-300"
-                            }`}
-                            data-testid={`page-card-${page.pageNumber}`}
-                          >
-                            <button
-                              onClick={() => {
-                                setSelectedPageNumber(page.pageNumber);
-                                setViewMode("page");
-                              }}
-                              className="w-full text-left"
-                              data-testid={`page-button-${page.pageNumber}`}
+                {/* Pages grid - shown when part is selected */}
+                {isSelected && (
+                  <div className={`rounded-lg border p-4 ${isInspirationPart ? "border-amber-200 bg-amber-50/50" : "border-sage-200 bg-sage-50/50"}`}>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {isInspirationPart ? (
+                        inspirationPages.map((page: any) => {
+                          const completed = isPageCompleted(page.pageNumber);
+                          return (
+                            <div
+                              key={page.id}
+                              className={`p-4 rounded-lg border text-left transition-all hover:shadow-md group relative ${
+                                completed 
+                                  ? "bg-green-50 border-green-200 hover:bg-green-100" 
+                                  : "bg-white border-amber-200 hover:border-amber-300"
+                              }`}
+                              data-testid={`page-card-${page.pageNumber}`}
                             >
-                              <div className="flex items-start gap-3">
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                                  completed ? "bg-green-500 text-white" : "bg-amber-100 text-amber-600"
-                                }`}>
-                                  {completed ? <Check className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => {
+                                  setSelectedPageNumber(page.pageNumber);
+                                  setViewMode("page");
+                                }}
+                                className="w-full text-left"
+                                data-testid={`page-button-${page.pageNumber}`}
+                              >
+                                <div className="flex items-start gap-3">
+                                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                                    completed ? "bg-green-500 text-white" : "bg-amber-100 text-amber-600"
+                                  }`}>
+                                    {completed ? <Check className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
                                     <h4 className="font-medium text-sage-900 truncate">
                                       {language === "fr" ? page.titleFr : page.titleEn}
                                     </h4>
-                                  </div>
-                                  {page.subtitleFr && (
-                                    <p className="text-sm text-sage-500 truncate">
-                                      {language === "fr" ? page.subtitleFr : page.subtitleEn}
-                                    </p>
-                                  )}
-                                  <div className="flex items-center gap-2 mt-2 flex-wrap">
-                                    <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-700">
+                                    {page.subtitleFr && (
+                                      <p className="text-sm text-sage-500 truncate">
+                                        {language === "fr" ? page.subtitleFr : page.subtitleEn}
+                                      </p>
+                                    )}
+                                    <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-700 mt-2">
                                       Page {(page as any).displayPageNumber || page.pageNumber}
                                     </Badge>
                                   </div>
                                 </div>
-                              </div>
-                            </button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <button
-                                  className="absolute top-2 right-2 p-1.5 rounded-full bg-red-100 text-red-600 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-200"
-                                  data-testid={`delete-page-${page.pageNumber}`}
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>
-                                    {language === "fr" ? "Supprimer cette page ?" : "Delete this page?"}
-                                  </AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    {language === "fr" 
-                                      ? "Cette action est irréversible. La page et tout son contenu seront supprimés définitivement." 
-                                      : "This action cannot be undone. The page and all its content will be permanently deleted."}
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>
-                                    {language === "fr" ? "Annuler" : "Cancel"}
-                                  </AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => deletePageMutation.mutate(page.id.replace("inspiration-", ""))}
-                                    className="bg-red-600 hover:bg-red-700"
-                                  >
-                                    {language === "fr" ? "Supprimer" : "Delete"}
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </ScrollArea>
-                </CardContent>
-              </Card>
-            ) : templateParts && templateParts[selectedPartIndex] ? (
-              <Card className="border-sage-200">
-                <CardHeader className="pb-4 bg-[#ead5c8]">
-                  <CardTitle className="text-lg font-fraunces">
-                    {language === "fr" 
-                      ? templateParts[selectedPartIndex].titleFr 
-                      : templateParts[selectedPartIndex].titleEn}
-                  </CardTitle>
-                  {templateParts[selectedPartIndex].descriptionFr && (
-                    <p className="text-sm text-sage-600">
-                      {language === "fr" 
-                        ? templateParts[selectedPartIndex].descriptionFr 
-                        : templateParts[selectedPartIndex].descriptionEn}
-                    </p>
-                  )}
-                </CardHeader>
-                <CardContent>
-                  <ScrollArea className="h-auto max-h-[60vh] lg:h-[400px]">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {getPagesByPart(templateParts[selectedPartIndex].id).map((page) => {
-                        const completed = isPageCompleted(page.pageNumber);
-                        const userPage = pages.find(p => p.pageNumber === page.pageNumber);
-                        return (
-                          <div
-                            key={page.id}
-                            className={`p-4 rounded-lg border text-left transition-all hover:shadow-md group relative ${
-                              completed 
-                                ? "bg-green-50 border-green-200 hover:bg-green-100" 
-                                : "bg-white border-sage-200 hover:border-sage-300"
-                            }`}
-                            data-testid={`page-card-${page.pageNumber}`}
-                          >
-                            <button
-                              onClick={() => {
-                                setSelectedPageNumber(page.pageNumber);
-                                setViewMode("page");
-                              }}
-                              className="w-full text-left"
-                              data-testid={`page-button-${page.pageNumber}`}
-                            >
-                              <div className="flex items-start gap-3">
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                                  completed ? "bg-green-500 text-white" : "bg-sage-100 text-sage-500"
-                                }`}>
-                                  {completed ? <Check className="w-4 h-4" /> : <span>{(page as any).displayPageNumber || page.pageNumber}</span>}
-                                </div>
-                                <div className="flex-1">
-                                  <div className="flex items-start gap-2">
-                                    <h4 className="font-medium text-sage-900 leading-tight">
-                                      {language === "fr" ? page.titleFr : page.titleEn}
-                                    </h4>
-                                    {completed && (
-                                      <Pencil className="w-3 h-3 text-sage-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 mt-1" />
-                                    )}
-                                  </div>
-                                  {page.subtitleFr && (
-                                    <p className="text-sm text-sage-500 leading-tight mt-1">
-                                      {language === "fr" ? page.subtitleFr : page.subtitleEn}
-                                    </p>
-                                  )}
-                                  <div className="flex items-center gap-2 mt-2 flex-wrap">
-                                    <Badge variant="secondary" className="text-xs">
-                                      {page.pageType.replace(/_/g, " ")}
-                                    </Badge>
-                                    {completed && (
-                                      <Badge variant="outline" className="text-xs text-green-600 border-green-300 bg-green-50">
-                                        {language === "fr" ? "Modifier" : "Edit"}
-                                      </Badge>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            </button>
-                            {userPage && (
+                              </button>
                               <AlertDialog>
                                 <AlertDialogTrigger asChild>
                                   <button
@@ -746,37 +609,127 @@ export function BookViewer({ bookId, language, onGoToInspiration, initialPage }:
                                 <AlertDialogContent>
                                   <AlertDialogHeader>
                                     <AlertDialogTitle>
-                                      {language === "fr" ? "Réinitialiser cette page ?" : "Reset this page?"}
+                                      {language === "fr" ? "Supprimer cette page ?" : "Delete this page?"}
                                     </AlertDialogTitle>
                                     <AlertDialogDescription>
                                       {language === "fr" 
-                                        ? "Cette action supprimera tout le contenu que vous avez ajouté à cette page (textes, photos, vidéos). La page reviendra à son état initial." 
-                                        : "This will delete all content you've added to this page (text, photos, videos). The page will return to its initial state."}
+                                        ? "Cette action est irréversible. La page et tout son contenu seront supprimés définitivement." 
+                                        : "This action cannot be undone. The page and all its content will be permanently deleted."}
                                     </AlertDialogDescription>
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
-                                    <AlertDialogCancel>
-                                      {language === "fr" ? "Annuler" : "Cancel"}
-                                    </AlertDialogCancel>
+                                    <AlertDialogCancel>{language === "fr" ? "Annuler" : "Cancel"}</AlertDialogCancel>
                                     <AlertDialogAction
-                                      onClick={() => deletePageMutation.mutate(userPage.id)}
+                                      onClick={() => deletePageMutation.mutate(page.id.replace("inspiration-", ""))}
                                       className="bg-red-600 hover:bg-red-700"
                                     >
-                                      {language === "fr" ? "Réinitialiser" : "Reset"}
+                                      {language === "fr" ? "Supprimer" : "Delete"}
                                     </AlertDialogAction>
                                   </AlertDialogFooter>
                                 </AlertDialogContent>
                               </AlertDialog>
-                            )}
-                          </div>
-                        );
-                      })}
+                            </div>
+                          );
+                        })
+                      ) : (
+                        partPages.map((page) => {
+                          const completed = isPageCompleted(page.pageNumber);
+                          const userPage = pages.find(p => p.pageNumber === page.pageNumber);
+                          return (
+                            <div
+                              key={page.id}
+                              className={`p-4 rounded-lg border text-left transition-all hover:shadow-md group relative ${
+                                completed 
+                                  ? "bg-green-50 border-green-200 hover:bg-green-100" 
+                                  : "bg-white border-sage-200 hover:border-sage-300"
+                              }`}
+                              data-testid={`page-card-${page.pageNumber}`}
+                            >
+                              <button
+                                onClick={() => {
+                                  setSelectedPageNumber(page.pageNumber);
+                                  setViewMode("page");
+                                }}
+                                className="w-full text-left"
+                                data-testid={`page-button-${page.pageNumber}`}
+                              >
+                                <div className="flex items-start gap-3">
+                                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                                    completed ? "bg-green-500 text-white" : "bg-sage-100 text-sage-500"
+                                  }`}>
+                                    {completed ? <Check className="w-4 h-4" /> : <span>{(page as any).displayPageNumber || page.pageNumber}</span>}
+                                  </div>
+                                  <div className="flex-1">
+                                    <div className="flex items-start gap-2">
+                                      <h4 className="font-medium text-sage-900 leading-tight">
+                                        {language === "fr" ? page.titleFr : page.titleEn}
+                                      </h4>
+                                      {completed && (
+                                        <Pencil className="w-3 h-3 text-sage-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 mt-1" />
+                                      )}
+                                    </div>
+                                    {page.subtitleFr && (
+                                      <p className="text-sm text-sage-500 leading-tight mt-1">
+                                        {language === "fr" ? page.subtitleFr : page.subtitleEn}
+                                      </p>
+                                    )}
+                                    <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                      <Badge variant="secondary" className="text-xs">
+                                        {page.pageType.replace(/_/g, " ")}
+                                      </Badge>
+                                      {completed && (
+                                        <Badge variant="outline" className="text-xs text-green-600 border-green-300 bg-green-50">
+                                          {language === "fr" ? "Modifier" : "Edit"}
+                                        </Badge>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              </button>
+                              {userPage && (
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <button
+                                      className="absolute top-2 right-2 p-1.5 rounded-full bg-red-100 text-red-600 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-200"
+                                      data-testid={`delete-page-${page.pageNumber}`}
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>
+                                        {language === "fr" ? "Réinitialiser cette page ?" : "Reset this page?"}
+                                      </AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        {language === "fr" 
+                                          ? "Cette action supprimera tout le contenu que vous avez ajouté à cette page (textes, photos, vidéos). La page reviendra à son état initial." 
+                                          : "This will delete all content you've added to this page (text, photos, videos). The page will return to its initial state."}
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>{language === "fr" ? "Annuler" : "Cancel"}</AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() => deletePageMutation.mutate(userPage.id)}
+                                        className="bg-red-600 hover:bg-red-700"
+                                      >
+                                        {language === "fr" ? "Réinitialiser" : "Reset"}
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              )}
+                            </div>
+                          );
+                        })
+                      )}
                     </div>
-                  </ScrollArea>
-                </CardContent>
-              </Card>
-            ) : null}
-          </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       ) : (
         <div className="text-center py-12">

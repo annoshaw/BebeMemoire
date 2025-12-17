@@ -524,6 +524,12 @@ export default function Prototype() {
   const [showNotificationInstructions, setShowNotificationInstructions] = useState(false);
   const [notificationStatus, setNotificationStatus] = useState<"default" | "granted" | "denied" | "unsupported">("default");
 
+  // Order configuration state
+  const [showOrderConfigModal, setShowOrderConfigModal] = useState(false);
+  const [selectedProductType, setSelectedProductType] = useState<"softcover" | "hardcover" | "ebook" | null>(null);
+  const [orderQuantity, setOrderQuantity] = useState(1);
+  const [selectedBooksForOrder, setSelectedBooksForOrder] = useState<string[]>([]);
+
   // Baby info editing state
   const [isEditingBabyInfo, setIsEditingBabyInfo] = useState(false);
   const [editBabyName, setEditBabyName] = useState("");
@@ -688,9 +694,21 @@ export default function Prototype() {
     }
   };
 
-  const handleSelectProduct = () => {
-    // Redirect to checkout page - product selection happens in the popup
-    setLocation(`/app/test-checkout?bookId=${activeBookId}`);
+  const handleSelectProduct = (productType: "softcover" | "hardcover" | "ebook") => {
+    // Show order configuration modal
+    setSelectedProductType(productType);
+    setOrderQuantity(1);
+    // Pre-select the active book if there is one
+    setSelectedBooksForOrder(activeBookId ? [activeBookId] : []);
+    setShowOrderConfigModal(true);
+  };
+  
+  const handleConfirmOrder = () => {
+    if (selectedBooksForOrder.length === 0) return;
+    // Navigate to checkout with selected books and quantity
+    const bookIds = selectedBooksForOrder.join(",");
+    setLocation(`/app/test-checkout?bookId=${bookIds}&quantity=${orderQuantity}&product=${selectedProductType}`);
+    setShowOrderConfigModal(false);
   };
 
   const addInvitedUser = () => {
@@ -1254,7 +1272,7 @@ export default function Prototype() {
                   <motion.div 
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    onClick={() => handleSelectProduct()}
+                    onClick={() => handleSelectProduct("softcover")}
                     className="bg-white rounded-xl border border-stone-200 p-3 flex items-center justify-between cursor-pointer hover:border-primary hover:shadow-md transition-all"
                   >
                     <div className="flex items-center gap-3">
@@ -1277,7 +1295,7 @@ export default function Prototype() {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.1 }}
-                    onClick={() => handleSelectProduct()}
+                    onClick={() => handleSelectProduct("hardcover")}
                     className="bg-white rounded-xl border border-stone-200 p-3 flex items-center justify-between cursor-pointer hover:border-primary hover:shadow-md transition-all"
                   >
                     <div className="flex items-center gap-3">
@@ -1300,7 +1318,7 @@ export default function Prototype() {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.2 }}
-                    onClick={() => handleSelectProduct()}
+                    onClick={() => handleSelectProduct("ebook")}
                     className="bg-white rounded-xl border border-stone-200 p-3 flex items-center justify-between cursor-pointer hover:border-primary hover:shadow-md transition-all"
                   >
                     <div className="flex items-center gap-3">
@@ -2873,6 +2891,160 @@ export default function Prototype() {
                 >
                   Compris
                 </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Order Configuration Modal */}
+      <AnimatePresence>
+        {showOrderConfigModal && selectedProductType && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4"
+            onClick={() => setShowOrderConfigModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="p-4 border-b border-stone-100 flex items-center justify-between sticky top-0 bg-white rounded-t-2xl">
+                <div>
+                  <h3 className="font-bold text-stone-800">Configurer votre commande</h3>
+                  <p className="text-xs text-stone-500">
+                    {selectedProductType === "softcover" ? "Couverture souple" : 
+                     selectedProductType === "hardcover" ? "Couverture rigide" : "E-Book"}
+                  </p>
+                </div>
+                <button 
+                  onClick={() => setShowOrderConfigModal(false)}
+                  className="p-2 hover:bg-stone-100 rounded-full"
+                >
+                  <X size={20} className="text-stone-500" />
+                </button>
+              </div>
+
+              <div className="p-4 space-y-5">
+                {/* Quantity Selector */}
+                <div>
+                  <label className="text-sm font-medium text-stone-700 mb-3 block">Nombre de copies</label>
+                  <div className="flex items-center justify-center gap-4 bg-stone-50 rounded-xl p-4">
+                    <button
+                      onClick={() => setOrderQuantity(Math.max(1, orderQuantity - 1))}
+                      className="w-10 h-10 rounded-full bg-white border border-stone-200 flex items-center justify-center hover:border-primary hover:bg-primary/5 transition-colors"
+                      data-testid="button-decrease-quantity"
+                    >
+                      <Minus size={18} className="text-stone-600" />
+                    </button>
+                    <div className="text-center min-w-[60px]">
+                      <span className="text-3xl font-bold text-stone-800">{orderQuantity}</span>
+                      <p className="text-xs text-stone-500">copie{orderQuantity > 1 ? "s" : ""}</p>
+                    </div>
+                    <button
+                      onClick={() => setOrderQuantity(Math.min(10, orderQuantity + 1))}
+                      className="w-10 h-10 rounded-full bg-white border border-stone-200 flex items-center justify-center hover:border-primary hover:bg-primary/5 transition-colors"
+                      data-testid="button-increase-quantity"
+                    >
+                      <Plus size={18} className="text-stone-600" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Book Selection */}
+                <div>
+                  <label className="text-sm font-medium text-stone-700 mb-3 block">
+                    Sélectionner le(s) livre(s) à imprimer
+                  </label>
+                  <div className="space-y-2 max-h-[200px] overflow-y-auto">
+                    {allBooks.map((book) => {
+                      const isSelected = selectedBooksForOrder.includes(book.id);
+                      return (
+                        <div
+                          key={book.id}
+                          onClick={() => {
+                            if (isSelected) {
+                              setSelectedBooksForOrder(selectedBooksForOrder.filter(id => id !== book.id));
+                            } else {
+                              setSelectedBooksForOrder([...selectedBooksForOrder, book.id]);
+                            }
+                          }}
+                          className={`p-3 rounded-xl border-2 cursor-pointer transition-all flex items-center gap-3 ${
+                            isSelected ? "border-primary bg-primary/5" : "border-stone-200 hover:border-stone-300"
+                          }`}
+                          data-testid={`book-select-${book.id}`}
+                        >
+                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                            isSelected ? "border-primary bg-primary" : "border-stone-300"
+                          }`}>
+                            {isSelected && <Check size={12} className="text-white" />}
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-medium text-stone-800 text-sm">{book.childName || "Mon livre"}</p>
+                            <p className="text-[10px] text-stone-500">
+                              {(book as any).templateSlug === "grossesse" ? "Grossesse" : 
+                               (book as any).templateSlug === "adoption" ? "Adoption" : "Naissance"}
+                            </p>
+                          </div>
+                          {book.id === activeBookId && (
+                            <span className="text-[9px] bg-primary/10 text-primary px-2 py-0.5 rounded-full">Actif</span>
+                          )}
+                        </div>
+                      );
+                    })}
+                    
+                    {allBooks.length === 0 && (
+                      <div className="text-center py-6 text-stone-500">
+                        <BookOpen size={32} className="mx-auto mb-2 opacity-50" />
+                        <p className="text-sm">Aucun livre disponible</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Summary */}
+                {selectedBooksForOrder.length > 0 && (
+                  <div className="bg-stone-50 rounded-xl p-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-stone-600">Livres sélectionnés:</span>
+                      <span className="font-medium text-stone-800">{selectedBooksForOrder.length}</span>
+                    </div>
+                    <div className="flex justify-between text-sm mt-1">
+                      <span className="text-stone-600">Copies par livre:</span>
+                      <span className="font-medium text-stone-800">{orderQuantity}</span>
+                    </div>
+                    <div className="border-t border-stone-200 mt-2 pt-2 flex justify-between text-sm">
+                      <span className="text-stone-700 font-medium">Total livres:</span>
+                      <span className="font-bold text-primary">{selectedBooksForOrder.length * orderQuantity}</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Action Buttons */}
+                <div className="flex gap-3 pt-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => setShowOrderConfigModal(false)}
+                    data-testid="button-cancel-order-config"
+                  >
+                    Annuler
+                  </Button>
+                  <Button
+                    className="flex-1"
+                    onClick={handleConfirmOrder}
+                    disabled={selectedBooksForOrder.length === 0}
+                    data-testid="button-confirm-order-config"
+                  >
+                    Continuer
+                  </Button>
+                </div>
               </div>
             </motion.div>
           </motion.div>

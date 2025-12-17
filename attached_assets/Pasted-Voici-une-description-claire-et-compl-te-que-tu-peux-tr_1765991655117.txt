@@ -1,0 +1,60 @@
+Voici une description claire et complète que tu peux transmettre à ton développeur sur Replit pour qu’il comprenne exactement ce que tu veux :
+
+🛒 Fonctionnalité de commande multi-articles
+Objectif :
+Permettre à l’utilisateur de sélectionner plusieurs articles lors de la commande de son livre Mémo, avec la possibilité d’indiquer la quantité souhaitée pour chaque article.
+La commande doit ensuite apparaître dans le backend administrateur, avec le détail du type d’article et du nombre commandé.
+
+🧩 Côté utilisateur (frontend)
+- Afficher une interface de commande avec :
+- Une liste d’articles disponibles (ex. : livre Mémo, version imprimée, coffret, accessoires…)
+- Pour chaque article :
+- une case à cocher ou un bouton “Ajouter”
+- un champ pour indiquer la quantité souhaitée
+- Exemple de structure :
+[
+  { "item": "Livre Mémo", "quantity": 2 },
+  { "item": "Coffret souvenir", "quantity": 1 }
+]
+
+
+
+🔄 Côté backend (Node.js / Express)
+Créer une route API pour enregistrer la commande :
+app.post("/api/place-order", async (req, res) => {
+  const userId = req.user.id;
+  const { items } = req.body; // tableau d’objets { item, quantity }
+
+  // Enregistrer la commande dans la base
+  await db.orders.insertOne({
+    userId,
+    items,
+    createdAt: new Date()
+  });
+
+  res.json({ message: "Commande enregistrée avec succès." });
+});
+
+
+
+🖥️ Côté administrateur (backend admin)
+- Afficher une liste des commandes reçues :
+- Nom de l’utilisateur
+- Détail des articles commandés
+- Quantité par article
+- Date de commande
+Exemple d’affichage :
+Commande #1023 — Ann-Sophie
+- Livre Mémo × 2
+- Coffret souvenir × 1
+Date : 17 décembre 2025
+
+
+
+✅ Résultat attendu
+- L’utilisateur peut commander plusieurs articles en une seule fois
+- Chaque article peut avoir une quantité personnalisée
+- La commande est enregistrée dans la base avec tous les détails
+- L’administrateur peut consulter les commandes dans son interface backend
+
+Je peux aussi t’aider à définir la structure de la base de données (orders), ou à créer l’interface admin si tu veux aller plus loin.

@@ -673,7 +673,7 @@ export function BookViewer({ bookId, language, onGoToInspiration, initialPage }:
               </Card>
             ) : templateParts && templateParts[selectedPartIndex] ? (
               <Card className="border-sage-200">
-                <CardHeader className="pb-4">
+                <CardHeader className="pb-4 bg-[#ead5c8]">
                   <CardTitle className="text-lg font-fraunces">
                     {language === "fr" 
                       ? templateParts[selectedPartIndex].titleFr 

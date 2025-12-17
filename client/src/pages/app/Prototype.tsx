@@ -720,9 +720,13 @@ export default function Prototype() {
   };
 
   const handleSelectProduct = (productType: "softcover" | "hardcover" | "ebook") => {
-    // Navigate directly to checkout with the selected product
+    // Show order configuration modal
     if (!activeBookId) return;
-    setLocation(`/app/test-checkout?bookId=${activeBookId}&product=${productType}`);
+    setSelectedProductType(productType);
+    setOrderQuantity(1);
+    const bookName = activeBook?.childName || "Mon livre";
+    setOrderItems([{ productType, quantity: 1, bookId: activeBookId, bookName }]);
+    setShowOrderConfigModal(true);
   };
   
   const handleConfirmOrder = () => {

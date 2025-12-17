@@ -1006,22 +1006,22 @@ export function PageEditor({
       </div>
 
       <Card className="border-sage-200">
-        <CardHeader className="pb-3 px-3 sm:px-6">
+        <CardHeader className="pb-3 px-3 sm:px-6 bg-[#ead5c8]">
           {/* Single horizontal row: Title + icons + badges */}
-          <div className="flex items-center gap-2 overflow-x-auto">
+          <div className="flex items-center gap-1 sm:gap-2 flex-nowrap">
             {/* Page badge */}
-            <Badge variant="outline" className="text-[10px] px-1.5 py-0 flex-shrink-0">
+            <Badge variant="outline" className="text-[10px] px-1 py-0 flex-shrink-0 bg-white">
               P{shownPageNumber}
             </Badge>
             {userPage?.isCompleted && (
-              <Badge className="bg-green-500 text-[10px] px-1.5 py-0 flex-shrink-0">
+              <Badge className="bg-green-500 text-[10px] px-1 py-0 flex-shrink-0">
                 <Check className="w-2.5 h-2.5" />
               </Badge>
             )}
             
-            {/* Title - allow to shrink/wrap */}
+            {/* Title - truncate on mobile */}
             <CardTitle 
-              className="text-sm sm:text-lg leading-tight flex-1 min-w-0" 
+              className="text-xs sm:text-lg leading-tight flex-1 min-w-0 truncate" 
               style={{ fontFamily: titleStyle.fontFamily }}
             >
               {language === "fr" 
@@ -1029,13 +1029,13 @@ export function PageEditor({
                 : templatePage?.titleEn}
             </CardTitle>
             
-            {/* Controls group - stay on same line */}
-            <div className="flex items-center gap-1 flex-shrink-0">
+            {/* Controls group - always stay on same line */}
+            <div className="flex items-center gap-0.5 sm:gap-1 flex-shrink-0">
               {/* Title Font Picker */}
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-                    <Type className="w-4 h-4" />
+                  <Button variant="ghost" size="sm" className="h-6 w-6 sm:h-7 sm:w-7 p-0">
+                    <Type className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-64 p-3 bg-white shadow-lg border border-stone-200" align="end">
@@ -1067,8 +1067,8 @@ export function PageEditor({
               {/* Title Size Picker */}
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-                    <ALargeSmall className="w-4 h-4" />
+                  <Button variant="ghost" size="sm" className="h-6 w-6 sm:h-7 sm:w-7 p-0">
+                    <ALargeSmall className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-48 p-3 bg-white shadow-lg border border-stone-200" align="end">
@@ -1100,7 +1100,7 @@ export function PageEditor({
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="h-7 text-[10px] px-2 whitespace-nowrap"
+                className="h-6 sm:h-7 text-[9px] sm:text-[10px] px-1.5 sm:px-2 whitespace-nowrap bg-white"
                 onClick={() => applyStyleToAllPages('title')}
                 disabled={applyingStyle}
               >

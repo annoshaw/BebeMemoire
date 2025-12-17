@@ -467,11 +467,13 @@ export function TextBlock({
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center gap-2 flex-nowrap overflow-x-auto pb-1">
-        <Label className="text-[10px] sm:text-sm text-sage-700 font-medium leading-tight whitespace-nowrap flex-shrink-0">
+      <div className="flex items-start gap-2">
+        <Label className="text-[10px] sm:text-sm text-sage-700 font-medium leading-tight flex-1 min-w-0 line-clamp-2">
           {combinedPrompt}
         </Label>
-        {renderStylePickers(0)}
+        <div className="flex-shrink-0">
+          {renderStylePickers(0)}
+        </div>
       </div>
       
       <Textarea

@@ -3340,20 +3340,31 @@ export async function registerRoutes(
       const { limit = 50, offset = 0 } = req.query;
       const exports = await storage.getAllPdfExports(Number(limit), Number(offset));
       
-      // Enrich exports with customer names from orders (with defensive error handling)
+      // Enrich exports with customer names and order items from orders (with defensive error handling)
       const enrichedExports = await Promise.all(exports.map(async (exp) => {
         let customerName: string | null = null;
         let customerEmail: string | null = null;
+        let orderNumber: string | null = null;
+        let orderItems: any[] = [];
+        let productType: string | null = null;
+        let quantity: number = 1;
         
         try {
           // Try to get customer from order first
           if (exp.orderId) {
             const order = await storage.getOrder(exp.orderId);
-            if (order && order.userId) {
-              const user = await storage.getUser(order.userId);
-              if (user) {
-                customerName = user.fullName || user.firstName || null;
-                customerEmail = user.email || null;
+            if (order) {
+              orderNumber = order.orderNumber;
+              orderItems = order.orderItems || [];
+              productType = order.productType;
+              quantity = order.quantity || 1;
+              
+              if (order.userId) {
+                const user = await storage.getUser(order.userId);
+                if (user) {
+                  customerName = user.fullName || user.firstName || null;
+                  customerEmail = user.email || null;
+                }
               }
             }
           }
@@ -3377,6 +3388,10 @@ export async function registerRoutes(
           ...exp,
           customerName,
           customerEmail,
+          orderNumber,
+          orderItems,
+          productType,
+          quantity,
         };
       }));
       

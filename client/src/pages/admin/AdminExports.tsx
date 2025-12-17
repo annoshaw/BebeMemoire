@@ -6,6 +6,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import AdminLayout from "./AdminLayout";
 import { toast } from "sonner";
 
+interface OrderItem {
+  productType: string;
+  quantity: number;
+  bookId: string;
+  bookName: string;
+}
+
 interface PdfExport {
   id: string;
   bookId: string;
@@ -21,7 +28,17 @@ interface PdfExport {
   errorMessage: string | null;
   customerName?: string | null;
   customerEmail?: string | null;
+  orderNumber?: string | null;
+  orderItems?: OrderItem[];
+  productType?: string | null;
+  quantity?: number;
 }
+
+const productLabels: Record<string, string> = {
+  softcover: "Couverture Souple",
+  hardcover: "Couverture Rigide",
+  ebook: "E-Book PDF",
+};
 
 const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
   pending: { label: "En attente", color: "bg-yellow-100 text-yellow-700", icon: Clock },
@@ -172,17 +189,28 @@ export default function AdminExports() {
       return;
     }
 
-    const headers = ["ID", "Client", "Email", "Livre ID", "Commande ID", "Statut", "Taille", "Créé"];
-    const rows = dataToExport.map(exp => [
-      exp.id.slice(0, 8),
-      exp.customerName || "-",
-      exp.customerEmail || "-",
-      exp.bookId.slice(0, 8),
-      exp.orderId?.slice(0, 8) || "-",
-      statusConfig[exp.status]?.label || exp.status,
-      formatFileSize(exp.fileSize),
-      new Date(exp.createdAt).toLocaleString("fr-CA")
-    ]);
+    const headers = ["Commande", "Client", "Email", "Articles", "Statut", "Taille", "Créé"];
+    const rows = dataToExport.map(exp => {
+      // Format order items as a readable string
+      let articlesStr = "-";
+      if (exp.orderItems && exp.orderItems.length > 0) {
+        articlesStr = exp.orderItems
+          .map(item => `${item.quantity}× ${productLabels[item.productType] || item.productType}`)
+          .join("; ");
+      } else if (exp.productType) {
+        articlesStr = `${exp.quantity || 1}× ${productLabels[exp.productType] || exp.productType}`;
+      }
+      
+      return [
+        exp.orderNumber || exp.id.slice(0, 8),
+        exp.customerName || "-",
+        exp.customerEmail || "-",
+        articlesStr,
+        statusConfig[exp.status]?.label || exp.status,
+        formatFileSize(exp.fileSize),
+        new Date(exp.createdAt).toLocaleString("fr-CA")
+      ];
+    });
 
     const csvContent = [
       headers.join(","),
@@ -238,10 +266,9 @@ export default function AdminExports() {
             <table className="w-full min-w-[900px]">
               <thead className="bg-stone-50 border-b border-stone-200">
                 <tr>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-stone-600">ID</th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-stone-600">Client</th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-stone-600">Livre</th>
                   <th className="text-left px-4 py-3 text-sm font-medium text-stone-600">Commande</th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-stone-600">Client</th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-stone-600">Articles</th>
                   <th className="text-left px-4 py-3 text-sm font-medium text-stone-600">Statut</th>
                   <th className="text-left px-4 py-3 text-sm font-medium text-stone-600">Taille</th>
                   <th className="text-left px-4 py-3 text-sm font-medium text-stone-600">Créé</th>
@@ -255,7 +282,11 @@ export default function AdminExports() {
                   return (
                     <tr key={exp.id} className="hover:bg-stone-50">
                       <td className="px-4 py-3">
-                        <span className="font-mono text-xs">{exp.id.slice(0, 8)}...</span>
+                        {exp.orderNumber ? (
+                          <span className="font-mono text-sm font-medium">{exp.orderNumber}</span>
+                        ) : (
+                          <span className="font-mono text-xs text-stone-400">{exp.id.slice(0, 8)}...</span>
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex flex-col">
@@ -265,12 +296,18 @@ export default function AdminExports() {
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3">
-                        <span className="font-mono text-xs">{exp.bookId.slice(0, 8)}...</span>
-                      </td>
-                      <td className="px-4 py-3">
-                        {exp.orderId ? (
-                          <span className="font-mono text-xs">{exp.orderId.slice(0, 8)}...</span>
+                      <td className="px-4 py-3 text-sm">
+                        {exp.orderItems && exp.orderItems.length > 0 ? (
+                          <div className="space-y-0.5">
+                            {exp.orderItems.map((item, idx) => (
+                              <div key={idx} className="text-xs">
+                                <span className="font-medium">{item.quantity}×</span>{" "}
+                                {productLabels[item.productType] || item.productType}
+                              </div>
+                            ))}
+                          </div>
+                        ) : exp.productType ? (
+                          <span>{exp.quantity || 1}× {productLabels[exp.productType] || exp.productType}</span>
                         ) : (
                           <span className="text-stone-400">-</span>
                         )}

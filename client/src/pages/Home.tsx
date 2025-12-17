@@ -9,6 +9,7 @@ import { Link } from "wouter";
 import heroImage from "@assets/generated_images/happy_parents_with_baby_looking_at_tablet.png";
 import appImage from "@assets/generated_images/mobile_app_interface_for_baby_book.png";
 import printImage from "@assets/generated_images/high_quality_printed_baby_book.png";
+import logoMemo from "@/assets/logo-memo.png";
 
 export default function Home() {
   const fadeInUp = {
@@ -50,6 +51,10 @@ export default function Home() {
               <div className="inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 text-white text-sm font-bold shadow-lg ml-2">
                 <span className="mr-2">🎁</span>
                 14 jours d'essai Premium GRATUIT
+              </div>
+              
+              <div className="flex items-center gap-4 mb-4">
+                <img src={logoMemo} alt="Mémo" className="h-24 sm:h-32 w-auto" />
               </div>
               
               <h1 className="text-5xl lg:text-7xl font-serif font-bold text-stone-900 leading-[1.1]">

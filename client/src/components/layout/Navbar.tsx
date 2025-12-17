@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Menu, X, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
+import logoMemo from "@/assets/logo-memo.png";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -22,8 +23,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           <Link href="/" className="font-serif text-2xl font-bold text-stone-800 tracking-tight flex items-center gap-2">
-            <span className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white font-sans text-lg">M</span>
-            Memoria
+            <img src={logoMemo} alt="Mémo" className="h-12 w-auto" />
           </Link>
 
           {/* Desktop Nav */}

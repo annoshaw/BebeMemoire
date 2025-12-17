@@ -349,7 +349,16 @@ export default function AdminOrders() {
                       </div>
                       <div className="mt-2 flex items-center justify-between text-xs">
                         <span className="text-stone-500">
-                          {productLabels[order.productType]?.split(" ")[0] || order.productType}
+                          {order.orderItems && order.orderItems.length > 0 ? (
+                            (order.orderItems as OrderItem[]).map((item, idx) => (
+                              <span key={idx}>
+                                {idx > 0 && ", "}
+                                {item.quantity}× {productLabels[item.productType]?.split(" ").pop() || item.productType}
+                              </span>
+                            ))
+                          ) : (
+                            productLabels[order.productType]?.split(" ")[0] || order.productType
+                          )}
                         </span>
                         <span className="font-medium text-stone-700">
                           {(order.totalAmount / 100).toFixed(2)}$
@@ -418,7 +427,18 @@ export default function AdminOrders() {
                           </div>
                         </td>
                         <td className="px-4 py-3 text-sm">
-                          {productLabels[order.productType] || order.productType}
+                          {order.orderItems && order.orderItems.length > 0 ? (
+                            <div className="space-y-0.5">
+                              {(order.orderItems as OrderItem[]).map((item, idx) => (
+                                <div key={idx} className="text-xs">
+                                  <span className="font-medium">{item.quantity}×</span>{" "}
+                                  {productLabels[item.productType] || item.productType}
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <span>{productLabels[order.productType] || order.productType} × {order.quantity || 1}</span>
+                          )}
                         </td>
                         <td className="px-4 py-3 text-sm">{order.pageCount}</td>
                         <td className="px-4 py-3 text-sm font-medium">
@@ -542,15 +562,30 @@ export default function AdminOrders() {
               </div>
               
               {/* Order Items Detail */}
-              {selectedOrder.orderItems && selectedOrder.orderItems.length > 0 && (
-                <div className="pt-4 border-t border-stone-200">
-                  <h4 className="text-sm font-medium text-stone-700 mb-2">Articles commandés</h4>
-                  <div className="space-y-2">
-                    {(selectedOrder.orderItems as OrderItem[]).map((item, index) => {
-                      const basePrice = item.productType === "ebook" ? 3000 : item.productType === "hardcover" ? 5499 : 4324;
-                      const shipping = item.productType === "ebook" ? 0 : 1200;
-                      const itemTotal = (basePrice + shipping) * item.quantity;
-                      return (
+              {selectedOrder.orderItems && selectedOrder.orderItems.length > 0 && (() => {
+                const items = selectedOrder.orderItems as OrderItem[];
+                const INCLUDED_PAGES = 50;
+                const pageCount = selectedOrder.pageCount || 50;
+                const extraPages = Math.max(0, pageCount - INCLUDED_PAGES);
+                let subtotal = 0;
+                let hasPhysical = false;
+                
+                const itemDetails = items.map((item) => {
+                  const basePrice = item.productType === "ebook" ? 3000 : item.productType === "hardcover" ? 5499 : 4324;
+                  const pageRate = item.productType === "ebook" ? 50 : 98;
+                  const itemTotal = (basePrice + (extraPages * pageRate)) * item.quantity;
+                  subtotal += itemTotal;
+                  if (item.productType !== "ebook") hasPhysical = true;
+                  return { ...item, itemTotal };
+                });
+                
+                const shipping = hasPhysical ? 1200 : 0;
+                
+                return (
+                  <div className="pt-4 border-t border-stone-200">
+                    <h4 className="text-sm font-medium text-stone-700 mb-2">Articles commandés</h4>
+                    <div className="space-y-2">
+                      {itemDetails.map((item, index) => (
                         <div key={index} className="bg-stone-50 rounded-lg p-3 flex justify-between items-center">
                           <div>
                             <p className="font-medium text-sm">{productLabels[item.productType] || item.productType}</p>
@@ -558,14 +593,28 @@ export default function AdminOrders() {
                           </div>
                           <div className="text-right">
                             <span className="font-bold text-primary">× {item.quantity}</span>
-                            <p className="text-xs text-stone-500">{(itemTotal / 100).toFixed(2)}$</p>
+                            <p className="text-xs text-stone-500">{(item.itemTotal / 100).toFixed(2)}$</p>
                           </div>
                         </div>
-                      );
-                    })}
+                      ))}
+                    </div>
+                    <div className="mt-3 pt-3 border-t border-stone-100 space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-stone-500">Sous-total</span>
+                        <span>{(subtotal / 100).toFixed(2)}$</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-stone-500">Livraison</span>
+                        <span>{shipping > 0 ? `${(shipping / 100).toFixed(2)}$` : "Gratuit"}</span>
+                      </div>
+                      <div className="flex justify-between font-medium pt-1 border-t border-stone-100">
+                        <span>Total</span>
+                        <span className="text-primary">{((subtotal + shipping) / 100).toFixed(2)}$ CAD</span>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
             </div>
           )}
         </DialogContent>

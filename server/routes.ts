@@ -2129,18 +2129,24 @@ export async function registerRoutes(
       
       // Calculate total based on whether this is a multi-item order
       let totalAmount = 0;
+      let hasPhysicalItem = false;
+      
       if (orderItems && orderItems.length > 0) {
-        // Multi-item order: calculate each item
+        // Multi-item order: calculate each item (without per-item shipping)
         for (const item of orderItems) {
           const itemType = item.productType as "softcover" | "hardcover" | "ebook";
           const itemBase = itemType === "ebook" ? 3000 : itemType === "hardcover" ? 5499 : 4324;
-          const itemShipping = itemType === "ebook" ? 0 : 1200;
-          totalAmount += (itemBase + itemShipping) * item.quantity;
+          const itemPageRate = itemType === "ebook" ? 50 : 98;
+          const itemExtraPages = Math.max(0, pageCount - INCLUDED_PAGES);
+          totalAmount += (itemBase + (itemExtraPages * itemPageRate)) * item.quantity;
+          if (itemType !== "ebook") {
+            hasPhysicalItem = true;
+          }
         }
-        // Add per-page pricing once
-        const pageRate = productType === "ebook" ? 50 : 98;
-        const extraPages = Math.max(0, pageCount - INCLUDED_PAGES);
-        totalAmount += extraPages * pageRate;
+        // Add flat shipping once if any physical items
+        if (hasPhysicalItem) {
+          totalAmount += 1200;
+        }
       } else {
         // Single item order
         const basePrice = productType === "ebook" ? 3000 : productType === "hardcover" ? 5499 : 4324;
@@ -2148,7 +2154,7 @@ export async function registerRoutes(
         const extraPages = Math.max(0, pageCount - INCLUDED_PAGES);
         const extraPagesPrice = extraPages * pageRate;
         const shippingAmount = productType === "ebook" ? 0 : 1200;
-        totalAmount = (basePrice + extraPagesPrice + shippingAmount) * quantity;
+        totalAmount = (basePrice + extraPagesPrice) * quantity + shippingAmount;
       }
       
       const basePrice = productType === "ebook" ? 3000 : productType === "hardcover" ? 5499 : 4324;

@@ -3074,22 +3074,24 @@ export default function Prototype() {
                   
                   const getBasePrice = (type: string) => type === "ebook" ? 3000 : type === "hardcover" ? 5499 : 4324;
                   const getPageRate = (type: string) => type === "ebook" ? 50 : 98;
-                  const getShipping = (type: string) => type === "ebook" ? 0 : 1200;
                   
                   let subtotal = 0;
-                  let totalShipping = 0;
                   let totalQuantity = 0;
+                  let hasPhysicalItem = false;
                   
                   for (const item of orderItems) {
                     const basePrice = getBasePrice(item.productType);
                     const extraPagesPrice = extraPages * getPageRate(item.productType);
                     const itemTotal = (basePrice + extraPagesPrice) * item.quantity;
-                    const shipping = getShipping(item.productType) * item.quantity;
                     subtotal += itemTotal;
-                    totalShipping += shipping;
                     totalQuantity += item.quantity;
+                    if (item.productType !== "ebook") {
+                      hasPhysicalItem = true;
+                    }
                   }
                   
+                  // Shipping is a flat $12 per order (not per item), only for physical items
+                  const totalShipping = hasPhysicalItem ? 1200 : 0;
                   const grandTotal = subtotal + totalShipping;
                   
                   return (

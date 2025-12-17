@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, Link, useLocation } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Settings, Sparkles, ChevronRight, Plus, X, Loader2, ShoppingCart } from "lucide-react";
+import { ArrowLeft, Settings, Sparkles, ChevronRight, Plus, X, Loader2, ShoppingCart, BookOpen, ChevronLeft, ChevronRight as ChevronRightIcon } from "lucide-react";
 import { BookViewer } from "@/components/book";
 import type { Book } from "@shared/schema";
 import {
@@ -11,8 +11,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { PrintPreview } from "@/components/book";
 
 const inspirationCategories = [
   { title: "Présentation de la famille", icon: "👨‍👩‍👧‍👦", color: "from-teal-100", hasSubPages: true },
@@ -93,6 +100,8 @@ export default function PrebuiltBookEditor() {
   const [showInspirationModal, setShowInspirationModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isAddingPage, setIsAddingPage] = useState(false);
+  const [showDigitalPreview, setShowDigitalPreview] = useState(false);
+  const [previewPageIndex, setPreviewPageIndex] = useState(0);
   const queryClient = useQueryClient();
 
   const addInspirationPageToBook = async (pageTitle: string, pageDesc?: string) => {
@@ -176,6 +185,23 @@ export default function PrebuiltBookEditor() {
     enabled: !!bookId,
   });
 
+  // Query for user pages (completed pages for digital preview)
+  const { data: pagesData } = useQuery<{ pages: any[], templatePages: any[] }>({
+    queryKey: ["/api/books", bookId, "pages"],
+    queryFn: async () => {
+      const res = await fetch(`/api/books/${bookId}/pages`, {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to load pages");
+      return res.json();
+    },
+    enabled: !!bookId,
+  });
+
+  // Get completed pages for preview
+  const completedPages = pagesData?.pages?.filter(p => p.isCompleted) || [];
+  const templatePages = pagesData?.templatePages || [];
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-cream-50 flex items-center justify-center">
@@ -233,6 +259,19 @@ export default function PrebuiltBookEditor() {
             </div>
 
             <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setPreviewPageIndex(0);
+                  setShowDigitalPreview(true);
+                }}
+                className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 hover:from-blue-100 hover:to-indigo-100 text-blue-700 px-2 sm:px-3"
+                data-testid="button-digital-preview"
+              >
+                <BookOpen className="w-4 h-4 sm:mr-1" />
+                <span className="hidden sm:inline">{language === "fr" ? "Aperçu" : "Preview"}</span>
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -428,6 +467,103 @@ export default function PrebuiltBookEditor() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Digital Book Preview Modal */}
+      <Dialog open={showDigitalPreview} onOpenChange={setShowDigitalPreview}>
+        <DialogContent className="w-[98vw] max-w-4xl h-[95dvh] sm:h-auto sm:max-h-[90vh] p-0 flex flex-col overflow-hidden">
+          <DialogHeader className="p-4 border-b bg-stone-50 flex-shrink-0">
+            <DialogTitle className="text-lg font-fraunces flex items-center gap-2">
+              <BookOpen className="w-5 h-5 text-blue-600" />
+              {language === "fr" ? "Aperçu numérique du livre" : "Digital Book Preview"}
+            </DialogTitle>
+            <p className="text-sm text-stone-500">
+              {language === "fr" 
+                ? `${completedPages.length} page${completedPages.length > 1 ? 's' : ''} complétée${completedPages.length > 1 ? 's' : ''}`
+                : `${completedPages.length} completed page${completedPages.length > 1 ? 's' : ''}`}
+            </p>
+          </DialogHeader>
+          
+          <div className="flex-1 overflow-hidden bg-stone-100 p-4">
+            {completedPages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-center">
+                <BookOpen className="w-16 h-16 text-stone-300 mb-4" />
+                <h3 className="text-lg font-medium text-stone-600">
+                  {language === "fr" ? "Aucune page complétée" : "No completed pages"}
+                </h3>
+                <p className="text-sm text-stone-500 mt-2 max-w-sm">
+                  {language === "fr" 
+                    ? "Complétez des pages pour voir l'aperçu de votre livre ici."
+                    : "Complete pages to see your book preview here."}
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-col h-full">
+                {/* Book page display */}
+                <div className="flex-1 flex items-center justify-center">
+                  {(() => {
+                    const currentPage = completedPages[previewPageIndex];
+                    const templatePage = templatePages.find((t: any) => t.pageNumber === currentPage?.pageNumber);
+                    if (!currentPage || !templatePage) return null;
+                    
+                    const customData = typeof currentPage.customData === 'string' 
+                      ? JSON.parse(currentPage.customData || '{}') 
+                      : (currentPage.customData || {});
+                    const textStyles = customData.textStyles || {};
+                    const titleStyle = customData.titleStyle || { fontFamily: "'Fraunces', serif", fontSize: 24 };
+                    
+                    return (
+                      <div className="bg-white shadow-2xl border border-stone-300 w-full max-w-[320px] sm:max-w-[400px]" style={{ aspectRatio: '8.5 / 11' }}>
+                        <PrintPreview
+                          photos={currentPage.photos || []}
+                          textContent={currentPage.textContent || []}
+                          videoUrl={currentPage.videoUrl}
+                          customData={customData}
+                          pageNumber={currentPage.pageNumber}
+                          title={language === "fr" ? templatePage.titleFr : templatePage.titleEn}
+                          subtitle={language === "fr" ? templatePage.subtitleFr : templatePage.subtitleEn}
+                          language={language}
+                          titleStyle={titleStyle}
+                          textStyles={textStyles}
+                          collageStyle={customData.collageStyle}
+                          selectedLayoutId={customData.photoLayouts?.[0]}
+                          monthNumber={customData.monthNumber}
+                        />
+                      </div>
+                    );
+                  })()}
+                </div>
+                
+                {/* Navigation */}
+                <div className="flex items-center justify-center gap-4 pt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPreviewPageIndex(Math.max(0, previewPageIndex - 1))}
+                    disabled={previewPageIndex === 0}
+                  >
+                    <ChevronLeft className="w-4 h-4 mr-1" />
+                    {language === "fr" ? "Précédent" : "Previous"}
+                  </Button>
+                  
+                  <span className="text-sm text-stone-600">
+                    {previewPageIndex + 1} / {completedPages.length}
+                  </span>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPreviewPageIndex(Math.min(completedPages.length - 1, previewPageIndex + 1))}
+                    disabled={previewPageIndex === completedPages.length - 1}
+                  >
+                    {language === "fr" ? "Suivant" : "Next"}
+                    <ChevronRightIcon className="w-4 h-4 ml-1" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

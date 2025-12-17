@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Plus, Minus, Image as ImageIcon, Mic, Video, MoreHorizontal, Calendar, Share2, BookOpen, Printer, CheckCircle, Bell, QrCode, Baby, LogOut, Settings, User, Sparkles, ShoppingBag, FolderHeart, Trash2, Crown, Mail, Phone, MapPin, UserPlus, Users, Edit2, CreditCard, X, Lock, Search, Clock, AlertTriangle, Gift, Loader2, Camera, ArrowUp, ArrowDown, Shield, TrendingUp } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Minus, Image as ImageIcon, Mic, Video, MoreHorizontal, Calendar, Share2, BookOpen, Printer, CheckCircle, Bell, QrCode, Baby, LogOut, Settings, User, Sparkles, ShoppingBag, FolderHeart, Trash2, Crown, Mail, Phone, MapPin, UserPlus, Users, Edit2, CreditCard, X, Lock, Search, Clock, AlertTriangle, Gift, Loader2, Camera, ArrowUp, ArrowDown, Shield, TrendingUp, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -523,6 +523,65 @@ export default function Prototype() {
   });
   const [showNotificationInstructions, setShowNotificationInstructions] = useState(false);
   const [notificationStatus, setNotificationStatus] = useState<"default" | "granted" | "denied" | "unsupported">("default");
+
+  // Baby info editing state
+  const [isEditingBabyInfo, setIsEditingBabyInfo] = useState(false);
+  const [editBabyName, setEditBabyName] = useState("");
+  const [editBabyGender, setEditBabyGender] = useState<"garcon" | "fille" | "neutre">("neutre");
+  const [editBabyDate, setEditBabyDate] = useState("");
+  const [isSavingBabyInfo, setIsSavingBabyInfo] = useState(false);
+
+  const startEditingBabyInfo = () => {
+    setEditBabyName(activeBook?.childName || "");
+    setEditBabyGender((activeBook?.babyGender as "garcon" | "fille" | "neutre") || "neutre");
+    const dateStr = activeBook?.birthDate 
+      ? new Date(activeBook.birthDate).toISOString().split("T")[0]
+      : "";
+    setEditBabyDate(dateStr);
+    setIsEditingBabyInfo(true);
+  };
+
+  const saveBabyInfo = async () => {
+    if (!activeBook?.id || activeBook.isLocal) return;
+    
+    setIsSavingBabyInfo(true);
+    try {
+      const response = await fetch(`/api/books/${activeBook.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          childName: editBabyName,
+          babyGender: editBabyGender,
+          birthDate: editBabyDate ? new Date(editBabyDate).toISOString() : null,
+        }),
+      });
+      
+      if (response.ok) {
+        // Update localStorage for sync
+        localStorage.setItem("babyName", editBabyName);
+        localStorage.setItem("babyGender", editBabyGender);
+        if (editBabyDate) {
+          localStorage.setItem("babyDate", editBabyDate);
+          localStorage.setItem("babyBirthDate", editBabyDate);
+        } else {
+          localStorage.removeItem("babyDate");
+          localStorage.removeItem("babyBirthDate");
+        }
+        // Refresh book data
+        await queryClient.invalidateQueries({ queryKey: ["/api/books"] });
+        await queryClient.invalidateQueries({ queryKey: ["/api/books", activeBook.id, "pages"] });
+        setIsEditingBabyInfo(false);
+      } else {
+        alert("Erreur lors de l'enregistrement. Veuillez réessayer.");
+      }
+    } catch (error) {
+      console.error("Error saving baby info:", error);
+      alert("Erreur de connexion. Veuillez réessayer.");
+    } finally {
+      setIsSavingBabyInfo(false);
+    }
+  };
 
   // Tutorial system
   const [showTutorial, setShowTutorial] = useState(() => {
@@ -1677,6 +1736,119 @@ export default function Prototype() {
                     </button>
                   </Link>
                 </div>
+              </div>
+
+              {/* Baby Info Section */}
+              <div className="bg-white rounded-2xl shadow-sm border border-stone-100 p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Baby size={18} className="text-primary" />
+                    <h4 className="font-bold text-stone-800 text-sm">Informations du bébé</h4>
+                  </div>
+                  {!isEditingBabyInfo && (
+                    <button 
+                      onClick={startEditingBabyInfo}
+                      className="p-2 hover:bg-stone-100 rounded-full"
+                      data-testid="button-edit-baby-info"
+                    >
+                      <Edit2 size={16} className="text-stone-500" />
+                    </button>
+                  )}
+                </div>
+                
+                {isEditingBabyInfo ? (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-xs text-stone-500 block mb-1">Prénom du bébé</label>
+                      <input
+                        type="text"
+                        value={editBabyName}
+                        onChange={(e) => setEditBabyName(e.target.value)}
+                        className="w-full p-2 border border-stone-200 rounded-lg text-sm"
+                        placeholder="Prénom"
+                        data-testid="input-baby-name"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-stone-500 block mb-1">Sexe</label>
+                      <select
+                        value={editBabyGender}
+                        onChange={(e) => setEditBabyGender(e.target.value as "garcon" | "fille" | "neutre")}
+                        className="w-full p-2 border border-stone-200 rounded-lg text-sm"
+                        data-testid="select-baby-gender"
+                      >
+                        <option value="garcon">Garçon</option>
+                        <option value="fille">Fille</option>
+                        <option value="neutre">Non spécifié</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs text-stone-500 block mb-1">
+                        {activeBook?.babyStatus === "enceinte" ? "Date prévue d'accouchement" : "Date de naissance"}
+                      </label>
+                      <input
+                        type="date"
+                        value={editBabyDate}
+                        onChange={(e) => setEditBabyDate(e.target.value)}
+                        className="w-full p-2 border border-stone-200 rounded-lg text-sm"
+                        data-testid="input-baby-date"
+                      />
+                    </div>
+                    <div className="flex gap-2 pt-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setIsEditingBabyInfo(false)}
+                        className="flex-1 h-9"
+                        data-testid="button-cancel-baby-info"
+                      >
+                        Annuler
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={saveBabyInfo}
+                        disabled={isSavingBabyInfo || !editBabyName.trim()}
+                        className="flex-1 h-9"
+                        data-testid="button-save-baby-info"
+                      >
+                        {isSavingBabyInfo ? (
+                          <Loader2 size={14} className="animate-spin mr-1" />
+                        ) : (
+                          <Check size={14} className="mr-1" />
+                        )}
+                        Enregistrer
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center py-2 border-b border-stone-100">
+                      <span className="text-xs text-stone-500">Prénom</span>
+                      <span className="text-sm font-medium text-stone-800">{activeBook?.childName || "Non défini"}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-stone-100">
+                      <span className="text-xs text-stone-500">Sexe</span>
+                      <span className="text-sm font-medium text-stone-800">
+                        {activeBook?.babyGender === "garcon" ? "Garçon" : 
+                         activeBook?.babyGender === "fille" ? "Fille" : "Non spécifié"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center py-2">
+                      <span className="text-xs text-stone-500">
+                        {activeBook?.babyStatus === "enceinte" ? "Date prévue" : "Date de naissance"}
+                      </span>
+                      <span className="text-sm font-medium text-stone-800">
+                        {activeBook?.birthDate 
+                          ? new Date(activeBook.birthDate).toLocaleDateString("fr-CA", { 
+                              day: "numeric", 
+                              month: "long", 
+                              year: "numeric" 
+                            })
+                          : "Non définie"}
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Notifications Section */}

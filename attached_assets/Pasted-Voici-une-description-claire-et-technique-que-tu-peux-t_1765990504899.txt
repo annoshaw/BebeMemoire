@@ -1,0 +1,54 @@
+Voici une description claire et technique que tu peux transmettre à ton développeur sur Replit pour qu’il comprenne exactement ce que tu veux :
+
+🔧 Fonctionnalité à intégrer dans la section “Compte”
+Objectif :
+Créer un espace dans le compte utilisateur permettant de voir et modifier les informations du bébé qui ont été saisies lors de la création du livre Mémo.
+
+🧩 Données à afficher et modifier
+- babyName (nom du bébé)
+- babyGender (sexe du bébé)
+- babyBirthDate (date de naissance du bébé)
+- (optionnel : babyDueDate si le livre a été commencé pendant la grossesse)
+Ces données doivent être préremplies avec les valeurs existantes et modifiables par l’utilisateur.
+
+🔄 Synchronisation globale
+Lorsqu’une de ces données est modifiée, l’application doit :
+- Mettre à jour la base de données (ex. : MongoDB, Supabase, etc.)
+- Déclencher une synchronisation des éléments dépendants :
+- bookTitle : le nom du livre doit être recalculé si basé sur le prénom ou la date
+- notifications : les rappels ou contenus liés à l’âge du bébé doivent être recalculés
+- timeline : les jalons ou suggestions doivent être ajustés
+- email content : les emails automatiques doivent refléter les nouvelles données
+
+🧠 Exemple de logique backend
+app.post("/api/update-baby-info", async (req, res) => {
+  const userId = req.user.id;
+  const { babyName, babyGender, babyBirthDate } = req.body;
+
+  // 1. Mettre à jour les infos du bébé
+  await db.users.update({ id: userId }, {
+    $set: {
+      babyName,
+      babyGender,
+      babyBirthDate
+    }
+  });
+
+  // 2. Recalculer les dépendances
+  await syncBookTitle(userId);
+  await syncNotifications(userId);
+  await syncTimeline(userId);
+  await syncEmails(userId);
+
+  res.json({ message: "Informations mises à jour et synchronisées." });
+});
+
+
+
+🖥️ Interface utilisateur
+Dans la section “Compte” :
+- Afficher les champs avec les valeurs actuelles
+- Permettre la modification avec validation (ex. : date valide, prénom non vide)
+- Ajouter un bouton “Enregistrer” qui déclenche la synchronisation
+
+Je peux aussi t’aider à rédiger les fonctions syncBookTitle, syncNotifications, etc., ou à définir les règles de recalcul si tu veux aller plus loin.

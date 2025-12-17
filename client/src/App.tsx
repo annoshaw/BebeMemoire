@@ -27,6 +27,7 @@ import AdminExports from "@/pages/admin/AdminExports";
 import AdminEmails from "@/pages/admin/AdminEmails";
 import AdminSubscriptions from "@/pages/admin/AdminSubscriptions";
 import InvitationAccept from "@/pages/app/InvitationAccept";
+import ShareTutorial from "@/pages/app/ShareTutorial";
 
 function Router() {
   return (
@@ -43,6 +44,7 @@ function Router() {
       <Route path="/app/order-success" component={OrderSuccess} />
       <Route path="/app/order-cancel" component={OrderCancel} />
       <Route path="/app/invitation/:token" component={InvitationAccept} />
+      <Route path="/app/tutoriel-partage" component={ShareTutorial} />
       <Route path="/register" component={Register} />
       <Route path="/login" component={Login} />
       <Route path="/forgot-password" component={ForgotPassword} />

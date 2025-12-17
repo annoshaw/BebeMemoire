@@ -26,6 +26,7 @@ export default function TestCheckout() {
   // Get params from URL
   const params = new URLSearchParams(window.location.search);
   const bookId = params.get("bookId");
+  const productParam = params.get("product") as ProductType | null;
   const itemsParam = params.get("items");
   
   // Parse multi-item orders from URL
@@ -39,12 +40,17 @@ export default function TestCheckout() {
         // Pre-select first product type if available
         if (parsed.length > 0 && !selectedProduct) {
           setSelectedProduct(parsed[0].productType as ProductType);
+          setStep("confirm");
         }
       } catch (e) {
         console.error("Error parsing items:", e);
       }
+    } else if (productParam && !selectedProduct) {
+      // Single product from URL - pre-select it and go to confirm step
+      setSelectedProduct(productParam);
+      setStep("confirm");
     }
-  }, [itemsParam]);
+  }, [itemsParam, productParam]);
   
   const isMultiItemOrder = orderItems.length > 0;
   const firstBookId = isMultiItemOrder ? orderItems[0]?.bookId : bookId;

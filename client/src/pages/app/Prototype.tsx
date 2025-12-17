@@ -720,15 +720,9 @@ export default function Prototype() {
   };
 
   const handleSelectProduct = (productType: "softcover" | "hardcover" | "ebook") => {
-    // Show order configuration modal
-    setSelectedProductType(productType);
-    setOrderQuantity(1);
-    // Pre-select the active book if there is one
-    setSelectedBooksForOrder(activeBookId ? [activeBookId] : []);
-    // Initialize order items with the selected product
-    const bookName = activeBook?.childName || "Mon livre";
-    setOrderItems(activeBookId ? [{ productType, quantity: 1, bookId: activeBookId, bookName }] : []);
-    setShowOrderConfigModal(true);
+    // Navigate directly to checkout with the selected product
+    if (!activeBookId) return;
+    setLocation(`/app/test-checkout?bookId=${activeBookId}&product=${productType}`);
   };
   
   const handleConfirmOrder = () => {

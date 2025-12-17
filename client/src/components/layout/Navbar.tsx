@@ -24,6 +24,7 @@ export default function Navbar() {
         <div className="flex justify-between items-center h-20">
           <Link href="/" className="font-serif text-2xl font-bold text-stone-800 tracking-tight flex items-center gap-2">
             <img src={logoMemo} alt="Mémo" className="h-12 w-auto" />
+            <span>Mémo</span>
           </Link>
 
           {/* Desktop Nav */}

@@ -197,17 +197,29 @@ export default function AdminOrders() {
       return;
     }
 
-    const headers = ["Numéro", "Client", "Email", "Format", "Pages", "Total (CAD)", "Statut", "Date"];
-    const rows = orders.map(order => [
-      order.orderNumber,
-      order.customerName || "-",
-      order.customerEmail || "-",
-      productLabels[order.productType] || order.productType,
-      order.pageCount.toString(),
-      (order.totalAmount / 100).toFixed(2),
-      statusLabels[order.status] || order.status,
-      new Date(order.createdAt).toLocaleDateString("fr-CA")
-    ]);
+    const headers = ["Numéro", "Client", "Email", "Articles", "Pages", "Total (CAD)", "Statut", "Date"];
+    const rows = orders.map(order => {
+      // Format order items as a readable string
+      let articlesStr = "";
+      if (order.orderItems && order.orderItems.length > 0) {
+        articlesStr = (order.orderItems as OrderItem[])
+          .map(item => `${item.quantity}× ${productLabels[item.productType] || item.productType}`)
+          .join("; ");
+      } else {
+        articlesStr = `${order.quantity || 1}× ${productLabels[order.productType] || order.productType}`;
+      }
+      
+      return [
+        order.orderNumber,
+        order.customerName || "-",
+        order.customerEmail || "-",
+        articlesStr,
+        order.pageCount.toString(),
+        (order.totalAmount / 100).toFixed(2),
+        statusLabels[order.status] || order.status,
+        new Date(order.createdAt).toLocaleDateString("fr-CA")
+      ];
+    });
 
     const csvContent = [
       headers.join(","),

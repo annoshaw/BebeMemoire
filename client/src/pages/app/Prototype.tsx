@@ -1687,7 +1687,11 @@ export default function Prototype() {
                 </div>
                 <div className="bg-primary/5 rounded-xl p-3 mb-3">
                   <p className="text-xs text-stone-700 leading-relaxed">
-                    Nous vous enverrons des suggestions personnalisées comme <span className="font-medium">"C'est le moment de capturer le premier sourire!"</span> ou <span className="font-medium">"{babyName} a 6 mois aujourd'hui!"</span>
+                    {activeBook?.babyStatus === "enceinte" ? (
+                      <>Nous vous enverrons des suggestions personnalisées comme <span className="font-medium">"C'est le moment de prendre une photo de votre ventre!"</span> ou <span className="font-medium">"{ageNotification.title}"</span></>
+                    ) : (
+                      <>Nous vous enverrons des suggestions personnalisées comme <span className="font-medium">"C'est le moment de capturer le premier sourire!"</span> ou <span className="font-medium">"{ageNotification.title}"</span></>
+                    )}
                   </p>
                 </div>
                 <div className="flex items-center justify-between">

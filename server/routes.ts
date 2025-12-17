@@ -8,7 +8,9 @@ import { setupAuth, isAuthenticated } from "./replitAuth";
 import express from "express";
 import path from "path";
 import fs from "fs";
+import crypto from "crypto";
 import { generateUploadUrl, generateDownloadUrl, deleteFile, generateMediaKey, isS3Configured } from "./s3";
+import { sendBookInvitationEmail } from "./emailService";
 
 // Extend Express Request to include user
 declare global {
@@ -2575,6 +2577,293 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Get book PDF exports error:", error);
       res.status(500).json({ message: "Erreur lors de la récupération des exports" });
+    }
+  });
+
+  // ============ BOOK SHARING / INVITATION ROUTES ============
+
+  // Invite a user to access a book
+  app.post("/api/books/:bookId/invite", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const { bookId } = req.params;
+      const { email, role } = req.body;
+
+      // Validate role
+      if (!['collaborator', 'observer'].includes(role)) {
+        return res.status(400).json({ message: "Rôle invalide. Utilisez 'collaborator' ou 'observer'." });
+      }
+
+      // Validate email
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return res.status(400).json({ message: "Adresse email invalide." });
+      }
+
+      // Check book exists and user owns it
+      const book = await storage.getBook(bookId);
+      if (!book) {
+        return res.status(404).json({ message: "Livre non trouvé." });
+      }
+      if (book.userId !== userId) {
+        return res.status(403).json({ message: "Vous n'êtes pas le propriétaire de ce livre." });
+      }
+
+      // Check if user is trying to invite themselves
+      const inviter = await storage.getUser(userId);
+      if (inviter?.email?.toLowerCase() === email.toLowerCase()) {
+        return res.status(400).json({ message: "Vous ne pouvez pas vous inviter vous-même." });
+      }
+
+      // Check if invitation already exists
+      const existingInvitations = await storage.getBookInvitationsByBook(bookId);
+      const pendingInvitation = existingInvitations.find(
+        inv => inv.email.toLowerCase() === email.toLowerCase() && inv.status === 'pending'
+      );
+      if (pendingInvitation) {
+        return res.status(400).json({ message: "Une invitation est déjà en attente pour cette adresse email." });
+      }
+
+      // Check if user is already a collaborator
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        const existingCollab = await storage.getBookCollaborator(bookId, existingUser.id);
+        if (existingCollab) {
+          return res.status(400).json({ message: "Cet utilisateur a déjà accès au livre." });
+        }
+      }
+
+      // Generate secure token
+      const token = crypto.randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+      // Create invitation
+      const invitation = await storage.createBookInvitation({
+        bookId,
+        invitedByUserId: userId,
+        email: email.toLowerCase(),
+        role,
+        token,
+        expiresAt,
+      });
+
+      // Send invitation email
+      const baseUrl = process.env.REPLIT_DEV_DOMAIN 
+        ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
+        : 'https://memoria.replit.app';
+      const inviteUrl = `${baseUrl}/app/invitation/${token}`;
+
+      await sendBookInvitationEmail({
+        recipientEmail: email,
+        inviterName: inviter?.fullName || inviter?.firstName || 'Un utilisateur',
+        bookName: book.childName || 'Livre de souvenirs',
+        role: role as 'collaborator' | 'observer',
+        inviteUrl,
+      });
+
+      res.json({ 
+        message: "Invitation envoyée avec succès!", 
+        invitation: {
+          id: invitation.id,
+          email: invitation.email,
+          role: invitation.role,
+          status: invitation.status,
+          expiresAt: invitation.expiresAt,
+        }
+      });
+    } catch (error) {
+      console.error("Invite user error:", error);
+      res.status(500).json({ message: "Erreur lors de l'envoi de l'invitation." });
+    }
+  });
+
+  // Get all invitations for a book (owner only)
+  app.get("/api/books/:bookId/invitations", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const { bookId } = req.params;
+
+      const book = await storage.getBook(bookId);
+      if (!book) {
+        return res.status(404).json({ message: "Livre non trouvé." });
+      }
+      if (book.userId !== userId) {
+        return res.status(403).json({ message: "Accès refusé." });
+      }
+
+      const invitations = await storage.getBookInvitationsByBook(bookId);
+      res.json(invitations);
+    } catch (error) {
+      console.error("Get invitations error:", error);
+      res.status(500).json({ message: "Erreur lors de la récupération des invitations." });
+    }
+  });
+
+  // Get all collaborators for a book
+  app.get("/api/books/:bookId/collaborators", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const { bookId } = req.params;
+
+      const book = await storage.getBook(bookId);
+      if (!book) {
+        return res.status(404).json({ message: "Livre non trouvé." });
+      }
+
+      // Check if user is owner or collaborator
+      const isOwner = book.userId === userId;
+      const collab = await storage.getBookCollaborator(bookId, userId);
+      if (!isOwner && !collab) {
+        return res.status(403).json({ message: "Accès refusé." });
+      }
+
+      const collaborators = await storage.getBookCollaborators(bookId);
+      res.json(collaborators);
+    } catch (error) {
+      console.error("Get collaborators error:", error);
+      res.status(500).json({ message: "Erreur lors de la récupération des collaborateurs." });
+    }
+  });
+
+  // Get invitation details by token (public - used when accepting)
+  app.get("/api/invitations/:token", async (req: Request, res: Response) => {
+    try {
+      const { token } = req.params;
+
+      const invitation = await storage.getBookInvitationByToken(token);
+      if (!invitation) {
+        return res.status(404).json({ message: "Invitation non trouvée." });
+      }
+
+      // Check if expired
+      if (new Date(invitation.expiresAt) < new Date()) {
+        return res.status(410).json({ message: "Cette invitation a expiré." });
+      }
+
+      // Check if already used
+      if (invitation.status !== 'pending') {
+        return res.status(410).json({ message: "Cette invitation a déjà été utilisée." });
+      }
+
+      // Get book and inviter info
+      const book = await storage.getBook(invitation.bookId);
+      const inviter = await storage.getUser(invitation.invitedByUserId);
+
+      res.json({
+        id: invitation.id,
+        email: invitation.email,
+        role: invitation.role,
+        bookName: book?.childName || 'Livre de souvenirs',
+        inviterName: inviter?.fullName || inviter?.firstName || 'Un utilisateur',
+        expiresAt: invitation.expiresAt,
+      });
+    } catch (error) {
+      console.error("Get invitation error:", error);
+      res.status(500).json({ message: "Erreur lors de la récupération de l'invitation." });
+    }
+  });
+
+  // Accept an invitation
+  app.post("/api/invitations/:token/accept", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const { token } = req.params;
+
+      const invitation = await storage.getBookInvitationByToken(token);
+      if (!invitation) {
+        return res.status(404).json({ message: "Invitation non trouvée." });
+      }
+
+      // Check if expired
+      if (new Date(invitation.expiresAt) < new Date()) {
+        await storage.updateBookInvitation(invitation.id, { status: 'expired' });
+        return res.status(410).json({ message: "Cette invitation a expiré." });
+      }
+
+      // Check if already used
+      if (invitation.status !== 'pending') {
+        return res.status(410).json({ message: "Cette invitation a déjà été utilisée." });
+      }
+
+      // Check if the accepting user's email matches the invitation
+      const user = await storage.getUser(userId);
+      if (user?.email?.toLowerCase() !== invitation.email.toLowerCase()) {
+        return res.status(403).json({ 
+          message: "Cette invitation est destinée à une autre adresse email.",
+          expectedEmail: invitation.email 
+        });
+      }
+
+      // Check if already a collaborator
+      const existingCollab = await storage.getBookCollaborator(invitation.bookId, userId);
+      if (existingCollab) {
+        await storage.updateBookInvitation(invitation.id, { status: 'accepted', acceptedByUserId: userId, acceptedAt: new Date() });
+        return res.status(400).json({ message: "Vous avez déjà accès à ce livre." });
+      }
+
+      // Create collaborator record
+      await storage.createBookCollaborator({
+        bookId: invitation.bookId,
+        userId,
+        role: invitation.role,
+        addedByUserId: invitation.invitedByUserId,
+      });
+
+      // Update invitation status
+      await storage.updateBookInvitation(invitation.id, {
+        status: 'accepted',
+        acceptedByUserId: userId,
+        acceptedAt: new Date(),
+      });
+
+      const book = await storage.getBook(invitation.bookId);
+
+      res.json({ 
+        message: "Invitation acceptée avec succès!", 
+        bookId: invitation.bookId,
+        bookName: book?.childName,
+        role: invitation.role,
+      });
+    } catch (error) {
+      console.error("Accept invitation error:", error);
+      res.status(500).json({ message: "Erreur lors de l'acceptation de l'invitation." });
+    }
+  });
+
+  // Remove a collaborator (owner only)
+  app.delete("/api/books/:bookId/collaborators/:collaboratorId", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const { bookId, collaboratorId } = req.params;
+
+      const book = await storage.getBook(bookId);
+      if (!book) {
+        return res.status(404).json({ message: "Livre non trouvé." });
+      }
+      if (book.userId !== userId) {
+        return res.status(403).json({ message: "Seul le propriétaire peut retirer des collaborateurs." });
+      }
+
+      const removed = await storage.removeBookCollaborator(collaboratorId);
+      if (!removed) {
+        return res.status(404).json({ message: "Collaborateur non trouvé." });
+      }
+
+      res.json({ message: "Collaborateur retiré avec succès." });
+    } catch (error) {
+      console.error("Remove collaborator error:", error);
+      res.status(500).json({ message: "Erreur lors du retrait du collaborateur." });
+    }
+  });
+
+  // Get books shared with current user
+  app.get("/api/shared-books", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const sharedBooks = await storage.getBooksSharedWithUser(userId);
+      res.json(sharedBooks);
+    } catch (error) {
+      console.error("Get shared books error:", error);
+      res.status(500).json({ message: "Erreur lors de la récupération des livres partagés." });
     }
   });
 

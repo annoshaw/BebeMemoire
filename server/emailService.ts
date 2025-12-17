@@ -964,3 +964,111 @@ export async function sendCampaignEmails(data: CampaignEmailData): Promise<{ sen
     return results;
   }
 }
+
+// Send book invitation email
+interface BookInvitationData {
+  recipientEmail: string;
+  inviterName: string;
+  bookName: string;
+  role: 'collaborator' | 'observer';
+  inviteUrl: string;
+}
+
+export async function sendBookInvitationEmail(data: BookInvitationData): Promise<boolean> {
+  try {
+    const roleDescriptionFr = data.role === 'collaborator' 
+      ? "Vous pourrez <strong>modifier le livre</strong> et <strong>commander des exemplaires</strong>."
+      : "Vous pourrez <strong>consulter le livre</strong> en mode lecture seule.";
+    
+    const roleLabel = data.role === 'collaborator' ? "Collaborateur" : "Observateur";
+    const roleIcon = data.role === 'collaborator' ? "🔧" : "👁️";
+    
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #7c9a7a 0%, #5a7d5a 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+    .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+    .invite-box { background: white; border: 2px solid #7c9a7a; border-radius: 12px; padding: 25px; margin: 20px 0; text-align: center; }
+    .book-name { font-size: 22px; font-weight: bold; color: #7c9a7a; margin-bottom: 10px; }
+    .role-badge { display: inline-block; background: ${data.role === 'collaborator' ? '#e8f5e9' : '#e3f2fd'}; color: ${data.role === 'collaborator' ? '#2e7d32' : '#1565c0'}; padding: 8px 16px; border-radius: 20px; font-weight: bold; margin: 15px 0; }
+    .btn { display: inline-block; background: #7c9a7a; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; }
+    .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+    .info { background: #fff8e1; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📖 Mémo</h1>
+      <p>Vous êtes invité(e) à collaborer!</p>
+    </div>
+    <div class="content">
+      <h2>Bonjour!</h2>
+      
+      <p><strong>${data.inviterName}</strong> vous invite à accéder à son livre de naissance sur Mémo.</p>
+      
+      <div class="invite-box">
+        <div class="book-name">📚 ${data.bookName}</div>
+        <div class="role-badge">${roleIcon} ${roleLabel}</div>
+        <p style="color: #666; font-size: 14px; margin-top: 15px;">${roleDescriptionFr}</p>
+      </div>
+      
+      ${data.role === 'collaborator' ? `
+      <div class="info">
+        <strong>💡 En tant que collaborateur:</strong>
+        <ul style="margin: 10px 0; padding-left: 20px;">
+          <li>Vous pouvez ajouter et modifier des photos et textes</li>
+          <li>Vous pouvez commander votre propre exemplaire imprimé</li>
+          <li>Vous devrez entrer vos informations personnelles pour les commandes</li>
+        </ul>
+      </div>
+      ` : `
+      <div class="info">
+        <strong>👁️ En tant qu'observateur:</strong>
+        <ul style="margin: 10px 0; padding-left: 20px;">
+          <li>Vous pouvez consulter toutes les pages du livre</li>
+          <li>Vous ne pouvez pas modifier le contenu</li>
+          <li>Vous ne pouvez pas passer de commandes</li>
+        </ul>
+      </div>
+      `}
+      
+      <p style="text-align: center; margin: 30px 0;">
+        <a href="${data.inviteUrl}" class="btn">
+          Accepter l'invitation
+        </a>
+      </p>
+      
+      <p style="font-size: 14px; color: #666;">Si vous n'avez pas encore de compte Mémo, vous pourrez en créer un lors de l'acceptation de l'invitation.</p>
+      
+      <p>L'équipe Mémo</p>
+    </div>
+    <div class="footer">
+      <p>Mémo - Créez des souvenirs qui durent toute une vie</p>
+      <p style="font-size: 11px; color: #999;">Cette invitation expire dans 7 jours.</p>
+    </div>
+  </div>
+</body>
+</html>
+    `;
+
+    const success = await sendEmail({
+      to: data.recipientEmail,
+      subject: `${data.inviterName} vous invite à accéder à "${data.bookName}" sur Mémo`,
+      html,
+    });
+
+    if (success) {
+      console.log(`Book invitation email sent to ${data.recipientEmail} for book ${data.bookName}`);
+    }
+    return success;
+  } catch (error) {
+    console.error('Failed to send book invitation email:', error);
+    return false;
+  }
+}

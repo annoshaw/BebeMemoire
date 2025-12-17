@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { users, books, memories, userPlans, qrCodes, passwordResetTokens, bookPages, notifications, notificationSettings, bookTemplates, templateSections, templateParts, templatePages, userBookPages, mediaFiles, subscriptions, orders, orderEvents, payments, pdfExports, adminActivityLogs, emailCampaigns, subscriptionDiscounts, userSubscriptionDiscounts, subscriptionPlanHistory, type User, type InsertUser, type UpsertUser, type Book, type InsertBook, type Memory, type InsertMemory, type UserPlan, type InsertUserPlan, type QRCode, type InsertQRCode, type PasswordResetToken, type InsertPasswordResetToken, type BookPage, type InsertBookPage, type Notification, type InsertNotification, type NotificationSettings, type InsertNotificationSettings, type BookTemplate, type InsertBookTemplate, type TemplateSection, type InsertTemplateSection, type TemplatePart, type InsertTemplatePart, type TemplatePage, type InsertTemplatePage, type UserBookPage, type InsertUserBookPage, type MediaFile, type InsertMediaFile, type Subscription, type InsertSubscription, type Order, type InsertOrder, type OrderEvent, type InsertOrderEvent, type Payment, type InsertPayment, type PdfExport, type InsertPdfExport, type AdminActivityLog, type InsertAdminActivityLog, type EmailCampaign, type InsertEmailCampaign, type SubscriptionDiscount, type InsertSubscriptionDiscount, type UserSubscriptionDiscount, type InsertUserSubscriptionDiscount, type SubscriptionPlanHistory, type InsertSubscriptionPlanHistory } from "@shared/schema";
+import { users, books, memories, userPlans, qrCodes, passwordResetTokens, bookPages, notifications, notificationSettings, bookTemplates, templateSections, templateParts, templatePages, userBookPages, mediaFiles, subscriptions, orders, orderEvents, payments, pdfExports, adminActivityLogs, emailCampaigns, subscriptionDiscounts, userSubscriptionDiscounts, subscriptionPlanHistory, bookInvitations, bookCollaborators, type User, type InsertUser, type UpsertUser, type Book, type InsertBook, type Memory, type InsertMemory, type UserPlan, type InsertUserPlan, type QRCode, type InsertQRCode, type PasswordResetToken, type InsertPasswordResetToken, type BookPage, type InsertBookPage, type Notification, type InsertNotification, type NotificationSettings, type InsertNotificationSettings, type BookTemplate, type InsertBookTemplate, type TemplateSection, type InsertTemplateSection, type TemplatePart, type InsertTemplatePart, type TemplatePage, type InsertTemplatePage, type UserBookPage, type InsertUserBookPage, type MediaFile, type InsertMediaFile, type Subscription, type InsertSubscription, type Order, type InsertOrder, type OrderEvent, type InsertOrderEvent, type Payment, type InsertPayment, type PdfExport, type InsertPdfExport, type AdminActivityLog, type InsertAdminActivityLog, type EmailCampaign, type InsertEmailCampaign, type SubscriptionDiscount, type InsertSubscriptionDiscount, type UserSubscriptionDiscount, type InsertUserSubscriptionDiscount, type SubscriptionPlanHistory, type InsertSubscriptionPlanHistory, type BookInvitation, type BookCollaborator } from "@shared/schema";
 import { eq, desc, and, gt, lt, asc, lte, or, isNull, sum, count, sql } from "drizzle-orm";
 
 export interface IStorage {
@@ -180,6 +180,19 @@ export interface IStorage {
   // Admin subscription management
   getUsersWithSubscriptionDetails(limit?: number, offset?: number, filter?: string): Promise<any[]>;
   getUserSubscriptionDetails(userId: string): Promise<any>;
+  
+  // Book Invitation operations
+  createBookInvitation(data: { bookId: string; invitedByUserId: string; email: string; role: string; token: string; expiresAt: Date }): Promise<any>;
+  getBookInvitationByToken(token: string): Promise<any>;
+  getBookInvitationsByBook(bookId: string): Promise<any[]>;
+  updateBookInvitation(id: string, data: Partial<{ status: string; acceptedByUserId: string; acceptedAt: Date }>): Promise<any>;
+  
+  // Book Collaborator operations
+  createBookCollaborator(data: { bookId: string; userId: string; role: string; addedByUserId: string }): Promise<any>;
+  getBookCollaborators(bookId: string): Promise<any[]>;
+  getBookCollaborator(bookId: string, userId: string): Promise<any>;
+  getBooksSharedWithUser(userId: string): Promise<any[]>;
+  removeBookCollaborator(id: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1399,6 +1412,89 @@ export class DatabaseStorage implements IStorage {
       monthsElapsed,
       status: subscription?.status || (userPlan ? 'active' : 'none'),
     };
+  }
+
+  // Book Invitation operations
+  async createBookInvitation(data: { bookId: string; invitedByUserId: string; email: string; role: string; token: string; expiresAt: Date }): Promise<BookInvitation> {
+    const result = await db.insert(bookInvitations).values({
+      bookId: data.bookId,
+      invitedByUserId: data.invitedByUserId,
+      email: data.email,
+      role: data.role,
+      token: data.token,
+      status: 'pending',
+      expiresAt: data.expiresAt,
+    }).returning();
+    return result[0];
+  }
+
+  async getBookInvitationByToken(token: string): Promise<BookInvitation | undefined> {
+    const result = await db.select().from(bookInvitations).where(eq(bookInvitations.token, token)).limit(1);
+    return result[0];
+  }
+
+  async getBookInvitationsByBook(bookId: string): Promise<BookInvitation[]> {
+    return await db.select().from(bookInvitations).where(eq(bookInvitations.bookId, bookId)).orderBy(desc(bookInvitations.createdAt));
+  }
+
+  async updateBookInvitation(id: string, data: Partial<{ status: string; acceptedByUserId: string; acceptedAt: Date }>): Promise<BookInvitation | undefined> {
+    const result = await db.update(bookInvitations).set(data).where(eq(bookInvitations.id, id)).returning();
+    return result[0];
+  }
+
+  // Book Collaborator operations
+  async createBookCollaborator(data: { bookId: string; userId: string; role: string; addedByUserId: string }): Promise<BookCollaborator> {
+    const result = await db.insert(bookCollaborators).values({
+      bookId: data.bookId,
+      userId: data.userId,
+      role: data.role,
+      addedByUserId: data.addedByUserId,
+    }).returning();
+    return result[0];
+  }
+
+  async getBookCollaborators(bookId: string): Promise<(BookCollaborator & { user: User })[]> {
+    const result = await db.select({
+      collaborator: bookCollaborators,
+      user: users,
+    })
+      .from(bookCollaborators)
+      .innerJoin(users, eq(bookCollaborators.userId, users.id))
+      .where(eq(bookCollaborators.bookId, bookId))
+      .orderBy(desc(bookCollaborators.createdAt));
+    
+    return result.map(r => ({
+      ...r.collaborator,
+      user: r.user,
+    }));
+  }
+
+  async getBookCollaborator(bookId: string, userId: string): Promise<BookCollaborator | undefined> {
+    const result = await db.select().from(bookCollaborators)
+      .where(and(eq(bookCollaborators.bookId, bookId), eq(bookCollaborators.userId, userId)))
+      .limit(1);
+    return result[0];
+  }
+
+  async getBooksSharedWithUser(userId: string): Promise<(BookCollaborator & { book: Book })[]> {
+    const result = await db.select({
+      collaborator: bookCollaborators,
+      book: books,
+    })
+      .from(bookCollaborators)
+      .innerJoin(books, eq(bookCollaborators.bookId, books.id))
+      .where(eq(bookCollaborators.userId, userId))
+      .orderBy(desc(bookCollaborators.createdAt));
+    
+    return result.map(r => ({
+      ...r.collaborator,
+      book: r.book,
+    }));
+  }
+
+  async removeBookCollaborator(id: string): Promise<boolean> {
+    const result = await db.delete(bookCollaborators).where(eq(bookCollaborators.id, id)).returning();
+    return result.length > 0;
   }
 }
 

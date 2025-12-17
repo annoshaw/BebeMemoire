@@ -3013,9 +3013,25 @@ export default function Prototype() {
                         <div
                           key={product.type}
                           className={`p-2 rounded-xl border-2 cursor-pointer transition-all text-center relative ${
-                            selectedProductType === product.type ? "border-primary bg-primary/5" : "border-stone-200 hover:border-stone-300"
+                            typeCount > 0 ? "border-primary bg-primary/5" : "border-stone-200 hover:border-stone-300"
                           }`}
-                          onClick={() => setSelectedProductType(product.type as any)}
+                          onClick={() => {
+                            setSelectedProductType(product.type as any);
+                            // Add or increment item of this type for the active book
+                            if (activeBookId) {
+                              const bookName = activeBook?.childName || "Mon livre";
+                              const existingIndex = orderItems.findIndex(item => item.productType === product.type && item.bookId === activeBookId);
+                              if (existingIndex >= 0) {
+                                // Increment existing item
+                                const updated = [...orderItems];
+                                updated[existingIndex].quantity = Math.min(10, updated[existingIndex].quantity + 1);
+                                setOrderItems(updated);
+                              } else {
+                                // Add new item of this type
+                                setOrderItems([...orderItems, { productType: product.type, quantity: 1, bookId: activeBookId, bookName }]);
+                              }
+                            }
+                          }}
                         >
                           {typeCount > 0 && (
                             <div className="absolute -top-2 -right-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center">

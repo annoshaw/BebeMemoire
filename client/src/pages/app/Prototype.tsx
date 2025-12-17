@@ -696,35 +696,43 @@ export default function Prototype() {
       return { title: `${babyName} grandit ! 🎉`, subtitle: "C'est le moment idéal pour capturer un souvenir." };
     }
     
+    // Parse dates and normalize to midnight for accurate day calculation
     const birthDate = new Date(birthDateStr);
+    birthDate.setHours(0, 0, 0, 0);
     const now = new Date();
+    now.setHours(0, 0, 0, 0);
     
     if (status === "enceinte") {
-      // For pregnancy: calculate weeks since conception date (birthDate is expected due date, so we calculate backward)
-      // Assuming birthDate is the start of pregnancy tracking
+      // For pregnancy: calculate weeks since start date
       const diffTime = now.getTime() - birthDate.getTime();
       const diffWeeks = Math.floor(diffTime / (1000 * 60 * 60 * 24 * 7));
       
       if (diffWeeks < 0) {
         return { title: `Grossesse en cours ! 🤰`, subtitle: "Documentez cette belle aventure." };
+      } else if (diffWeeks === 0) {
+        return { title: `Début de grossesse ! 🤰`, subtitle: "Une nouvelle aventure commence." };
       } else if (diffWeeks < 13) {
-        return { title: `${diffWeeks} semaines de grossesse ! 🤰`, subtitle: "Premier trimestre - une période magique à documenter." };
+        return { title: `${diffWeeks} semaine${diffWeeks > 1 ? 's' : ''} de grossesse ! 🤰`, subtitle: "Premier trimestre - une période magique à documenter." };
       } else if (diffWeeks < 27) {
         return { title: `${diffWeeks} semaines de grossesse ! 🤰`, subtitle: "Deuxième trimestre - bébé grandit vite !" };
       } else {
         return { title: `${diffWeeks} semaines de grossesse ! 🤰`, subtitle: "Dernier trimestre - la rencontre approche !" };
       }
     } else {
-      // For born babies: calculate age in months/years
+      // For born babies: calculate age in days/weeks/months/years
       const diffTime = now.getTime() - birthDate.getTime();
-      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
       const diffMonths = Math.floor(diffDays / 30.44);
       const diffYears = Math.floor(diffMonths / 12);
       
       if (diffDays < 0) {
         return { title: `${babyName} arrive bientôt ! 👶`, subtitle: "Préparez-vous à capturer ses premiers moments." };
+      } else if (diffDays === 0) {
+        return { title: `${babyName} est né aujourd'hui ! 🎉`, subtitle: "Bienvenue au monde ! Capturez ce moment magique." };
+      } else if (diffDays === 1) {
+        return { title: `${babyName} a 1 jour aujourd'hui ! 🎉`, subtitle: "Chaque jour est précieux à documenter." };
       } else if (diffDays < 7) {
-        return { title: `${babyName} a ${diffDays} jour${diffDays > 1 ? 's' : ''} ! 🎉`, subtitle: "Chaque jour est précieux à documenter." };
+        return { title: `${babyName} a ${diffDays} jours ! 🎉`, subtitle: "Chaque jour est précieux à documenter." };
       } else if (diffDays < 30) {
         const weeks = Math.floor(diffDays / 7);
         return { title: `${babyName} a ${weeks} semaine${weeks > 1 ? 's' : ''} ! 🎉`, subtitle: "Ces premiers jours passent si vite !" };

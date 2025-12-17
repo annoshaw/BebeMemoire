@@ -1,0 +1,62 @@
+Voici une description claire et complète que tu peux transmettre à ton développeur sur Replit pour implémenter cette fonctionnalité dans Mémo :
+
+👥 Fonction “Ajouter un utilisateur” au livre de naissance
+Objectif :
+Permettre à l’utilisateur principal d’inviter une autre personne à accéder au livre de naissance, avec deux niveaux de permission. L’invitation est envoyée par email et donne accès à l’interface Mémo selon le rôle choisi.
+
+🧩 Étapes fonctionnelles
+- Ajout d’un utilisateur
+- L’utilisateur principal entre l’adresse email de la personne à inviter.
+- Il choisit l’un des deux rôles :
+- Collaborateur : peut modifier le livre, commander un exemplaire, et doit entrer ses propres informations personnelles (nom, genre, ville…).
+- Observateur : peut uniquement consulter l’aperçu du livre, sans modifier ni commander.
+- Envoi de l’invitation
+- Un email est envoyé à l’adresse indiquée avec :
+- un lien sécurisé vers Mémo
+- une explication du rôle attribué
+- une invitation à créer un compte ou se connecter
+- Accès à l’interface
+- Une fois connecté, l’utilisateur invité voit le livre selon son rôle :
+- Collaborateur : accès complet à l’édition, avec formulaire pour ses infos personnelles.
+- Observateur : accès en lecture seule à l’aperçu du livre.
+
+🔐 Backend — logique d’invitation
+app.post("/api/invite-user", async (req, res) => {
+  const { bookId, email, role } = req.body; // role = "editor" ou "viewer"
+
+  // 1. Créer un token d’invitation
+  const token = generateSecureToken();
+
+  // 2. Enregistrer l’invitation
+  await db.invitations.insertOne({
+    bookId,
+    email,
+    role,
+    token,
+    status: "pending",
+    createdAt: new Date()
+  });
+
+  // 3. Envoyer l’email via MailerSend
+  await sendInvitationEmail(email, token, role);
+
+  res.json({ message: "Invitation envoyée." });
+});
+
+
+
+🖥️ Interface utilisateur
+- Dans la section “Partager le livre” :
+- Champ email
+- Choix du rôle :
+- 🔧 Peut modifier et commander
+- 👁️ Observateur uniquement
+- Bouton “Envoyer l’invitation”
+
+✅ Résultat attendu
+- L’utilisateur principal peut inviter des proches à collaborer ou observer le livre.
+- Chaque invité reçoit un email personnalisé avec un lien sécurisé.
+- Le rôle détermine les permissions dans l’interface.
+- Les collaborateurs doivent entrer leurs propres infos personnelles pour commander.
+
+Je peux aussi t’aider à rédiger le contenu de l’email d’invitation ou à définir les permissions exactes dans l’interface.

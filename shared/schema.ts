@@ -659,3 +659,44 @@ export const insertSubscriptionPlanHistorySchema = createInsertSchema(subscripti
 
 export type InsertSubscriptionPlanHistory = z.infer<typeof insertSubscriptionPlanHistorySchema>;
 export type SubscriptionPlanHistory = typeof subscriptionPlanHistory.$inferSelect;
+
+// Book invitations - Share book with other users
+export const bookInvitations = pgTable("book_invitations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  bookId: varchar("book_id").notNull().references(() => books.id, { onDelete: "cascade" }),
+  invitedByUserId: varchar("invited_by_user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  email: varchar("email").notNull(),
+  role: text("role").notNull(), // collaborator, observer
+  token: varchar("token").notNull().unique(),
+  status: text("status").notNull().default("pending"), // pending, accepted, declined, expired
+  acceptedByUserId: varchar("accepted_by_user_id").references(() => users.id, { onDelete: "set null" }),
+  acceptedAt: timestamp("accepted_at"),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertBookInvitationSchema = createInsertSchema(bookInvitations).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertBookInvitation = z.infer<typeof insertBookInvitationSchema>;
+export type BookInvitation = typeof bookInvitations.$inferSelect;
+
+// Book collaborators - Active access to shared books
+export const bookCollaborators = pgTable("book_collaborators", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  bookId: varchar("book_id").notNull().references(() => books.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  role: text("role").notNull(), // collaborator, observer
+  addedByUserId: varchar("added_by_user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertBookCollaboratorSchema = createInsertSchema(bookCollaborators).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertBookCollaborator = z.infer<typeof insertBookCollaboratorSchema>;
+export type BookCollaborator = typeof bookCollaborators.$inferSelect;

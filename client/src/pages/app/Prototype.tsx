@@ -687,6 +687,67 @@ export default function Prototype() {
     }
   };
 
+  // Calculate baby age or pregnancy progress for notifications
+  const getAgeNotificationText = () => {
+    const birthDateStr = activeBook?.birthDate;
+    const status = activeBook?.babyStatus;
+    
+    if (!birthDateStr) {
+      return { title: `${babyName} grandit ! 🎉`, subtitle: "C'est le moment idéal pour capturer un souvenir." };
+    }
+    
+    const birthDate = new Date(birthDateStr);
+    const now = new Date();
+    
+    if (status === "enceinte") {
+      // For pregnancy: calculate weeks since conception date (birthDate is expected due date, so we calculate backward)
+      // Assuming birthDate is the start of pregnancy tracking
+      const diffTime = now.getTime() - birthDate.getTime();
+      const diffWeeks = Math.floor(diffTime / (1000 * 60 * 60 * 24 * 7));
+      
+      if (diffWeeks < 0) {
+        return { title: `Grossesse en cours ! 🤰`, subtitle: "Documentez cette belle aventure." };
+      } else if (diffWeeks < 13) {
+        return { title: `${diffWeeks} semaines de grossesse ! 🤰`, subtitle: "Premier trimestre - une période magique à documenter." };
+      } else if (diffWeeks < 27) {
+        return { title: `${diffWeeks} semaines de grossesse ! 🤰`, subtitle: "Deuxième trimestre - bébé grandit vite !" };
+      } else {
+        return { title: `${diffWeeks} semaines de grossesse ! 🤰`, subtitle: "Dernier trimestre - la rencontre approche !" };
+      }
+    } else {
+      // For born babies: calculate age in months/years
+      const diffTime = now.getTime() - birthDate.getTime();
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      const diffMonths = Math.floor(diffDays / 30.44);
+      const diffYears = Math.floor(diffMonths / 12);
+      
+      if (diffDays < 0) {
+        return { title: `${babyName} arrive bientôt ! 👶`, subtitle: "Préparez-vous à capturer ses premiers moments." };
+      } else if (diffDays < 7) {
+        return { title: `${babyName} a ${diffDays} jour${diffDays > 1 ? 's' : ''} ! 🎉`, subtitle: "Chaque jour est précieux à documenter." };
+      } else if (diffDays < 30) {
+        const weeks = Math.floor(diffDays / 7);
+        return { title: `${babyName} a ${weeks} semaine${weeks > 1 ? 's' : ''} ! 🎉`, subtitle: "Ces premiers jours passent si vite !" };
+      } else if (diffMonths < 12) {
+        return { title: `${babyName} a ${diffMonths} mois aujourd'hui ! 🎉`, subtitle: "C'est le moment idéal pour prendre une photo de son évolution." };
+      } else if (diffYears === 1) {
+        const remainingMonths = diffMonths % 12;
+        if (remainingMonths === 0) {
+          return { title: `${babyName} a 1 an aujourd'hui ! 🎂`, subtitle: "Joyeux anniversaire ! Un an de beaux souvenirs." };
+        }
+        return { title: `${babyName} a 1 an et ${remainingMonths} mois ! 🎉`, subtitle: "Le temps passe si vite, capturez ces moments." };
+      } else {
+        const remainingMonths = diffMonths % 12;
+        if (remainingMonths === 0) {
+          return { title: `${babyName} a ${diffYears} ans ! 🎂`, subtitle: "Joyeux anniversaire !" };
+        }
+        return { title: `${babyName} a ${diffYears} ans et ${remainingMonths} mois ! 🎉`, subtitle: "Continuez à documenter ces beaux moments." };
+      }
+    }
+  };
+  
+  const ageNotification = getAgeNotificationText();
+
   const memories = [
     {
       id: 0,
@@ -752,8 +813,8 @@ export default function Prototype() {
                   <Bell size={18} />
                 </div>
                 <div className="flex-1">
-                  <h4 className="text-sm font-bold text-stone-900">{babyName} a 6 mois aujourd'hui ! 🎉</h4>
-                  <p className="text-xs text-stone-500 mt-1">C'est le moment idéal pour prendre une photo de son évolution.</p>
+                  <h4 className="text-sm font-bold text-stone-900">{ageNotification.title}</h4>
+                  <p className="text-xs text-stone-500 mt-1">{ageNotification.subtitle}</p>
                 </div>
                 <div className="w-2 h-2 rounded-full bg-primary mt-2"></div>
               </div>

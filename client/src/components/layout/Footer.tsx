@@ -1,4 +1,5 @@
 import { Heart, Instagram, Twitter, Facebook } from "lucide-react";
+import logoMemo from "@/assets/logo-memo.png";
 
 export default function Footer() {
   return (
@@ -7,8 +8,8 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
           <div className="space-y-4">
             <h3 className="text-2xl font-serif font-bold text-white flex items-center gap-2">
-              <span className="w-8 h-8 bg-stone-700 rounded-full flex items-center justify-center text-white font-sans text-lg">M</span>
-              Memoria
+              <img src={logoMemo} alt="Mémo" className="w-8 h-8 object-contain" />
+              Mémo
             </h3>
             <p className="text-sm leading-relaxed max-w-xs">
               Capturing life's most precious moments, one memory at a time. Designed for modern families in Canada and beyond.
@@ -49,7 +50,7 @@ export default function Footer() {
         </div>
         
         <div className="border-t border-stone-800 mt-12 pt-8 text-xs text-center md:text-left flex flex-col md:flex-row justify-between items-center">
-          <p>&copy; 2025 Memoria Inc. All rights reserved.</p>
+          <p>&copy; 2025 Mémo Inc. All rights reserved.</p>
           <div className="flex space-x-6 mt-4 md:mt-0">
             <a href="#" className="hover:text-white">Terms</a>
             <a href="#" className="hover:text-white">Privacy</a>

@@ -4066,7 +4066,13 @@ export default function Prototype() {
               <div className="p-4 border-b border-stone-100 flex items-center justify-between sticky top-0 bg-white rounded-t-2xl">
                 <div>
                   <h3 className="font-bold text-stone-800">Partager le livre</h3>
-                  <p className="text-xs text-stone-500">Invitez quelqu'un à collaborer</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs text-stone-500">Invitez quelqu'un à collaborer</p>
+                    <span className="text-xs text-stone-300">•</span>
+                    <Link href="/app/tutoriel-partage" className="text-xs text-primary hover:underline" data-testid="link-share-tutorial">
+                      Comment ça marche ?
+                    </Link>
+                  </div>
                 </div>
                 <button 
                   onClick={() => {

@@ -1114,6 +1114,14 @@ export default function Prototype() {
                   <span>Partager le livre</span>
                 </DropdownMenuItem>
               )}
+              <DropdownMenuItem 
+                className="cursor-pointer"
+                onClick={() => setLocation("/utiliser-certificat")}
+                data-testid="menu-redeem-gift"
+              >
+                <Gift size={16} className="mr-2" />
+                <span>J'ai un code cadeau</span>
+              </DropdownMenuItem>
               {isAdmin && (
                 <>
                   <DropdownMenuSeparator />
@@ -2376,6 +2384,22 @@ export default function Prototype() {
                   <ChevronRight size={16} className="text-stone-400" />
                 </button>
               </div>
+
+              {/* Gift Certificate Button */}
+              <button 
+                className="w-full p-4 bg-white rounded-2xl shadow-sm border border-stone-100 flex items-center gap-3 hover:bg-primary/5 transition-colors"
+                onClick={() => setLocation("/utiliser-certificat")}
+                data-testid="button-redeem-gift-account"
+              >
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Gift size={18} className="text-primary" />
+                </div>
+                <div className="text-left flex-1">
+                  <p className="text-sm font-medium text-stone-800">J'ai un code cadeau</p>
+                  <p className="text-xs text-stone-500">Utiliser un certificat-cadeau</p>
+                </div>
+                <ChevronRight size={16} className="text-stone-400" />
+              </button>
 
               {/* Logout Button */}
               <button 

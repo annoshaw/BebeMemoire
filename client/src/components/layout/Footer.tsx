@@ -69,7 +69,7 @@ export default function Footer() {
               <li><a href="#how-it-works" className="hover:text-white transition-colors">{t.howItWorks}</a></li>
               <li><a href="#pricing" className="hover:text-white transition-colors">{t.pricing}</a></li>
               <li><a href="#" className="hover:text-white transition-colors">{t.downloadApp}</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">{t.giftCards}</a></li>
+              <li><a href="/certificat-cadeau" className="hover:text-white transition-colors">{t.giftCards}</a></li>
             </ul>
           </div>
 

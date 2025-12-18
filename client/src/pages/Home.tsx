@@ -419,6 +419,65 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Gift Certificate Section */}
+      <section className="py-20 bg-gradient-to-br from-secondary/20 via-white to-primary/10">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="bg-white rounded-3xl shadow-xl border border-stone-100 overflow-hidden"
+          >
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
+              <div className="p-8 lg:p-12 flex flex-col justify-center">
+                <div className="inline-flex items-center px-3 py-1 rounded-full bg-secondary/20 text-secondary-foreground text-sm font-medium mb-6 w-fit">
+                  <span className="mr-2">🎁</span>
+                  Idée cadeau parfaite
+                </div>
+                <h2 className="text-3xl lg:text-4xl font-serif font-bold text-stone-900 mb-4">
+                  Offrez un certificat-cadeau Mémo
+                </h2>
+                <p className="text-stone-600 mb-6 leading-relaxed">
+                  Le cadeau idéal pour les futurs parents ou les nouvelles familles. 
+                  Offrez-leur la possibilité de créer un livre de souvenirs unique et personnalisé.
+                </p>
+                <ul className="space-y-3 mb-8">
+                  {[
+                    "Livraison instantanée par email",
+                    "Valide 1 an",
+                    "Plusieurs formules disponibles"
+                  ].map((item, i) => (
+                    <li key={i} className="flex items-center gap-3 text-stone-600">
+                      <CheckCircle size={18} className="text-primary flex-shrink-0" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+                <Link href="/certificat-cadeau">
+                  <Button size="lg" className="bg-primary hover:bg-primary/90 text-white rounded-full px-8 h-14 text-lg shadow-lg shadow-primary/20 w-full sm:w-auto">
+                    Acheter un certificat-cadeau
+                    <ArrowRight size={18} className="ml-2" />
+                  </Button>
+                </Link>
+              </div>
+              <div className="bg-gradient-to-br from-primary/5 to-secondary/10 p-8 lg:p-12 flex items-center justify-center">
+                <div className="relative">
+                  <div className="w-64 h-40 bg-white rounded-xl shadow-lg border border-stone-200 p-6 transform rotate-3 absolute -top-2 -left-2 opacity-60"></div>
+                  <div className="w-64 h-40 bg-gradient-to-br from-primary to-primary/80 rounded-xl shadow-xl p-6 relative z-10 text-white">
+                    <div className="flex items-center gap-2 mb-4">
+                      <img src={logoMemo} alt="Mémo" className="h-8 w-auto brightness-0 invert" />
+                      <span className="font-serif font-bold text-lg">Mémo</span>
+                    </div>
+                    <p className="text-sm opacity-90 mb-2">Certificat-cadeau</p>
+                    <p className="text-2xl font-bold">À partir de 30$</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-24 bg-primary/10">
         <div className="max-w-4xl mx-auto px-4 text-center space-y-8">

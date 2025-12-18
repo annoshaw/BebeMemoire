@@ -16,6 +16,7 @@ export default function Navbar() {
     { name: lang === "fr" ? "Fonctionnalités" : "Features", href: "#features" },
     { name: lang === "fr" ? "Comment ça marche" : "How it works", href: "#how-it-works" },
     { name: lang === "fr" ? "Livre Imprimé" : "Printed Book", href: "#print" },
+    { name: lang === "fr" ? "Certificat-cadeau" : "Gift Card", href: "/certificat-cadeau", isLink: true },
   ];
 
   return (
@@ -30,13 +31,23 @@ export default function Navbar() {
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center space-x-8">
             {navLinks.map((link) => (
-              <a
-                key={link.name}
-                href={link.href}
-                className="text-stone-600 hover:text-primary transition-colors font-medium text-sm"
-              >
-                {link.name}
-              </a>
+              link.isLink ? (
+                <Link
+                  key={link.name}
+                  href={link.href}
+                  className="text-stone-600 hover:text-primary transition-colors font-medium text-sm"
+                >
+                  {link.name}
+                </Link>
+              ) : (
+                <a
+                  key={link.name}
+                  href={link.href}
+                  className="text-stone-600 hover:text-primary transition-colors font-medium text-sm"
+                >
+                  {link.name}
+                </a>
+              )
             ))}
             
             <button 
@@ -84,14 +95,25 @@ export default function Navbar() {
           >
             <div className="px-4 pt-2 pb-6 space-y-2">
               {navLinks.map((link) => (
-                <a
-                  key={link.name}
-                  href={link.href}
-                  onClick={() => setIsOpen(false)}
-                  className="block px-3 py-3 text-stone-600 hover:text-primary hover:bg-stone-50 rounded-md font-medium"
-                >
-                  {link.name}
-                </a>
+                link.isLink ? (
+                  <Link
+                    key={link.name}
+                    href={link.href}
+                    onClick={() => setIsOpen(false)}
+                    className="block px-3 py-3 text-stone-600 hover:text-primary hover:bg-stone-50 rounded-md font-medium"
+                  >
+                    {link.name}
+                  </Link>
+                ) : (
+                  <a
+                    key={link.name}
+                    href={link.href}
+                    onClick={() => setIsOpen(false)}
+                    className="block px-3 py-3 text-stone-600 hover:text-primary hover:bg-stone-50 rounded-md font-medium"
+                  >
+                    {link.name}
+                  </a>
+                )
               ))}
               <div className="pt-4">
                 <Link href="/app" asChild>

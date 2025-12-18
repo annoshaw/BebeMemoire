@@ -2737,7 +2737,7 @@ export async function registerRoutes(
       }
 
       // Return redirect URL based on product type - user goes directly to create their book
-      const redirectUrl = '/app/create-album';
+      const redirectUrl = '/app/create';
 
       res.json({ 
         success: true, 

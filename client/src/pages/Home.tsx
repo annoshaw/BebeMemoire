@@ -7,7 +7,7 @@ import { Link } from "wouter";
 
 // Import generated assets
 import heroImage from "@assets/generated_images/happy_parents_with_baby_looking_at_tablet.png";
-import appImage from "@assets/generated_images/memo_app_screenshot.png";
+import appImage from "@assets/generated_images/memo_app_cropped.png";
 import printImage from "@assets/generated_images/high_quality_printed_baby_book.png";
 import logoMemo from "@/assets/logo-memo.png";
 

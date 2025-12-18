@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ArrowRight, Smartphone, Heart, Video, Printer, CheckCircle, Play } from "lucide-react";
+import { ArrowRight, Smartphone, Heart, Video, Users, CheckCircle, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -174,9 +174,9 @@ export default function Home() {
                 desc: "Recevez des suggestions personnalisées : 'Vous êtes à 6 mois, une photo du ventre ?' ou 'Léo a 1 an aujourd'hui !'"
               },
               {
-                icon: <Printer className="w-8 h-8 text-stone-800" />,
-                title: "Impression Premium",
-                desc: "Papier mat certifié FSC, couverture rigide en toile. Une qualité d'archivage pour durer toute une vie."
+                icon: <Users className="w-8 h-8 text-stone-800" />,
+                title: "Création Collaborative",
+                desc: "Partagez la création de votre album avec les autres. Ajoutez des utilisateurs qui vous aideront à ajouter des photos et des descriptions."
               }
             ].map((feature, idx) => (
               <motion.div 

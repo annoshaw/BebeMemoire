@@ -46,33 +46,88 @@ interface BookPageData {
 interface GeneratePdfOptions {
   bookId: string;
   orderId?: string;
-  format?: 'letter' | 'a4';
+  format?: 'gelato' | 'letter' | 'a4';
   orientation?: 'portrait' | 'landscape';
 }
 
+// Gelato Photobook Hardcover Specifications
+// Product: photobooks-hardcover_pf_210x280-mm-8x11-inch
+// Paper: 170-gsm-65lb-coated-silk
+const GELATO_SPECS = {
+  // Interior pages dimensions in mm
+  interior: {
+    trimWidth: 210,      // Final trim size width
+    trimHeight: 280,     // Final trim size height
+    bleed: 3,            // 3mm bleed on all sides
+    safeZone: 5,         // 5mm safe zone from trim edge
+    // Total page with bleed: 216mm x 286mm
+    totalWidth: 216,     // 210 + 3 + 3
+    totalHeight: 286,    // 280 + 3 + 3
+  },
+  // Cover dimensions (varies by page count - spine width)
+  cover: {
+    wrapWidth: 15,       // Cover wrap around edge
+    spineWidthPerPage: 0.05, // mm per page (approximate)
+    minSpineWidth: 3,    // Minimum spine width
+  },
+  dpi: 300,              // Required resolution
+};
+
+// Convert mm to inches
+const mmToInches = (mm: number) => mm / 25.4;
+
 const FORMAT_DIMENSIONS = {
-  letter: { width: 8, height: 11 },  // 8x11 book format
-  a4: { width: 8.27, height: 11.69 },
+  // Gelato 8x11" photobook with 3mm bleed
+  gelato: { 
+    width: mmToInches(GELATO_SPECS.interior.totalWidth),   // ~8.5"
+    height: mmToInches(GELATO_SPECS.interior.totalHeight), // ~11.26"
+    trimWidth: mmToInches(GELATO_SPECS.interior.trimWidth),
+    trimHeight: mmToInches(GELATO_SPECS.interior.trimHeight),
+    bleed: mmToInches(GELATO_SPECS.interior.bleed),
+    safeZone: mmToInches(GELATO_SPECS.interior.safeZone),
+  },
+  letter: { 
+    width: 8, 
+    height: 11,
+    trimWidth: 8,
+    trimHeight: 11,
+    bleed: 0,
+    safeZone: 0.25,
+  },
+  a4: { 
+    width: 8.27, 
+    height: 11.69,
+    trimWidth: 8.27,
+    trimHeight: 11.69,
+    bleed: 0,
+    safeZone: 0.25,
+  },
 };
 
-// Book printing margins (in inches)
+// Book printing margins (measured from trim edge, not from bleed)
 const BOOK_MARGINS = {
-  top: 0.75,
-  bottom: 0.75,
-  inside: 0.875,  // Gutter margin for binding
-  outside: 0.625,
+  top: mmToInches(GELATO_SPECS.interior.safeZone),      // 5mm safe zone
+  bottom: mmToInches(GELATO_SPECS.interior.safeZone),   // 5mm safe zone
+  inside: mmToInches(GELATO_SPECS.interior.safeZone + 5), // Extra for binding gutter
+  outside: mmToInches(GELATO_SPECS.interior.safeZone),  // 5mm safe zone
 };
 
-function generatePageHtml(page: BookPageData, format: 'letter' | 'a4' = 'letter', pageIndex: number = 0): string {
+function generatePageHtml(page: BookPageData, format: 'gelato' | 'letter' | 'a4' = 'gelato', pageIndex: number = 0): string {
   const dims = FORMAT_DIMENSIONS[format];
   const hasText = page.textBlocks?.some(block => block.content?.trim());
   const hasPhotos = page.photos?.length > 0;
   const textPlacement = hasText ? (page.textPlacement || 'top') : 'none';
   
+  // For Gelato format, account for bleed area
+  const bleed = dims.bleed || 0;
+  const safeZone = dims.safeZone || 0;
+  
   // Alternating margins for book binding (odd pages = right side, even pages = left side)
   const isRightPage = pageIndex % 2 === 0; // First page (index 0) is right page
-  const marginLeft = isRightPage ? BOOK_MARGINS.inside : BOOK_MARGINS.outside;
-  const marginRight = isRightPage ? BOOK_MARGINS.outside : BOOK_MARGINS.inside;
+  // Total margin = bleed + safe zone (+ extra gutter for inside margin)
+  const gutterExtra = format === 'gelato' ? mmToInches(5) : BOOK_MARGINS.inside - BOOK_MARGINS.outside;
+  const marginLeft = bleed + safeZone + (isRightPage ? gutterExtra : 0);
+  const marginRight = bleed + safeZone + (isRightPage ? 0 : gutterExtra);
 
   const titleHtml = page.title ? `
     <header style="
@@ -179,11 +234,15 @@ function generatePageHtml(page: BookPageData, format: 'letter' | 'a4' = 'letter'
     contentHtml = photosHtml;
   }
 
+  // Top/bottom margins include bleed
+  const marginTop = bleed + safeZone;
+  const marginBottom = bleed + safeZone;
+
   return `
     <div style="
       width: ${dims.width}in;
       height: ${dims.height}in;
-      padding: ${BOOK_MARGINS.top}in ${marginRight}in ${BOOK_MARGINS.bottom}in ${marginLeft}in;
+      padding: ${marginTop}in ${marginRight}in ${marginBottom}in ${marginLeft}in;
       box-sizing: border-box;
       display: flex;
       flex-direction: column;
@@ -201,7 +260,7 @@ function generatePageHtml(page: BookPageData, format: 'letter' | 'a4' = 'letter'
   `;
 }
 
-function generateFullHtml(pages: BookPageData[], format: 'letter' | 'a4' = 'letter'): string {
+function generateFullHtml(pages: BookPageData[], format: 'gelato' | 'letter' | 'a4' = 'gelato'): string {
   const dims = FORMAT_DIMENSIONS[format];
   
   return `
@@ -244,7 +303,7 @@ function generateFullHtml(pages: BookPageData[], format: 'letter' | 'a4' = 'lett
 }
 
 export async function generateBookPdf(options: GeneratePdfOptions): Promise<PdfExport> {
-  const { bookId, orderId, format = 'letter', orientation = 'portrait' } = options;
+  const { bookId, orderId, format = 'gelato', orientation = 'portrait' } = options;
 
   const book = await storage.getBook(bookId);
   if (!book) {
@@ -393,6 +452,172 @@ export async function generateBookPdf(options: GeneratePdfOptions): Promise<PdfE
     });
     throw error;
   }
+}
+
+// Generate cover PDF for Gelato printing
+// Cover dimensions include: back cover + spine + front cover
+export async function generateCoverPdf(options: {
+  bookId: string;
+  orderId?: string;
+  pageCount: number;
+}): Promise<{ filename: string; buffer: Buffer }> {
+  const { bookId, pageCount } = options;
+  
+  const book = await storage.getBook(bookId);
+  if (!book) {
+    throw new Error('Book not found');
+  }
+  
+  // Calculate spine width based on page count
+  // Gelato formula: approximately 0.05mm per page for 170gsm paper
+  const spineWidthMm = Math.max(
+    GELATO_SPECS.cover.minSpineWidth,
+    pageCount * GELATO_SPECS.cover.spineWidthPerPage
+  );
+  
+  // Cover dimensions in mm (with bleed and wrap)
+  const bleed = GELATO_SPECS.interior.bleed;
+  const wrap = GELATO_SPECS.cover.wrapWidth;
+  const coverHeight = GELATO_SPECS.interior.trimHeight + (bleed * 2); // 286mm
+  
+  // Full cover width: wrap + back + spine + front + wrap
+  const singleCoverWidth = GELATO_SPECS.interior.trimWidth + bleed; // One side with bleed
+  const totalCoverWidth = wrap + singleCoverWidth + spineWidthMm + singleCoverWidth + wrap;
+  
+  const coverWidthIn = mmToInches(totalCoverWidth);
+  const coverHeightIn = mmToInches(coverHeight);
+  const spineWidthIn = mmToInches(spineWidthMm);
+  const wrapIn = mmToInches(wrap);
+  const singleCoverIn = mmToInches(singleCoverWidth);
+  
+  // Generate cover HTML
+  const coverHtml = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,400&family=Poppins:wght@300;400;500;600&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; }
+        @page {
+          size: ${coverWidthIn}in ${coverHeightIn}in;
+          margin: 0;
+        }
+      </style>
+    </head>
+    <body>
+      <div style="
+        width: ${coverWidthIn}in;
+        height: ${coverHeightIn}in;
+        display: flex;
+        background: linear-gradient(135deg, #F5E6D3 0%, #E8D4BE 100%);
+      ">
+        <!-- Wrap area (left) -->
+        <div style="width: ${wrapIn}in; background: #F5E6D3;"></div>
+        
+        <!-- Back cover -->
+        <div style="
+          width: ${singleCoverIn}in;
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          padding: 0.5in;
+          text-align: center;
+        ">
+          <p style="font-size: 12px; color: #8B7355;">
+            Créé avec amour sur Mémo
+          </p>
+          <p style="font-size: 10px; color: #A08B70; margin-top: 8px;">
+            memo-app.com
+          </p>
+        </div>
+        
+        <!-- Spine -->
+        <div style="
+          width: ${spineWidthIn}in;
+          height: 100%;
+          background: #E8D4BE;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          writing-mode: vertical-rl;
+          text-orientation: mixed;
+        ">
+          <span style="
+            font-family: 'Fraunces', serif;
+            font-size: ${spineWidthMm > 10 ? '14px' : '10px'};
+            color: #5C4A32;
+            letter-spacing: 2px;
+          ">
+            ${book.childName || 'Mon Livre'}
+          </span>
+        </div>
+        
+        <!-- Front cover -->
+        <div style="
+          width: ${singleCoverIn}in;
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          padding: 0.75in;
+          text-align: center;
+        ">
+          <h1 style="
+            font-family: 'Fraunces', serif;
+            font-size: 36px;
+            color: #5C4A32;
+            margin-bottom: 16px;
+          ">
+            Mon Livre de Souvenirs
+          </h1>
+          ${book.childName ? `
+            <h2 style="
+              font-family: 'Poppins', sans-serif;
+              font-size: 24px;
+              font-weight: 400;
+              color: #8B7355;
+            ">
+              ${book.childName}
+            </h2>
+          ` : ''}
+        </div>
+        
+        <!-- Wrap area (right) -->
+        <div style="width: ${wrapIn}in; background: #F5E6D3;"></div>
+      </div>
+    </body>
+    </html>
+  `;
+  
+  const browser = await puppeteer.launch({
+    headless: true,
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
+  });
+  
+  const page = await browser.newPage();
+  await page.setContent(coverHtml, { waitUntil: 'networkidle0' });
+  
+  const pdfBuffer = await page.pdf({
+    width: `${coverWidthIn}in`,
+    height: `${coverHeightIn}in`,
+    printBackground: true,
+    margin: { top: 0, right: 0, bottom: 0, left: 0 },
+  });
+  
+  await browser.close();
+  
+  const filename = `cover-${book.childName || 'book'}-${Date.now()}.pdf`;
+  
+  return {
+    filename,
+    buffer: Buffer.from(pdfBuffer),
+  };
 }
 
 // Check if storage key points to local or S3

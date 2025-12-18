@@ -201,15 +201,25 @@ export default function TestCheckout() {
         throw new Error(err.message || "Erreur lors de la création du paiement");
       }
 
-      const { checkoutUrl } = await checkoutRes.json();
-      return checkoutUrl;
+      const result = await checkoutRes.json();
+      
+      // If paid with gift certificate, return redirect URL instead of Stripe checkout
+      if (result.paidWithGiftCertificate) {
+        return { isGiftCertificate: true, redirectUrl: result.redirectUrl, message: result.message };
+      }
+      
+      return { isGiftCertificate: false, checkoutUrl: result.checkoutUrl };
     },
-    onSuccess: (checkoutUrl) => {
-      // Use window.open for better cross-origin redirect handling
-      const newWindow = window.open(checkoutUrl, '_blank');
-      if (!newWindow) {
-        // Fallback if popup is blocked
-        window.location.href = checkoutUrl;
+    onSuccess: (result: { isGiftCertificate: boolean; redirectUrl?: string; checkoutUrl?: string; message?: string }) => {
+      if (result.isGiftCertificate && result.redirectUrl) {
+        // Gift certificate payment - redirect to success page
+        window.location.href = result.redirectUrl;
+      } else if (result.checkoutUrl) {
+        // Stripe payment - open checkout
+        const newWindow = window.open(result.checkoutUrl, '_blank');
+        if (!newWindow) {
+          window.location.href = result.checkoutUrl;
+        }
       }
     },
     onError: (err: Error) => {

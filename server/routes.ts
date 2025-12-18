@@ -2736,8 +2736,8 @@ export async function registerRoutes(
         }
       }
 
-      // Return redirect URL based on product type - user goes directly to create their book
-      const redirectUrl = '/app/create';
+      // Return redirect URL - user goes to onboarding to create their book (same as "Créer un nouveau livre")
+      const redirectUrl = '/onboarding';
 
       res.json({ 
         success: true, 

@@ -450,6 +450,8 @@ export const orders = pgTable("orders", {
   // Notes
   adminNotes: text("admin_notes"),
   customerNotes: text("customer_notes"),
+  // Cover style selection
+  coverStyle: varchar("cover_style"), // ID of selected cover design (e.g., "lavender", "rose", "blue", etc.)
   // Payment reminders
   reminderSentAt: timestamp("reminder_sent_at"),
   reminderCount: integer("reminder_count").default(0),

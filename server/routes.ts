@@ -2469,6 +2469,313 @@ export async function registerRoutes(
     }
   });
 
+  // ============ GIFT CERTIFICATE ROUTES ============
+
+  // Gift certificate pricing (in cents)
+  const GIFT_CERTIFICATE_PRICING = {
+    softcover: 4324, // $43.24
+    hardcover: 5499, // $54.99
+    ebook: 3000, // $30.00
+    subscription_premium: 2388, // $23.88/year
+    subscription_platine: 5988, // $59.88/year
+  };
+
+  // Create gift certificate checkout session (no auth required - anyone can purchase)
+  app.post("/api/gift-certificates/checkout", async (req: Request, res: Response) => {
+    try {
+      const { 
+        productType, 
+        includesSubscription = false, 
+        subscriptionType,
+        purchaserEmail, 
+        purchaserName,
+        recipientEmail,
+        recipientName,
+      } = req.body;
+
+      // Validate product type
+      if (!['softcover', 'hardcover', 'ebook'].includes(productType)) {
+        return res.status(400).json({ message: "Type de produit invalide" });
+      }
+
+      // Validate subscription type if included
+      if (includesSubscription && !['premium', 'platine'].includes(subscriptionType)) {
+        return res.status(400).json({ message: "Type d'abonnement invalide" });
+      }
+
+      // Validate purchaser email
+      if (!purchaserEmail || !purchaserEmail.includes('@')) {
+        return res.status(400).json({ message: "Email de l'acheteur invalide" });
+      }
+
+      // Calculate amount
+      let amount = GIFT_CERTIFICATE_PRICING[productType as keyof typeof GIFT_CERTIFICATE_PRICING];
+      if (includesSubscription && subscriptionType) {
+        amount += GIFT_CERTIFICATE_PRICING[`subscription_${subscriptionType}` as keyof typeof GIFT_CERTIFICATE_PRICING];
+      }
+
+      // Generate unique code for this gift certificate
+      const code = `MEMO-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
+
+      // Create gift certificate record
+      const giftCertificate = await storage.createGiftCertificate({
+        code,
+        purchaserEmail,
+        purchaserName,
+        recipientEmail,
+        recipientName,
+        productType,
+        includesSubscription,
+        subscriptionType,
+        amount,
+        currency: 'cad',
+        status: 'pending',
+        expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year expiry
+      });
+
+      const { stripeService } = await import('./stripeService');
+      const baseUrl = `https://${process.env.REPLIT_DOMAINS?.split(',')[0]}`;
+
+      // Build product name
+      let productName = `Certificat-Cadeau Mémo - Livre ${productType === 'hardcover' ? 'Couverture Rigide' : productType === 'softcover' ? 'Couverture Souple' : 'E-Book'}`;
+      if (includesSubscription) {
+        productName += ` + Abonnement ${subscriptionType === 'platine' ? 'Platine' : 'Premium'}`;
+      }
+
+      // Create checkout session with guest checkout (using customer email)
+      const session = await stripeService.createCheckoutSession({
+        customerEmail: purchaserEmail, // Guest checkout with email
+        orderId: giftCertificate.id,
+        items: [{ name: productName, unitAmount: amount, quantity: 1 }],
+        successUrl: `${baseUrl}/certificat-cadeau/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancelUrl: `${baseUrl}/certificat-cadeau?cancelled=true`,
+        metadata: {
+          type: 'gift_certificate',
+          giftCertificateId: giftCertificate.id,
+          code: giftCertificate.code,
+        },
+      });
+
+      // Update gift certificate with Stripe session ID
+      await storage.updateGiftCertificate(giftCertificate.id, { 
+        stripeSessionId: session.id 
+      });
+
+      res.json({ 
+        checkoutUrl: session.url,
+        giftCertificateId: giftCertificate.id,
+      });
+    } catch (error) {
+      console.error("Gift certificate checkout error:", error);
+      res.status(500).json({ message: "Erreur lors de la création du certificat-cadeau" });
+    }
+  });
+
+  // Verify gift certificate payment
+  app.post("/api/gift-certificates/verify-payment", async (req: Request, res: Response) => {
+    try {
+      const { sessionId } = req.body;
+
+      if (!sessionId) {
+        return res.status(400).json({ message: "Session ID manquant" });
+      }
+
+      const giftCertificate = await storage.getGiftCertificateByStripeSession(sessionId);
+      if (!giftCertificate) {
+        return res.status(404).json({ message: "Certificat-cadeau non trouvé" });
+      }
+
+      const { stripeService } = await import('./stripeService');
+      const session = await stripeService.retrieveCheckoutSession(sessionId);
+
+      if (session.payment_status === "paid") {
+        // Update gift certificate status
+        await storage.updateGiftCertificate(giftCertificate.id, {
+          status: 'paid',
+          stripePaymentIntentId: (session.payment_intent as any)?.id || undefined,
+        });
+
+        // Send gift certificate email to recipient (or purchaser if no recipient)
+        try {
+          const { sendGiftCertificateEmail } = await import('./emailService');
+          await sendGiftCertificateEmail({
+            code: giftCertificate.code,
+            purchaserName: giftCertificate.purchaserName || 'Un ami',
+            purchaserEmail: giftCertificate.purchaserEmail,
+            recipientEmail: giftCertificate.recipientEmail || giftCertificate.purchaserEmail,
+            recipientName: giftCertificate.recipientName,
+            productType: giftCertificate.productType,
+            includesSubscription: giftCertificate.includesSubscription || false,
+            subscriptionType: giftCertificate.subscriptionType || undefined,
+            expiresAt: giftCertificate.expiresAt || undefined,
+          });
+
+          await storage.updateGiftCertificate(giftCertificate.id, {
+            status: 'sent',
+            emailSentAt: new Date(),
+          });
+        } catch (emailError) {
+          console.error("Failed to send gift certificate email:", emailError);
+          // Don't fail the request, email can be resent later
+        }
+
+        res.json({ 
+          success: true, 
+          status: "paid",
+          code: giftCertificate.code,
+          recipientEmail: giftCertificate.recipientEmail || giftCertificate.purchaserEmail,
+        });
+      } else {
+        res.json({ success: false, status: session.payment_status });
+      }
+    } catch (error) {
+      console.error("Verify gift certificate payment error:", error);
+      res.status(500).json({ message: "Erreur lors de la vérification du paiement" });
+    }
+  });
+
+  // Redeem gift certificate (requires auth)
+  app.post("/api/gift-certificates/redeem", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const { code } = req.body;
+
+      if (!code) {
+        return res.status(400).json({ message: "Code du certificat-cadeau requis" });
+      }
+
+      const giftCertificate = await storage.getGiftCertificateByCode(code.toUpperCase());
+      if (!giftCertificate) {
+        return res.status(404).json({ message: "Certificat-cadeau invalide" });
+      }
+
+      if (giftCertificate.status === 'redeemed') {
+        return res.status(400).json({ message: "Ce certificat-cadeau a déjà été utilisé" });
+      }
+
+      if (giftCertificate.status !== 'paid' && giftCertificate.status !== 'sent') {
+        return res.status(400).json({ message: "Ce certificat-cadeau n'est pas valide" });
+      }
+
+      if (giftCertificate.expiresAt && new Date(giftCertificate.expiresAt) < new Date()) {
+        return res.status(400).json({ message: "Ce certificat-cadeau a expiré" });
+      }
+
+      // Update gift certificate as redeemed
+      await storage.updateGiftCertificate(giftCertificate.id, {
+        status: 'redeemed',
+        redeemedByUserId: userId,
+        redeemedAt: new Date(),
+      });
+
+      // Grant the user their product/subscription
+      // This would typically create an order credit or activate subscription
+      const user = await storage.getUser(userId);
+
+      // If includes subscription, create/update user plan
+      if (giftCertificate.includesSubscription && giftCertificate.subscriptionType) {
+        const existingPlan = await storage.getUserPlan(userId);
+        if (existingPlan) {
+          await storage.updateUserPlan(userId, {
+            plan: giftCertificate.subscriptionType,
+          });
+        } else {
+          await storage.createUserPlan({
+            userId,
+            plan: giftCertificate.subscriptionType,
+          });
+        }
+      }
+
+      res.json({ 
+        success: true, 
+        productType: giftCertificate.productType,
+        includesSubscription: giftCertificate.includesSubscription,
+        subscriptionType: giftCertificate.subscriptionType,
+        message: `Certificat-cadeau appliqué! Vous pouvez maintenant commander votre livre ${giftCertificate.productType}.`,
+      });
+    } catch (error) {
+      console.error("Redeem gift certificate error:", error);
+      res.status(500).json({ message: "Erreur lors de l'utilisation du certificat-cadeau" });
+    }
+  });
+
+  // Get gift certificate by code (for display purposes)
+  app.get("/api/gift-certificates/lookup/:code", async (req: Request, res: Response) => {
+    try {
+      const { code } = req.params;
+      const giftCertificate = await storage.getGiftCertificateByCode(code.toUpperCase());
+
+      if (!giftCertificate) {
+        return res.status(404).json({ message: "Certificat-cadeau non trouvé" });
+      }
+
+      // Return limited info for public lookup
+      res.json({
+        productType: giftCertificate.productType,
+        includesSubscription: giftCertificate.includesSubscription,
+        subscriptionType: giftCertificate.subscriptionType,
+        status: giftCertificate.status,
+        isValid: ['paid', 'sent'].includes(giftCertificate.status) && 
+                 (!giftCertificate.expiresAt || new Date(giftCertificate.expiresAt) > new Date()),
+        expiresAt: giftCertificate.expiresAt,
+      });
+    } catch (error) {
+      console.error("Gift certificate lookup error:", error);
+      res.status(500).json({ message: "Erreur lors de la recherche du certificat-cadeau" });
+    }
+  });
+
+  // Admin: Get all gift certificates
+  app.get("/api/admin/gift-certificates", requireAdmin, async (_req: Request, res: Response) => {
+    try {
+      const certificates = await storage.getAllGiftCertificates();
+      const stats = await storage.getGiftCertificateStats();
+      res.json({ certificates, stats });
+    } catch (error) {
+      console.error("Admin get gift certificates error:", error);
+      res.status(500).json({ message: "Erreur lors de la récupération des certificats-cadeaux" });
+    }
+  });
+
+  // Admin: Resend gift certificate email
+  app.post("/api/admin/gift-certificates/:id/resend-email", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const giftCertificate = await storage.getGiftCertificate(id);
+
+      if (!giftCertificate) {
+        return res.status(404).json({ message: "Certificat-cadeau non trouvé" });
+      }
+
+      if (giftCertificate.status !== 'paid' && giftCertificate.status !== 'sent') {
+        return res.status(400).json({ message: "Impossible de renvoyer l'email pour ce certificat" });
+      }
+
+      const { sendGiftCertificateEmail } = await import('./emailService');
+      await sendGiftCertificateEmail({
+        code: giftCertificate.code,
+        purchaserName: giftCertificate.purchaserName || 'Un ami',
+        purchaserEmail: giftCertificate.purchaserEmail,
+        recipientEmail: giftCertificate.recipientEmail || giftCertificate.purchaserEmail,
+        recipientName: giftCertificate.recipientName,
+        productType: giftCertificate.productType,
+        includesSubscription: giftCertificate.includesSubscription || false,
+        subscriptionType: giftCertificate.subscriptionType || undefined,
+        expiresAt: giftCertificate.expiresAt || undefined,
+      });
+
+      await storage.updateGiftCertificate(giftCertificate.id, {
+        emailSentAt: new Date(),
+      });
+
+      res.json({ success: true, message: "Email renvoyé avec succès" });
+    } catch (error) {
+      console.error("Resend gift certificate email error:", error);
+      res.status(500).json({ message: "Erreur lors de l'envoi de l'email" });
+    }
+  });
+
   // ============ PDF GENERATION ROUTES ============
 
   // Generate PDF for a book

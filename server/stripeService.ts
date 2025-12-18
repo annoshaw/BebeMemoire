@@ -15,17 +15,17 @@ export class StripeService {
   }
 
   async createCheckoutSession(params: {
-    customerId: string;
+    customerId?: string;
     orderId: string;
     items: Array<{ name: string; unitAmount: number; quantity: number }>;
     successUrl: string;
     cancelUrl: string;
     metadata?: Record<string, string>;
+    customerEmail?: string;
   }) {
     const stripe = await getUncachableStripeClient();
     
-    return await stripe.checkout.sessions.create({
-      customer: params.customerId,
+    const sessionParams: any = {
       payment_method_types: ['card'],
       line_items: params.items.map(item => ({
         price_data: {
@@ -44,7 +44,16 @@ export class StripeService {
         orderId: params.orderId,
         ...params.metadata,
       },
-    });
+    };
+
+    // Add customer or customer_email for guest checkout
+    if (params.customerId) {
+      sessionParams.customer = params.customerId;
+    } else if (params.customerEmail) {
+      sessionParams.customer_email = params.customerEmail;
+    }
+
+    return await stripe.checkout.sessions.create(sessionParams);
   }
 
   async createPaymentIntent(params: {

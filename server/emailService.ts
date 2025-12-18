@@ -1164,7 +1164,7 @@ export async function sendGiftCertificateEmail(data: GiftCertificateData): Promi
       </div>
       
       <p style="text-align: center;">
-        <a href="${baseUrl}/app?redeem=${data.code}" class="btn">
+        <a href="${baseUrl}/utiliser-certificat?code=${data.code}" class="btn">
           Utiliser mon certificat
         </a>
       </p>

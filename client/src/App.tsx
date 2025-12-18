@@ -30,6 +30,7 @@ import InvitationAccept from "@/pages/app/InvitationAccept";
 import ShareTutorial from "@/pages/app/ShareTutorial";
 import GiftCertificate from "@/pages/GiftCertificate";
 import GiftCertificateSuccess from "@/pages/GiftCertificateSuccess";
+import GiftCertificateRedeem from "@/pages/GiftCertificateRedeem";
 import AdminGiftCertificates from "@/pages/admin/AdminGiftCertificates";
 
 function Router() {
@@ -63,6 +64,7 @@ function Router() {
       <Route path="/app/admin/gift-certificates" component={AdminGiftCertificates} />
       <Route path="/certificat-cadeau" component={GiftCertificate} />
       <Route path="/certificat-cadeau/success" component={GiftCertificateSuccess} />
+      <Route path="/utiliser-certificat" component={GiftCertificateRedeem} />
       <Route component={NotFound} />
     </Switch>
   );

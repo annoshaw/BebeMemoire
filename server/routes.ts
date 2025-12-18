@@ -451,6 +451,20 @@ export async function registerRoutes(
       // User needs to choose a plan if trial expired and no subscription
       const requiresSubscription = trialExpired && !hasSubscription && dbUser.role !== "admin";
       
+      // Check for active gift certificate credit
+      let giftCertificateCredit = null;
+      if (dbUser.activeGiftCertificateId) {
+        const giftCert = await storage.getGiftCertificate(dbUser.activeGiftCertificateId);
+        if (giftCert) {
+          giftCertificateCredit = {
+            id: giftCert.id,
+            productType: giftCert.productType,
+            includesSubscription: giftCert.includesSubscription,
+            subscriptionType: giftCert.subscriptionType,
+          };
+        }
+      }
+      
       res.json({
         ...dbUser,
         trialDaysLeft,
@@ -458,6 +472,7 @@ export async function registerRoutes(
         hasSubscription,
         currentPlan,
         requiresSubscription,
+        giftCertificateCredit,
       });
     } catch (error) {
       console.error("Error fetching user:", error);

@@ -82,6 +82,13 @@ export class WebhookHandlers {
     const order = orders[0];
     console.log(`Updating order ${order.orderNumber} to paid status`);
 
+    // Check if gift certificate was used
+    const giftCertificateId = session.metadata?.giftCertificateId;
+    const giftCertificateCode = session.metadata?.giftCertificateCode;
+    
+    // Determine payment type based on whether gift certificate was used
+    const paymentType = giftCertificateId ? 'gift_certificate_shipping' : 'order';
+
     // Update order status
     await storage.updateOrder(order.id, {
       status: 'paid',
@@ -99,6 +106,8 @@ export class WebhookHandlers {
       metadata: { 
         stripeSessionId: sessionId,
         paymentIntentId: session.payment_intent,
+        giftCertificateId: giftCertificateId || undefined,
+        giftCertificateCode: giftCertificateCode || undefined,
       },
     });
 
@@ -109,9 +118,23 @@ export class WebhookHandlers {
       stripePaymentIntentId: session.payment_intent,
       amount: session.amount_total,
       currency: session.currency?.toUpperCase() || 'CAD',
-      paymentType: 'order',
+      paymentType: paymentType,
       status: 'succeeded',
     });
+
+    // If gift certificate was used, mark it as used and clear from user
+    if (giftCertificateId) {
+      console.log(`Marking gift certificate ${giftCertificateCode} as used`);
+      
+      await storage.updateGiftCertificate(giftCertificateId, {
+        status: 'used',
+      });
+      
+      // Clear user's active gift certificate
+      await storage.updateUser(order.userId, {
+        activeGiftCertificateId: null,
+      });
+    }
 
     console.log(`Order ${order.orderNumber} marked as paid`);
   }

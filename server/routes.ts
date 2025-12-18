@@ -2355,6 +2355,10 @@ export async function registerRoutes(
       }
 
       // Check if user has an active gift certificate credit
+      let giftCertificateApplied = false;
+      let giftCertBookCredit = 0;
+      let appliedGiftCert: any = null;
+      
       if (user.activeGiftCertificateId) {
         const giftCert = await storage.getGiftCertificate(user.activeGiftCertificateId);
         
@@ -2365,25 +2369,10 @@ export async function registerRoutes(
         const certificateIsRedeemed = giftCert && giftCert.status === 'redeemed';
         
         if (giftCert && productTypeMatches && isSingleItemOrder && certificateIsRedeemed) {
-          // Use transactional payment processing to ensure atomicity
-          const result = await storage.processGiftCertificatePayment({
-            orderId: order.id,
-            userId,
-            giftCertificateId: giftCert.id,
-            amount: order.totalAmount,
-            currency: order.currency,
-          });
-
-          if (result.success) {
-            return res.json({ 
-              success: true, 
-              paidWithGiftCertificate: true,
-              message: "Votre commande a été payée avec votre certificat-cadeau!",
-              redirectUrl: `/app/order-success?order_id=${order.id}&gift=true`,
-            });
-          }
-          // If transaction failed, fall through to Stripe checkout
-          console.error('Gift certificate payment failed:', result.error);
+          giftCertificateApplied = true;
+          appliedGiftCert = giftCert;
+          // Gift certificate covers book price (base + extra pages), user pays shipping only
+          giftCertBookCredit = order.basePrice + order.extraPagesPrice;
         }
       }
 
@@ -2403,10 +2392,10 @@ export async function registerRoutes(
 
       // Build product name based on order type
       const productName = order.productType === "ebook" 
-        ? `Livre Memoria E-Book (${order.pageCount} pages)`
+        ? `Livre Mémo E-Book (${order.pageCount} pages)`
         : order.productType === "hardcover"
-        ? `Livre Memoria Couverture Rigide (${order.pageCount} pages)`
-        : `Livre Memoria Couverture Souple (${order.pageCount} pages)`;
+        ? `Livre Mémo Couverture Rigide (${order.pageCount} pages)`
+        : `Livre Mémo Couverture Souple (${order.pageCount} pages)`;
 
       const baseUrl = `https://${process.env.REPLIT_DOMAINS?.split(',')[0]}`;
 
@@ -2420,24 +2409,53 @@ export async function registerRoutes(
         }
       }
 
-      // Create checkout session with discounts if available
-      const session = await stripeService.createCheckoutSessionWithDiscount({
-        customerId: stripeCustomerId,
-        orderId: order.id,
-        items: [
+      // Build line items based on whether gift certificate is applied
+      let lineItems: Array<{ name: string; unitAmount: number; quantity: number }> = [];
+      let checkoutMetadata: Record<string, string | undefined> = {
+        orderNumber: order.orderNumber,
+        productType: order.productType,
+        appliedDiscounts: stripeDiscounts.length > 0 ? stripeDiscounts.map(d => d.coupon).join(',') : undefined,
+      };
+
+      if (giftCertificateApplied && appliedGiftCert) {
+        // Gift certificate covers book price - user only pays shipping
+        // Format credit amount for display (e.g., $59.99)
+        const creditDisplay = (giftCertBookCredit / 100).toFixed(2);
+        
+        lineItems = [
+          {
+            name: `🎁 ${productName} - Certificat-cadeau appliqué (-$${creditDisplay})`,
+            unitAmount: 0, // Book is free with gift certificate
+            quantity: 1,
+          },
+          {
+            name: "Frais de livraison",
+            unitAmount: order.shippingPrice,
+            quantity: 1,
+          },
+        ];
+        checkoutMetadata.giftCertificateId = appliedGiftCert.id;
+        checkoutMetadata.giftCertificateCode = appliedGiftCert.code;
+        checkoutMetadata.giftCertificateCredit = giftCertBookCredit.toString();
+      } else {
+        // Regular checkout - full amount
+        lineItems = [
           {
             name: productName,
             unitAmount: order.totalAmount,
             quantity: 1,
           },
-        ],
-        successUrl: `${baseUrl}/app/order-success?session_id={CHECKOUT_SESSION_ID}`,
+        ];
+      }
+
+      // Create checkout session with discounts if available
+      const session = await stripeService.createCheckoutSessionWithDiscount({
+        customerId: stripeCustomerId,
+        orderId: order.id,
+        items: lineItems,
+        successUrl: `${baseUrl}/app/order-success?session_id={CHECKOUT_SESSION_ID}${giftCertificateApplied ? '&gift=true' : ''}`,
         cancelUrl: `${baseUrl}/app/order-cancel`,
-        metadata: {
-          orderNumber: order.orderNumber,
-          productType: order.productType,
-          appliedDiscounts: stripeDiscounts.length > 0 ? stripeDiscounts.map(d => d.coupon).join(',') : undefined,
-        },
+        metadata: checkoutMetadata,
         discounts: stripeDiscounts.length > 0 ? stripeDiscounts : undefined,
       });
 

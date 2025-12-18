@@ -159,9 +159,9 @@ export default function Home() {
                 desc: "Une photo fige l'instant, une vidéo capture l'émotion. Intégrez vos vidéos marquantes via des QR codes élégants."
               },
               {
-                icon: <CheckCircle className="w-8 h-8 text-stone-700" />,
-                title: "Zéro gaspillage",
-                desc: "Fini les pages 'Première dent' qui restent vides. Vous choisissez quelles pages imprimer. Personnalisation totale."
+                icon: <Users className="w-8 h-8 text-stone-800" />,
+                title: "Création Collaborative",
+                desc: "Partagez la création de votre album avec les autres. Ajoutez des utilisateurs qui vous aideront à ajouter des photos et des descriptions."
               },
               {
                 icon: <Heart className="w-8 h-8 text-red-400" />,
@@ -174,9 +174,9 @@ export default function Home() {
                 desc: "Recevez des suggestions personnalisées : 'Vous êtes à 6 mois, une photo du ventre ?' ou 'Léo a 1 an aujourd'hui !'"
               },
               {
-                icon: <Users className="w-8 h-8 text-stone-800" />,
-                title: "Création Collaborative",
-                desc: "Partagez la création de votre album avec les autres. Ajoutez des utilisateurs qui vous aideront à ajouter des photos et des descriptions."
+                icon: <CheckCircle className="w-8 h-8 text-stone-700" />,
+                title: "Zéro gaspillage",
+                desc: "Fini les pages 'Première dent' qui restent vides. Vous choisissez quelles pages imprimer. Personnalisation totale."
               }
             ].map((feature, idx) => (
               <motion.div 

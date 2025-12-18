@@ -2438,17 +2438,60 @@ export async function registerRoutes(
         checkoutMetadata.giftCertificateCode = appliedGiftCert.code;
         checkoutMetadata.giftCertificateCredit = giftCertBookCredit.toString();
       } else {
-        // Regular checkout - full amount
-        lineItems = [
-          {
-            name: productName,
-            unitAmount: order.totalAmount,
-            quantity: 1,
-          },
-        ];
+        // Regular checkout - calculate discounts on book price only (not shipping)
+        const bookPrice = order.basePrice + order.extraPagesPrice;
+        let discountedBookPrice = bookPrice;
+        let discountDescription = '';
+        
+        // Apply user discounts manually to book price only
+        for (const ud of userDiscounts) {
+          if (ud.discount) {
+            if (ud.discount.type === 'percentage') {
+              const discountAmount = Math.floor(bookPrice * (ud.discount.value / 100));
+              discountedBookPrice -= discountAmount;
+              discountDescription = ` (-${ud.discount.value}% ${ud.discount.name})`;
+            } else if (ud.discount.type === 'fixed') {
+              discountedBookPrice -= ud.discount.value;
+              discountDescription = ` (-$${(ud.discount.value / 100).toFixed(2)} ${ud.discount.name})`;
+            }
+          }
+        }
+        
+        // Ensure price doesn't go negative
+        if (discountedBookPrice < 0) discountedBookPrice = 0;
+        
+        // Build line items: book (with discount) + shipping (no discount)
+        if (userDiscounts.length > 0 && discountDescription) {
+          lineItems = [
+            {
+              name: `${productName}${discountDescription}`,
+              unitAmount: discountedBookPrice,
+              quantity: 1,
+            },
+            {
+              name: "Frais de livraison",
+              unitAmount: order.shippingPrice,
+              quantity: 1,
+            },
+          ];
+        } else {
+          // No discounts - show book + shipping separately for clarity
+          lineItems = [
+            {
+              name: productName,
+              unitAmount: bookPrice,
+              quantity: 1,
+            },
+            {
+              name: "Frais de livraison",
+              unitAmount: order.shippingPrice,
+              quantity: 1,
+            },
+          ];
+        }
       }
 
-      // Create checkout session with discounts if available
+      // Create checkout session WITHOUT Stripe discounts (we calculate manually)
       const session = await stripeService.createCheckoutSessionWithDiscount({
         customerId: stripeCustomerId,
         orderId: order.id,
@@ -2456,7 +2499,7 @@ export async function registerRoutes(
         successUrl: `${baseUrl}/app/order-success?session_id={CHECKOUT_SESSION_ID}${giftCertificateApplied ? '&gift=true' : ''}`,
         cancelUrl: `${baseUrl}/app/order-cancel`,
         metadata: checkoutMetadata,
-        discounts: stripeDiscounts.length > 0 ? stripeDiscounts : undefined,
+        // Don't pass Stripe discounts - we calculated them manually on book price only
       });
 
       // Update order with Stripe session ID

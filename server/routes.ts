@@ -2362,54 +2362,28 @@ export async function registerRoutes(
         // Safety checks: certificate exists, product type matches, single item, quantity 1
         const isSingleItemOrder = order.quantity === 1;
         const productTypeMatches = giftCert && giftCert.productType === order.productType;
-        const certificateNotUsed = giftCert && giftCert.status === 'redeemed'; // Already redeemed by user
+        const certificateIsRedeemed = giftCert && giftCert.status === 'redeemed';
         
-        if (giftCert && productTypeMatches && isSingleItemOrder && certificateNotUsed) {
-          // Mark order as paid with gift certificate
-          await storage.updateOrder(order.id, {
-            status: "paid",
-          });
-
-          // Create payment record for gift certificate
-          await storage.createPayment({
-            userId,
+        if (giftCert && productTypeMatches && isSingleItemOrder && certificateIsRedeemed) {
+          // Use transactional payment processing to ensure atomicity
+          const result = await storage.processGiftCertificatePayment({
             orderId: order.id,
-            stripePaymentIntentId: null,
+            userId,
+            giftCertificateId: giftCert.id,
             amount: order.totalAmount,
             currency: order.currency,
-            paymentType: "gift_certificate",
-            status: "succeeded",
           });
 
-          // Log gift certificate redemption event
-          await storage.createOrderEvent({
-            orderId: order.id,
-            eventType: "payment_received",
-            newStatus: "paid",
-            metadata: { 
-              paymentMethod: "gift_certificate",
-              giftCertificateId: giftCert.id,
-              giftCertificateCode: giftCert.code,
-            },
-          });
-
-          // Mark gift certificate as fully used
-          await storage.updateGiftCertificate(giftCert.id, {
-            status: 'used',
-          });
-
-          // Clear the gift certificate credit from user (it's been used)
-          await storage.updateUser(userId, {
-            activeGiftCertificateId: null,
-          });
-
-          // Return success without redirect to Stripe
-          return res.json({ 
-            success: true, 
-            paidWithGiftCertificate: true,
-            message: "Votre commande a été payée avec votre certificat-cadeau!",
-            redirectUrl: `/app/order-success?order_id=${order.id}&gift=true`,
-          });
+          if (result.success) {
+            return res.json({ 
+              success: true, 
+              paidWithGiftCertificate: true,
+              message: "Votre commande a été payée avec votre certificat-cadeau!",
+              redirectUrl: `/app/order-success?order_id=${order.id}&gift=true`,
+            });
+          }
+          // If transaction failed, fall through to Stripe checkout
+          console.error('Gift certificate payment failed:', result.error);
         }
       }
 

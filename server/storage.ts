@@ -202,6 +202,15 @@ export interface IStorage {
   updateGiftCertificate(id: string, data: Partial<InsertGiftCertificate>): Promise<GiftCertificate | undefined>;
   getAllGiftCertificates(): Promise<GiftCertificate[]>;
   getGiftCertificateStats(): Promise<{ total: number; pending: number; paid: number; redeemed: number; totalRevenue: number }>;
+  
+  // Transactional Gift Certificate Payment
+  processGiftCertificatePayment(params: {
+    orderId: string;
+    userId: string;
+    giftCertificateId: string;
+    amount: number;
+    currency: string;
+  }): Promise<{ success: boolean; order?: Order; error?: string }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1543,6 +1552,60 @@ export class DatabaseStorage implements IStorage {
     const redeemed = all.filter(g => g.status === 'redeemed').length;
     const totalRevenue = all.filter(g => g.status !== 'pending' && g.status !== 'refunded').reduce((sum, g) => sum + g.amount, 0);
     return { total: all.length, pending, paid, redeemed, totalRevenue };
+  }
+
+  async processGiftCertificatePayment(params: {
+    orderId: string;
+    userId: string;
+    giftCertificateId: string;
+    amount: number;
+    currency: string;
+  }): Promise<{ success: boolean; order?: Order; error?: string }> {
+    const { orderId, userId, giftCertificateId, amount, currency } = params;
+    
+    try {
+      return await db.transaction(async (tx) => {
+        const [giftCert] = await tx.select().from(giftCertificates).where(eq(giftCertificates.id, giftCertificateId)).limit(1);
+        if (!giftCert || giftCert.status !== 'redeemed') {
+          return { success: false, error: 'Certificat-cadeau invalide ou déjà utilisé' };
+        }
+
+        const [updatedOrder] = await tx.update(orders).set({ status: 'paid' }).where(eq(orders.id, orderId)).returning();
+        if (!updatedOrder) {
+          return { success: false, error: 'Commande non trouvée' };
+        }
+
+        await tx.insert(payments).values({
+          userId,
+          orderId,
+          stripePaymentIntentId: null,
+          amount,
+          currency,
+          paymentType: 'gift_certificate',
+          status: 'succeeded',
+        });
+
+        await tx.insert(orderEvents).values({
+          orderId,
+          eventType: 'payment_received',
+          newStatus: 'paid',
+          metadata: { 
+            paymentMethod: 'gift_certificate',
+            giftCertificateId: giftCert.id,
+            giftCertificateCode: giftCert.code,
+          },
+        });
+
+        await tx.update(giftCertificates).set({ status: 'used' }).where(eq(giftCertificates.id, giftCertificateId));
+
+        await tx.update(users).set({ activeGiftCertificateId: null, updatedAt: new Date() }).where(eq(users.id, userId));
+
+        return { success: true, order: updatedOrder };
+      });
+    } catch (error) {
+      console.error('Gift certificate payment transaction failed:', error);
+      return { success: false, error: 'Erreur lors du traitement du paiement' };
+    }
   }
 }
 

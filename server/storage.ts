@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { users, books, memories, userPlans, qrCodes, passwordResetTokens, bookPages, notifications, notificationSettings, bookTemplates, templateSections, templateParts, templatePages, userBookPages, mediaFiles, subscriptions, orders, orderEvents, payments, pdfExports, adminActivityLogs, emailCampaigns, subscriptionDiscounts, userSubscriptionDiscounts, subscriptionPlanHistory, bookInvitations, bookCollaborators, type User, type InsertUser, type UpsertUser, type Book, type InsertBook, type Memory, type InsertMemory, type UserPlan, type InsertUserPlan, type QRCode, type InsertQRCode, type PasswordResetToken, type InsertPasswordResetToken, type BookPage, type InsertBookPage, type Notification, type InsertNotification, type NotificationSettings, type InsertNotificationSettings, type BookTemplate, type InsertBookTemplate, type TemplateSection, type InsertTemplateSection, type TemplatePart, type InsertTemplatePart, type TemplatePage, type InsertTemplatePage, type UserBookPage, type InsertUserBookPage, type MediaFile, type InsertMediaFile, type Subscription, type InsertSubscription, type Order, type InsertOrder, type OrderEvent, type InsertOrderEvent, type Payment, type InsertPayment, type PdfExport, type InsertPdfExport, type AdminActivityLog, type InsertAdminActivityLog, type EmailCampaign, type InsertEmailCampaign, type SubscriptionDiscount, type InsertSubscriptionDiscount, type UserSubscriptionDiscount, type InsertUserSubscriptionDiscount, type SubscriptionPlanHistory, type InsertSubscriptionPlanHistory, type BookInvitation, type BookCollaborator } from "@shared/schema";
+import { users, books, memories, userPlans, qrCodes, passwordResetTokens, bookPages, notifications, notificationSettings, bookTemplates, templateSections, templateParts, templatePages, userBookPages, mediaFiles, subscriptions, orders, orderEvents, payments, pdfExports, adminActivityLogs, emailCampaigns, subscriptionDiscounts, userSubscriptionDiscounts, subscriptionPlanHistory, bookInvitations, bookCollaborators, giftCertificates, type User, type InsertUser, type UpsertUser, type Book, type InsertBook, type Memory, type InsertMemory, type UserPlan, type InsertUserPlan, type QRCode, type InsertQRCode, type PasswordResetToken, type InsertPasswordResetToken, type BookPage, type InsertBookPage, type Notification, type InsertNotification, type NotificationSettings, type InsertNotificationSettings, type BookTemplate, type InsertBookTemplate, type TemplateSection, type InsertTemplateSection, type TemplatePart, type InsertTemplatePart, type TemplatePage, type InsertTemplatePage, type UserBookPage, type InsertUserBookPage, type MediaFile, type InsertMediaFile, type Subscription, type InsertSubscription, type Order, type InsertOrder, type OrderEvent, type InsertOrderEvent, type Payment, type InsertPayment, type PdfExport, type InsertPdfExport, type AdminActivityLog, type InsertAdminActivityLog, type EmailCampaign, type InsertEmailCampaign, type SubscriptionDiscount, type InsertSubscriptionDiscount, type UserSubscriptionDiscount, type InsertUserSubscriptionDiscount, type SubscriptionPlanHistory, type InsertSubscriptionPlanHistory, type BookInvitation, type BookCollaborator, type GiftCertificate, type InsertGiftCertificate } from "@shared/schema";
 import { eq, desc, and, gt, lt, asc, lte, or, isNull, sum, count, sql } from "drizzle-orm";
 
 export interface IStorage {
@@ -193,6 +193,15 @@ export interface IStorage {
   getBookCollaborator(bookId: string, userId: string): Promise<any>;
   getBooksSharedWithUser(userId: string): Promise<any[]>;
   removeBookCollaborator(id: string): Promise<boolean>;
+  
+  // Gift Certificate operations
+  createGiftCertificate(data: InsertGiftCertificate): Promise<GiftCertificate>;
+  getGiftCertificate(id: string): Promise<GiftCertificate | undefined>;
+  getGiftCertificateByCode(code: string): Promise<GiftCertificate | undefined>;
+  getGiftCertificateByStripeSession(sessionId: string): Promise<GiftCertificate | undefined>;
+  updateGiftCertificate(id: string, data: Partial<InsertGiftCertificate>): Promise<GiftCertificate | undefined>;
+  getAllGiftCertificates(): Promise<GiftCertificate[]>;
+  getGiftCertificateStats(): Promise<{ total: number; pending: number; paid: number; redeemed: number; totalRevenue: number }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1495,6 +1504,45 @@ export class DatabaseStorage implements IStorage {
   async removeBookCollaborator(id: string): Promise<boolean> {
     const result = await db.delete(bookCollaborators).where(eq(bookCollaborators.id, id)).returning();
     return result.length > 0;
+  }
+
+  // Gift Certificate operations
+  async createGiftCertificate(data: InsertGiftCertificate): Promise<GiftCertificate> {
+    const result = await db.insert(giftCertificates).values(data).returning();
+    return result[0];
+  }
+
+  async getGiftCertificate(id: string): Promise<GiftCertificate | undefined> {
+    const result = await db.select().from(giftCertificates).where(eq(giftCertificates.id, id)).limit(1);
+    return result[0];
+  }
+
+  async getGiftCertificateByCode(code: string): Promise<GiftCertificate | undefined> {
+    const result = await db.select().from(giftCertificates).where(eq(giftCertificates.code, code)).limit(1);
+    return result[0];
+  }
+
+  async getGiftCertificateByStripeSession(sessionId: string): Promise<GiftCertificate | undefined> {
+    const result = await db.select().from(giftCertificates).where(eq(giftCertificates.stripeSessionId, sessionId)).limit(1);
+    return result[0];
+  }
+
+  async updateGiftCertificate(id: string, data: Partial<InsertGiftCertificate>): Promise<GiftCertificate | undefined> {
+    const result = await db.update(giftCertificates).set(data).where(eq(giftCertificates.id, id)).returning();
+    return result[0];
+  }
+
+  async getAllGiftCertificates(): Promise<GiftCertificate[]> {
+    return await db.select().from(giftCertificates).orderBy(desc(giftCertificates.createdAt));
+  }
+
+  async getGiftCertificateStats(): Promise<{ total: number; pending: number; paid: number; redeemed: number; totalRevenue: number }> {
+    const all = await db.select().from(giftCertificates);
+    const pending = all.filter(g => g.status === 'pending').length;
+    const paid = all.filter(g => ['paid', 'sent'].includes(g.status)).length;
+    const redeemed = all.filter(g => g.status === 'redeemed').length;
+    const totalRevenue = all.filter(g => g.status !== 'pending' && g.status !== 'refunded').reduce((sum, g) => sum + g.amount, 0);
+    return { total: all.length, pending, paid, redeemed, totalRevenue };
   }
 }
 

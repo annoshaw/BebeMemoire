@@ -16,7 +16,8 @@ export default function Navbar() {
     { name: lang === "fr" ? "Fonctionnalités" : "Features", href: "#features" },
     { name: lang === "fr" ? "Comment ça marche" : "How it works", href: "#how-it-works" },
     { name: lang === "fr" ? "Livre Imprimé" : "Printed Book", href: "#print" },
-    { name: lang === "fr" ? "Certificat-cadeau" : "Gift Card", href: "/certificat-cadeau", isLink: true },
+    { name: lang === "fr" ? "Offrir un livre" : "Gift a Book", href: "/certificat-cadeau", isLink: true },
+    { name: lang === "fr" ? "J'ai un code" : "I have a code", href: "/utiliser-certificat", isLink: true },
   ];
 
   return (

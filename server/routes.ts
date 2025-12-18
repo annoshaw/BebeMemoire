@@ -205,6 +205,12 @@ export async function registerRoutes(
     });
   }
   
+  // Serve attached_assets for cover style images and other assets
+  const attachedAssetsPath = path.resolve(process.cwd(), "attached_assets");
+  if (fs.existsSync(attachedAssetsPath)) {
+    app.use("/attached_assets", express.static(attachedAssetsPath));
+  }
+  
   // Setup Replit Auth (handles session, passport, login/logout/callback routes)
   await setupAuth(app);
 

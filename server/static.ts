@@ -20,6 +20,12 @@ export function serveStatic(app: Express) {
       res.sendFile(path.resolve(flutterPath, "index.html"));
     });
   }
+  
+  // Serve attached_assets for cover style images
+  const attachedAssetsPath = path.resolve(__dirname, "..", "attached_assets");
+  if (fs.existsSync(attachedAssetsPath)) {
+    app.use("/attached_assets", express.static(attachedAssetsPath));
+  }
 
   // Serve React app
   app.use(express.static(distPath));

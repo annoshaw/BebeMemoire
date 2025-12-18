@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { CreditCard, Loader2, ShieldCheck, ExternalLink, BookOpen, BookMarked, Smartphone, ChevronRight } from "lucide-react";
+import { CreditCard, Loader2, ShieldCheck, ExternalLink, BookOpen, BookMarked, Smartphone, ChevronRight, Palette } from "lucide-react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +12,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { motion } from "framer-motion";
+import { CoverStyleSelector } from "@/components/CoverStyleSelector";
+import { getCoverStyleById } from "@shared/coverStyles";
 
 type ProductType = "softcover" | "hardcover" | "ebook";
 
@@ -20,8 +22,9 @@ export default function TestCheckout() {
   const [showDialog, setShowDialog] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [step, setStep] = useState<"select" | "confirm">("select");
+  const [step, setStep] = useState<"select" | "cover" | "confirm">("select");
   const [selectedProduct, setSelectedProduct] = useState<ProductType | null>(null);
+  const [selectedCover, setSelectedCover] = useState<string | null>(null);
 
   // Get params from URL
   const params = new URLSearchParams(window.location.search);
@@ -40,15 +43,16 @@ export default function TestCheckout() {
         // Pre-select first product type if available
         if (parsed.length > 0 && !selectedProduct) {
           setSelectedProduct(parsed[0].productType as ProductType);
-          setStep("confirm");
+          // For multi-item orders, skip to cover selection
+          setStep("cover");
         }
       } catch (e) {
         console.error("Error parsing items:", e);
       }
     } else if (productParam && !selectedProduct) {
-      // Single product from URL - pre-select it and go to confirm step
+      // Single product from URL - pre-select it and go to cover step
       setSelectedProduct(productParam);
-      setStep("confirm");
+      setStep("cover");
     }
   }, [itemsParam, productParam]);
   
@@ -172,6 +176,7 @@ export default function TestCheckout() {
           pageCount,
           quantity: isMultiItemOrder ? orderItems.reduce((sum, item) => sum + item.quantity, 0) : 1,
           orderItems: isMultiItemOrder ? orderItems : undefined,
+          coverStyle: selectedCover,
           shippingAddress: {
             name: "Test User",
             street: "123 Test Street",
@@ -230,7 +235,12 @@ export default function TestCheckout() {
 
   const handleSelectProduct = (type: ProductType) => {
     setSelectedProduct(type);
-    setStep("confirm");
+    // E-books don't need cover selection - go directly to confirm
+    if (type === "ebook") {
+      setStep("confirm");
+    } else {
+      setStep("cover");
+    }
   };
 
   const handleConfirm = () => {
@@ -245,8 +255,19 @@ export default function TestCheckout() {
   };
 
   const handleBack = () => {
-    setStep("select");
-    setSelectedProduct(null);
+    if (step === "confirm" && selectedProduct !== "ebook") {
+      setStep("cover");
+    } else if (step === "cover") {
+      setStep("select");
+      setSelectedCover(null);
+    } else {
+      setStep("select");
+      setSelectedProduct(null);
+    }
+  };
+
+  const handleCoverConfirm = () => {
+    setStep("confirm");
   };
 
   // If no bookId and no items, redirect back
@@ -327,6 +348,14 @@ export default function TestCheckout() {
                 </Button>
               </DialogFooter>
             </>
+          ) : step === "cover" ? (
+            <CoverStyleSelector
+              language="fr"
+              selectedCover={selectedCover}
+              onSelectCover={setSelectedCover}
+              onConfirm={handleCoverConfirm}
+              onBack={handleBack}
+            />
           ) : (
             <>
               <DialogHeader className="text-center">
@@ -397,6 +426,12 @@ export default function TestCheckout() {
                       <span className="text-stone-500">Format</span>
                       <span className="font-medium">{selectedProduct && productNames[selectedProduct]}</span>
                     </div>
+                    {selectedCover && getCoverStyleById(selectedCover) && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-stone-500">Couverture</span>
+                        <span className="font-medium">{getCoverStyleById(selectedCover)?.name.fr}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-sm">
                       <span className="text-stone-500">Pages</span>
                       <span className="font-medium">{pageCount} pages (50 incluses)</span>
@@ -468,7 +503,7 @@ export default function TestCheckout() {
                   className="w-full text-stone-500"
                   data-testid="button-back"
                 >
-                  Retour au choix du format
+                  {selectedProduct !== "ebook" ? "Retour au choix de la couverture" : "Retour au choix du format"}
                 </Button>
               </DialogFooter>
             </>

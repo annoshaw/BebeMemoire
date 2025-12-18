@@ -165,6 +165,7 @@ const createOrderSchema = z.object({
   pageCount: z.number().int().positive().min(1),
   quantity: z.number().int().positive().optional().default(1),
   orderItems: z.array(orderItemSchema).optional().nullable(),
+  coverStyle: z.string().optional().nullable(),
   shippingAddress: z.object({
     name: z.string(),
     street: z.string(),
@@ -2139,7 +2140,7 @@ export async function registerRoutes(
         });
       }
       
-      const { bookId, productType, printOptions, pageCount, quantity, orderItems, shippingAddress, billingAddress } = parseResult.data;
+      const { bookId, productType, printOptions, pageCount, quantity, orderItems, coverStyle, shippingAddress, billingAddress } = parseResult.data;
 
       // Calculate pricing (amounts in cents) - 50 pages included in base price
       const INCLUDED_PAGES = 50;
@@ -2190,6 +2191,7 @@ export async function registerRoutes(
         pageCount,
         quantity,
         orderItems: orderItems || [],
+        coverStyle: coverStyle || null,
         basePrice,
         extraPagesPrice,
         shippingPrice: shippingAmount,

@@ -293,7 +293,7 @@ export default function Prototype() {
   const [bookCollaborators, setBookCollaborators] = useState<any[]>([]);
   const [isLoadingSharing, setIsLoadingSharing] = useState(false);
   
-  // Fetch sharing data when modal opens
+  // Fetch sharing data function
   const fetchSharingData = async () => {
     if (!activeBook?.id || (activeBook as any).isLocal) return;
     setIsLoadingSharing(true);
@@ -316,6 +316,13 @@ export default function Prototype() {
       setIsLoadingSharing(false);
     }
   };
+  
+  // Fetch sharing data when active book changes
+  useEffect(() => {
+    if (activeBook?.id && !(activeBook as any).isLocal) {
+      fetchSharingData();
+    }
+  }, [activeBook?.id]);
   
   const handleInviteUser = async () => {
     if (!activeBook?.id || !shareEmail) return;
@@ -571,12 +578,17 @@ export default function Prototype() {
       gender: "Femme"
     };
   });
-  const [invitedUsers, setInvitedUsers] = useState([
-    { id: 1, name: "Jean Martin", email: "jean@example.com" }
-  ]);
   const [showAddUser, setShowAddUser] = useState(false);
   const [newUserName, setNewUserName] = useState("");
   const [newUserEmail, setNewUserEmail] = useState("");
+  
+  // Use existing bookCollaborators state from fetchSharingData
+  const invitedUsers = bookCollaborators?.map((c: any) => ({
+    id: c.collaborator?.id || c.id,
+    name: c.user?.fullName || c.user?.email?.split('@')[0] || 'Utilisateur',
+    email: c.user?.email || '',
+    role: c.collaborator?.role || c.role || 'observer'
+  })) || [];
   const [showAddPageMenu, setShowAddPageMenu] = useState(false);
   const [bookStyle, setBookStyle] = useState<"moderne" | "classique" | "colore" | "animation">("moderne");
   const [previewStyle, setPreviewStyle] = useState<string | null>(null);
@@ -821,16 +833,24 @@ export default function Prototype() {
   };
 
   const addInvitedUser = () => {
-    if (newUserName && newUserEmail) {
-      setInvitedUsers([...invitedUsers, { id: Date.now(), name: newUserName, email: newUserEmail }]);
-      setNewUserName("");
-      setNewUserEmail("");
-      setShowAddUser(false);
-    }
+    // Open share modal instead of local add
+    setShowShareModal(true);
+    setShowAddUser(false);
   };
 
-  const removeInvitedUser = (id: number) => {
-    setInvitedUsers(invitedUsers.filter(u => u.id !== id));
+  const removeInvitedUser = async (collaboratorId: string) => {
+    if (!activeBook?.id) return;
+    try {
+      const res = await fetch(`/api/books/${activeBook.id}/collaborators/${collaboratorId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (res.ok) {
+        fetchSharingData();
+      }
+    } catch (error) {
+      console.error("Error removing collaborator:", error);
+    }
   };
 
   const addBasicPage = () => {
@@ -2304,15 +2324,29 @@ export default function Prototype() {
                   {invitedUsers.map((user) => (
                     <div key={user.id} className="flex items-center gap-3 p-2 bg-stone-50 rounded-lg">
                       <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                        <User size={14} className="text-primary" />
+                        {user.role === "collaborator" ? (
+                          <Edit2 size={14} className="text-primary" />
+                        ) : (
+                          <User size={14} className="text-primary" />
+                        )}
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-stone-800">{user.name}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-medium text-stone-800">{user.name}</p>
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                            user.role === "collaborator" 
+                              ? "bg-blue-100 text-blue-700" 
+                              : "bg-stone-200 text-stone-600"
+                          }`}>
+                            {user.role === "collaborator" ? "Collaborateur" : "Observateur"}
+                          </span>
+                        </div>
                         <p className="text-xs text-stone-500">{user.email}</p>
                       </div>
                       <button 
                         onClick={() => removeInvitedUser(user.id)}
                         className="p-1 hover:bg-red-100 rounded-full text-red-500"
+                        data-testid={`button-remove-collaborator-${user.id}`}
                       >
                         <Trash2 size={14} />
                       </button>

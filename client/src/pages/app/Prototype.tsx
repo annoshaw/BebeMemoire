@@ -2825,7 +2825,7 @@ export default function Prototype() {
                                   data-testid={`button-share-book-${book.id}`}
                                   title="Partager le livre"
                                 >
-                                  <Share2 size={14} />
+                                  <UserPlus size={14} />
                                 </Button>
                                 <Button 
                                   size="sm" 

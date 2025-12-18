@@ -476,12 +476,14 @@ export async function generateCoverPdf(options: {
   );
   
   // Cover dimensions in mm (with bleed and wrap)
+  // Gelato requires 3mm bleed on ALL edges of each panel
   const bleed = GELATO_SPECS.interior.bleed;
   const wrap = GELATO_SPECS.cover.wrapWidth;
-  const coverHeight = GELATO_SPECS.interior.trimHeight + (bleed * 2); // 286mm
+  const coverHeight = GELATO_SPECS.interior.trimHeight + (bleed * 2); // 286mm (280 + 3 + 3)
   
-  // Full cover width: wrap + back + spine + front + wrap
-  const singleCoverWidth = GELATO_SPECS.interior.trimWidth + bleed; // One side with bleed
+  // Full cover width: wrap + back (with bleed both sides) + spine + front (with bleed both sides) + wrap
+  // Each panel: trimWidth + bleed on outer edge + bleed on spine edge = trimWidth + bleed*2
+  const singleCoverWidth = GELATO_SPECS.interior.trimWidth + (bleed * 2); // 216mm (210 + 3 + 3)
   const totalCoverWidth = wrap + singleCoverWidth + spineWidthMm + singleCoverWidth + wrap;
   
   const coverWidthIn = mmToInches(totalCoverWidth);

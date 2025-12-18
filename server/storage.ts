@@ -1564,46 +1564,58 @@ export class DatabaseStorage implements IStorage {
     const { orderId, userId, giftCertificateId, amount, currency } = params;
     
     try {
-      return await db.transaction(async (tx) => {
-        const [giftCert] = await tx.select().from(giftCertificates).where(eq(giftCertificates.id, giftCertificateId)).limit(1);
-        if (!giftCert || giftCert.status !== 'redeemed') {
-          return { success: false, error: 'Certificat-cadeau invalide ou déjà utilisé' };
-        }
+      // Step 1: Verify gift certificate is still valid
+      const [giftCert] = await db.select().from(giftCertificates).where(eq(giftCertificates.id, giftCertificateId)).limit(1);
+      if (!giftCert || giftCert.status !== 'redeemed') {
+        return { success: false, error: 'Certificat-cadeau invalide ou déjà utilisé' };
+      }
 
-        const [updatedOrder] = await tx.update(orders).set({ status: 'paid' }).where(eq(orders.id, orderId)).returning();
-        if (!updatedOrder) {
-          return { success: false, error: 'Commande non trouvée' };
-        }
+      // Step 2: Mark gift certificate as used FIRST (prevents double-spend)
+      await db.update(giftCertificates).set({ status: 'used' }).where(eq(giftCertificates.id, giftCertificateId));
 
-        await tx.insert(payments).values({
-          userId,
-          orderId,
-          stripePaymentIntentId: null,
-          amount,
-          currency,
-          paymentType: 'gift_certificate',
-          status: 'succeeded',
-        });
+      // Step 3: Update order to paid
+      const [updatedOrder] = await db.update(orders).set({ status: 'paid' }).where(eq(orders.id, orderId)).returning();
+      if (!updatedOrder) {
+        // Rollback: restore certificate status
+        await db.update(giftCertificates).set({ status: 'redeemed' }).where(eq(giftCertificates.id, giftCertificateId));
+        return { success: false, error: 'Commande non trouvée' };
+      }
 
-        await tx.insert(orderEvents).values({
-          orderId,
-          eventType: 'payment_received',
-          newStatus: 'paid',
-          metadata: { 
-            paymentMethod: 'gift_certificate',
-            giftCertificateId: giftCert.id,
-            giftCertificateCode: giftCert.code,
-          },
-        });
-
-        await tx.update(giftCertificates).set({ status: 'used' }).where(eq(giftCertificates.id, giftCertificateId));
-
-        await tx.update(users).set({ activeGiftCertificateId: null, updatedAt: new Date() }).where(eq(users.id, userId));
-
-        return { success: true, order: updatedOrder };
+      // Step 4: Create payment record
+      await db.insert(payments).values({
+        userId,
+        orderId,
+        stripePaymentIntentId: null,
+        amount,
+        currency,
+        paymentType: 'gift_certificate',
+        status: 'succeeded',
       });
+
+      // Step 5: Log order event
+      await db.insert(orderEvents).values({
+        orderId,
+        eventType: 'payment_received',
+        newStatus: 'paid',
+        metadata: { 
+          paymentMethod: 'gift_certificate',
+          giftCertificateId: giftCert.id,
+          giftCertificateCode: giftCert.code,
+        },
+      });
+
+      // Step 6: Clear user's active gift certificate
+      await db.update(users).set({ activeGiftCertificateId: null, updatedAt: new Date() }).where(eq(users.id, userId));
+
+      return { success: true, order: updatedOrder };
     } catch (error) {
-      console.error('Gift certificate payment transaction failed:', error);
+      console.error('Gift certificate payment failed:', error);
+      // Try to restore certificate status on any error
+      try {
+        await db.update(giftCertificates).set({ status: 'redeemed' }).where(eq(giftCertificates.id, giftCertificateId));
+      } catch (rollbackError) {
+        console.error('Failed to rollback gift certificate status:', rollbackError);
+      }
       return { success: false, error: 'Erreur lors du traitement du paiement' };
     }
   }

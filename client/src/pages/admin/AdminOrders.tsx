@@ -57,6 +57,7 @@ interface Order {
   customerName?: string;
   customerEmail?: string;
   orderItems?: OrderItem[];
+  coverStyle?: string;
 }
 
 const statusLabels: Record<string, string> = {
@@ -571,6 +572,12 @@ export default function AdminOrders() {
                   <span className="text-stone-500">ID Livre:</span>
                   <p className="font-mono text-xs">{selectedOrder.bookId}</p>
                 </div>
+                {selectedOrder.coverStyle && (
+                  <div>
+                    <span className="text-stone-500">Style couverture:</span>
+                    <p className="font-medium capitalize">{selectedOrder.coverStyle.replace(/-/g, ' ')}</p>
+                  </div>
+                )}
               </div>
               
               {/* Order Items Detail */}

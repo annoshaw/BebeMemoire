@@ -2,7 +2,7 @@
 import { MailerSend, EmailParams, Sender, Recipient } from 'mailersend';
 
 const FROM_EMAIL = process.env.MAILERSEND_FROM_EMAIL || 'noreply@test-86org8ey200gew13.mlsender.net';
-const FROM_NAME = 'Memoria';
+const FROM_NAME = 'Mémo';
 
 let mailerSendClient: MailerSend | null = null;
 
@@ -63,13 +63,13 @@ export async function sendPasswordResetEmail(data: PasswordResetData): Promise<b
 <body>
   <div class="container">
     <div class="header">
-      <h1>📖 Memoria</h1>
+      <h1>📖 Mémo</h1>
       <p>Réinitialisation de mot de passe</p>
     </div>
     <div class="content">
       <h2>Bonjour ${data.fullName || 'cher parent'},</h2>
       
-      <p>Vous avez demandé à réinitialiser votre mot de passe Memoria.</p>
+      <p>Vous avez demandé à réinitialiser votre mot de passe Mémo.</p>
       
       <p style="text-align: center; margin: 30px 0;">
         <a href="${data.resetUrl}" class="btn">
@@ -81,10 +81,10 @@ export async function sendPasswordResetEmail(data: PasswordResetData): Promise<b
         <strong>⚠️ Important:</strong> Ce lien expire dans 1 heure. Si vous n'avez pas demandé cette réinitialisation, ignorez cet email.
       </div>
       
-      <p>L'équipe Memoria</p>
+      <p>L'équipe Mémo</p>
     </div>
     <div class="footer">
-      <p>Memoria - Créez des souvenirs qui durent toute une vie</p>
+      <p>Mémo - Créez des souvenirs qui durent toute une vie</p>
     </div>
   </div>
 </body>
@@ -93,7 +93,7 @@ export async function sendPasswordResetEmail(data: PasswordResetData): Promise<b
 
     const success = await sendEmail({
       to: data.email,
-      subject: 'Réinitialisation de votre mot de passe Memoria',
+      subject: 'Réinitialisation de votre mot de passe Mémo',
       html,
     });
 
@@ -121,7 +121,7 @@ export async function sendPaymentReminderEmail(data: OrderReminderData): Promise
   try {
     const subject = data.daysRemaining <= 3 
       ? `⚠️ Dernier rappel: Votre commande ${data.orderNumber} expire bientôt`
-      : `Rappel: Finalisez votre commande Memoria ${data.orderNumber}`;
+      : `Rappel: Finalisez votre commande Mémo ${data.orderNumber}`;
 
     const html = `
 <!DOCTYPE html>
@@ -142,7 +142,7 @@ export async function sendPaymentReminderEmail(data: OrderReminderData): Promise
 <body>
   <div class="container">
     <div class="header">
-      <h1>📖 Memoria</h1>
+      <h1>📖 Mémo</h1>
       <p>Votre album de souvenirs</p>
     </div>
     <div class="content">
@@ -172,11 +172,11 @@ export async function sendPaymentReminderEmail(data: OrderReminderData): Promise
       
       <p>Si vous avez des questions, n'hésitez pas à nous contacter.</p>
       
-      <p>L'équipe Memoria</p>
+      <p>L'équipe Mémo</p>
     </div>
     <div class="footer">
-      <p>Memoria - Créez des souvenirs qui durent toute une vie</p>
-      <p>Vous recevez cet email car vous avez une commande en cours sur Memoria.</p>
+      <p>Mémo - Créez des souvenirs qui durent toute une vie</p>
+      <p>Vous recevez cet email car vous avez une commande en cours sur Mémo.</p>
     </div>
   </div>
 </body>
@@ -230,13 +230,13 @@ export async function sendSubscriptionReminderEmail(data: SubscriptionReminderDa
 <body>
   <div class="container">
     <div class="header">
-      <h1>📖 Memoria</h1>
+      <h1>📖 Mémo</h1>
       <p>Votre album de souvenirs</p>
     </div>
     <div class="content">
       <h2>Bonjour ${data.customerName || 'cher parent'},</h2>
       
-      <p>Cela fait maintenant 14 jours que vous avez créé votre compte Memoria ! 🎉</p>
+      <p>Cela fait maintenant 14 jours que vous avez créé votre compte Mémo ! 🎉</p>
       
       <p>Nous voulions vous rappeler que si vous ne choisissez pas d'abonnement, <strong>l'abonnement gratuit sera automatiquement attribué</strong> à votre compte.</p>
       
@@ -277,10 +277,10 @@ export async function sendSubscriptionReminderEmail(data: SubscriptionReminderDa
       
       <p>Si vous avez des questions, n'hésitez pas à nous contacter.</p>
       
-      <p>L'équipe Memoria</p>
+      <p>L'équipe Mémo</p>
     </div>
     <div class="footer">
-      <p>Memoria - Créez des souvenirs qui durent toute une vie</p>
+      <p>Mémo - Créez des souvenirs qui durent toute une vie</p>
     </div>
   </div>
 </body>
@@ -289,7 +289,7 @@ export async function sendSubscriptionReminderEmail(data: SubscriptionReminderDa
 
     const success = await sendEmail({
       to: data.customerEmail,
-      subject: 'Rappel: Choisissez votre abonnement Memoria',
+      subject: 'Rappel: Choisissez votre abonnement Mémo',
       html,
     });
 
@@ -331,7 +331,7 @@ export async function sendOrderCancellationEmail(data: OrderCancellationData): P
 <body>
   <div class="container">
     <div class="header">
-      <h1>📖 Memoria</h1>
+      <h1>📖 Mémo</h1>
       <p>Votre album de souvenirs</p>
     </div>
     <div class="content">
@@ -355,10 +355,10 @@ export async function sendOrderCancellationEmail(data: OrderCancellationData): P
       
       <p>Si vous avez des questions, n'hésitez pas à nous contacter.</p>
       
-      <p>L'équipe Memoria</p>
+      <p>L'équipe Mémo</p>
     </div>
     <div class="footer">
-      <p>Memoria - Créez des souvenirs qui durent toute une vie</p>
+      <p>Mémo - Créez des souvenirs qui durent toute une vie</p>
     </div>
   </div>
 </body>
@@ -413,7 +413,7 @@ export async function sendPdfDeliveryEmail(data: PdfDeliveryData): Promise<boole
 <body>
   <div class="container">
     <div class="header">
-      <h1>📖 Memoria</h1>
+      <h1>📖 Mémo</h1>
       <p>Votre livre de souvenirs est prêt!</p>
     </div>
     <div class="content">
@@ -439,12 +439,12 @@ export async function sendPdfDeliveryEmail(data: PdfDeliveryData): Promise<boole
       
       <p>Si vous avez des questions ou rencontrez des difficultés, n'hésitez pas à nous contacter.</p>
       
-      <p>Merci d'avoir choisi Memoria pour préserver vos précieux souvenirs!</p>
+      <p>Merci d'avoir choisi Mémo pour préserver vos précieux souvenirs!</p>
       
-      <p>L'équipe Memoria</p>
+      <p>L'équipe Mémo</p>
     </div>
     <div class="footer">
-      <p>Memoria - Créez des souvenirs qui durent toute une vie</p>
+      <p>Mémo - Créez des souvenirs qui durent toute une vie</p>
     </div>
   </div>
 </body>
@@ -512,7 +512,7 @@ export async function sendSubscriptionConfirmationEmail(data: SubscriptionConfir
 <body>
   <div class="container">
     <div class="header">
-      <h1>📖 Memoria</h1>
+      <h1>📖 Mémo</h1>
       <p>Bienvenue dans votre abonnement!</p>
     </div>
     <div class="content">
@@ -538,12 +538,12 @@ export async function sendSubscriptionConfirmationEmail(data: SubscriptionConfir
         </a>
       </p>
       
-      <p>Merci de faire confiance à Memoria pour accompagner votre famille!</p>
+      <p>Merci de faire confiance à Mémo pour accompagner votre famille!</p>
       
-      <p>L'équipe Memoria</p>
+      <p>L'équipe Mémo</p>
     </div>
     <div class="footer">
-      <p>Memoria - Créez des souvenirs qui durent toute une vie</p>
+      <p>Mémo - Créez des souvenirs qui durent toute une vie</p>
     </div>
   </div>
 </body>
@@ -610,7 +610,7 @@ export async function sendPlanChangeEmail(data: PlanChangeData): Promise<boolean
 <body>
   <div class="container">
     <div class="header">
-      <h1>📖 Memoria</h1>
+      <h1>📖 Mémo</h1>
       <p>Changement d'abonnement</p>
     </div>
     <div class="content">
@@ -645,10 +645,10 @@ export async function sendPlanChangeEmail(data: PlanChangeData): Promise<boolean
       
       <p>Si vous avez des questions concernant ce changement, n'hésitez pas à nous contacter.</p>
       
-      <p>L'équipe Memoria</p>
+      <p>L'équipe Mémo</p>
     </div>
     <div class="footer">
-      <p>Memoria - Créez des souvenirs qui durent toute une vie</p>
+      <p>Mémo - Créez des souvenirs qui durent toute une vie</p>
     </div>
   </div>
 </body>
@@ -715,7 +715,7 @@ export async function sendPriceAdjustmentEmail(data: PriceAdjustmentData): Promi
 <body>
   <div class="container">
     <div class="header">
-      <h1>📖 Memoria</h1>
+      <h1>📖 Mémo</h1>
       <p>Ajustement de prix</p>
     </div>
     <div class="content">
@@ -752,10 +752,10 @@ export async function sendPriceAdjustmentEmail(data: PriceAdjustmentData): Promi
       
       <p>Si vous avez des questions, n'hésitez pas à nous contacter.</p>
       
-      <p>L'équipe Memoria</p>
+      <p>L'équipe Mémo</p>
     </div>
     <div class="footer">
-      <p>Memoria - Créez des souvenirs qui durent toute une vie</p>
+      <p>Mémo - Créez des souvenirs qui durent toute une vie</p>
     </div>
   </div>
 </body>
@@ -815,7 +815,7 @@ export async function sendDiscountAppliedEmail(data: DiscountAppliedData): Promi
 <body>
   <div class="container">
     <div class="header">
-      <h1>📖 Memoria</h1>
+      <h1>📖 Mémo</h1>
       <p>Vous avez reçu un rabais!</p>
     </div>
     <div class="content">
@@ -842,10 +842,10 @@ export async function sendDiscountAppliedEmail(data: DiscountAppliedData): Promi
       
       <p>Merci de votre fidélité!</p>
       
-      <p>L'équipe Memoria</p>
+      <p>L'équipe Mémo</p>
     </div>
     <div class="footer">
-      <p>Memoria - Créez des souvenirs qui durent toute une vie</p>
+      <p>Mémo - Créez des souvenirs qui durent toute une vie</p>
     </div>
   </div>
 </body>
@@ -902,7 +902,7 @@ export async function sendCampaignEmails(data: CampaignEmailData): Promise<{ sen
 <body>
   <div class="container">
     <div class="header">
-      <h1>📖 Memoria</h1>
+      <h1>📖 Mémo</h1>
       <p>Votre album de souvenirs</p>
     </div>
     <div class="content">
@@ -910,13 +910,13 @@ export async function sendCampaignEmails(data: CampaignEmailData): Promise<{ sen
       ${data.bodyHtml}
       <p style="text-align: center; margin: 30px 0;">
         <a href="https://memoria.replit.app/app" class="btn">
-          Visitez Memoria
+          Visitez Mémo
         </a>
       </p>
-      <p>L'équipe Memoria</p>
+      <p>L'équipe Mémo</p>
     </div>
     <div class="footer">
-      <p>Memoria - Créez des souvenirs qui durent toute une vie</p>
+      <p>Mémo - Créez des souvenirs qui durent toute une vie</p>
       <p style="font-size: 11px; color: #999;">Pour vous désabonner, contactez-nous à support@memoria.app</p>
     </div>
   </div>

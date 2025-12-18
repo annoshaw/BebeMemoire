@@ -14,7 +14,8 @@ import {
   Loader2,
   ShieldAlert,
   Mail,
-  Crown
+  Crown,
+  Gift
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -41,6 +42,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
     { path: "/app/admin/orders", label: "Commandes", icon: ShoppingCart },
     { path: "/app/admin/users", label: "Utilisateurs", icon: Users },
     { path: "/app/admin/subscriptions", label: "Abonnements", icon: Crown },
+    { path: "/app/admin/gift-certificates", label: "Certificats-cadeaux", icon: Gift },
     { path: "/app/admin/exports", label: "Exports PDF", icon: FileText },
     { path: "/app/admin/emails", label: "Courriels", icon: Mail },
   ];

@@ -28,6 +28,8 @@ import AdminEmails from "@/pages/admin/AdminEmails";
 import AdminSubscriptions from "@/pages/admin/AdminSubscriptions";
 import InvitationAccept from "@/pages/app/InvitationAccept";
 import ShareTutorial from "@/pages/app/ShareTutorial";
+import GiftCertificate from "@/pages/GiftCertificate";
+import GiftCertificateSuccess from "@/pages/GiftCertificateSuccess";
 
 function Router() {
   return (
@@ -57,6 +59,8 @@ function Router() {
       <Route path="/app/admin/exports" component={AdminExports} />
       <Route path="/app/admin/emails" component={AdminEmails} />
       <Route path="/app/admin/subscriptions" component={AdminSubscriptions} />
+      <Route path="/certificat-cadeau" component={GiftCertificate} />
+      <Route path="/certificat-cadeau/success" component={GiftCertificateSuccess} />
       <Route component={NotFound} />
     </Switch>
   );

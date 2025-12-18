@@ -32,6 +32,7 @@ export const users = pgTable("users", {
   stripeCustomerId: varchar("stripe_customer_id"),
   onboardingCompleted: boolean("onboarding_completed").default(false),
   subscriptionReminderSentAt: timestamp("subscription_reminder_sent_at"),
+  activeGiftCertificateId: varchar("active_gift_certificate_id"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

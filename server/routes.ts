@@ -2668,9 +2668,10 @@ export async function registerRoutes(
         redeemedAt: new Date(),
       });
 
-      // Grant the user their product/subscription
-      // This would typically create an order credit or activate subscription
-      const user = await storage.getUser(userId);
+      // Store the gift certificate ID on the user for book credit tracking
+      await storage.updateUser(userId, {
+        activeGiftCertificateId: giftCertificate.id,
+      });
 
       // If includes subscription, create/update user plan
       if (giftCertificate.includesSubscription && giftCertificate.subscriptionType) {
@@ -2687,12 +2688,16 @@ export async function registerRoutes(
         }
       }
 
+      // Return redirect URL based on product type - user goes directly to create their book
+      const redirectUrl = '/app/create-album';
+
       res.json({ 
         success: true, 
         productType: giftCertificate.productType,
         includesSubscription: giftCertificate.includesSubscription,
         subscriptionType: giftCertificate.subscriptionType,
-        message: `Certificat-cadeau appliqué! Vous pouvez maintenant commander votre livre ${giftCertificate.productType}.`,
+        redirectUrl,
+        message: `Certificat-cadeau appliqué! Créez votre livre maintenant.`,
       });
     } catch (error) {
       console.error("Redeem gift certificate error:", error);

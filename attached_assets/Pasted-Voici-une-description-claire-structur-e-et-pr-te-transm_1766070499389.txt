@@ -1,0 +1,107 @@
+Voici une description claire, structurée et prête à transmettre à ton développeur sur Replit, pour qu’il comprenne exactement ce que tu veux mettre en place pour l’achat de certificats‑cadeaux dans Mémo.
+
+🎁 Fonctionnalité : Onglet “Certificat‑cadeau”
+🎯 Objectif
+Créer un nouvel onglet sur le site permettant aux utilisateurs d’acheter un certificat‑cadeau Mémo.
+L’utilisateur doit pouvoir choisir entre deux grandes catégories, sélectionner un produit précis, payer via Stripe, puis recevoir automatiquement un email contenant une carte‑cadeau imprimable.
+
+🧩 1. Structure de l’onglet “Certificat‑cadeau”
+L’onglet doit afficher deux catégories principales :
+
+Catégorie 1 — Offrir le livre avec abonnement de base
+Inclut un livre de 50 pages 100 % personnalisable avec photos.
+Options :
+- Livre couverture souple — 43,24 $
+- Livre couverture rigide — 54,76 $
+- E‑Book — 30,00 $
+
+Catégorie 2 — Livre + abonnement (1 an)
+Options :
+- Livre couverture souple + abonnement Platine — 103,12 $
+- Livre couverture souple + abonnement Premium — 67,12 $
+- Livre couverture rigide + abonnement Platine — 114,64 $
+- Livre couverture rigide + abonnement Premium — 78,64 $
+- E‑Book + abonnement Platine — 89,88 $
+- E‑Book + abonnement Premium — 53,88 $
+
+🛒 2. Fonctionnement côté utilisateur
+- L’utilisateur ouvre l’onglet “Certificat‑cadeau”.
+- Il choisit une catégorie.
+- Il sélectionne un produit dans la liste.
+- Il clique sur “Acheter”.
+- Il est redirigé vers Stripe Checkout avec :
+- le bon produit
+- le bon prix
+- les taxes si applicable
+- Une fois le paiement complété :
+- Stripe envoie un webhook au backend
+- Le backend génère un code unique de certificat‑cadeau
+- Un email est envoyé automatiquement avec :
+- la carte‑cadeau imprimable (PDF ou image)
+- le code unique
+- les instructions pour l’utiliser
+
+🔐 3. Backend — logique à implémenter
+Route pour créer une session Stripe
+app.post("/api/giftcard/checkout", async (req, res) => {
+  const { productId } = req.body;
+
+  const product = await db.giftProducts.findOne({ id: productId });
+
+  const session = await stripe.checkout.sessions.create({
+    payment_method_types: ["card"],
+    line_items: [
+      {
+        price_data: {
+          currency: "cad",
+          product_data: { name: product.name },
+          unit_amount: Math.round(product.price * 100)
+        },
+        quantity: 1
+      }
+    ],
+    mode: "payment",
+    success_url: "https://memo.app/success",
+    cancel_url: "https://memo.app/cancel"
+  });
+
+  res.json({ url: session.url });
+});
+
+
+
+Webhook Stripe
+À déclencher après paiement réussi :
+- Générer un code cadeau unique (ex. : MEMO-ABCD-1234)
+- Enregistrer la commande dans la base
+- Envoyer l’email avec la carte‑cadeau
+
+Envoi de l’email (MailerSend)
+Contenu de l’email :
+- Merci pour votre achat
+- Votre certificat‑cadeau Mémo
+- Code : MEMO‑XXXX‑XXXX
+- Lien pour télécharger la carte‑cadeau imprimable
+- Instructions d’utilisation
+
+🖥️ 4. Interface administrateur
+Dans ton backend admin, chaque achat doit apparaître avec :
+- Nom de l’acheteur
+- Email
+- Produit choisi
+- Prix payé
+- Code cadeau généré
+- Date d’achat
+- Statut : “Envoyé”
+
+✨ Résultat final
+✔ Un onglet clair et simple pour acheter un certificat‑cadeau
+✔ Deux catégories bien séparées
+✔ Paiement sécurisé via Stripe
+✔ Email automatique avec carte‑cadeau imprimable
+✔ Suivi complet dans ton admin
+
+Si tu veux, je peux aussi te préparer :
+- le texte exact de l’email cadeau
+- le design de la carte‑cadeau
+- la structure de la base de données pour les certificats‑cadeaux

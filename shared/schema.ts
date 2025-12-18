@@ -700,3 +700,34 @@ export const insertBookCollaboratorSchema = createInsertSchema(bookCollaborators
 
 export type InsertBookCollaborator = z.infer<typeof insertBookCollaboratorSchema>;
 export type BookCollaborator = typeof bookCollaborators.$inferSelect;
+
+// Gift Certificates
+export const giftCertificates = pgTable("gift_certificates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  code: varchar("code").notNull().unique(),
+  purchaserEmail: varchar("purchaser_email").notNull(),
+  purchaserName: varchar("purchaser_name"),
+  recipientEmail: varchar("recipient_email"),
+  recipientName: varchar("recipient_name"),
+  productType: text("product_type").notNull(), // softcover, hardcover, ebook
+  includesSubscription: boolean("includes_subscription").default(false),
+  subscriptionType: text("subscription_type"), // premium, platine, null
+  amount: integer("amount").notNull(), // in cents
+  currency: text("currency").notNull().default("cad"),
+  stripeSessionId: varchar("stripe_session_id"),
+  stripePaymentIntentId: varchar("stripe_payment_intent_id"),
+  status: text("status").notNull().default("pending"), // pending, paid, sent, redeemed, expired, refunded
+  redeemedByUserId: varchar("redeemed_by_user_id").references(() => users.id, { onDelete: "set null" }),
+  redeemedAt: timestamp("redeemed_at"),
+  emailSentAt: timestamp("email_sent_at"),
+  expiresAt: timestamp("expires_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertGiftCertificateSchema = createInsertSchema(giftCertificates).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertGiftCertificate = z.infer<typeof insertGiftCertificateSchema>;
+export type GiftCertificate = typeof giftCertificates.$inferSelect;

@@ -9,6 +9,7 @@ import { Link } from "wouter";
 import heroImage from "@assets/generated_images/happy_parents_with_baby_looking_at_tablet.png";
 import appImage from "@assets/generated_images/memo_editor_page.png";
 import printImage from "@assets/generated_images/high_quality_printed_baby_book.png";
+import creatorImage from "@assets/generated_images/ann_sophie_photo.png";
 import logoMemo from "@/assets/logo-memo.png";
 
 export default function Home() {
@@ -368,6 +369,52 @@ export default function Home() {
                 <p className="font-serif text-xl italic">"La qualité est incroyable, c'est un trésor pour notre famille."</p>
                 <p className="text-stone-400 text-sm mt-2">— Sophie & Marc, Parents de Léo</p>
               </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Creator Section */}
+      <section className="py-24 bg-stone-50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <motion.div 
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="relative"
+            >
+              <div className="aspect-[3/4] rounded-2xl overflow-hidden shadow-xl">
+                <img 
+                  src={creatorImage} 
+                  alt="Ann-Sophie Shaw, créatrice de Mémo" 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-primary/20 rounded-full blur-2xl -z-10"></div>
+            </motion.div>
+            
+            <motion.div 
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="space-y-6"
+            >
+              <h2 className="text-3xl lg:text-4xl font-serif font-bold text-stone-900">
+                L'histoire derrière Mémo
+              </h2>
+              <div className="space-y-4 text-stone-600 leading-relaxed">
+                <p>
+                  Je suis Ann‑Sophie Shaw, maman de deux petites filles du Saguenay–Lac‑Saint‑Jean.
+                </p>
+                <p>
+                  Mémo est né dans les premiers mois de ma maternité, alors que j'essayais de capturer des moments trop précieux pour être oubliés. Entre les pages qui restaient vides, les milliers de photos à trier et le tourbillon de la vie de maman, j'ai rêvé d'un livre qui se remplirait naturellement, au rythme de notre histoire.
+                </p>
+                <p>
+                  Aujourd'hui, Mémo existe pour ça : garder vivants les souvenirs, les images, les vidéos et l'émotion des débuts — et créer un héritage que nos enfants pourront tenir entre leurs mains.
+                </p>
+              </div>
+              <p className="text-stone-800 font-medium italic">— Ann‑Sophie</p>
             </motion.div>
           </div>
         </div>

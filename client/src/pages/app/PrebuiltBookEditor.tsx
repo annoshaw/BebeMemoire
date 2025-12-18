@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, Link, useLocation } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Settings, Sparkles, ChevronRight, Plus, X, Loader2, ShoppingCart, BookOpen, ChevronLeft, ChevronRight as ChevronRightIcon } from "lucide-react";
+import { ArrowLeft, Settings, Sparkles, ChevronRight, Plus, X, Loader2, ShoppingCart, BookOpen, ChevronLeft, ChevronRight as ChevronRightIcon, UserPlus } from "lucide-react";
 import { BookViewer } from "@/components/book";
 import type { Book } from "@shared/schema";
 import {
@@ -102,7 +102,46 @@ export default function PrebuiltBookEditor() {
   const [isAddingPage, setIsAddingPage] = useState(false);
   const [showDigitalPreview, setShowDigitalPreview] = useState(false);
   const [previewPageIndex, setPreviewPageIndex] = useState(0);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareEmail, setShareEmail] = useState("");
+  const [shareRole, setShareRole] = useState<"collaborator" | "observer">("observer");
+  const [isSendingInvite, setIsSendingInvite] = useState(false);
+  const [shareError, setShareError] = useState<string | null>(null);
+  const [shareSuccess, setShareSuccess] = useState<string | null>(null);
   const queryClient = useQueryClient();
+
+  const handleSendInvitation = async () => {
+    if (!shareEmail || !bookId) return;
+    
+    setIsSendingInvite(true);
+    setShareError(null);
+    setShareSuccess(null);
+    
+    try {
+      const res = await fetch(`/api/books/${bookId}/invite`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          email: shareEmail,
+          role: shareRole,
+        }),
+      });
+      
+      const data = await res.json();
+      
+      if (res.ok) {
+        setShareSuccess(language === "fr" ? "Invitation envoyée avec succès!" : "Invitation sent successfully!");
+        setShareEmail("");
+      } else {
+        setShareError(data.message || (language === "fr" ? "Erreur lors de l'envoi" : "Error sending invitation"));
+      }
+    } catch (err) {
+      setShareError(language === "fr" ? "Erreur de connexion" : "Connection error");
+    } finally {
+      setIsSendingInvite(false);
+    }
+  };
 
   const addInspirationPageToBook = async (pageTitle: string, pageDesc?: string) => {
     if (!bookId || isAddingPage) return;
@@ -290,6 +329,16 @@ export default function PrebuiltBookEditor() {
               >
                 <ShoppingCart className="w-4 h-4 sm:mr-1" />
                 <span className="hidden sm:inline">{language === "fr" ? "Commander" : "Order"}</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowShareModal(true)}
+                className="px-2 sm:px-3"
+                data-testid="button-share-book"
+                title={language === "fr" ? "Partager le livre" : "Share book"}
+              >
+                <UserPlus className="w-4 h-4" />
               </Button>
               <Button
                 variant="outline"
@@ -564,6 +613,138 @@ export default function PrebuiltBookEditor() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Share Modal */}
+      <AnimatePresence>
+        {showShareModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4"
+            onClick={() => {
+              setShowShareModal(false);
+              setShareError(null);
+              setShareSuccess(null);
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-4 border-b border-stone-100 flex items-center justify-between">
+                <div>
+                  <h3 className="font-bold text-stone-800">
+                    {language === "fr" ? "Partager le livre" : "Share book"}
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs text-stone-500">
+                      {language === "fr" ? "Invitez quelqu'un à collaborer" : "Invite someone to collaborate"}
+                    </p>
+                    <span className="text-xs text-stone-300">•</span>
+                    <Link href="/app/tutoriel-partage" className="text-xs text-primary hover:underline">
+                      {language === "fr" ? "Comment ça marche ?" : "How it works?"}
+                    </Link>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => {
+                    setShowShareModal(false);
+                    setShareError(null);
+                    setShareSuccess(null);
+                  }}
+                  className="p-2 hover:bg-stone-100 rounded-full"
+                >
+                  <X size={20} className="text-stone-500" />
+                </button>
+              </div>
+
+              <div className="p-4 space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-stone-700 mb-2 block">
+                    {language === "fr" ? "Adresse email" : "Email address"}
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="exemple@email.com"
+                    value={shareEmail}
+                    onChange={(e) => setShareEmail(e.target.value)}
+                    className="w-full px-3 py-2 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  />
+                </div>
+                
+                <div>
+                  <label className="text-sm font-medium text-stone-700 mb-2 block">
+                    {language === "fr" ? "Niveau d'accès" : "Access level"}
+                  </label>
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => setShareRole("observer")}
+                      className={`w-full p-3 rounded-xl border-2 text-left transition-all ${
+                        shareRole === "observer" 
+                          ? "border-primary bg-primary/5" 
+                          : "border-stone-200 hover:border-stone-300"
+                      }`}
+                    >
+                      <p className="font-medium text-stone-800">
+                        {language === "fr" ? "Observateur" : "Observer"}
+                      </p>
+                      <p className="text-xs text-stone-500">
+                        {language === "fr" ? "Peut voir le livre, mais ne peut pas modifier" : "Can view but cannot edit"}
+                      </p>
+                    </button>
+                    <button
+                      onClick={() => setShareRole("collaborator")}
+                      className={`w-full p-3 rounded-xl border-2 text-left transition-all ${
+                        shareRole === "collaborator" 
+                          ? "border-primary bg-primary/5" 
+                          : "border-stone-200 hover:border-stone-300"
+                      }`}
+                    >
+                      <p className="font-medium text-stone-800">
+                        {language === "fr" ? "Collaborateur" : "Collaborator"}
+                      </p>
+                      <p className="text-xs text-stone-500">
+                        {language === "fr" ? "Peut modifier le livre et passer des commandes" : "Can edit book and place orders"}
+                      </p>
+                    </button>
+                  </div>
+                </div>
+
+                {shareError && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-600">{shareError}</p>
+                  </div>
+                )}
+
+                {shareSuccess && (
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-sm text-green-600">{shareSuccess}</p>
+                  </div>
+                )}
+
+                <Button 
+                  className="w-full"
+                  onClick={handleSendInvitation}
+                  disabled={!shareEmail || isSendingInvite}
+                >
+                  {isSendingInvite ? (
+                    <>
+                      <Loader2 size={16} className="mr-2 animate-spin" />
+                      {language === "fr" ? "Envoi en cours..." : "Sending..."}
+                    </>
+                  ) : (
+                    language === "fr" ? "Envoyer l'invitation" : "Send invitation"
+                  )}
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

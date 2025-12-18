@@ -2412,14 +2412,25 @@ export default function Prototype() {
                           </div>
                         </div>
                         
-                        <Link href={'templateSlug' in activeBook && activeBook.templateSlug && activeBook.templateSlug !== 'custom' 
-                          ? `/app/book/${activeBook.id}/prebuilt` 
-                          : `/app/book/${activeBook.id}/edit`}>
-                          <Button size="sm" className="w-full mt-3 gap-2" data-testid="button-edit-active-book">
-                            <Edit2 size={14} />
-                            Continuer l'édition
+                        <div className="flex gap-2 mt-3">
+                          <Link href={'templateSlug' in activeBook && activeBook.templateSlug && activeBook.templateSlug !== 'custom' 
+                            ? `/app/book/${activeBook.id}/prebuilt` 
+                            : `/app/book/${activeBook.id}/edit`} className="flex-1">
+                            <Button size="sm" className="w-full gap-2" data-testid="button-edit-active-book">
+                              <Edit2 size={14} />
+                              Continuer l'édition
+                            </Button>
+                          </Link>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            className="gap-2"
+                            onClick={() => setShowShareModal(true)}
+                            data-testid="button-share-active-book"
+                          >
+                            <UserPlus size={14} />
                           </Button>
-                        </Link>
+                        </div>
                       </div>
                     </div>
                     

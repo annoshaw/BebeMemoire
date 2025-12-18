@@ -1072,3 +1072,136 @@ export async function sendBookInvitationEmail(data: BookInvitationData): Promise
     return false;
   }
 }
+
+// Gift Certificate Email
+interface GiftCertificateData {
+  code: string;
+  purchaserName: string;
+  purchaserEmail: string;
+  recipientEmail: string;
+  recipientName?: string | null;
+  productType: string;
+  includesSubscription: boolean;
+  subscriptionType?: string;
+  expiresAt?: Date;
+}
+
+export async function sendGiftCertificateEmail(data: GiftCertificateData): Promise<boolean> {
+  try {
+    const baseUrl = process.env.REPLIT_DOMAINS?.split(',')[0] 
+      ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}` 
+      : 'https://memo.app';
+
+    const productName = data.productType === 'hardcover' 
+      ? 'Couverture Rigide' 
+      : data.productType === 'softcover' 
+      ? 'Couverture Souple' 
+      : 'E-Book';
+
+    const subscriptionName = data.subscriptionType === 'platine' ? 'Platine' : 'Premium';
+    const recipientGreeting = data.recipientName ? data.recipientName : 'Cher(e) ami(e)';
+    const formattedExpiry = data.expiresAt 
+      ? new Date(data.expiresAt).toLocaleDateString('fr-CA', { year: 'numeric', month: 'long', day: 'numeric' })
+      : '1 an';
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Certificat-Cadeau Mémo</title>
+  <style>
+    body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #FDF8F3; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { text-align: center; padding: 30px 20px; background: linear-gradient(135deg, #C4A484 0%, #8B6914 100%); border-radius: 16px 16px 0 0; }
+    .logo { font-size: 32px; font-weight: bold; color: white; font-family: serif; }
+    .content { background: white; padding: 40px 30px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+    .gift-box { background: linear-gradient(135deg, #FDF8F3 0%, #F5EBE0 100%); border: 2px dashed #C4A484; border-radius: 16px; padding: 30px; margin: 20px 0; text-align: center; }
+    .gift-title { font-size: 24px; color: #5C4033; margin-bottom: 10px; }
+    .gift-code { font-size: 28px; font-weight: bold; color: #8B6914; letter-spacing: 3px; background: white; padding: 15px 25px; border-radius: 8px; display: inline-block; margin: 15px 0; border: 2px solid #C4A484; }
+    .gift-details { margin: 20px 0; padding: 20px; background: #FFF; border-radius: 8px; text-align: left; }
+    .gift-details li { padding: 8px 0; color: #5C4033; }
+    .btn { display: inline-block; background: linear-gradient(135deg, #C4A484 0%, #8B6914 100%); color: white; padding: 15px 40px; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 20px; }
+    .btn:hover { opacity: 0.9; }
+    .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+    .emoji { font-size: 48px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">Mémo</div>
+      <p style="color: white; margin: 10px 0 0 0; opacity: 0.9;">Créez des souvenirs qui durent toute une vie</p>
+    </div>
+    <div class="content">
+      <p class="emoji" style="text-align: center;">🎁</p>
+      <h2 style="color: #5C4033; text-align: center; margin-bottom: 20px;">
+        ${recipientGreeting}, vous avez reçu un cadeau!
+      </h2>
+      
+      <p style="color: #666; text-align: center;">
+        <strong>${data.purchaserName}</strong> vous offre un certificat-cadeau Mémo pour créer un magnifique livre de souvenirs.
+      </p>
+      
+      <div class="gift-box">
+        <p class="gift-title">Votre Certificat-Cadeau</p>
+        <div class="gift-code">${data.code}</div>
+        
+        <div class="gift-details">
+          <p style="font-weight: bold; color: #8B6914; margin-bottom: 10px;">Ce cadeau inclut:</p>
+          <ul style="list-style: none; padding: 0; margin: 0;">
+            <li>📖 Un livre Mémo ${productName}</li>
+            ${data.includesSubscription ? `<li>⭐ Un abonnement ${subscriptionName} (1 an)</li>` : ''}
+            <li>📸 Jusqu'à 51 pages de souvenirs</li>
+            <li>🎥 Intégration vidéo avec QR codes</li>
+          </ul>
+        </div>
+        
+        <p style="color: #999; font-size: 12px;">
+          Valide jusqu'au: ${formattedExpiry}
+        </p>
+      </div>
+      
+      <p style="text-align: center;">
+        <a href="${baseUrl}/app?redeem=${data.code}" class="btn">
+          Utiliser mon certificat
+        </a>
+      </p>
+      
+      <p style="color: #999; font-size: 14px; text-align: center; margin-top: 30px;">
+        Connectez-vous ou créez un compte sur Mémo pour utiliser votre certificat-cadeau.
+      </p>
+      
+      <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+      
+      <p style="color: #666; font-size: 13px;">
+        💝 Ce cadeau a été envoyé par ${data.purchaserName} (${data.purchaserEmail})
+      </p>
+    </div>
+    <div class="footer">
+      <p>Mémo - Saguenay-Lac-St-Jean, Québec</p>
+      <p style="font-size: 11px; color: #999;">
+        Si vous avez des questions, contactez-nous à support@memo.app
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+    `;
+
+    const success = await sendEmail({
+      to: data.recipientEmail,
+      subject: `🎁 ${data.purchaserName} vous offre un certificat-cadeau Mémo!`,
+      html,
+    });
+
+    if (success) {
+      console.log(`Gift certificate email sent to ${data.recipientEmail} with code ${data.code}`);
+    }
+    return success;
+  } catch (error) {
+    console.error('Failed to send gift certificate email:', error);
+    return false;
+  }
+}

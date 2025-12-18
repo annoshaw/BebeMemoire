@@ -2398,9 +2398,20 @@ export default function Prototype() {
                     className="bg-gradient-to-br from-primary/10 via-white to-secondary/10 rounded-3xl p-5 border border-primary/20 shadow-lg"
                     data-testid="active-book-preview"
                   >
-                    <div className="flex items-center gap-2 mb-3">
-                      <Sparkles size={14} className="text-primary" />
-                      <span className="text-xs font-bold text-primary uppercase tracking-wide">Livre actif</span>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <Sparkles size={14} className="text-primary" />
+                        <span className="text-xs font-bold text-primary uppercase tracking-wide">Livre actif</span>
+                      </div>
+                      <Button 
+                        size="sm" 
+                        variant="ghost"
+                        className="h-8 px-2 text-primary hover:bg-primary/10"
+                        onClick={() => setShowShareModal(true)}
+                        data-testid="button-share-active-book"
+                      >
+                        <UserPlus size={16} />
+                      </Button>
                     </div>
                     
                     <div className="flex gap-4">
@@ -2446,25 +2457,14 @@ export default function Prototype() {
                           </div>
                         </div>
                         
-                        <div className="flex gap-2 mt-3">
-                          <Link href={'templateSlug' in activeBook && activeBook.templateSlug && activeBook.templateSlug !== 'custom' 
-                            ? `/app/book/${activeBook.id}/prebuilt` 
-                            : `/app/book/${activeBook.id}/edit`} className="flex-1">
-                            <Button size="sm" className="w-full gap-2" data-testid="button-edit-active-book">
-                              <Edit2 size={14} />
-                              Continuer l'édition
-                            </Button>
-                          </Link>
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            className="gap-2"
-                            onClick={() => setShowShareModal(true)}
-                            data-testid="button-share-active-book"
-                          >
-                            <UserPlus size={14} />
+                        <Link href={'templateSlug' in activeBook && activeBook.templateSlug && activeBook.templateSlug !== 'custom' 
+                          ? `/app/book/${activeBook.id}/prebuilt` 
+                          : `/app/book/${activeBook.id}/edit`} className="block mt-3">
+                          <Button size="sm" className="w-full gap-2" data-testid="button-edit-active-book">
+                            <Edit2 size={14} />
+                            Continuer l'édition
                           </Button>
-                        </div>
+                        </Link>
                       </div>
                     </div>
                     

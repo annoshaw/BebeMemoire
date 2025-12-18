@@ -1,7 +1,54 @@
 import { Heart, Instagram, Twitter, Facebook } from "lucide-react";
 import logoMemo from "@/assets/logo-memo.png";
 
+const translations = {
+  fr: {
+    tagline: "Capturer les moments les plus précieux de la vie, un souvenir à la fois. Conçu pour les familles modernes au Canada et ailleurs.",
+    platform: "Plateforme",
+    howItWorks: "Comment ça marche",
+    pricing: "Tarification",
+    downloadApp: "Télécharger l'app",
+    giftCards: "Cartes-cadeaux",
+    company: "Entreprise",
+    aboutUs: "À propos",
+    careers: "Carrières",
+    contact: "Contact",
+    privacyPolicy: "Politique de confidentialité",
+    connect: "Nous suivre",
+    madeWith: "Fait avec",
+    location: "au Saguenay-Lac-St-Jean.",
+    allRights: "Tous droits réservés.",
+    terms: "Conditions",
+    privacy: "Confidentialité",
+    cookies: "Cookies",
+  },
+  en: {
+    tagline: "Capturing life's most precious moments, one memory at a time. Designed for modern families in Canada and beyond.",
+    platform: "Platform",
+    howItWorks: "How it works",
+    pricing: "Pricing",
+    downloadApp: "Download App",
+    giftCards: "Gift Cards",
+    company: "Company",
+    aboutUs: "About Us",
+    careers: "Careers",
+    contact: "Contact",
+    privacyPolicy: "Privacy Policy",
+    connect: "Connect",
+    madeWith: "Made with",
+    location: "in Saguenay-Lac-St-Jean.",
+    allRights: "All rights reserved.",
+    terms: "Terms",
+    privacy: "Privacy",
+    cookies: "Cookies",
+  },
+};
+
 export default function Footer() {
+  const browserLang = typeof navigator !== 'undefined' ? navigator.language : 'fr';
+  const lang = browserLang.startsWith('fr') ? 'fr' : 'en';
+  const t = translations[lang];
+
   return (
     <footer className="bg-stone-900 text-stone-400 py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -12,49 +59,49 @@ export default function Footer() {
               Mémo
             </h3>
             <p className="text-sm leading-relaxed max-w-xs">
-              Capturing life's most precious moments, one memory at a time. Designed for modern families in Canada and beyond.
+              {t.tagline}
             </p>
           </div>
           
           <div>
-            <h4 className="text-white font-semibold mb-4">Platform</h4>
+            <h4 className="text-white font-semibold mb-4">{t.platform}</h4>
             <ul className="space-y-2 text-sm">
-              <li><a href="#" className="hover:text-white transition-colors">How it works</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Pricing</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Download App</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Gift Cards</a></li>
+              <li><a href="#how-it-works" className="hover:text-white transition-colors">{t.howItWorks}</a></li>
+              <li><a href="#pricing" className="hover:text-white transition-colors">{t.pricing}</a></li>
+              <li><a href="#" className="hover:text-white transition-colors">{t.downloadApp}</a></li>
+              <li><a href="#" className="hover:text-white transition-colors">{t.giftCards}</a></li>
             </ul>
           </div>
 
           <div>
-            <h4 className="text-white font-semibold mb-4">Company</h4>
+            <h4 className="text-white font-semibold mb-4">{t.company}</h4>
             <ul className="space-y-2 text-sm">
-              <li><a href="#" className="hover:text-white transition-colors">About Us</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
+              <li><a href="#" className="hover:text-white transition-colors">{t.aboutUs}</a></li>
+              <li><a href="#" className="hover:text-white transition-colors">{t.careers}</a></li>
+              <li><a href="#" className="hover:text-white transition-colors">{t.contact}</a></li>
+              <li><a href="#" className="hover:text-white transition-colors">{t.privacyPolicy}</a></li>
             </ul>
           </div>
 
           <div>
-            <h4 className="text-white font-semibold mb-4">Connect</h4>
+            <h4 className="text-white font-semibold mb-4">{t.connect}</h4>
             <div className="flex space-x-4">
               <a href="#" className="hover:text-white transition-colors"><Instagram size={20} /></a>
               <a href="#" className="hover:text-white transition-colors"><Twitter size={20} /></a>
               <a href="#" className="hover:text-white transition-colors"><Facebook size={20} /></a>
             </div>
             <p className="mt-6 text-xs">
-              Made with <Heart size={12} className="inline text-red-500" /> in Montreal.
+              {t.madeWith} <Heart size={12} className="inline text-red-500" /> {t.location}
             </p>
           </div>
         </div>
         
         <div className="border-t border-stone-800 mt-12 pt-8 text-xs text-center md:text-left flex flex-col md:flex-row justify-between items-center">
-          <p>&copy; 2025 Mémo Inc. All rights reserved.</p>
+          <p>&copy; 2025 Mémo Inc. {t.allRights}</p>
           <div className="flex space-x-6 mt-4 md:mt-0">
-            <a href="#" className="hover:text-white">Terms</a>
-            <a href="#" className="hover:text-white">Privacy</a>
-            <a href="#" className="hover:text-white">Cookies</a>
+            <a href="#" className="hover:text-white">{t.terms}</a>
+            <a href="#" className="hover:text-white">{t.privacy}</a>
+            <a href="#" className="hover:text-white">{t.cookies}</a>
           </div>
         </div>
       </div>

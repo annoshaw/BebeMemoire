@@ -35,7 +35,10 @@ export async function generateUploadUrl(
     ContentType: contentType,
   });
 
-  return getSignedUrl(s3Client, command, { expiresIn });
+  return getSignedUrl(s3Client, command, { 
+    expiresIn,
+    signableHeaders: new Set(['content-type', 'host']),
+  });
 }
 
 export async function generateDownloadUrl(

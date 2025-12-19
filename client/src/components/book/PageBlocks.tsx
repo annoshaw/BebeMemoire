@@ -720,12 +720,12 @@ export function VideoBlock({ videoUrl, onAdd, onRemove, language, qrCodeUrl, isU
                   <PopoverContent className="w-80 p-4 bg-white" align="end">
                     <div className="space-y-3">
                       <h4 className="font-semibold text-sm text-green-800">
-                        {language === "fr" ? "Pourquoi utiliser un lien permanent ?" : "Why use a permanent link?"}
+                        {language === "fr" ? "Pour que vos souvenirs vous appartiennent vraiment" : "So your memories truly belong to you"}
                       </h4>
                       <p className="text-xs text-gray-600">
                         {language === "fr" 
-                          ? "Le QR code dans votre livre imprimé restera valide même dans 20 ans, car il pointe vers votre propre compte Google Photos ou iCloud."
-                          : "The QR code in your printed book will remain valid even in 20 years, because it points to your own Google Photos or iCloud account."}
+                          ? "Mémo peut envoyer une copie de chaque photo et vidéo dans votre espace personnel (iCloud ou Google Drive). Même si un jour Mémo s'arrête, vos souvenirs restent à vous."
+                          : "Mémo can send a copy of each photo and video to your personal space (iCloud or Google Drive). Even if Mémo stops one day, your memories remain yours."}
                       </p>
                       
                       <div className="border-t pt-3">

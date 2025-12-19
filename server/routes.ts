@@ -964,13 +964,77 @@ export async function registerRoutes(
         }
       }
 
-      // Add inspiration pages (from userPages with isInspirationPage flag) to templatePages
+      // Separate blank pages (inline) from inspiration pages (bonus section)
+      const blankPages = pagesWithFreshUrls.filter(page => {
+        const customData = page.customData as any;
+        return customData?.isBlankPage === true && customData?.isInspirationPage !== true;
+      });
+      
       const inspirationPages = pagesWithFreshUrls.filter(page => {
         const customData = page.customData as any;
         return customData?.isInspirationPage === true;
       });
 
-      // Create a virtual "Inspiration" part for inspiration pages
+      // Add blank pages inline with regular template pages
+      if (blankPages.length > 0 && templatePages) {
+        const blankTemplatePages = blankPages.map(page => {
+          const customData = page.customData as any;
+          // Use insertAtPosition for sorting, falling back to pageNumber
+          const sortPosition = customData.insertAtPosition ?? page.pageNumber;
+          
+          // Find which part this page belongs to based on position
+          let assignedPartId = null;
+          if (templatePages && templatePages.length > 0) {
+            // Find the closest template page at or before this position
+            const precedingPages = templatePages.filter(tp => tp.pageNumber < sortPosition);
+            if (precedingPages.length > 0) {
+              assignedPartId = precedingPages[precedingPages.length - 1].partId;
+            } else {
+              // If no preceding pages, use the first part
+              assignedPartId = templatePages[0].partId;
+            }
+          }
+          
+          return {
+            id: `blank-${page.id}`,
+            userPageId: page.id, // Keep reference to original user page
+            templateId: template?.id || null,
+            partId: assignedPartId,
+            pageNumber: page.pageNumber, // Original storage page number
+            sortPosition: sortPosition - 0.5, // Sort just before the target position
+            titleFr: customData.titleFr || "Page personnalisée",
+            titleEn: customData.titleEn || "Custom page",
+            subtitleFr: customData.subtitleFr || null,
+            subtitleEn: customData.subtitleEn || null,
+            promptsFr: customData.promptsFr || [],
+            promptsEn: customData.promptsEn || [],
+            pageType: customData.pageType || "text_photo_video",
+            layoutStyle: "single",
+            maxPhotos: customData.maxPhotos || 6,
+            hasVideo: customData.hasVideo ?? true,
+            hasTextBlocks: 2,
+            iconName: null,
+            backgroundImage: null,
+            createdAt: page.createdAt,
+            isBlankPage: true,
+          };
+        });
+        
+        // Add sortPosition to template pages for consistent sorting
+        const templatePagesWithSort = templatePages.map(tp => ({
+          ...tp,
+          sortPosition: tp.pageNumber,
+        }));
+        
+        // Merge blank pages with template pages and sort by sortPosition
+        const mergedWithBlank = [...templatePagesWithSort, ...blankTemplatePages].sort((a, b) => a.sortPosition - b.sortPosition);
+        templatePages = mergedWithBlank.map((page, index) => ({
+          ...page,
+          displayPageNumber: index + 1,
+        }));
+      }
+
+      // Create a virtual "Inspiration" part for inspiration pages (Bonus section)
       const inspirationPartId = 'inspiration-part';
       
       if (inspirationPages.length > 0 && templatePages) {
@@ -1698,23 +1762,29 @@ export async function registerRoutes(
       }
       
       // Create new user book page as a blank customizable page (like "Notre histoire d'amour")
+      // Mark as isBlankPage but NOT isInspirationPage so it appears inline with regular pages
+      // Store the intended position in customData.insertAtPosition for accurate sorting
+      // Use a very high page number to ensure unique storage while sorting happens at display time
+      const storagePageNumber = 10000 + insertAtPageNumber; // High number to avoid conflicts
       const newPage = await storage.addInspirationPage(req.params.bookId, {
-        pageNumber: insertAtPageNumber,
+        pageNumber: storagePageNumber,
         titleOverride: null,
         textContent: [],
         photos: [],
         customData: { 
-          isInspirationPage: true,
+          isInspirationPage: false,
           isBlankPage: true,
-          titleFr: "",
-          titleEn: "",
+          insertAtPosition: insertAtPageNumber, // The actual desired position
+          titleFr: "Page personnalisée",
+          titleEn: "Custom page",
           subtitleFr: "",
           subtitleEn: "",
           pageType: "text_photo_video",
           promptsFr: [],
           promptsEn: [],
           hasVideo: true,
-          maxPhotos: 6
+          maxPhotos: 6,
+          partId: null // Will be assigned based on position
         },
         isCompleted: false,
       });

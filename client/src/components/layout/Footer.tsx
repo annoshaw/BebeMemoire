@@ -1,5 +1,6 @@
 import { Heart, Instagram, Twitter, Facebook, Mail } from "lucide-react";
 import logoMemo from "@/assets/logo-memo.png";
+import { useMemoStore } from "@/store/useMemoStore";
 
 const translations = {
   fr: {
@@ -45,9 +46,8 @@ const translations = {
 };
 
 export default function Footer() {
-  const browserLang = typeof navigator !== 'undefined' ? navigator.language : 'fr';
-  const lang = browserLang.startsWith('fr') ? 'fr' : 'en';
-  const t = translations[lang];
+  const { language } = useMemoStore();
+  const t = translations[language];
 
   return (
     <footer className="bg-stone-900 text-stone-400 py-16">

@@ -4,13 +4,14 @@ import { Menu, X, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import logoMemo from "@/assets/logo-memo.png";
+import { useMemoStore } from "@/store/useMemoStore";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
-  const [lang, setLang] = useState<"fr" | "en">("fr");
+  const { language: lang, setLanguage } = useMemoStore();
   const [location] = useLocation();
 
-  const toggleLang = () => setLang(lang === "fr" ? "en" : "fr");
+  const toggleLang = () => setLanguage(lang === "fr" ? "en" : "fr");
 
   const navLinks = [
     { name: lang === "fr" ? "Fonctionnalités" : "Features", href: "#features" },

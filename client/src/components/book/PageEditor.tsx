@@ -238,6 +238,9 @@ export function PageEditor({
     (userPage as any)?.videoMediaId || null
   );
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
+  const [externalVideoUrl, setExternalVideoUrl] = useState<string>(
+    (userPage?.customData as any)?.externalVideoUrl || ""
+  );
   const [customData, setCustomData] = useState<Record<string, string>>(
     (userPage?.customData as Record<string, string>) || {}
   );
@@ -300,8 +303,9 @@ export function PageEditor({
     }
     setVideoMediaId((userPage as any)?.videoMediaId || null);
     const data = (userPage?.customData as Record<string, any>) || {};
-    const { photoLayouts: layouts, textStyles: styles, titleStyle: tStyle, blockPositions: positions, textLayout: tLayout, selectedPhotoLayoutId: layoutId, ...rest } = data;
+    const { photoLayouts: layouts, textStyles: styles, titleStyle: tStyle, blockPositions: positions, textLayout: tLayout, selectedPhotoLayoutId: layoutId, externalVideoUrl: extUrl, ...rest } = data;
     setCustomData(rest);
+    setExternalVideoUrl(extUrl || "");
     setPhotoLayouts(layouts || {});
     setTextStyles(styles || {});
     setTitleStyle(tStyle || { fontFamily: "'Fraunces', serif", fontSize: 20 });
@@ -311,10 +315,11 @@ export function PageEditor({
     setIsDirty(false);
   }, [userPage, pageNumber]);
 
-  // Fetch short URL for QR code when videoMediaId is available
+  // Fetch short URL for QR code when videoMediaId is available or page reloads
   useEffect(() => {
-    if (videoMediaId) {
-      fetch(`/api/media/${videoMediaId}/qr-url`, { credentials: 'include' })
+    const mediaId = videoMediaId || (userPage as any)?.videoMediaId;
+    if (mediaId) {
+      fetch(`/api/media/${mediaId}/qr-url`, { credentials: 'include' })
         .then(res => res.json())
         .then(data => {
           if (data.qrUrl) {
@@ -325,7 +330,7 @@ export function PageEditor({
     } else {
       setQrCodeUrl(null);
     }
-  }, [videoMediaId]);
+  }, [videoMediaId, userPage]);
 
   const handleTextStyleChange = (index: number, style: TextStyle) => {
     setTextStyles(prev => ({ ...prev, [index]: style }));
@@ -450,13 +455,15 @@ export function PageEditor({
     mutationFn: async () => {
       if (!userPage?.id) throw new Error("No user page found");
       
-      // Merge photoLayouts, textStyles, titleStyle, textLayout, blockPositions and selectedPhotoLayoutId into customData for saving
+      // Merge photoLayouts, textStyles, titleStyle, textLayout, blockPositions, externalVideoUrl and selectedPhotoLayoutId into customData for saving
+      // Note: externalVideoUrl is explicitly set to empty string when cleared, or the actual URL when provided
       const dataToSave = {
         ...customData,
         ...(Object.keys(photoLayouts).length > 0 ? { photoLayouts } : {}),
         ...(Object.keys(textStyles).length > 0 ? { textStyles } : {}),
         ...(Object.keys(blockPositions).length > 0 ? { blockPositions } : {}),
         ...(selectedPhotoLayoutId ? { selectedPhotoLayoutId } : {}),
+        externalVideoUrl: externalVideoUrl || "", // Always save, empty string clears it
         titleStyle,
         textLayout
       };
@@ -584,6 +591,11 @@ export function PageEditor({
     setIsDirty(true);
   };
 
+  const handleExternalVideoUrlChange = (url: string) => {
+    setExternalVideoUrl(url);
+    setIsDirty(true);
+  };
+
   const handleCustomDataChange = (field: string, value: string) => {
     setCustomData({ ...customData, [field]: value });
     setIsDirty(true);
@@ -661,6 +673,8 @@ export function PageEditor({
                 onRemove={handleVideoRemove}
                 language={language}
                 isUploading={isVideoUploading}
+                externalVideoUrl={externalVideoUrl}
+                onExternalUrlChange={handleExternalVideoUrlChange}
               />
             )}
           </div>
@@ -701,6 +715,8 @@ export function PageEditor({
                 onRemove={handleVideoRemove}
                 language={language}
                 isUploading={isVideoUploading}
+                externalVideoUrl={externalVideoUrl}
+                onExternalUrlChange={handleExternalVideoUrlChange}
               />
             )}
           </div>
@@ -735,6 +751,8 @@ export function PageEditor({
                 onRemove={handleVideoRemove}
                 language={language}
                 isUploading={isVideoUploading}
+                externalVideoUrl={externalVideoUrl}
+                onExternalUrlChange={handleExternalVideoUrlChange}
               />
             )}
           </div>
@@ -775,6 +793,8 @@ export function PageEditor({
                 onRemove={handleVideoRemove}
                 language={language}
                 isUploading={isVideoUploading}
+                externalVideoUrl={externalVideoUrl}
+                onExternalUrlChange={handleExternalVideoUrlChange}
               />
             )}
           </div>
@@ -839,6 +859,8 @@ export function PageEditor({
                 onRemove={handleVideoRemove}
                 language={language}
                 isUploading={isVideoUploading}
+                externalVideoUrl={externalVideoUrl}
+                onExternalUrlChange={handleExternalVideoUrlChange}
               />
             )}
           </div>
@@ -1517,7 +1539,8 @@ export function PageEditor({
               </div>
 
               {/* Draggable QR Code - Positioned within safe zone (5mm from edges for Gelato) */}
-              {qrCodeUrl && (() => {
+              {/* Use external URL (Google Photos/iCloud) if provided, otherwise use our signed URL */}
+              {(externalVideoUrl || qrCodeUrl) && (() => {
                 const pageWidth = 400;
                 const pageHeight = 550;
                 const qrContainerSize = 120;
@@ -1550,7 +1573,7 @@ export function PageEditor({
                     >
                       <div className="bg-white p-2 rounded-lg shadow-lg border-2 border-purple-300 hover:border-purple-500 transition-colors">
                         <QRCodeSVG 
-                          value={qrCodeUrl} 
+                          value={externalVideoUrl || qrCodeUrl || ""} 
                           size={100} 
                           level="H"
                           includeMargin={true}
@@ -1558,6 +1581,11 @@ export function PageEditor({
                         <p className="text-center text-[8px] text-purple-600 mt-1 font-medium">
                           {language === "fr" ? "Scannez pour la vidéo" : "Scan for video"}
                         </p>
+                        {externalVideoUrl && (
+                          <p className="text-center text-[6px] text-green-600 mt-0.5">
+                            {language === "fr" ? "Lien externe" : "External link"}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </Draggable>

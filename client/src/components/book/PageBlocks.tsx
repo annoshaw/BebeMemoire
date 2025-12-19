@@ -599,9 +599,11 @@ interface VideoBlockProps {
   language: "fr" | "en";
   qrCodeUrl?: string;
   isUploading?: boolean;
+  externalVideoUrl?: string;
+  onExternalUrlChange?: (url: string) => void;
 }
 
-export function VideoBlock({ videoUrl, onAdd, onRemove, language, qrCodeUrl, isUploading }: VideoBlockProps) {
+export function VideoBlock({ videoUrl, onAdd, onRemove, language, qrCodeUrl, isUploading, externalVideoUrl, onExternalUrlChange }: VideoBlockProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -696,6 +698,35 @@ export function VideoBlock({ videoUrl, onAdd, onRemove, language, qrCodeUrl, isU
               </div>
             </div>
           </div>
+          
+          {/* External URL option for permanent QR code */}
+          {onExternalUrlChange && (
+            <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+              <Label className="text-sm text-green-700 flex items-center gap-2 mb-2">
+                <Link className="w-4 h-4" />
+                {language === "fr" ? "Lien permanent (Google Photos / iCloud)" : "Permanent link (Google Photos / iCloud)"}
+              </Label>
+              <p className="text-xs text-green-600 mb-3">
+                {language === "fr" 
+                  ? "Collez un lien Google Photos ou iCloud pour que le QR code reste valide même dans 20 ans."
+                  : "Paste a Google Photos or iCloud link so the QR code stays valid even in 20 years."}
+              </p>
+              <Input
+                type="url"
+                placeholder={language === "fr" ? "https://photos.google.com/..." : "https://photos.google.com/..."}
+                value={externalVideoUrl || ""}
+                onChange={(e) => onExternalUrlChange(e.target.value)}
+                className="bg-white"
+                data-testid="external-video-url-input"
+              />
+              {externalVideoUrl && (
+                <p className="text-xs text-green-600 mt-2 flex items-center gap-1">
+                  <Check className="w-3 h-3" />
+                  {language === "fr" ? "Le QR code utilisera ce lien permanent" : "QR code will use this permanent link"}
+                </p>
+              )}
+            </div>
+          )}
         </div>
       ) : !isUploading && (
         <div

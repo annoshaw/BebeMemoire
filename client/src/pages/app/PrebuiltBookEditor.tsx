@@ -458,6 +458,8 @@ export default function PrebuiltBookEditor() {
                           className="h-7 text-xs flex-shrink-0 ml-2"
                           disabled={isAddingPage}
                           onClick={() => {
+                            setShowInspirationModal(false);
+                            setSelectedCategory(null);
                             setPendingInspirationPage({ title: subPage.title, desc: subPage.desc });
                             setInspirationPosition("");
                           }}
@@ -506,6 +508,8 @@ export default function PrebuiltBookEditor() {
                             disabled={isAddingPage}
                             onClick={(e) => {
                               e.stopPropagation();
+                              setShowInspirationModal(false);
+                              setSelectedCategory(null);
                               setPendingInspirationPage({ title: category.title });
                               setInspirationPosition("");
                             }}

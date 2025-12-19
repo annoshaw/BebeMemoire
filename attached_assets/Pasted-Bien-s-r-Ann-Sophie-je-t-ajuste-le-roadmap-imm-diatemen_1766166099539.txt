@@ -1,0 +1,69 @@
+Bien sûr Ann‑Sophie — je t’ajuste le roadmap immédiatement sans aucune option d’ajout de Go.
+On garde uniquement les limites incluses dans les abonnements Premium et Platine, et on retire toute logique de facturation additionnelle.
+Voici la version épurée et cohérente.
+
+🗺️ Roadmap — Gestion des limites vidéo sans espace additionnel
+🎯 Objectif global
+Mettre en place un système simple où :
+- Premium = 2 Go d’espace vidéo total
+- Platine = 5 Go d’espace vidéo total
+- Aucune possibilité d’acheter de l’espace supplémentaire
+- Les uploads sont automatiquement bloqués si l’utilisateur dépasse sa limite
+
+Phase 1 — Définition & Architecture (Semaine 1)
+🔍 1.1. Règles métier
+- Premium → limite fixe : 2 Go
+- Platine → limite fixe : 5 Go
+- Taille maximale d’une vidéo = espace restant
+- Aucun mécanisme d’achat d’espace supplémentaire
+🧱 1.2. Modélisation des données
+- Champs nécessaires :
+- video_storage_limit_gb (2 ou 5 selon l’abonnement)
+- video_storage_used_gb
+- Suppression des champs liés à l’espace additionnel :
+- extra_video_storage_gb
+- video_storage_transactions
+- Toute logique de facturation additionnelle
+
+Phase 2 — Implémentation backend (Semaines 2–3)
+⚙️ 2.1. Attribution automatique des limites
+- Lors de l’achat ou du changement d’abonnement :
+- Premium → video_storage_limit_gb = 2
+- Platine → video_storage_limit_gb = 5
+📦 2.2. Calcul de l’espace utilisé
+- Mise à jour automatique après chaque upload ou suppression de vidéo
+🛑 2.3. Validation lors de l’upload
+- Vérifier :
+taille_video + video_storage_used_gb ≤ video_storage_limit_gb
+- Sinon → erreur : “Votre limite d’espace est atteinte”
+
+Phase 3 — Interface utilisateur (Semaines 3–4)
+📊 3.1. Affichage clair de l’espace
+- Barre de progression
+- Détail : utilisé / total / restant
+🛑 3.2. Messages d’erreur UX
+- “Vous avez atteint votre limite de 2 Go / 5 Go”
+- “Supprimez des vidéos pour libérer de l’espace”
+🚫 3.3. Suppression de toute option d’achat
+- Retirer :
+- Bouton “Ajouter de l’espace”
+- Pages ou modales liées à l’achat
+- Logique Stripe associée
+
+Phase 4 — Tests & QA (Semaine 5)
+🧪 4.1. Tests unitaires
+- Attribution des limites
+- Calcul de l’espace utilisé
+- Blocage des uploads
+🧪 4.2. Tests d’intégration
+- Upload vidéo
+- Changement d’abonnement
+
+Phase 5 — Lancement (Semaine 6)
+🚀 5.1. Déploiement progressif
+- Activer pour un petit groupe
+- Monitorer les erreurs
+📣 5.2. Communication
+- Explication des limites fixes selon l’abonnement
+
+Si tu veux, je peux aussi te préparer une version ultra‑courte pour envoyer à Replit comme consigne technique, ou une version visuelle du roadmap.

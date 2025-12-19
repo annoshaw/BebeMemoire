@@ -1,12 +1,25 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ChevronLeft, Bell, Save, Check, Calendar, Baby, Cake, Camera, Star, AlertCircle, Mail } from "lucide-react";
+import { ChevronLeft, Bell, Save, Check, Calendar, Baby, Cake, Camera, Star, AlertCircle, Mail, Video, HardDrive } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Progress } from "@/components/ui/progress";
 import { Link, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { toast } from "sonner";
+
+interface VideoStorageStatus {
+  plan: string;
+  videoUsedBytes: number;
+  videoUsedGb: number;
+  videoLimitBytes: number;
+  videoLimitGb: number;
+  remainingBytes: number;
+  remainingGb: number;
+  percentageUsed: number;
+  canUploadVideos: boolean;
+}
 
 interface NotificationSettings {
   id: number;
@@ -27,6 +40,14 @@ export default function NotificationSettings() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [pushPermissionStatus, setPushPermissionStatus] = useState<"default" | "granted" | "denied" | "unsupported">("default");
   const queryClient = useQueryClient();
+
+  const { data: videoStorage } = useQuery<VideoStorageStatus>({
+    queryKey: ["/api/auth/video-storage"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/auth/video-storage");
+      return res.json();
+    },
+  });
   
   const [settings, setSettings] = useState({
     milestoneReminders: true,
@@ -417,6 +438,62 @@ export default function NotificationSettings() {
               <p className="text-sm text-red-700 font-medium">
                 Une erreur s'est produite. Veuillez réessayer.
               </p>
+            </motion.div>
+          )}
+
+          {videoStorage && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.28 }}
+              className="bg-gradient-to-r from-violet-50 to-purple-50 rounded-xl p-4 border border-purple-200 mt-6"
+            >
+              <h3 className="text-sm font-semibold text-stone-700 mb-3 flex items-center gap-2">
+                <Video size={16} className="text-purple-600" />
+                Espace vidéo
+              </h3>
+              
+              {videoStorage.canUploadVideos ? (
+                <>
+                  <div className="flex justify-between text-xs text-stone-600 mb-2">
+                    <span>{videoStorage.videoUsedGb} Go utilisés</span>
+                    <span>{videoStorage.videoLimitGb} Go disponibles</span>
+                  </div>
+                  <Progress 
+                    value={videoStorage.percentageUsed} 
+                    className="h-2 mb-2"
+                  />
+                  <div className="flex justify-between items-center">
+                    <p className="text-xs text-stone-500">
+                      {videoStorage.remainingGb} Go restants
+                    </p>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${
+                      videoStorage.percentageUsed >= 90 
+                        ? 'bg-red-100 text-red-700' 
+                        : videoStorage.percentageUsed >= 70 
+                          ? 'bg-amber-100 text-amber-700'
+                          : 'bg-green-100 text-green-700'
+                    }`}>
+                      {videoStorage.percentageUsed}% utilisé
+                    </span>
+                  </div>
+                  {videoStorage.percentageUsed >= 90 && (
+                    <p className="text-xs text-red-600 mt-2">
+                      Attention : votre espace vidéo est presque plein. Supprimez des vidéos pour libérer de l'espace.
+                    </p>
+                  )}
+                </>
+              ) : (
+                <div className="text-center py-2">
+                  <HardDrive size={24} className="text-stone-400 mx-auto mb-2" />
+                  <p className="text-sm text-stone-600 mb-1">
+                    Stockage vidéo non disponible
+                  </p>
+                  <p className="text-xs text-stone-500">
+                    Passez à Premium (2 Go) ou Platine (5 Go) pour télécharger des vidéos.
+                  </p>
+                </div>
+              )}
             </motion.div>
           )}
 

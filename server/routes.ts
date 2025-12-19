@@ -564,10 +564,11 @@ export async function registerRoutes(
       }
       
       const existingPlan = await storage.getUserPlan(userId);
+      const videoStorageLimitGb = storage.getVideoStorageLimitGb(plan);
       if (existingPlan) {
-        await storage.updateUserPlan(userId, { plan });
+        await storage.updateUserPlan(userId, { plan, videoStorageLimitGb });
       } else {
-        await storage.createUserPlan({ userId, plan, storageUsed: 0 });
+        await storage.createUserPlan({ userId, plan, storageUsed: 0, videoStorageLimitGb, videoStorageUsedBytes: 0 });
       }
       
       res.json({ success: true, plan });
@@ -593,10 +594,10 @@ export async function registerRoutes(
         const existingPlan = await storage.getUserPlan(userId);
         if (existingPlan) {
           // Update existing plan
-          await storage.updateUserPlan(userId, { plan: "free" });
+          await storage.updateUserPlan(userId, { plan: "free", videoStorageLimitGb: 0 });
         } else {
           // Create new plan
-          await storage.createUserPlan({ userId, plan: "free", storageUsed: 0 });
+          await storage.createUserPlan({ userId, plan: "free", storageUsed: 0, videoStorageLimitGb: 0, videoStorageUsedBytes: 0 });
         }
         
         return res.json({ 
@@ -687,10 +688,11 @@ export async function registerRoutes(
       // For now, we'll update the plan directly (payment handled via checkout)
       
       const userPlan = await storage.getUserPlan(userId);
+      const videoStorageLimitGb = storage.getVideoStorageLimitGb(toPlan);
       if (userPlan) {
-        await storage.updateUserPlan(userId, { plan: toPlan });
+        await storage.updateUserPlan(userId, { plan: toPlan, videoStorageLimitGb });
       } else {
-        await storage.createUserPlan({ userId, plan: toPlan, storageUsed: 0 });
+        await storage.createUserPlan({ userId, plan: toPlan, storageUsed: 0, videoStorageLimitGb, videoStorageUsedBytes: 0 });
       }
       
       res.json({
@@ -846,6 +848,39 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Update user error:", error);
       res.status(500).json({ message: "Erreur lors de la mise à jour du profil" });
+    }
+  });
+
+  // Get user's video storage status
+  app.get("/api/auth/video-storage", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const userPlan = await storage.getUserPlan(userId);
+      const plan = userPlan?.plan || "free";
+      
+      const videoUsedBytes = await storage.getUserVideoStorageUsed(userId);
+      const videoLimitBytes = storage.getVideoStorageLimitBytes(plan);
+      const videoLimitGb = storage.getVideoStorageLimitGb(plan);
+      
+      const usedGb = videoUsedBytes / (1024 * 1024 * 1024);
+      const remainingBytes = Math.max(0, videoLimitBytes - videoUsedBytes);
+      const remainingGb = remainingBytes / (1024 * 1024 * 1024);
+      const percentageUsed = videoLimitBytes > 0 ? (videoUsedBytes / videoLimitBytes) * 100 : 0;
+      
+      res.json({
+        plan,
+        videoUsedBytes,
+        videoUsedGb: parseFloat(usedGb.toFixed(2)),
+        videoLimitBytes,
+        videoLimitGb,
+        remainingBytes,
+        remainingGb: parseFloat(remainingGb.toFixed(2)),
+        percentageUsed: parseFloat(percentageUsed.toFixed(1)),
+        canUploadVideos: videoLimitBytes > 0 && remainingBytes > 0
+      });
+    } catch (error) {
+      console.error("Get video storage error:", error);
+      res.status(500).json({ message: "Erreur lors de la récupération du stockage vidéo" });
     }
   });
 
@@ -2083,6 +2118,29 @@ export async function registerRoutes(
         });
       }
 
+      // Check video-specific storage quota
+      if (mediaType === 'video') {
+        const videoLimitBytes = storage.getVideoStorageLimitBytes(plan);
+        if (videoLimitBytes === 0) {
+          return res.status(403).json({
+            message: "Votre abonnement ne permet pas le stockage de vidéos. Passez à Premium ou Platine.",
+            code: "VIDEO_NOT_ALLOWED"
+          });
+        }
+        
+        const videoUsed = await storage.getUserVideoStorageUsed(userId);
+        if (videoUsed + size > videoLimitBytes) {
+          const videoLimitGb = storage.getVideoStorageLimitGb(plan);
+          return res.status(413).json({
+            message: `Votre limite de ${videoLimitGb} Go d'espace vidéo est atteinte. Supprimez des vidéos pour libérer de l'espace.`,
+            code: "VIDEO_STORAGE_EXCEEDED",
+            videoUsed,
+            videoLimit: videoLimitBytes,
+            required: size
+          });
+        }
+      }
+
       // Verify book ownership
       const book = await storage.getBook(bookId);
       if (!book || book.userId !== userId) {
@@ -2114,6 +2172,11 @@ export async function registerRoutes(
         await storage.updateUserBookPage(pageId, {
           videoMediaId: mediaFile.id
         });
+      }
+
+      // Update video storage used if it's a video
+      if (mediaType === 'video') {
+        await storage.updateUserVideoStorageUsed(userId);
       }
 
       // Generate download URL
@@ -3031,14 +3094,18 @@ export async function registerRoutes(
       // If includes subscription, create/update user plan
       if (giftCertificate.includesSubscription && giftCertificate.subscriptionType) {
         const existingPlan = await storage.getUserPlan(userId);
+        const videoStorageLimitGb = storage.getVideoStorageLimitGb(giftCertificate.subscriptionType);
         if (existingPlan) {
           await storage.updateUserPlan(userId, {
             plan: giftCertificate.subscriptionType,
+            videoStorageLimitGb,
           });
         } else {
           await storage.createUserPlan({
             userId,
             plan: giftCertificate.subscriptionType,
+            videoStorageLimitGb,
+            videoStorageUsedBytes: 0,
           });
         }
       }
@@ -3675,10 +3742,11 @@ export async function registerRoutes(
       }
 
       // Update user plan in database
+      const videoStorageLimitGb = storage.getVideoStorageLimitGb(newPlan);
       if (userPlan) {
-        await storage.updateUserPlan(userId, { plan: newPlan });
+        await storage.updateUserPlan(userId, { plan: newPlan, videoStorageLimitGb });
       } else {
-        await storage.createUserPlan({ userId, plan: newPlan, storageUsed: 0 });
+        await storage.createUserPlan({ userId, plan: newPlan, storageUsed: 0, videoStorageLimitGb, videoStorageUsedBytes: 0 });
       }
 
       // Create plan history record

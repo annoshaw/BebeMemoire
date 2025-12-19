@@ -30,6 +30,11 @@ export interface IStorage {
   createUserPlan(plan: InsertUserPlan): Promise<UserPlan>;
   updateUserPlan(userId: string, plan: Partial<InsertUserPlan>): Promise<UserPlan | undefined>;
   getStorageLimit(plan: string): number;
+  getVideoStorageLimitGb(plan: string): number;
+  getVideoStorageLimitBytes(plan: string): number;
+  getUserVideoStorageUsed(userId: string): Promise<number>;
+  updateUserVideoStorageUsed(userId: string): Promise<void>;
+  setVideoStorageLimitForPlan(userId: string, plan: string): Promise<void>;
   getSubscriptionPlanCounts(): Promise<{ plan: string; count: number }[]>;
   
   // QR Code operations
@@ -336,6 +341,48 @@ export class DatabaseStorage implements IStorage {
       platine: 5120, // 5 GB
     };
     return limits[plan] || 1024;
+  }
+
+  getVideoStorageLimitGb(plan: string): number {
+    const limits: Record<string, number> = {
+      free: 0,
+      premium: 2,
+      platine: 5,
+    };
+    return limits[plan] || 0;
+  }
+
+  getVideoStorageLimitBytes(plan: string): number {
+    return this.getVideoStorageLimitGb(plan) * 1024 * 1024 * 1024;
+  }
+
+  async getUserVideoStorageUsed(userId: string): Promise<number> {
+    const result = await db.select({
+      total: sum(mediaFiles.size)
+    })
+      .from(mediaFiles)
+      .where(
+        and(
+          eq(mediaFiles.userId, userId),
+          eq(mediaFiles.status, "uploaded"),
+          eq(mediaFiles.mediaType, "video")
+        )
+      );
+    return parseInt(result[0]?.total || "0", 10);
+  }
+
+  async updateUserVideoStorageUsed(userId: string): Promise<void> {
+    const usedBytes = await this.getUserVideoStorageUsed(userId);
+    await db.update(userPlans)
+      .set({ videoStorageUsedBytes: usedBytes })
+      .where(eq(userPlans.userId, userId));
+  }
+
+  async setVideoStorageLimitForPlan(userId: string, plan: string): Promise<void> {
+    const limitGb = this.getVideoStorageLimitGb(plan);
+    await db.update(userPlans)
+      .set({ videoStorageLimitGb: limitGb })
+      .where(eq(userPlans.userId, userId));
   }
 
   async getSubscriptionPlanCounts(): Promise<{ plan: string; count: number }[]> {

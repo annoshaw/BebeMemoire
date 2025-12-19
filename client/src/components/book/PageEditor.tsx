@@ -613,7 +613,7 @@ export function PageEditor({
 
   const pageType = templatePage?.pageType || "text_photo";
   const maxPhotos = templatePage?.maxPhotos || 1;
-  const hasVideo = templatePage?.hasVideo || false;
+  const hasVideo = true; // Allow video on all pages
   const hasTextBlocks = (templatePage?.hasTextBlocks || 0) > 0;
   const shouldShowTextBlock = hasTextBlocks || prompts.length > 0;
 

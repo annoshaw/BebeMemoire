@@ -22,7 +22,9 @@ import {
   HelpCircle,
   ArrowDown,
   ArrowRight,
-  MousePointer2
+  MousePointer2,
+  Plus,
+  Loader2
 } from "lucide-react";
 import {
   AlertDialog,

@@ -964,20 +964,15 @@ export async function registerRoutes(
         }
       }
 
-      // Separate blank pages (inline) from inspiration pages (bonus section)
-      const blankPages = pagesWithFreshUrls.filter(page => {
+      // Get ALL user-added pages (both blank and inspiration) - they all use insertAtPosition for inline placement
+      const userAddedPages = pagesWithFreshUrls.filter(page => {
         const customData = page.customData as any;
-        return customData?.isBlankPage === true && customData?.isInspirationPage !== true;
-      });
-      
-      const inspirationPages = pagesWithFreshUrls.filter(page => {
-        const customData = page.customData as any;
-        return customData?.isInspirationPage === true;
+        return customData?.isBlankPage === true || customData?.isInspirationPage === true;
       });
 
-      // Add blank pages inline with regular template pages
-      if (blankPages.length > 0 && templatePages) {
-        const blankTemplatePages = blankPages.map(page => {
+      // Add user-added pages inline with regular template pages based on insertAtPosition
+      if (userAddedPages.length > 0 && templatePages) {
+        const userTemplatePages = userAddedPages.map(page => {
           const customData = page.customData as any;
           // Use insertAtPosition for sorting, falling back to pageNumber
           const sortPosition = customData.insertAtPosition ?? page.pageNumber;
@@ -986,7 +981,7 @@ export async function registerRoutes(
           let assignedPartId = null;
           if (templatePages && templatePages.length > 0) {
             // Find the closest template page at or before this position
-            const precedingPages = templatePages.filter(tp => tp.pageNumber < sortPosition);
+            const precedingPages = templatePages.filter(tp => (tp as any).sortPosition ? (tp as any).sortPosition < sortPosition : tp.pageNumber < sortPosition);
             if (precedingPages.length > 0) {
               assignedPartId = precedingPages[precedingPages.length - 1].partId;
             } else {
@@ -995,15 +990,18 @@ export async function registerRoutes(
             }
           }
           
+          const isBlank = customData?.isBlankPage === true;
+          const pagePrefix = isBlank ? 'blank' : 'inspiration';
+          
           return {
-            id: `blank-${page.id}`,
+            id: `${pagePrefix}-${page.id}`,
             userPageId: page.id, // Keep reference to original user page
             templateId: template?.id || null,
             partId: assignedPartId,
             pageNumber: page.pageNumber, // Original storage page number
             sortPosition: sortPosition - 0.5, // Sort just before the target position
-            titleFr: customData.titleFr || "Page personnalisée",
-            titleEn: customData.titleEn || "Custom page",
+            titleFr: customData.titleFr || (isBlank ? "Page personnalisée" : "Page d'inspiration"),
+            titleEn: customData.titleEn || (isBlank ? "Custom page" : "Inspiration Page"),
             subtitleFr: customData.subtitleFr || null,
             subtitleEn: customData.subtitleEn || null,
             promptsFr: customData.promptsFr || [],
@@ -1016,75 +1014,24 @@ export async function registerRoutes(
             iconName: null,
             backgroundImage: null,
             createdAt: page.createdAt,
-            isBlankPage: true,
+            isBlankPage: isBlank,
+            isInspirationPage: !isBlank,
+            isUserAddedPage: true, // Mark as user-added for styling
           };
         });
         
         // Add sortPosition to template pages for consistent sorting
         const templatePagesWithSort = templatePages.map(tp => ({
           ...tp,
-          sortPosition: tp.pageNumber,
+          sortPosition: (tp as any).sortPosition ?? tp.pageNumber,
         }));
         
-        // Merge blank pages with template pages and sort by sortPosition
-        const mergedWithBlank = [...templatePagesWithSort, ...blankTemplatePages].sort((a, b) => a.sortPosition - b.sortPosition);
-        templatePages = mergedWithBlank.map((page, index) => ({
-          ...page,
-          displayPageNumber: index + 1,
-        }));
-      }
-
-      // Create a virtual "Inspiration" part for inspiration pages (Bonus section)
-      const inspirationPartId = 'inspiration-part';
-      
-      if (inspirationPages.length > 0 && templatePages) {
-        const inspirationTemplatePages = inspirationPages.map(page => {
-          const customData = page.customData as any;
-          return {
-            id: `inspiration-${page.id}`,
-            templateId: template?.id || null,
-            partId: inspirationPartId, // Link to virtual inspiration part
-            pageNumber: page.pageNumber,
-            titleFr: customData.titleFr || page.titleOverride || "Page d'inspiration",
-            titleEn: customData.titleEn || page.titleOverride || "Inspiration Page",
-            subtitleFr: customData.subtitleFr || null,
-            subtitleEn: customData.subtitleEn || null,
-            promptsFr: customData.promptsFr || [],
-            promptsEn: customData.promptsEn || [],
-            pageType: customData.pageType || "text_photo",
-            layoutStyle: "single",
-            maxPhotos: customData.maxPhotos || 4,
-            hasVideo: customData.hasVideo ?? true,
-            hasTextBlocks: 2,
-            iconName: null,
-            backgroundImage: null,
-            createdAt: page.createdAt,
-            isInspirationPage: true,
-          };
-        });
-        
-        // Merge and sort by page number, then recalculate displayPageNumber
-        const mergedPages = [...templatePages, ...inspirationTemplatePages].sort((a, b) => a.pageNumber - b.pageNumber);
+        // Merge user pages with template pages and sort by sortPosition
+        const mergedPages = [...templatePagesWithSort, ...userTemplatePages].sort((a, b) => a.sortPosition - b.sortPosition);
         templatePages = mergedPages.map((page, index) => ({
           ...page,
           displayPageNumber: index + 1,
         }));
-        
-        // Add virtual Inspiration part at the end
-        const nextPartNumber = templateParts ? Math.max(...templateParts.map(p => p.partNumber), 0) + 1 : 1;
-        const inspirationPart = {
-          id: inspirationPartId,
-          templateId: template?.id || null,
-          partNumber: nextPartNumber,
-          titleFr: "Bonus",
-          titleEn: "Bonus",
-          descriptionFr: "Pages d'inspiration ajoutées",
-          descriptionEn: "Added inspiration pages",
-          iconName: "sparkles",
-          createdAt: new Date(),
-          isInspirationSection: true,
-        };
-        templateParts = [...(templateParts || []), inspirationPart];
       }
 
       res.json({ 
@@ -1690,7 +1637,7 @@ export async function registerRoutes(
         return res.status(403).json({ message: "Accès refusé" });
       }
       
-      const { title, titleEn, subtitle, subtitleEn, pageType, prompts, promptsEn } = req.body;
+      const { title, titleEn, subtitle, subtitleEn, pageType, prompts, promptsEn, insertAtPosition } = req.body;
       
       if (!title) {
         return res.status(400).json({ message: "Titre requis" });
@@ -1710,17 +1657,21 @@ export async function registerRoutes(
       const existingUserPages = await storage.getUserBookPages(req.params.bookId);
       const maxUserPageNumber = Math.max(...existingUserPages.map(p => p.pageNumber), 0);
       
-      // New page number is after all existing pages (template + inspiration)
-      const newPageNumber = Math.max(maxTemplatePageNumber, maxUserPageNumber) + 1;
+      // If insertAtPosition provided, use high storage number; otherwise use sequential numbering
+      const targetPosition = insertAtPosition && insertAtPosition >= 1 ? insertAtPosition : null;
+      const storagePageNumber = targetPosition 
+        ? 10000 + targetPosition // High number for positioned pages
+        : Math.max(maxTemplatePageNumber, maxUserPageNumber) + 1; // Sequential for unpositioned
       
       // Create new user book page
       const newPage = await storage.addInspirationPage(req.params.bookId, {
-        pageNumber: newPageNumber,
+        pageNumber: storagePageNumber,
         titleOverride: title,
         textContent: [],
         photos: [],
         customData: { 
           isInspirationPage: true, 
+          insertAtPosition: targetPosition, // Store position for inline placement
           titleFr: title,
           titleEn: titleEn || title,
           subtitleFr: subtitle || "",
@@ -1734,7 +1685,7 @@ export async function registerRoutes(
         isCompleted: false,
       });
       
-      res.json({ page: newPage, pageNumber: newPageNumber, message: "Page d'inspiration ajoutée avec succès" });
+      res.json({ page: newPage, pageNumber: storagePageNumber, insertAtPosition: targetPosition, message: "Page d'inspiration ajoutée avec succès" });
     } catch (error) {
       console.error("Add inspiration page error:", error);
       res.status(500).json({ message: "Erreur lors de l'ajout de la page d'inspiration" });

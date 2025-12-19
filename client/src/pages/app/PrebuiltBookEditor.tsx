@@ -14,9 +14,13 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { PrintPreview } from "@/components/book";
@@ -100,6 +104,8 @@ export default function PrebuiltBookEditor() {
   const [showInspirationModal, setShowInspirationModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isAddingPage, setIsAddingPage] = useState(false);
+  const [pendingInspirationPage, setPendingInspirationPage] = useState<{ title: string; desc?: string } | null>(null);
+  const [inspirationPosition, setInspirationPosition] = useState("");
   const [showDigitalPreview, setShowDigitalPreview] = useState(false);
   const [previewPageIndex, setPreviewPageIndex] = useState(0);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -143,7 +149,7 @@ export default function PrebuiltBookEditor() {
     }
   };
 
-  const addInspirationPageToBook = async (pageTitle: string, pageDesc?: string) => {
+  const addInspirationPageToBook = async (pageTitle: string, pageDesc?: string, position?: number) => {
     if (!bookId || isAddingPage) return;
     
     setIsAddingPage(true);
@@ -160,6 +166,7 @@ export default function PrebuiltBookEditor() {
           pageType: "text_photo",
           prompts: pageDesc ? [pageDesc] : [],
           promptsEn: pageDesc ? [pageDesc] : [],
+          insertAtPosition: position || null,
         }),
       });
 
@@ -450,7 +457,10 @@ export default function PrebuiltBookEditor() {
                           variant="outline" 
                           className="h-7 text-xs flex-shrink-0 ml-2"
                           disabled={isAddingPage}
-                          onClick={() => addInspirationPageToBook(subPage.title, subPage.desc)}
+                          onClick={() => {
+                            setPendingInspirationPage({ title: subPage.title, desc: subPage.desc });
+                            setInspirationPosition("");
+                          }}
                         >
                           {isAddingPage ? (
                             <Loader2 size={12} className="mr-1 animate-spin" />
@@ -496,7 +506,8 @@ export default function PrebuiltBookEditor() {
                             disabled={isAddingPage}
                             onClick={(e) => {
                               e.stopPropagation();
-                              addInspirationPageToBook(category.title);
+                              setPendingInspirationPage({ title: category.title });
+                              setInspirationPosition("");
                             }}
                           >
                             {isAddingPage ? (
@@ -516,6 +527,68 @@ export default function PrebuiltBookEditor() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Position Dialog for Inspiration Pages */}
+      <Dialog open={!!pendingInspirationPage} onOpenChange={(open) => !open && setPendingInspirationPage(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {language === "fr" ? "Position de la page" : "Page position"}
+            </DialogTitle>
+            <DialogDescription>
+              {language === "fr" 
+                ? `Entrez le numéro de page où vous souhaitez insérer "${pendingInspirationPage?.title}" (laissez vide pour ajouter à la fin)`
+                : `Enter the page number where you want to insert "${pendingInspirationPage?.title}" (leave empty to add at the end)`}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="inspirationPageNumber">
+                {language === "fr" ? "Numéro de page (optionnel)" : "Page number (optional)"}
+              </Label>
+              <Input
+                id="inspirationPageNumber"
+                type="number"
+                min="1"
+                placeholder={language === "fr" ? "Ex: 15" : "E.g. 15"}
+                value={inspirationPosition}
+                onChange={(e) => setInspirationPosition(e.target.value)}
+                data-testid="input-inspiration-position"
+              />
+              <p className="text-xs text-stone-500">
+                {language === "fr" 
+                  ? "La page sera insérée juste avant la page indiquée"
+                  : "The page will be inserted just before the indicated page"}
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setPendingInspirationPage(null)}
+            >
+              {language === "fr" ? "Annuler" : "Cancel"}
+            </Button>
+            <Button 
+              onClick={async () => {
+                if (pendingInspirationPage) {
+                  const position = inspirationPosition ? parseInt(inspirationPosition) : undefined;
+                  await addInspirationPageToBook(pendingInspirationPage.title, pendingInspirationPage.desc, position);
+                  setPendingInspirationPage(null);
+                  setInspirationPosition("");
+                }
+              }}
+              disabled={isAddingPage}
+              data-testid="button-confirm-inspiration"
+            >
+              {isAddingPage ? (
+                <Loader2 size={16} className="mr-2 animate-spin" />
+              ) : null}
+              {language === "fr" ? "Ajouter" : "Add"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Digital Book Preview Modal */}
       <Dialog open={showDigitalPreview} onOpenChange={setShowDigitalPreview}>

@@ -37,6 +37,16 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { PageEditor } from "./PageEditor";
 import type { TemplatePart, TemplatePage, UserBookPage, Book, BookTemplate } from "@shared/schema";
 
@@ -121,6 +131,8 @@ export function BookViewer({ bookId, language, onGoToInspiration, initialPage }:
   const [tutorialStep, setTutorialStep] = useState(0);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState("");
+  const [showAddPageDialog, setShowAddPageDialog] = useState(false);
+  const [newPageNumber, setNewPageNumber] = useState("");
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -222,7 +234,7 @@ export function BookViewer({ bookId, language, onGoToInspiration, initialPage }:
   });
 
   const addBlankPageMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (pageNumber: number) => {
       const res = await fetch(`/api/books/${bookId}/add-inspiration-page`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -235,6 +247,7 @@ export function BookViewer({ bookId, language, onGoToInspiration, initialPage }:
           subtitleEn: "",
           pageType: "text_photo",
           prompts: [],
+          insertAtPageNumber: pageNumber,
         }),
       });
       if (!res.ok) {
@@ -246,6 +259,8 @@ export function BookViewer({ bookId, language, onGoToInspiration, initialPage }:
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/books", bookId, "pages"] });
       queryClient.invalidateQueries({ queryKey: ["/api/books", bookId] });
+      setShowAddPageDialog(false);
+      setNewPageNumber("");
     },
   });
 
@@ -510,6 +525,16 @@ export function BookViewer({ bookId, language, onGoToInspiration, initialPage }:
           </button>
         </div>
         <div className="flex items-center gap-2 sm:gap-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowAddPageDialog(true)}
+            className="border-sage-300 hover:bg-sage-50 text-sage-700"
+            data-testid="button-add-custom-page"
+          >
+            <Plus className="w-4 h-4 sm:mr-1" />
+            <span className="hidden sm:inline">{language === "fr" ? "Ajouter page" : "Add page"}</span>
+          </Button>
           {onGoToInspiration && (
             <Button
               variant="outline"
@@ -762,23 +787,6 @@ export function BookViewer({ bookId, language, onGoToInspiration, initialPage }:
               </div>
             );
           })}
-          
-          {/* Add blank page button - visible for all books */}
-          <button
-            onClick={() => addBlankPageMutation.mutate()}
-            disabled={addBlankPageMutation.isPending}
-            className="w-full p-4 rounded-lg border-2 border-dashed border-sage-300 bg-sage-50 hover:bg-sage-100 hover:border-sage-400 transition-all flex items-center justify-center gap-3"
-            data-testid="add-blank-page-button"
-          >
-            {addBlankPageMutation.isPending ? (
-              <Loader2 className="w-5 h-5 text-sage-500 animate-spin" />
-            ) : (
-              <Plus className="w-5 h-5 text-sage-500" />
-            )}
-            <span className="font-medium text-sage-700">
-              {language === "fr" ? "Ajouter une page personnalisée" : "Add a custom page"}
-            </span>
-          </button>
         </div>
       ) : (
         <div className="text-center py-12">
@@ -795,6 +803,72 @@ export function BookViewer({ bookId, language, onGoToInspiration, initialPage }:
           </p>
         </div>
       )}
+
+      {/* Dialog for adding custom page */}
+      <Dialog open={showAddPageDialog} onOpenChange={setShowAddPageDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {language === "fr" ? "Ajouter une page personnalisée" : "Add a custom page"}
+            </DialogTitle>
+            <DialogDescription>
+              {language === "fr" 
+                ? "Entrez le numéro de page où vous souhaitez insérer votre nouvelle page (ex: 15)"
+                : "Enter the page number where you want to insert your new page (e.g. 15)"}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="pageNumber">
+                {language === "fr" ? "Numéro de page" : "Page number"}
+              </Label>
+              <Input
+                id="pageNumber"
+                type="number"
+                min="1"
+                placeholder={language === "fr" ? "Ex: 15" : "E.g. 15"}
+                value={newPageNumber}
+                onChange={(e) => setNewPageNumber(e.target.value)}
+                data-testid="input-page-number"
+              />
+              <p className="text-sm text-sage-500">
+                {language === "fr" 
+                  ? "La nouvelle page sera insérée à cette position"
+                  : "The new page will be inserted at this position"}
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowAddPageDialog(false);
+                setNewPageNumber("");
+              }}
+            >
+              {language === "fr" ? "Annuler" : "Cancel"}
+            </Button>
+            <Button
+              onClick={() => {
+                const pageNum = parseInt(newPageNumber, 10);
+                if (pageNum > 0) {
+                  addBlankPageMutation.mutate(pageNum);
+                }
+              }}
+              disabled={!newPageNumber || parseInt(newPageNumber, 10) <= 0 || addBlankPageMutation.isPending}
+              className="bg-sage-600 hover:bg-sage-700"
+              data-testid="button-confirm-add-page"
+            >
+              {addBlankPageMutation.isPending ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Plus className="w-4 h-4 mr-2" />
+              )}
+              {language === "fr" ? "Ajouter" : "Add"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

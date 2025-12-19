@@ -229,12 +229,6 @@ export default function Home() {
                     {t.startStory}
                   </Button>
                 </Link>
-                <Link href="/book-demo">
-                  <Button variant="outline" size="lg" className="rounded-full px-8 h-14 text-lg border-stone-200 hover:bg-stone-50 text-stone-600" data-testid="button-demo">
-                    <Play size={18} className="mr-2 fill-stone-600" />
-                    {t.viewDemo}
-                  </Button>
-                </Link>
               </div>
 
             </motion.div>

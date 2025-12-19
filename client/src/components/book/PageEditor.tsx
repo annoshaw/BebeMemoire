@@ -1499,66 +1499,53 @@ export function PageEditor({
                 </div>
               </div>
 
-              {/* Debug: Show video status */}
-              {process.env.NODE_ENV === 'development' && (
-                <div className="absolute bottom-2 left-2 text-[8px] bg-yellow-100 p-1 rounded z-20 max-w-[150px] break-all">
-                  URL: {videoUrl ? (videoUrl.startsWith('http') ? 'Valid' : 'Invalid') : 'None'}
-                  <br/>
-                  {videoUrl && videoUrl.substring(0, 30)}...
-                </div>
-              )}
-              
-              {/* Draggable QR Code - Positioned intelligently based on text layout */}
-              {videoUrl && (videoUrl.startsWith('https://') || videoUrl.startsWith('http://')) && (
-                <Draggable
-                  nodeRef={qrDraggableRef}
-                  bounds="parent"
-                  defaultPosition={blockPositions.qr || (() => {
-                    const pageWidth = 400;
-                    const pageHeight = 550;
-                    const qrSize = 120;
-                    const margin = 8;
-                    
-                    switch (textLayout.position) {
-                      case 'bottom':
-                        return { x: pageWidth - qrSize - margin, y: margin };
-                      case 'top':
-                        return { x: pageWidth - qrSize - margin, y: pageHeight - qrSize - margin };
-                      case 'left':
-                        return { x: pageWidth - qrSize - margin, y: pageHeight - qrSize - margin };
-                      case 'right':
-                        return { x: margin, y: pageHeight - qrSize - margin };
-                      case 'center':
-                      default:
-                        return { x: pageWidth - qrSize - margin, y: margin };
-                    }
-                  })()}
-                  onStop={(e, data) => {
-                    updateBlockPosition('qr', { x: data.x, y: data.y });
-                  }}
-                >
-                  <div 
-                    ref={qrDraggableRef}
-                    style={{ 
-                      position: 'absolute',
-                      cursor: 'move',
-                      zIndex: 10
+              {/* Draggable QR Code - Positioned within safe zone (5mm from edges for Gelato) */}
+              {videoUrl && (videoUrl.startsWith('https://') || videoUrl.startsWith('http://')) && (() => {
+                const pageWidth = 400;
+                const pageHeight = 550;
+                const qrContainerSize = 120;
+                const safeMargin = 10;
+                
+                return (
+                  <Draggable
+                    nodeRef={qrDraggableRef}
+                    bounds={{
+                      left: safeMargin,
+                      top: safeMargin,
+                      right: pageWidth - qrContainerSize - safeMargin,
+                      bottom: pageHeight - qrContainerSize - safeMargin
+                    }}
+                    defaultPosition={blockPositions.qr || { 
+                      x: pageWidth - qrContainerSize - safeMargin, 
+                      y: safeMargin 
+                    }}
+                    onStop={(e, data) => {
+                      updateBlockPosition('qr', { x: data.x, y: data.y });
                     }}
                   >
-                    <div className="bg-white p-2 rounded-lg shadow-lg border-2 border-purple-300 hover:border-purple-500 transition-colors">
-                      <QRCodeSVG 
-                        value={videoUrl} 
-                        size={100} 
-                        level="H"
-                        includeMargin={true}
-                      />
-                      <p className="text-center text-[8px] text-purple-600 mt-1 font-medium">
-                        {language === "fr" ? "Scannez pour la vidéo" : "Scan for video"}
-                      </p>
+                    <div 
+                      ref={qrDraggableRef}
+                      style={{ 
+                        position: 'absolute',
+                        cursor: 'move',
+                        zIndex: 10
+                      }}
+                    >
+                      <div className="bg-white p-2 rounded-lg shadow-lg border-2 border-purple-300 hover:border-purple-500 transition-colors">
+                        <QRCodeSVG 
+                          value={videoUrl} 
+                          size={100} 
+                          level="H"
+                          includeMargin={true}
+                        />
+                        <p className="text-center text-[8px] text-purple-600 mt-1 font-medium">
+                          {language === "fr" ? "Scannez pour la vidéo" : "Scan for video"}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                </Draggable>
-              )}
+                  </Draggable>
+                );
+              })()}
             </div>
             </div>
           </div>

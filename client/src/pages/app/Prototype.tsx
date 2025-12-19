@@ -1,11 +1,25 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Plus, Minus, Image as ImageIcon, Mic, Video, MoreHorizontal, Calendar, Share2, BookOpen, Printer, CheckCircle, Bell, QrCode, Baby, LogOut, Settings, User, Sparkles, ShoppingBag, FolderHeart, Trash2, Crown, Mail, Phone, MapPin, UserPlus, Users, Edit2, CreditCard, X, Lock, Search, Clock, AlertTriangle, Gift, Loader2, Camera, ArrowUp, ArrowDown, Shield, TrendingUp, Check } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Minus, Image as ImageIcon, Mic, Video, MoreHorizontal, Calendar, Share2, BookOpen, Printer, CheckCircle, Bell, QrCode, Baby, LogOut, Settings, User, Sparkles, ShoppingBag, FolderHeart, Trash2, Crown, Mail, Phone, MapPin, UserPlus, Users, Edit2, CreditCard, X, Lock, Search, Clock, AlertTriangle, Gift, Loader2, Camera, ArrowUp, ArrowDown, Shield, TrendingUp, Check, HardDrive } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { Link, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import type { Book, TemplatePage, UserBookPage, TemplatePart, BookTemplate } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
+
+interface VideoStorageStatus {
+  plan: string;
+  videoUsedBytes: number;
+  videoUsedGb: number;
+  videoLimitBytes: number;
+  videoLimitGb: number;
+  remainingBytes: number;
+  remainingGb: number;
+  percentageUsed: number;
+  canUploadVideos: boolean;
+}
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -97,6 +111,14 @@ export default function Prototype() {
       const response = await fetch("/api/books", { credentials: "include" });
       if (!response.ok) return { books: [] };
       return response.json();
+    },
+  });
+
+  const { data: videoStorage } = useQuery<VideoStorageStatus>({
+    queryKey: ["/api/auth/video-storage"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/auth/video-storage");
+      return res.json();
     },
   });
   
@@ -2400,6 +2422,59 @@ export default function Prototype() {
                 </div>
                 <ChevronRight size={16} className="text-stone-400" />
               </button>
+
+              {/* Video Storage Section */}
+              {videoStorage && (
+                <div className="bg-gradient-to-r from-violet-50 to-purple-50 rounded-2xl p-4 border border-purple-200 shadow-sm">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
+                      <Video size={18} className="text-purple-600" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-stone-800">Espace vidéo</h4>
+                      <p className="text-xs text-stone-500">
+                        {videoStorage.canUploadVideos 
+                          ? `${videoStorage.videoUsedGb} Go / ${videoStorage.videoLimitGb} Go utilisés`
+                          : "Non disponible avec votre plan"
+                        }
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {videoStorage.canUploadVideos ? (
+                    <>
+                      <Progress 
+                        value={videoStorage.percentageUsed} 
+                        className="h-2 mb-2"
+                      />
+                      <div className="flex justify-between items-center">
+                        <p className="text-xs text-stone-500">
+                          {videoStorage.remainingGb} Go restants
+                        </p>
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${
+                          videoStorage.percentageUsed >= 90 
+                            ? 'bg-red-100 text-red-700' 
+                            : videoStorage.percentageUsed >= 70 
+                              ? 'bg-amber-100 text-amber-700'
+                              : 'bg-green-100 text-green-700'
+                        }`}>
+                          {videoStorage.percentageUsed}% utilisé
+                        </span>
+                      </div>
+                      {videoStorage.percentageUsed >= 90 && (
+                        <p className="text-xs text-red-600 mt-2">
+                          Attention : votre espace vidéo est presque plein.
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <div className="flex items-center gap-2 text-xs text-stone-500">
+                      <HardDrive size={14} />
+                      <span>Passez à Premium ou Platine pour télécharger des vidéos.</span>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Logout Button */}
               <button 

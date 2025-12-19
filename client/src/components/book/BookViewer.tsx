@@ -221,6 +221,34 @@ export function BookViewer({ bookId, language, onGoToInspiration, initialPage }:
     },
   });
 
+  const addBlankPageMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/books/${bookId}/add-inspiration-page`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          templateId: "blank-page",
+          titleFr: "",
+          titleEn: "",
+          subtitleFr: "",
+          subtitleEn: "",
+          pageType: "text_photo",
+          prompts: [],
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || "Failed to add blank page");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/books", bookId, "pages"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/books", bookId] });
+    },
+  });
+
   useEffect(() => {
     if (data && data.templatePages && data.pages.length === 0 && data.book.templateSlug) {
       initializeMutation.mutate();
@@ -557,7 +585,8 @@ export function BookViewer({ bookId, language, onGoToInspiration, initialPage }:
                   <div className={`rounded-lg border p-4 ${isInspirationPart ? "border-amber-200 bg-amber-50/50" : "border-sage-200 bg-sage-50/50"}`}>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                       {isInspirationPart ? (
-                        inspirationPages.map((page: any) => {
+                        <>
+                        {inspirationPages.map((page: any) => {
                           const completed = isPageCompleted(page.pageNumber);
                           return (
                             <div
@@ -632,7 +661,23 @@ export function BookViewer({ bookId, language, onGoToInspiration, initialPage }:
                               </AlertDialog>
                             </div>
                           );
-                        })
+                        })}
+                        <button
+                          onClick={() => addBlankPageMutation.mutate()}
+                          disabled={addBlankPageMutation.isPending}
+                          className="p-4 rounded-lg border-2 border-dashed border-amber-300 bg-amber-50 hover:bg-amber-100 hover:border-amber-400 transition-all flex flex-col items-center justify-center gap-2 min-h-[100px]"
+                          data-testid="add-blank-page-button"
+                        >
+                          {addBlankPageMutation.isPending ? (
+                            <Loader2 className="w-6 h-6 text-amber-500 animate-spin" />
+                          ) : (
+                            <Plus className="w-6 h-6 text-amber-500" />
+                          )}
+                          <span className="text-sm font-medium text-amber-700">
+                            {language === "fr" ? "Ajouter une page" : "Add a page"}
+                          </span>
+                        </button>
+                        </>
                       ) : (
                         partPages.map((page) => {
                           const completed = isPageCompleted(page.pageNumber);

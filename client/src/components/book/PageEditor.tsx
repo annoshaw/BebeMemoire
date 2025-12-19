@@ -525,70 +525,31 @@ export function PageEditor({
   const handleVideoAdd = async (file: File) => {
     setIsVideoUploading(true);
     try {
-      const response = await fetch('/api/media/upload-url', {
+      console.log('Uploading video via proxy...', { filename: file.name, size: file.size });
+      
+      const response = await fetch('/api/media/proxy-upload', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': file.type,
+          'X-Book-Id': bookId,
+          'X-Page-Id': userPage?.id || '',
+          'X-Filename': file.name,
+          'X-Media-Type': 'video'
+        },
         credentials: 'include',
-        body: JSON.stringify({
-          filename: file.name,
-          contentType: file.type,
-          size: file.size,
-          bookId,
-          pageId: userPage?.id,
-          mediaType: 'video'
-        })
+        body: file
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || 'Erreur lors de la préparation de l\'upload');
+        throw new Error(error.message || 'Erreur lors du téléversement');
       }
 
-      const { mediaId, uploadUrl } = await response.json();
-
-      console.log('Uploading video to S3...', { uploadUrl: uploadUrl.substring(0, 100) + '...' });
+      const { mediaId, downloadUrl } = await response.json();
+      console.log('Video upload successful!', { mediaId });
       
-      try {
-        // Use XMLHttpRequest for better CORS compatibility with S3
-        await new Promise<void>((resolve, reject) => {
-          const xhr = new XMLHttpRequest();
-          xhr.open('PUT', uploadUrl, true);
-          xhr.setRequestHeader('Content-Type', file.type);
-          
-          xhr.onload = () => {
-            if (xhr.status >= 200 && xhr.status < 300) {
-              console.log('S3 upload successful!');
-              resolve();
-            } else {
-              console.error('S3 upload failed:', xhr.status, xhr.responseText);
-              reject(new Error(`Erreur S3 (${xhr.status}): ${xhr.responseText?.substring(0, 100) || 'Unknown error'}`));
-            }
-          };
-          
-          xhr.onerror = () => {
-            console.error('S3 upload network error');
-            reject(new Error('Erreur réseau lors de l\'upload. Vérifiez la configuration CORS du bucket S3.'));
-          };
-          
-          xhr.send(file);
-        });
-      } catch (uploadError) {
-        console.error('S3 upload error:', uploadError);
-        throw uploadError;
-      }
-
-      const confirmResponse = await fetch(`/api/media/${mediaId}/confirm`, {
-        method: 'POST',
-        credentials: 'include'
-      });
-
-      if (!confirmResponse.ok) {
-        throw new Error('Erreur lors de la confirmation');
-      }
-
-      const { downloadUrl, mediaId: confirmedMediaId } = await confirmResponse.json();
       setVideoUrl(downloadUrl);
-      setVideoMediaId(confirmedMediaId);
+      setVideoMediaId(mediaId);
       setIsDirty(true);
       toast.success(language === 'fr' ? 'Vidéo téléversée!' : 'Video uploaded!');
     } catch (error) {

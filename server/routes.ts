@@ -9,7 +9,7 @@ import express from "express";
 import path from "path";
 import fs from "fs";
 import crypto from "crypto";
-import { generateUploadUrl, generateDownloadUrl, deleteFile, generateMediaKey, isS3Configured } from "./s3";
+import { generateUploadUrl, generateDownloadUrl, deleteFile, generateMediaKey, isS3Configured, uploadBuffer } from "./s3";
 import { sendBookInvitationEmail } from "./emailService";
 
 // Extend Express Request to include user
@@ -1965,6 +1965,98 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Generate upload URL error:", error);
       res.status(500).json({ message: "Erreur lors de la génération de l'URL d'upload" });
+    }
+  });
+
+  // Proxy upload - uploads file through server to bypass CORS issues
+  app.post("/api/media/proxy-upload", requireAuth, async (req: Request, res: Response) => {
+    try {
+      if (!isS3Configured()) {
+        return res.status(503).json({ message: "Le stockage S3 n'est pas configuré" });
+      }
+
+      const userId = (req as any).userId;
+      const contentType = req.headers['content-type'] || 'video/mp4';
+      const bookId = req.headers['x-book-id'] as string;
+      const pageId = req.headers['x-page-id'] as string | undefined;
+      const filename = req.headers['x-filename'] as string || 'video.mp4';
+      const mediaType = (req.headers['x-media-type'] as string) || 'video';
+
+      if (!bookId) {
+        return res.status(400).json({ message: "Book ID manquant" });
+      }
+
+      // Collect body data
+      const chunks: Buffer[] = [];
+      req.on('data', (chunk: Buffer) => chunks.push(chunk));
+      
+      await new Promise<void>((resolve, reject) => {
+        req.on('end', resolve);
+        req.on('error', reject);
+      });
+
+      const buffer = Buffer.concat(chunks);
+      const size = buffer.length;
+
+      // Check storage quota
+      const currentUsage = await storage.getUserStorageUsed(userId);
+      const userPlan = await storage.getUserPlan(userId);
+      const plan = userPlan?.plan || "free";
+      const limitBytes = storage.getStorageLimit(plan) * 1024 * 1024;
+
+      if (currentUsage + size > limitBytes) {
+        return res.status(413).json({ 
+          message: "Quota de stockage dépassé",
+          currentUsage,
+          limit: limitBytes,
+          required: size
+        });
+      }
+
+      // Verify book ownership
+      const book = await storage.getBook(bookId);
+      if (!book || book.userId !== userId) {
+        return res.status(403).json({ message: "Accès refusé" });
+      }
+
+      // Generate S3 key
+      const s3Key = generateMediaKey(userId, bookId, filename, mediaType as "photo" | "video");
+
+      // Upload to S3
+      await uploadBuffer(s3Key, buffer, contentType);
+
+      // Create media record
+      const mediaFile = await storage.createMediaFile({
+        userId,
+        bookId,
+        pageId: pageId || null,
+        s3Key,
+        filename,
+        contentType,
+        size,
+        mediaType,
+        status: "uploaded",
+        uploadedAt: new Date()
+      });
+
+      // If media is a video and has a page associated, update the page with the mediaId
+      if (mediaType === 'video' && pageId) {
+        await storage.updateUserBookPage(pageId, {
+          videoMediaId: mediaFile.id
+        });
+      }
+
+      // Generate download URL
+      const downloadUrl = await generateDownloadUrl(s3Key, 3600);
+
+      res.json({
+        mediaId: mediaFile.id,
+        s3Key,
+        downloadUrl
+      });
+    } catch (error) {
+      console.error("Proxy upload error:", error);
+      res.status(500).json({ message: "Erreur lors de l'upload" });
     }
   });
 

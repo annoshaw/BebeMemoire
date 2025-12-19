@@ -100,4 +100,19 @@ export function isS3Configured(): boolean {
   );
 }
 
+export async function uploadBuffer(
+  key: string,
+  buffer: Buffer,
+  contentType: string
+): Promise<void> {
+  const command = new PutObjectCommand({
+    Bucket: BUCKET_NAME,
+    Key: key,
+    Body: buffer,
+    ContentType: contentType,
+  });
+
+  await s3Client.send(command);
+}
+
 export { s3Client, BUCKET_NAME };

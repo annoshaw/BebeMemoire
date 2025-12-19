@@ -86,7 +86,7 @@ export default function Footer() {
           <div>
             <h4 className="text-white font-semibold mb-4">{t.connect}</h4>
             <div className="flex space-x-4">
-              <a href="#" className="hover:text-white transition-colors"><Instagram size={20} /></a>
+              <a href="https://www.instagram.com/memo.app.25" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors"><Instagram size={20} /></a>
               <a href="#" className="hover:text-white transition-colors"><Twitter size={20} /></a>
               <a href="#" className="hover:text-white transition-colors"><Facebook size={20} /></a>
             </div>

@@ -662,21 +662,6 @@ export function BookViewer({ bookId, language, onGoToInspiration, initialPage }:
                             </div>
                           );
                         })}
-                        <button
-                          onClick={() => addBlankPageMutation.mutate()}
-                          disabled={addBlankPageMutation.isPending}
-                          className="p-4 rounded-lg border-2 border-dashed border-amber-300 bg-amber-50 hover:bg-amber-100 hover:border-amber-400 transition-all flex flex-col items-center justify-center gap-2 min-h-[100px]"
-                          data-testid="add-blank-page-button"
-                        >
-                          {addBlankPageMutation.isPending ? (
-                            <Loader2 className="w-6 h-6 text-amber-500 animate-spin" />
-                          ) : (
-                            <Plus className="w-6 h-6 text-amber-500" />
-                          )}
-                          <span className="text-sm font-medium text-amber-700">
-                            {language === "fr" ? "Ajouter une page" : "Add a page"}
-                          </span>
-                        </button>
                         </>
                       ) : (
                         partPages.map((page) => {
@@ -777,6 +762,23 @@ export function BookViewer({ bookId, language, onGoToInspiration, initialPage }:
               </div>
             );
           })}
+          
+          {/* Add blank page button - visible for all books */}
+          <button
+            onClick={() => addBlankPageMutation.mutate()}
+            disabled={addBlankPageMutation.isPending}
+            className="w-full p-4 rounded-lg border-2 border-dashed border-sage-300 bg-sage-50 hover:bg-sage-100 hover:border-sage-400 transition-all flex items-center justify-center gap-3"
+            data-testid="add-blank-page-button"
+          >
+            {addBlankPageMutation.isPending ? (
+              <Loader2 className="w-5 h-5 text-sage-500 animate-spin" />
+            ) : (
+              <Plus className="w-5 h-5 text-sage-500" />
+            )}
+            <span className="font-medium text-sage-700">
+              {language === "fr" ? "Ajouter une page personnalisée" : "Add a custom page"}
+            </span>
+          </button>
         </div>
       ) : (
         <div className="text-center py-12">

@@ -116,12 +116,6 @@ export const coverStyles: CoverStyle[] = [
     name: { en: 'Mauve Dream', fr: 'Rêve Mauve' },
     imageUrl: '/attached_assets/image_1766077520008.png',
     category: 'floral'
-  },
-  {
-    id: 'ivory',
-    name: { en: 'Ivory Elegance', fr: 'Élégance Ivoire' },
-    imageUrl: '/attached_assets/image_1766068216491.png',
-    category: 'classic'
   }
 ];
 

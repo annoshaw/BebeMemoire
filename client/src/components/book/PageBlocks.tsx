@@ -20,7 +20,8 @@ import {
   Type,
   ALargeSmall,
   QrCode,
-  Link
+  Link,
+  HelpCircle
 } from "lucide-react";
 import ColorThief from "colorthief";
 import { QRCodeSVG } from "qrcode.react";
@@ -702,15 +703,64 @@ export function VideoBlock({ videoUrl, onAdd, onRemove, language, qrCodeUrl, isU
           {/* External URL option for permanent QR code */}
           {onExternalUrlChange && (
             <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-              <Label className="text-sm text-green-700 flex items-center gap-2 mb-2">
-                <Link className="w-4 h-4" />
-                {language === "fr" ? "Lien permanent (Google Photos / iCloud)" : "Permanent link (Google Photos / iCloud)"}
-              </Label>
-              <p className="text-xs text-green-600 mb-3">
-                {language === "fr" 
-                  ? "Collez un lien Google Photos ou iCloud pour que le QR code reste valide même dans 20 ans."
-                  : "Paste a Google Photos or iCloud link so the QR code stays valid even in 20 years."}
-              </p>
+              <div className="flex items-center justify-between mb-2">
+                <Label className="text-sm text-green-700 flex items-center gap-2">
+                  <Link className="w-4 h-4" />
+                  {language === "fr" ? "Lien permanent (optionnel)" : "Permanent link (optional)"}
+                </Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button 
+                      className="p-1 rounded-full hover:bg-green-100 transition-colors"
+                      data-testid="external-url-help-button"
+                    >
+                      <HelpCircle className="w-4 h-4 text-green-600" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80 p-4" align="end">
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-sm text-green-800">
+                        {language === "fr" ? "Pourquoi utiliser un lien permanent ?" : "Why use a permanent link?"}
+                      </h4>
+                      <p className="text-xs text-gray-600">
+                        {language === "fr" 
+                          ? "Le QR code dans votre livre imprimé restera valide même dans 20 ans, car il pointe vers votre propre compte Google Photos ou iCloud."
+                          : "The QR code in your printed book will remain valid even in 20 years, because it points to your own Google Photos or iCloud account."}
+                      </p>
+                      
+                      <div className="border-t pt-3">
+                        <h5 className="font-medium text-xs text-green-800 mb-2">
+                          {language === "fr" ? "Comment obtenir un lien :" : "How to get a link:"}
+                        </h5>
+                        <div className="space-y-2 text-xs text-gray-600">
+                          <div className="flex items-start gap-2">
+                            <span className="bg-green-100 text-green-700 rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0 text-[10px] font-bold">1</span>
+                            <span>{language === "fr" ? "Ouvrez Google Photos ou iCloud" : "Open Google Photos or iCloud"}</span>
+                          </div>
+                          <div className="flex items-start gap-2">
+                            <span className="bg-green-100 text-green-700 rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0 text-[10px] font-bold">2</span>
+                            <span>{language === "fr" ? "Sélectionnez votre vidéo" : "Select your video"}</span>
+                          </div>
+                          <div className="flex items-start gap-2">
+                            <span className="bg-green-100 text-green-700 rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0 text-[10px] font-bold">3</span>
+                            <span>{language === "fr" ? "Cliquez sur \"Partager\" → \"Créer un lien\"" : "Click \"Share\" → \"Create link\""}</span>
+                          </div>
+                          <div className="flex items-start gap-2">
+                            <span className="bg-green-100 text-green-700 rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0 text-[10px] font-bold">4</span>
+                            <span>{language === "fr" ? "Copiez et collez le lien ici" : "Copy and paste the link here"}</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <p className="text-[10px] text-gray-500 italic border-t pt-2">
+                        {language === "fr" 
+                          ? "Sans lien permanent, le QR code fonctionnera tant que Mémo existe."
+                          : "Without a permanent link, the QR code will work as long as Mémo exists."}
+                      </p>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
               <Input
                 type="url"
                 placeholder={language === "fr" ? "https://photos.google.com/..." : "https://photos.google.com/..."}

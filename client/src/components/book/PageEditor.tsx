@@ -549,24 +549,31 @@ export function PageEditor({
       console.log('Uploading video to S3...', { uploadUrl: uploadUrl.substring(0, 100) + '...' });
       
       try {
-        const uploadResponse = await fetch(uploadUrl, {
-          method: 'PUT',
-          headers: { 'Content-Type': file.type },
-          body: file
+        // Use XMLHttpRequest for better CORS compatibility with S3
+        await new Promise<void>((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open('PUT', uploadUrl, true);
+          xhr.setRequestHeader('Content-Type', file.type);
+          
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              console.log('S3 upload successful!');
+              resolve();
+            } else {
+              console.error('S3 upload failed:', xhr.status, xhr.responseText);
+              reject(new Error(`Erreur S3 (${xhr.status}): ${xhr.responseText?.substring(0, 100) || 'Unknown error'}`));
+            }
+          };
+          
+          xhr.onerror = () => {
+            console.error('S3 upload network error');
+            reject(new Error('Erreur réseau lors de l\'upload. Vérifiez la configuration CORS du bucket S3.'));
+          };
+          
+          xhr.send(file);
         });
-
-        if (!uploadResponse.ok) {
-          const errorText = await uploadResponse.text().catch(() => 'Unknown error');
-          console.error('S3 upload failed:', uploadResponse.status, errorText);
-          throw new Error(`Erreur S3 (${uploadResponse.status}): ${errorText.substring(0, 100)}`);
-        }
-        
-        console.log('S3 upload successful!');
       } catch (uploadError) {
-        console.error('S3 upload error (possibly CORS):', uploadError);
-        if (uploadError instanceof TypeError && uploadError.message.includes('Failed to fetch')) {
-          throw new Error('Erreur CORS: Le bucket S3 doit être configuré pour autoriser les uploads depuis ce domaine');
-        }
+        console.error('S3 upload error:', uploadError);
         throw uploadError;
       }
 

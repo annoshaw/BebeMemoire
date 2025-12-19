@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ChevronLeft, Bell, Save, Check, Calendar, Baby, Cake, Camera, Star, AlertCircle } from "lucide-react";
+import { ChevronLeft, Bell, Save, Check, Calendar, Baby, Cake, Camera, Star, AlertCircle, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Link, useLocation } from "wouter";
@@ -419,6 +419,29 @@ export default function NotificationSettings() {
               </p>
             </motion.div>
           )}
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="bg-stone-50 rounded-xl p-4 border border-stone-200 mt-6"
+          >
+            <h3 className="text-sm font-semibold text-stone-700 mb-2 flex items-center gap-2">
+              <Mail size={16} className="text-amber-600" />
+              Nous contacter
+            </h3>
+            <p className="text-xs text-stone-500 mb-3">
+              Une question, une suggestion ou besoin d'aide ? Écrivez-nous !
+            </p>
+            <a
+              href="mailto:memo.app.25@hotmail.com"
+              className="inline-flex items-center gap-2 text-sm text-amber-700 hover:text-amber-800 font-medium transition-colors"
+              data-testid="link-contact-email"
+            >
+              <Mail size={14} />
+              memo.app.25@hotmail.com
+            </a>
+          </motion.div>
         </div>
       </div>
     </div>

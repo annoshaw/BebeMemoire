@@ -1,4 +1,4 @@
-import { Heart, Instagram, Twitter, Facebook } from "lucide-react";
+import { Heart, Instagram, Twitter, Facebook, Mail } from "lucide-react";
 import logoMemo from "@/assets/logo-memo.png";
 
 const translations = {
@@ -78,7 +78,7 @@ export default function Footer() {
             <ul className="space-y-2 text-sm">
               <li><a href="#" className="hover:text-white transition-colors">{t.aboutUs}</a></li>
               <li><a href="#" className="hover:text-white transition-colors">{t.careers}</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">{t.contact}</a></li>
+              <li><a href="mailto:memo.app.25@hotmail.com" className="hover:text-white transition-colors">{t.contact}</a></li>
               <li><a href="#" className="hover:text-white transition-colors">{t.privacyPolicy}</a></li>
             </ul>
           </div>
@@ -90,7 +90,11 @@ export default function Footer() {
               <a href="#" className="hover:text-white transition-colors"><Twitter size={20} /></a>
               <a href="#" className="hover:text-white transition-colors"><Facebook size={20} /></a>
             </div>
-            <p className="mt-6 text-xs">
+            <a href="mailto:memo.app.25@hotmail.com" className="mt-4 flex items-center gap-2 text-sm hover:text-white transition-colors">
+              <Mail size={16} />
+              memo.app.25@hotmail.com
+            </a>
+            <p className="mt-4 text-xs">
               {t.madeWith} <Heart size={12} className="inline text-red-500" /> {t.location}
             </p>
           </div>

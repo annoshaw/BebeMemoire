@@ -32,10 +32,10 @@ const inspirationCategories = [
   { title: "Premières fois", icon: "👣", color: "from-amber-100", hasSubPages: true },
   { title: "Allaitement", icon: "🤱", color: "from-rose-100", hasSubPages: true },
   { title: "Adoption", icon: "💕", color: "from-blue-100", hasSubPages: false },
-  { title: "FIV", icon: "🌱", color: "from-orange-100", hasSubPages: false },
+  { title: "FIV", icon: "🌱", color: "from-orange-100", hasSubPages: false, comingSoon: true },
   { title: "Événements lors de la grossesse", icon: "🎉", color: "from-yellow-100", hasSubPages: true },
   { title: "Chambre de bébé", icon: "🛏️", color: "from-green-100", hasSubPages: false },
-  { title: "Lettre à bébé", icon: "💌", color: "from-red-100", hasSubPages: false },
+  { title: "Lettre à bébé", icon: "💌", color: "from-red-100", hasSubPages: false, comingSoon: true },
 ];
 
 const inspirationSubPages: Record<string, {id: number, title: string, icon: string, color: string, desc?: string}[]> = {
@@ -500,6 +500,10 @@ export default function PrebuiltBookEditor() {
                         </div>
                         {category.hasSubPages ? (
                           <ChevronRight size={18} className="text-stone-400" />
+                        ) : (category as any).comingSoon ? (
+                          <span className="text-xs px-2 py-1 bg-amber-100 text-amber-700 rounded-full font-medium">
+                            {language === "fr" ? "À venir" : "Coming soon"}
+                          </span>
                         ) : (
                           <Button 
                             size="sm" 

@@ -282,7 +282,7 @@ export default function Home() {
                 <h3 className="text-xl font-bold mb-2">{plan.name}</h3>
                 <div className="text-3xl font-serif font-bold mb-2">{plan.price}</div>
                 <p className={`text-sm mb-6 ${plan.highlight ? 'text-stone-400' : 'text-stone-500'}`}>{plan.desc}</p>
-                <ul className="space-y-4 mb-8">
+                <ul className="space-y-4">
                   {plan.features.map((feat, j) => (
                     <li key={j} className="flex items-center gap-3 text-sm">
                       <CheckCircle size={16} className={plan.highlight ? 'text-primary' : 'text-stone-400'} />
@@ -290,9 +290,6 @@ export default function Home() {
                     </li>
                   ))}
                 </ul>
-                <Button className={`w-full rounded-full py-6 ${plan.highlight ? 'bg-white text-stone-900 hover:bg-stone-100' : 'bg-stone-900 text-white hover:bg-stone-800'}`}>
-                  {plan.cta}
-                </Button>
               </div>
             ))}
           </div>

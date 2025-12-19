@@ -385,10 +385,6 @@ export default function Home() {
                   </li>
                 ))}
               </ul>
-              
-              <Button className="bg-white text-stone-900 hover:bg-stone-100 rounded-full px-8 py-6 text-lg mt-4">
-                Commander un échantillon
-              </Button>
             </div>
             
             <motion.div 

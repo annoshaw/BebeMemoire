@@ -30,10 +30,6 @@ import {
 import NotificationBell from "@/components/NotificationBell";
 import { PageThumbnail, PageThumbnailSkeleton } from "@/components/book";
 
-import styleModerne from "@assets/generated_images/modern_minimalist_book_cover.png";
-import styleClassique from "@assets/generated_images/classic_elegant_book_cover.png";
-import styleColore from "@assets/generated_images/colorful_playful_book_cover.png";
-import styleAnimation from "@assets/generated_images/animation_style_book_cover.png";
 
 export default function Prototype() {
   const { user } = useAuth();
@@ -2206,10 +2202,10 @@ export default function Prototype() {
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   {[
-                    { id: "moderne", label: "Moderne", icon: "✨", desc: "Épuré et minimaliste", preview: styleModerne },
-                    { id: "classique", label: "Classique", icon: "📖", desc: "Traditionnel et élégant", preview: styleClassique },
-                    { id: "colore", label: "Coloré", icon: "🎨", desc: "Vif et joyeux", preview: styleColore },
-                    { id: "animation", label: "Animation", icon: "🎬", desc: "Ludique et animé", preview: styleAnimation },
+                    { id: "moderne", label: "Moderne", icon: "✨", desc: "Épuré et minimaliste", preview: "/attached_assets/image_1766077488363.png" },
+                    { id: "classique", label: "Classique", icon: "📖", desc: "Traditionnel et élégant", preview: "/attached_assets/image_1766077426906.png" },
+                    { id: "colore", label: "Coloré", icon: "🎨", desc: "Vif et joyeux", preview: "/attached_assets/image_1766077455027.png" },
+                    { id: "animation", label: "Animation", icon: "🎬", desc: "Ludique et animé", preview: "/attached_assets/image_1766077316312.png" },
                   ].map((style) => (
                     <div key={style.id} className="relative">
                       <button

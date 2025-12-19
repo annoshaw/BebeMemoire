@@ -237,6 +237,7 @@ export function PageEditor({
   const [videoMediaId, setVideoMediaId] = useState<string | null>(
     (userPage as any)?.videoMediaId || null
   );
+  const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [customData, setCustomData] = useState<Record<string, string>>(
     (userPage?.customData as Record<string, string>) || {}
   );
@@ -309,6 +310,22 @@ export function PageEditor({
     setSelectedPhotoLayoutId(layoutId);
     setIsDirty(false);
   }, [userPage, pageNumber]);
+
+  // Fetch short URL for QR code when videoMediaId is available
+  useEffect(() => {
+    if (videoMediaId) {
+      fetch(`/api/media/${videoMediaId}/qr-url`, { credentials: 'include' })
+        .then(res => res.json())
+        .then(data => {
+          if (data.qrUrl) {
+            setQrCodeUrl(data.qrUrl);
+          }
+        })
+        .catch(err => console.error('Error fetching QR URL:', err));
+    } else {
+      setQrCodeUrl(null);
+    }
+  }, [videoMediaId]);
 
   const handleTextStyleChange = (index: number, style: TextStyle) => {
     setTextStyles(prev => ({ ...prev, [index]: style }));
@@ -1500,7 +1517,7 @@ export function PageEditor({
               </div>
 
               {/* Draggable QR Code - Positioned within safe zone (5mm from edges for Gelato) */}
-              {videoUrl && (videoUrl.startsWith('https://') || videoUrl.startsWith('http://')) && (() => {
+              {qrCodeUrl && (() => {
                 const pageWidth = 400;
                 const pageHeight = 550;
                 const qrContainerSize = 120;
@@ -1533,7 +1550,7 @@ export function PageEditor({
                     >
                       <div className="bg-white p-2 rounded-lg shadow-lg border-2 border-purple-300 hover:border-purple-500 transition-colors">
                         <QRCodeSVG 
-                          value={videoUrl} 
+                          value={qrCodeUrl} 
                           size={100} 
                           level="H"
                           includeMargin={true}

@@ -2098,6 +2098,82 @@ export async function registerRoutes(
     }
   });
 
+  // Public video redirect for QR codes (requires signed token)
+  app.get("/v/:mediaId", async (req: Request, res: Response) => {
+    try {
+      const { mediaId } = req.params;
+      const { t: token } = req.query;
+
+      if (!token || typeof token !== 'string') {
+        return res.status(403).send('Access denied');
+      }
+
+      // Verify token matches the expected signature
+      const secret = process.env.SESSION_SECRET || 'memo-video-secret';
+      const expectedToken = crypto.createHmac('sha256', secret)
+        .update(mediaId)
+        .digest('hex')
+        .substring(0, 16);
+
+      if (token !== expectedToken) {
+        return res.status(403).send('Invalid access token');
+      }
+
+      const mediaFile = await storage.getMediaFile(mediaId);
+      if (!mediaFile || mediaFile.mediaType !== 'video' || mediaFile.status !== 'uploaded') {
+        return res.status(404).send('Video not found');
+      }
+
+      // Generate a longer-lived URL (24 hours) for QR code access
+      const videoUrl = await generateDownloadUrl(mediaFile.s3Key, 86400);
+      
+      res.redirect(videoUrl);
+    } catch (error) {
+      console.error("Video redirect error:", error);
+      res.status(500).send('Error loading video');
+    }
+  });
+
+  // Generate signed video URL for QR code
+  app.get("/api/media/:mediaId/qr-url", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const { mediaId } = req.params;
+
+      const mediaFile = await storage.getMediaFile(mediaId);
+      if (!mediaFile) {
+        return res.status(404).json({ message: "Fichier non trouvé" });
+      }
+
+      // Verify ownership through book
+      const book = await storage.getBook(mediaFile.bookId || "");
+      if (!book || book.userId !== userId) {
+        return res.status(403).json({ message: "Accès refusé" });
+      }
+
+      // Generate signed token
+      const secret = process.env.SESSION_SECRET || 'memo-video-secret';
+      const token = crypto.createHmac('sha256', secret)
+        .update(mediaId)
+        .digest('hex')
+        .substring(0, 16);
+
+      // Build the short URL for QR code
+      const baseUrl = process.env.REPLIT_DEV_DOMAIN 
+        ? `https://${process.env.REPLIT_DEV_DOMAIN}`
+        : process.env.REPLIT_DOMAINS?.split(',')[0] 
+          ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`
+          : 'https://memo.replit.app';
+
+      const qrUrl = `${baseUrl}/v/${mediaId}?t=${token}`;
+
+      res.json({ qrUrl });
+    } catch (error) {
+      console.error("Generate QR URL error:", error);
+      res.status(500).json({ message: "Erreur lors de la génération de l'URL" });
+    }
+  });
+
   // Get download URL for a media file
   app.get("/api/media/:mediaId/url", requireAuth, async (req: Request, res: Response) => {
     try {

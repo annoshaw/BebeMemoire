@@ -717,7 +717,7 @@ export function VideoBlock({ videoUrl, onAdd, onRemove, language, qrCodeUrl, isU
                       <HelpCircle className="w-4 h-4 text-green-600" />
                     </button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-80 p-4" align="end">
+                  <PopoverContent className="w-80 p-4 bg-white" align="end">
                     <div className="space-y-3">
                       <h4 className="font-semibold text-sm text-green-800">
                         {language === "fr" ? "Pourquoi utiliser un lien permanent ?" : "Why use a permanent link?"}

@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, integer, boolean, jsonb, index } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, integer, bigint, boolean, jsonb, index } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -102,6 +102,8 @@ export const userPlans = pgTable("user_plans", {
   userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }).unique(),
   plan: text("plan").notNull().default("free"), // free, premium, platine
   storageUsed: integer("storage_used").notNull().default(0), // in MB
+  videoStorageLimitGb: integer("video_storage_limit_gb").notNull().default(0), // 0=free, 2=premium, 5=platine
+  videoStorageUsedBytes: bigint("video_storage_used_bytes", { mode: "number" }).notNull().default(0), // in bytes
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

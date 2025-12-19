@@ -30,6 +30,11 @@ import {
 import NotificationBell from "@/components/NotificationBell";
 import { PageThumbnail, PageThumbnailSkeleton } from "@/components/book";
 
+import styleModerne from "@assets/generated_images/modern_minimalist_book_cover.png";
+import styleClassique from "@assets/generated_images/classic_elegant_book_cover.png";
+import styleColore from "@assets/generated_images/colorful_playful_book_cover.png";
+import styleAnimation from "@assets/generated_images/animation_style_book_cover.png";
+
 export default function Prototype() {
   const { user } = useAuth();
   const isAdmin = (user as any)?.role === "admin";
@@ -2201,10 +2206,10 @@ export default function Prototype() {
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   {[
-                    { id: "moderne", label: "Moderne", icon: "✨", desc: "Épuré et minimaliste", preview: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&h=300&fit=crop" },
-                    { id: "classique", label: "Classique", icon: "📖", desc: "Traditionnel et élégant", preview: "https://images.unsplash.com/photo-1589998059171-988d887df646?w=400&h=300&fit=crop" },
-                    { id: "colore", label: "Coloré", icon: "🎨", desc: "Vif et joyeux", preview: "https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?w=400&h=300&fit=crop" },
-                    { id: "animation", label: "Animation", icon: "🎬", desc: "Ludique et animé", preview: "https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=400&h=300&fit=crop" },
+                    { id: "moderne", label: "Moderne", icon: "✨", desc: "Épuré et minimaliste", preview: styleModerne },
+                    { id: "classique", label: "Classique", icon: "📖", desc: "Traditionnel et élégant", preview: styleClassique },
+                    { id: "colore", label: "Coloré", icon: "🎨", desc: "Vif et joyeux", preview: styleColore },
+                    { id: "animation", label: "Animation", icon: "🎬", desc: "Ludique et animé", preview: styleAnimation },
                   ].map((style) => (
                     <div key={style.id} className="relative">
                       <button
@@ -2212,20 +2217,26 @@ export default function Prototype() {
                           setBookStyle(style.id as any);
                           setPreviewStyle(previewStyle === style.id ? null : style.id);
                         }}
-                        className={`w-full p-3 rounded-xl border-2 transition-all text-left ${
+                        className={`w-full p-2 rounded-xl border-2 transition-all text-left ${
                           bookStyle === style.id
                             ? "border-primary bg-primary/5"
                             : "border-stone-200 hover:border-stone-300"
                         }`}
                         data-testid={`button-style-${style.id}`}
                       >
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-lg">{style.icon}</span>
-                          <p className={`font-bold text-xs ${bookStyle === style.id ? "text-primary" : "text-stone-700"}`}>
-                            {style.label}
-                          </p>
+                        <div className="flex items-center gap-2">
+                          <img 
+                            src={style.preview} 
+                            alt={style.label}
+                            className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className={`font-bold text-xs ${bookStyle === style.id ? "text-primary" : "text-stone-700"}`}>
+                              {style.label}
+                            </p>
+                            <p className="text-[10px] text-stone-500 truncate">{style.desc}</p>
+                          </div>
                         </div>
-                        <p className="text-[10px] text-stone-500">{style.desc}</p>
                       </button>
                       
                       {/* Preview Bubble */}

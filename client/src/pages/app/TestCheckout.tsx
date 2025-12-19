@@ -220,11 +220,8 @@ export default function TestCheckout() {
         // Gift certificate payment - redirect to success page
         window.location.href = result.redirectUrl;
       } else if (result.checkoutUrl) {
-        // Stripe payment - open checkout
-        const newWindow = window.open(result.checkoutUrl, '_blank');
-        if (!newWindow) {
-          window.location.href = result.checkoutUrl;
-        }
+        // Stripe payment - redirect in same window to preserve session
+        window.location.href = result.checkoutUrl;
       }
     },
     onError: (err: Error) => {

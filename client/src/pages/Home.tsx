@@ -81,16 +81,6 @@ export default function Home() {
                 </Link>
               </div>
 
-              <div className="flex items-center gap-4 text-sm text-stone-500 pt-4">
-                <div className="flex -space-x-2">
-                  {[1,2,3,4].map(i => (
-                    <div key={i} className="w-8 h-8 rounded-full bg-stone-200 border-2 border-white flex items-center justify-center text-xs font-bold overflow-hidden">
-                       <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${i}`} alt="avatar" />
-                    </div>
-                  ))}
-                </div>
-                <p>Rejoignez +10,000 parents modernes</p>
-              </div>
             </motion.div>
             
             <motion.div 

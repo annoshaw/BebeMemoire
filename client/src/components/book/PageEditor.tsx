@@ -244,6 +244,7 @@ export function PageEditor({
     ((userPage?.customData as Record<string, string>)?.collageStyle as CollageStyle) || "grid"
   );
   const [isDirty, setIsDirty] = useState(false);
+  const qrDraggableRef = useRef<HTMLDivElement>(null);
   const [showPreview, setShowPreview] = useState(false);
   
   // Photo layout state: { photoIndex: { scale, x, y } }
@@ -1510,6 +1511,7 @@ export function PageEditor({
               {/* Draggable QR Code - Positioned intelligently based on text layout */}
               {videoUrl && (videoUrl.startsWith('https://') || videoUrl.startsWith('http://')) && (
                 <Draggable
+                  nodeRef={qrDraggableRef}
                   bounds="parent"
                   defaultPosition={blockPositions.qr || (() => {
                     const pageWidth = 400;
@@ -1536,6 +1538,7 @@ export function PageEditor({
                   }}
                 >
                   <div 
+                    ref={qrDraggableRef}
                     style={{ 
                       position: 'absolute',
                       cursor: 'move',

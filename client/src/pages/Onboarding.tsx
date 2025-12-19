@@ -93,7 +93,7 @@ export default function Onboarding() {
         setPushNotificationsEnabled(true);
         toast.success("Notifications push activées !");
         
-        new Notification("Memoria", {
+        new Notification("Mémo", {
           body: "Les notifications push sont maintenant activées !",
           icon: "/favicon.ico"
         });

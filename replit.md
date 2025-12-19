@@ -1,8 +1,8 @@
-# Memoria - Baby Memory Book Application
+# Mémo - Baby Memory Book Application
 
 ## Overview
 
-Memoria is a mobile-first web application designed for parents to create, store, and print personalized baby memory books. It allows users to document pregnancy and childhood milestones with photos, videos, and text, including QR code generation for video content in printed books. The platform supports diverse family structures and aims to provide a comprehensive and inclusive memory-keeping solution.
+Mémo is a mobile-first web application designed for parents to create, store, and print personalized baby memory books. It allows users to document pregnancy and childhood milestones with photos, videos, and text, including QR code generation for video content in printed books. The platform supports diverse family structures and aims to provide a comprehensive and inclusive memory-keeping solution.
 
 ## User Preferences
 

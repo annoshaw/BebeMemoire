@@ -1,4 +1,4 @@
-// Stripe service for Memoria
+// Stripe service for Mémo
 // Handles direct Stripe API operations for payments and checkout
 
 import { storage } from './storage';

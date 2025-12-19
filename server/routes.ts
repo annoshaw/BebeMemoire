@@ -4661,7 +4661,7 @@ export async function registerRoutes(
       const emailSent = await sendPdfDeliveryEmail({
         customerEmail: user.email,
         customerName: user.fullName || user.firstName || 'Cher parent',
-        bookName: book.childName || 'Mon album Memoria',
+        bookName: book.childName || 'Mon album Mémo',
         orderNumber,
         downloadUrl,
         expiresInDays: 7,

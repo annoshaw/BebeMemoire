@@ -743,7 +743,7 @@ export default function Prototype() {
   const tutorialSteps = [
     {
       id: "welcome",
-      title: "Bienvenue sur Memoria!",
+      title: "Bienvenue sur Mémo!",
       description: "Je vais vous guider à travers les fonctionnalités principales pour créer votre premier livre de souvenirs.",
       icon: "👋",
       target: null
@@ -779,7 +779,7 @@ export default function Prototype() {
     {
       id: "complete",
       title: "Vous êtes prêt!",
-      description: "Vous savez maintenant utiliser Memoria. Commencez à créer des souvenirs inoubliables!",
+      description: "Vous savez maintenant utiliser Mémo. Commencez à créer des souvenirs inoubliables!",
       icon: "🎉",
       target: null
     }
@@ -3136,7 +3136,7 @@ export default function Prototype() {
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold flex-shrink-0">4</span>
-                        Activez les notifications pour <span className="font-medium">Memoria</span>
+                        Activez les notifications pour <span className="font-medium">Mémo</span>
                       </li>
                     </ol>
                   </div>

@@ -1,4 +1,4 @@
-// Stripe client configuration for Memoria
+// Stripe client configuration for Mémo
 // Uses Replit connection API to fetch credentials
 
 import Stripe from 'stripe';

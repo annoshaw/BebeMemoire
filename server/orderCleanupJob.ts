@@ -33,7 +33,7 @@ export async function processPendingOrders(): Promise<void> {
       
       // Get book info for email
       const book = order.bookId ? await storage.getBook(order.bookId) : null;
-      const bookName = book?.childName || 'Votre livre Memoria';
+      const bookName = book?.childName || 'Votre livre Mémo';
       
       // Cancel the order
       await storage.updateOrder(order.id, { 

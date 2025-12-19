@@ -188,7 +188,7 @@ export default function Home() {
           >
             <h2 className="text-4xl font-serif font-bold text-stone-900 mb-6">Conçu pour la vraie vie de parent</h2>
             <p className="text-lg text-stone-600">
-              Oubliez la culpabilité du livre vide. Memoria s'adapte à votre rythme, capture vos vidéos, et ne garde que le meilleur.
+              Oubliez la culpabilité du livre vide. Mémo s'adapte à votre rythme, capture vos vidéos, et ne garde que le meilleur.
             </p>
           </motion.div>
 

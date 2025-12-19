@@ -150,7 +150,7 @@ export default function AdminEmails() {
                 rows={6}
               />
               <p className="text-xs text-muted-foreground">
-                Le contenu sera intégré dans le template Memoria avec l'en-tête et le pied de page.
+                Le contenu sera intégré dans le template Mémo avec l'en-tête et le pied de page.
               </p>
             </div>
 

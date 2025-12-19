@@ -40,7 +40,7 @@ async function initStripe() {
       `${webhookBaseUrl}/api/stripe/webhook`,
       {
         enabled_events: ['*'],
-        description: 'Managed webhook for Memoria payments',
+        description: 'Managed webhook for Mémo payments',
       }
     );
     console.log(`Webhook configured: ${webhook.url} (UUID: ${uuid})`);

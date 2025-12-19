@@ -1,4 +1,4 @@
-// Stripe webhook handlers for Memoria
+// Stripe webhook handlers for Mémo
 // Handles webhook processing via stripe-replit-sync + custom order updates
 
 import { getStripeSync, getUncachableStripeClient } from './stripeClient';

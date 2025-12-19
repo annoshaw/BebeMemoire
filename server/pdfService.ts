@@ -727,7 +727,7 @@ export async function generateAndSendPdfToCustomer(options: GenerateAndSendOptio
   }
   
   const book = await storage.getBook(pdfOptions.bookId);
-  const bookName = book?.childName || 'Mon album Memoria';
+  const bookName = book?.childName || 'Mon album Mémo';
   
   const downloadUrl = await getSignedDownloadUrl(pdfExport.s3Key, 7 * 24 * 60 * 60);
   

@@ -235,18 +235,11 @@ export function BookViewer({ bookId, language, onGoToInspiration, initialPage }:
 
   const addBlankPageMutation = useMutation({
     mutationFn: async (pageNumber: number) => {
-      const res = await fetch(`/api/books/${bookId}/add-inspiration-page`, {
+      const res = await fetch(`/api/books/${bookId}/add-blank-page`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          templateId: "blank-page",
-          titleFr: "",
-          titleEn: "",
-          subtitleFr: "",
-          subtitleEn: "",
-          pageType: "text_photo",
-          prompts: [],
           insertAtPageNumber: pageNumber,
         }),
       });

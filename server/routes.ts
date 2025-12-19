@@ -1677,6 +1677,55 @@ export async function registerRoutes(
     }
   });
 
+  // Add blank page at specific position (like "Notre histoire d'amour" - text, photo, video)
+  app.post("/api/books/:bookId/add-blank-page", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      const book = await storage.getBook(req.params.bookId);
+      
+      if (!book) {
+        return res.status(404).json({ message: "Livre non trouvé" });
+      }
+      
+      if (book.userId !== userId) {
+        return res.status(403).json({ message: "Accès refusé" });
+      }
+      
+      const { insertAtPageNumber } = req.body;
+      
+      if (!insertAtPageNumber || insertAtPageNumber < 1) {
+        return res.status(400).json({ message: "Numéro de page invalide" });
+      }
+      
+      // Create new user book page as a blank customizable page (like "Notre histoire d'amour")
+      const newPage = await storage.addInspirationPage(req.params.bookId, {
+        pageNumber: insertAtPageNumber,
+        titleOverride: null,
+        textContent: [],
+        photos: [],
+        customData: { 
+          isInspirationPage: true,
+          isBlankPage: true,
+          titleFr: "",
+          titleEn: "",
+          subtitleFr: "",
+          subtitleEn: "",
+          pageType: "text_photo_video",
+          promptsFr: [],
+          promptsEn: [],
+          hasVideo: true,
+          maxPhotos: 6
+        },
+        isCompleted: false,
+      });
+      
+      res.json({ page: newPage, pageNumber: insertAtPageNumber, message: "Page vierge ajoutée avec succès" });
+    } catch (error) {
+      console.error("Add blank page error:", error);
+      res.status(500).json({ message: "Erreur lors de l'ajout de la page vierge" });
+    }
+  });
+
   // Delete inspiration page from a book
   app.delete("/api/books/:bookId/pages/:pageId", requireAuth, async (req: Request, res: Response) => {
     try {
